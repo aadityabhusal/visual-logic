@@ -1,7 +1,14 @@
-import "./App.css";
+import { Statement } from "./components/Statement";
 
 function App() {
-  return <div className="App">Visual Logic</div>;
+  return (
+    <div>
+      <h1 style={{ textAlign: "center", marginBottom: "1rem" }}>
+        Visual Logic
+      </h1>
+      <Statement />
+    </div>
+  );
 }
 
 export default App;
