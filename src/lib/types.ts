@@ -1,5 +1,6 @@
 export type IValue = string | number;
 export type IValueConstructor = StringConstructor | NumberConstructor;
+export type IValueObject = String | Number;
 
 export interface IData {
   id: string;
@@ -9,13 +10,12 @@ export interface IData {
 
 export interface IMethod {
   name: string;
-  handler: (value: IValue) => IValue;
+  return: IValue;
 }
 
 export interface IOperation {
   id: string;
   entityType: "operation";
-  name: string;
-  inputType: IValue;
-  methods: IMethod[];
+  methods: (keyof IValueObject)[];
+  selectedMethod: keyof IValueObject;
 }
