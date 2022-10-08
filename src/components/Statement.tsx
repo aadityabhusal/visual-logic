@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { initialStatement } from "../lib/data";
 import { IData, IOperation } from "../lib/types";
 import { Data } from "./Data";
 import { Operation } from "./Operation";
 
 export function Statement() {
-  const [sequence, setSequence] = useState<(IData | IOperation)[]>([]);
+  const [sequence, setSequence] =
+    useState<(IData | IOperation)[]>(initialStatement);
 
   function handleDataUpdate(data: IData) {
     setSequence((prev) => {

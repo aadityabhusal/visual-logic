@@ -1,3 +1,4 @@
+import { typeToObject } from "../lib/data";
 import { IData } from "../lib/types";
 
 export function Data({
@@ -7,12 +8,15 @@ export function Data({
   data: IData;
   handleData: (data: IData) => void;
 }) {
+  const ValueConstructor = typeToObject[typeof data.value];
   return (
     <input
-      type="text"
+      type={typeof data.value === "number" ? "number" : "text"}
       placeholder="Enter here value here"
       value={data.value}
-      onChange={(e) => handleData({ ...data, value: e.target.value })}
+      onChange={(e) =>
+        handleData({ ...data, value: ValueConstructor(e.target.value) })
+      }
     />
   );
 }

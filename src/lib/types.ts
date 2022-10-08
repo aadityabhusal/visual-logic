@@ -1,21 +1,21 @@
-export type IInput = string | number;
-export type IOutput = string | number | boolean;
+export type IValue = string | number;
+export type IValueConstructor = StringConstructor | NumberConstructor;
 
 export interface IData {
   id: string;
   entityType: "data";
-  value: IInput;
+  value: IValue;
 }
 
 export interface IMethod {
   name: string;
-  handler: (value: IInput) => IOutput;
+  handler: (value: IValue) => IValue;
 }
 
 export interface IOperation {
   id: string;
   entityType: "operation";
   name: string;
-  inputType: IInput;
+  inputType: IValue;
   methods: IMethod[];
 }
