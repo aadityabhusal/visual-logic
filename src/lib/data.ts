@@ -1,5 +1,6 @@
 import { IData, IValue, IValueConstructor } from "./types";
 import { nanoid } from "nanoid";
+import { createOperation } from "./utils";
 
 export const initialData: IData = {
   id: nanoid(),
@@ -12,4 +13,4 @@ export const typeToObject: Record<IValue, IValueConstructor> = {
   string: String,
 };
 
-export const initialStatement = [initialData];
+export const initialStatement = [initialData, createOperation(initialData)];

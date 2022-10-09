@@ -12,18 +12,22 @@ export function Statement() {
   function handleSequence(data: IData | IOperation) {
     setSequence((prev) => {
       let index = prev.findIndex((item) => item.id === data.id);
-      return [...prev.slice(0, index), data];
+      return [
+        ...prev.slice(0, index),
+        data,
+        ...(data.entityType === "data" ? [prev[index + 1]] : []),
+      ];
     });
   }
 
-  function addData() {
+  function addToSequence() {
     setSequence((prev) => {
       let lastItem = prev[prev.length - 1];
-      let data =
-        lastItem.entityType === "operation"
-          ? createData(lastItem, prev[prev.length - 2] as IData)
-          : createOperation(lastItem);
-      return [...prev, data];
+      if (lastItem.entityType === "operation") {
+        let data = createData(lastItem, prev[prev.length - 2] as IData);
+        let operation = createOperation(data);
+        return [...prev, data, operation];
+      } else return prev;
     });
   }
 
@@ -41,7 +45,9 @@ export function Statement() {
           )}
         </div>
       ))}
-      <button onClick={addData}>{">"}</button>
+      {sequence[sequence.length - 1].entityType === "operation" ? (
+        <button onClick={addToSequence}>{">"}</button>
+      ) : null}
     </div>
   );
 }

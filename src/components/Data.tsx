@@ -12,7 +12,7 @@ export function Data({
   return (
     <input
       type={typeof data.value === "number" ? "number" : "text"}
-      placeholder="Enter here value here"
+      placeholder={`Enter ${typeof data.value} here`}
       value={data.value}
       onChange={(e) =>
         handleData({ ...data, value: ValueConstructor(e.target.value) })
