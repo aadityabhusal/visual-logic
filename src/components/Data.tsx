@@ -4,9 +4,11 @@ import { IData } from "../lib/types";
 export function Data({
   data,
   handleData,
+  readOnly,
 }: {
   data: IData;
   handleData: (data: IData) => void;
+  readOnly?: boolean;
 }) {
   const ValueConstructor = typeToObject[typeof data.value];
   return (
@@ -18,22 +20,28 @@ export function Data({
         onChange={(e) =>
           handleData({ ...data, value: ValueConstructor(e.target.value) })
         }
+        readOnly={readOnly}
+        style={{ opacity: readOnly ? 0.9 : 1 }}
       />
-      <select
-        value={typeof data.value}
-        onChange={(e) =>
-          handleData({
-            ...data,
-            value: typeToObject[e.target.value](Number(data.value) || ""),
-          })
-        }
-      >
-        {Object.keys(typeToObject).map((item) => (
-          <option key={item} value={item}>
-            {item}
-          </option>
-        ))}
-      </select>
+      {!readOnly ? (
+        <select
+          value={typeof data.value}
+          onChange={(e) =>
+            handleData({
+              ...data,
+              value: typeToObject[e.target.value](Number(data.value) || ""),
+            })
+          }
+        >
+          {Object.keys(typeToObject).map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input value={typeof data.value} readOnly style={{ opacity: 0.9 }} />
+      )}
     </>
   );
 }

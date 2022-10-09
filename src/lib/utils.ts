@@ -41,16 +41,13 @@ export function sequenceToCode(sequence: (IData | IOperation)[]): string {
       .map((item) => (typeof item === "number" ? item : `"${item}"`))
       .join();
   }
-  let codeText = sequence.map((item, i, arr) => {
-    if (item.entityType === "data") {
-      return parseData([item.value]);
-    }
+  let codeText = sequence.slice(1, -1).map((item) => {
     if (item.entityType === "operation") {
       return `.${item.selectedMethod.name}(${parseData(
         item.selectedMethod.parameters
       )})`;
     }
   });
-
-  return codeText.join("");
+  let firstItem = sequence[0] as IData;
+  return parseData([firstItem.value]) + codeText.join("");
 }

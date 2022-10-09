@@ -46,7 +46,11 @@ export function Statement() {
                 handleOperation={(operation) => handleSequence(operation)}
               />
             ) : (
-              <Data data={item} handleData={(data) => handleSequence(data)} />
+              <Data
+                data={item}
+                handleData={(data) => handleSequence(data)}
+                readOnly={i > 0}
+              />
             )}
           </div>
         ))}

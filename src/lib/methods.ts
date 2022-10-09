@@ -20,7 +20,7 @@ export const stringMethods = [
     return value.toLowerCase();
   }),
   createMethod("toNumber", [], (value: string) => {
-    return Number(value);
+    return Number(value) || 0;
   }),
   createMethod("toUpperCase", [], (value: string) => {
     return value.toUpperCase();
