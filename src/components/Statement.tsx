@@ -12,11 +12,8 @@ export function Statement() {
   function handleSequence(data: IData | IOperation) {
     setSequence((prev) => {
       let index = prev.findIndex((item) => item.id === data.id);
-      return [
-        ...prev.slice(0, index),
-        data,
-        ...(data.entityType === "data" ? [prev[index + 1]] : []),
-      ];
+      let operation = data.entityType === "data" ? [createOperation(data)] : [];
+      return [...prev.slice(0, index), data, ...operation];
     });
   }
 
@@ -33,8 +30,14 @@ export function Statement() {
 
   return (
     <div className="statement">
-      {sequence.map((item, i) => (
-        <div style={{ marginLeft: i / 1.5 + 1 + "rem" }} key={item.id}>
+      {sequence.map((item, i, arr) => (
+        <div
+          style={{
+            marginLeft: i / 1.5 + "rem",
+            opacity: i === arr.length - 1 ? 0.7 : 1,
+          }}
+          key={item.id}
+        >
           {item.entityType === "operation" ? (
             <Operation
               operation={item}
