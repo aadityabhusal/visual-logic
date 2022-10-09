@@ -10,12 +10,13 @@ export interface IData {
 
 export interface IMethod {
   name: string;
-  return: IValue;
+  parameters: IValue[];
+  handler: Function;
 }
 
 export interface IOperation {
   id: string;
   entityType: "operation";
-  methods: (keyof IValueObject)[];
-  selectedMethod: keyof IValueObject;
+  methods: IMethod[];
+  selectedMethod: IMethod;
 }

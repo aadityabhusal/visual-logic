@@ -1,15 +1,21 @@
 import { nanoid } from "nanoid";
-import { typeToObject } from "./data";
-import { IData, IOperation, IValueConstructor, IValueObject } from "./types";
+import { operationMethods } from "./methods";
+import { IData, IMethod, IOperation } from "./types";
 
-export function getMethods(object: IValueConstructor) {
-  return Object.getOwnPropertyNames(object.prototype).filter(
-    (prop) => prop != "constructor"
-  ) as (keyof IValueObject)[];
+export function createMethod(
+  name: IMethod["name"],
+  parameters: IMethod["parameters"],
+  handler: IMethod["handler"]
+): IMethod {
+  return {
+    name,
+    parameters,
+    handler,
+  };
 }
 
 export function createOperation(data: IData): IOperation {
-  const methods = getMethods(typeToObject[typeof data.value]);
+  const methods = operationMethods[typeof data.value];
   return {
     id: nanoid(),
     entityType: "operation",
@@ -19,11 +25,12 @@ export function createOperation(data: IData): IOperation {
 }
 
 export function createData(operation: IOperation, data: IData): IData {
-  let constructor = typeToObject[typeof data.value];
-  let method = constructor(data.value as any)[operation.selectedMethod]();
   return {
     id: nanoid(),
     entityType: "data",
-    value: method,
+    value: operation.selectedMethod?.handler(
+      data.value,
+      ...operation.selectedMethod.parameters
+    ),
   };
 }
