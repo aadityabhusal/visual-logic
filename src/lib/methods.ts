@@ -2,11 +2,19 @@ import { IMethod, IValue } from "./types";
 import { createMethod } from "./utils";
 
 export const stringMethods = [
+  createMethod("capitalize", [], (value: string) => {
+    let func = (word: string) =>
+      word.length ? word[0].toUpperCase() + word.slice(1) : "";
+    return value.split(" ").map(func).join(" ");
+  }),
+  createMethod("concat", [""], (value: string, p1: string) => {
+    return value.concat(p1);
+  }),
   createMethod("length", [], (value: string) => {
     return value.length;
   }),
-  createMethod("toUpperCase", [], (value: string) => {
-    return value.toUpperCase();
+  createMethod("slice", [0, 0], (value: string, p1: number, p2: number) => {
+    return value.slice(p1, p2);
   }),
   createMethod("toLowerCase", [], (value: string) => {
     return value.toLowerCase();
@@ -14,9 +22,8 @@ export const stringMethods = [
   createMethod("toNumber", [], (value: string) => {
     return Number(value);
   }),
-  createMethod("capitalize", [], (value: string) => {
-    let func = (word: string) => word[0].toUpperCase() + word.slice(1);
-    return value.split(" ").map(func).join(" ");
+  createMethod("toUpperCase", [], (value: string) => {
+    return value.toUpperCase();
   }),
 ];
 

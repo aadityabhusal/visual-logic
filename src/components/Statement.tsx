@@ -11,13 +11,8 @@ export function Statement() {
 
   function handleSequence(data: IData | IOperation) {
     setSequence((prev) => {
-      const result = [...prev];
       let index = prev.findIndex((item) => item.id === data.id);
-      if (index !== -1) {
-        result[index] = data;
-        if (data.entityType === "operation") result.length = index + 1;
-      }
-      return result;
+      return [...prev.slice(0, index), data];
     });
   }
 
@@ -31,6 +26,7 @@ export function Statement() {
       return [...prev, data];
     });
   }
+
   return (
     <div className="statement">
       {sequence.map((item, i) => (
