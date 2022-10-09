@@ -4,6 +4,7 @@ import { IData, IOperation } from "../lib/types";
 import { createData, createOperation } from "../lib/utils";
 import { Data } from "./Data";
 import { Operation } from "./Operation";
+import { Result } from "./Result";
 
 export function Statement() {
   const [sequence, setSequence] =
@@ -29,28 +30,31 @@ export function Statement() {
   }
 
   return (
-    <div className="statement">
-      {sequence.map((item, i, arr) => (
-        <div
-          style={{
-            marginLeft: i / 1.5 + "rem",
-            opacity: i === arr.length - 1 ? 0.7 : 1,
-          }}
-          key={item.id}
-        >
-          {item.entityType === "operation" ? (
-            <Operation
-              operation={item}
-              handleOperation={(operation) => handleSequence(operation)}
-            />
-          ) : (
-            <Data data={item} handleData={(data) => handleSequence(data)} />
-          )}
-        </div>
-      ))}
-      {sequence[sequence.length - 1].entityType === "operation" ? (
-        <button onClick={addToSequence}>{">"}</button>
-      ) : null}
-    </div>
+    <>
+      <div className="statement">
+        {sequence.map((item, i, arr) => (
+          <div
+            style={{
+              marginLeft: i / 1.5 + "rem",
+              opacity: i === arr.length - 1 ? 0.7 : 1,
+            }}
+            key={item.id}
+          >
+            {item.entityType === "operation" ? (
+              <Operation
+                operation={item}
+                handleOperation={(operation) => handleSequence(operation)}
+              />
+            ) : (
+              <Data data={item} handleData={(data) => handleSequence(data)} />
+            )}
+          </div>
+        ))}
+        {sequence[sequence.length - 1].entityType === "operation" ? (
+          <button onClick={addToSequence}>{">"}</button>
+        ) : null}
+      </div>
+      <Result sequence={sequence} />
+    </>
   );
 }

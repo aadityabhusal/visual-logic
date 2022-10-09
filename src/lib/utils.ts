@@ -34,3 +34,23 @@ export function createData(operation: IOperation, data: IData): IData {
     ),
   };
 }
+
+export function sequenceToCode(sequence: (IData | IOperation)[]): string {
+  function parseData(value: IData["value"][]) {
+    return value
+      .map((item) => (typeof item === "number" ? item : `"${item}"`))
+      .join();
+  }
+  let codeText = sequence.map((item, i, arr) => {
+    if (item.entityType === "data") {
+      return parseData([item.value]);
+    }
+    if (item.entityType === "operation") {
+      return `.${item.selectedMethod.name}(${parseData(
+        item.selectedMethod.parameters
+      )})`;
+    }
+  });
+
+  return codeText.join("");
+}
