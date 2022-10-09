@@ -35,14 +35,13 @@ export function Operation({
           value={item}
           onChange={(e) => {
             const ValueConstructor = typeToObject[typeof item];
-            operation.selectedMethod.parameters[i] = ValueConstructor(
-              e.target.value
-            );
+            let parameters = [...operation.selectedMethod.parameters];
+            parameters[i] = ValueConstructor(e.target.value);
             handleOperation({
               ...operation,
               selectedMethod: {
                 ...operation.selectedMethod,
-                parameters: operation.selectedMethod.parameters,
+                parameters,
               },
             });
           }}
