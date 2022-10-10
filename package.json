@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@styled-icons/fa-solid": "^10.46.0",
     "nanoid": "^4.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
