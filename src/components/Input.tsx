@@ -22,10 +22,20 @@ export const Input: FC<IInput> = ({ value, onChange, readOnly }) => {
   );
 };
 
-const InputWrapper = styled.input<{ width?: number; type: string }>`
+const InputWrapper = styled.input<{ width?: number }>`
   outline: none;
   background-color: inherit;
   border: none;
   color: #eee;
-  width: ${({ width, type }) => (width || 1) + (type === "number" ? 2 : 0)}ch;
+  width: ${({ width }) => width || 1}ch;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  &[type="number"] {
+    -moz-appearance: textfield;
+  }
 `;

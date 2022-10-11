@@ -38,7 +38,6 @@ export function Dropdown({ display, setDisplay, children }: IProps) {
 }
 
 const DropdownWrapper = styled.div`
-  position: relative;
   z-index: 2;
   & > svg {
     padding: 0 0.1rem;
@@ -48,5 +47,5 @@ const DropdownWrapper = styled.div`
 const DropdownContainer = styled.div`
   position: absolute;
   top: 100%;
-  right: 0;
+  left: 0;
 `;

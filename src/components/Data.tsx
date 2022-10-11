@@ -64,5 +64,10 @@ const DropdownOptions = styled.div`
 `;
 
 const DropdownOption = styled.div<{ selected?: boolean }>`
-  background-color: ${({ selected }) => (selected ? "#888" : "inherit")};
+  font-size: 0.8rem;
+  padding: 0.1rem 0.2rem;
+  background-color: ${({ selected }) => (selected ? "#bbb" : "inherit")};
+  &:hover {
+    background-color: #ddd;
+  }
 `;
