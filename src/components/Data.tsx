@@ -1,18 +1,30 @@
+import { useState } from "react";
+import styled from "styled-components";
 import { typeToObject } from "../lib/data";
-import { IData } from "../lib/types";
+import { IData, IValue } from "../lib/types";
+import { Dropdown } from "./Dropdown";
 
-export function Data({
-  data,
-  handleData,
-  readOnly,
-}: {
+interface IProps {
   data: IData;
   handleData: (data: IData) => void;
   readOnly?: boolean;
-}) {
+}
+
+export function Data({ data, handleData, readOnly }: IProps) {
   const ValueConstructor = typeToObject[typeof data.value];
+  const [dropdown, setDropdown] = useState(false);
+
+  function handleDropdown(value: IValue) {
+    setDropdown(false);
+    value !== typeof data.value &&
+      handleData({
+        ...data,
+        value: typeToObject[value](Number(data.value) || ""),
+      });
+  }
+
   return (
-    <>
+    <DataWrapper>
       <input
         type={typeof data.value === "number" ? "number" : "text"}
         placeholder={`Enter ${typeof data.value} here`}
@@ -24,24 +36,35 @@ export function Data({
         style={{ opacity: readOnly ? 0.9 : 1 }}
       />
       {!readOnly ? (
-        <select
-          value={typeof data.value}
-          onChange={(e) =>
-            handleData({
-              ...data,
-              value: typeToObject[e.target.value](Number(data.value) || ""),
-            })
-          }
-        >
-          {Object.keys(typeToObject).map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
-      ) : (
-        <input value={typeof data.value} readOnly style={{ opacity: 0.9 }} />
-      )}
-    </>
+        <Dropdown display={dropdown} setDisplay={setDropdown}>
+          <DropdownOptions>
+            {Object.keys(typeToObject).map((item) => (
+              <DropdownOption
+                key={item}
+                onClick={() => handleDropdown(item)}
+                selected={typeof data.value === item}
+              >
+                {item}
+              </DropdownOption>
+            ))}
+          </DropdownOptions>
+        </Dropdown>
+      ) : null}
+    </DataWrapper>
   );
 }
+
+const DataWrapper = styled.div`
+  position: relative;
+  display: flex;
+`;
+
+const DropdownOptions = styled.div`
+  cursor: pointer;
+  background-color: #fff;
+  color: #000;
+`;
+
+const DropdownOption = styled.div<{ selected?: boolean }>`
+  background-color: ${({ selected }) => (selected ? "#888" : "inherit")};
+`;

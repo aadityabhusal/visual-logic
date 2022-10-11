@@ -3,38 +3,57 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 
 interface IProps {
+  display?: boolean;
+  setDisplay?: React.Dispatch<React.SetStateAction<boolean>>;
   children: ReactNode;
 }
 
-export function Dropdown({ children }: IProps) {
+export function Dropdown({ display, setDisplay, children }: IProps) {
   const [dropdown, setDropdown] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  function handleDisplay() {
+    if (setDisplay) setDisplay((d) => !d);
+    else setDropdown((d) => !d);
+  }
+
+  useEffect(() => {
+    if (setDisplay) setDisplay(Boolean(display));
+    else setDropdown(Boolean(display));
+  }, [display]);
+
   useEffect(() => {
     function clickHandler(e: MouseEvent) {
-      setDropdown(Boolean(ref.current?.contains(e.target as Node)));
+      let value = Boolean(ref.current?.contains(e.target as Node));
+      if (setDisplay) setDisplay(value);
+      else setDropdown(value);
     }
 
-    if (dropdown) document.addEventListener("click", clickHandler);
+    if (display || dropdown) document.addEventListener("click", clickHandler);
     else document.removeEventListener("click", clickHandler);
 
     return () => {
       document.removeEventListener("click", clickHandler);
     };
-  }, [dropdown]);
+  }, [display, dropdown]);
 
   return (
     <DropdownWrapper ref={ref}>
-      <ChevronDown size={16} onClick={() => setDropdown((d) => !d)} />
-      {dropdown ? <DropdownContainer>{children}</DropdownContainer> : null}
+      <ChevronDown size={16} onClick={handleDisplay} />
+      {display || dropdown ? (
+        <DropdownContainer>{children}</DropdownContainer>
+      ) : null}
     </DropdownWrapper>
   );
 }
 
 const DropdownWrapper = styled.div`
   position: relative;
+  z-index: 2;
 `;
 
 const DropdownContainer = styled.div`
-  position: relative;
+  position: absolute;
+  top: 100%;
+  right: 0;
 `;
