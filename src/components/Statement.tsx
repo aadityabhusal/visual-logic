@@ -32,7 +32,11 @@ export function Statement() {
   return (
     <>
       <div className="statement">
-        {sequence.map((item, i, arr) => (
+        <Data
+          data={sequence[0] as IData}
+          handleData={(data) => handleSequence(data)}
+        />
+        {sequence.slice(1).map((item, i, arr) => (
           <div
             style={{ opacity: i === arr.length - 1 ? 0.7 : 1 }}
             key={item.id}
@@ -42,13 +46,7 @@ export function Statement() {
                 operation={item}
                 handleOperation={(operation) => handleSequence(operation)}
               />
-            ) : (
-              <Data
-                data={item}
-                handleData={(data) => handleSequence(data)}
-                readOnly={i > 0}
-              />
-            )}
+            ) : null}
           </div>
         ))}
         {sequence[sequence.length - 1].entityType === "operation" ? (
