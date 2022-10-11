@@ -39,7 +39,7 @@ export function Dropdown({ display, setDisplay, children }: IProps) {
 
   return (
     <DropdownWrapper ref={ref}>
-      <ChevronDown size={16} onClick={handleDisplay} />
+      <ChevronDown size={10} onClick={handleDisplay} />
       {display || dropdown ? (
         <DropdownContainer>{children}</DropdownContainer>
       ) : null}
@@ -50,6 +50,9 @@ export function Dropdown({ display, setDisplay, children }: IProps) {
 const DropdownWrapper = styled.div`
   position: relative;
   z-index: 2;
+  & > svg {
+    padding: 0 0.1rem;
+  }
 `;
 
 const DropdownContainer = styled.div`

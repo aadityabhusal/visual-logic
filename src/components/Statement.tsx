@@ -34,10 +34,7 @@ export function Statement() {
       <div className="statement">
         {sequence.map((item, i, arr) => (
           <div
-            style={{
-              marginLeft: i / 1.5 + "rem",
-              opacity: i === arr.length - 1 ? 0.7 : 1,
-            }}
+            style={{ opacity: i === arr.length - 1 ? 0.7 : 1 }}
             key={item.id}
           >
             {item.entityType === "operation" ? (

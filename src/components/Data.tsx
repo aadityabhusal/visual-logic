@@ -1,6 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { typeToObject } from "../lib/data";
+import { typeToComponent, typeToObject } from "../lib/data";
 import { IData, IValue } from "../lib/types";
 import { Dropdown } from "./Dropdown";
 
@@ -11,8 +11,9 @@ interface IProps {
 }
 
 export function Data({ data, handleData, readOnly }: IProps) {
-  const ValueConstructor = typeToObject[typeof data.value];
   const [dropdown, setDropdown] = useState(false);
+  const ValueConstructor = typeToObject[typeof data.value];
+  const Input = typeToComponent[typeof data.value];
 
   function handleDropdown(value: IValue) {
     setDropdown(false);
@@ -25,15 +26,12 @@ export function Data({ data, handleData, readOnly }: IProps) {
 
   return (
     <DataWrapper>
-      <input
-        type={typeof data.value === "number" ? "number" : "text"}
-        placeholder={`Enter ${typeof data.value} here`}
+      <Input
         value={data.value}
         onChange={(e) =>
           handleData({ ...data, value: ValueConstructor(e.target.value) })
         }
         readOnly={readOnly}
-        style={{ opacity: readOnly ? 0.9 : 1 }}
       />
       {!readOnly ? (
         <Dropdown display={dropdown} setDisplay={setDropdown}>
