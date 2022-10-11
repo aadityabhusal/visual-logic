@@ -4,12 +4,13 @@ import styled from "styled-components";
 import { useUncontrolled } from "../hooks/useUncontrolled";
 
 interface IProps {
+  value?: string;
   display?: boolean;
   setDisplay?: React.Dispatch<React.SetStateAction<boolean>>;
   children: ReactNode;
 }
 
-export function Dropdown({ display, setDisplay, children }: IProps) {
+export function Dropdown({ value, display, setDisplay, children }: IProps) {
   const [dropdown, setDropdown] = useUncontrolled({
     value: display,
     onChange: setDisplay,
@@ -31,7 +32,10 @@ export function Dropdown({ display, setDisplay, children }: IProps) {
 
   return (
     <DropdownWrapper ref={ref}>
-      <ChevronDown size={10} onClick={() => setDropdown((d) => !d)} />
+      <div onClick={() => setDropdown((d) => !d)}>
+        {value ? <span>{value}</span> : null}
+        <ChevronDown size={10} />
+      </div>
       {dropdown ? <DropdownContainer>{children}</DropdownContainer> : null}
     </DropdownWrapper>
   );

@@ -57,13 +57,13 @@ const DataWrapper = styled.div`
   display: flex;
 `;
 
-const DropdownOptions = styled.div`
+export const DropdownOptions = styled.div`
   cursor: pointer;
   background-color: #fff;
   color: #000;
 `;
 
-const DropdownOption = styled.div<{ selected?: boolean }>`
+export const DropdownOption = styled.div<{ selected?: boolean }>`
   font-size: 0.8rem;
   padding: 0.1rem 0.2rem;
   background-color: ${({ selected }) => (selected ? "#bbb" : "inherit")};
