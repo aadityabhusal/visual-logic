@@ -39,11 +39,34 @@ export function Operation({
     });
   }
 
+  function methodParams() {
+    return (
+      <>
+        <span>{"("}</span>
+        {operation.selectedMethod.parameters.map((item, i, arr) => (
+          <span key={i} style={{ display: "flex" }}>
+            <Input
+              value={item}
+              onChange={(e) => handleParameter(item, e.target.value, i)}
+            />
+            {i < arr.length - 1 ? <span>{", "}</span> : null}
+          </span>
+        ))}
+        <span>{")"}</span>
+      </>
+    );
+  }
+
   return (
     <OperationWrapper>
       <span>{"."}</span>
       <Dropdown
-        value={operation.selectedMethod.name}
+        head={
+          <>
+            {operation.selectedMethod.name}
+            {methodParams()}
+          </>
+        }
         display={dropdown}
         setDisplay={setDropdown}
       >
@@ -59,18 +82,6 @@ export function Operation({
           ))}
         </DropdownOptions>
       </Dropdown>
-      <span>{"("}</span>
-      {operation.selectedMethod.parameters.map((item, i, arr) => (
-        <>
-          <Input
-            key={i}
-            value={item}
-            onChange={(e) => handleParameter(item, e.target.value, i)}
-          />
-          {i < arr.length - 1 ? <span>{", "}</span> : null}
-        </>
-      ))}
-      <span>{")"}</span>
     </OperationWrapper>
   );
 }

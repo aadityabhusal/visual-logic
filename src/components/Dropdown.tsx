@@ -4,14 +4,14 @@ import styled from "styled-components";
 import { useUncontrolled } from "../hooks/useUncontrolled";
 
 interface IProps {
-  value?: string;
   display?: boolean;
   setDisplay?: React.Dispatch<React.SetStateAction<boolean>>;
-  children: ReactNode;
+  head?: ReactNode;
+  children?: ReactNode;
 }
 
-export function Dropdown({ value, display, setDisplay, children }: IProps) {
-  const [dropdown, setDropdown] = useUncontrolled({
+export function Dropdown({ display, setDisplay, head, children }: IProps) {
+  const [dropdown, setDropdown] = useUncontrolled<boolean>({
     value: display,
     onChange: setDisplay,
   });
@@ -32,10 +32,10 @@ export function Dropdown({ value, display, setDisplay, children }: IProps) {
 
   return (
     <DropdownWrapper ref={ref}>
-      <div onClick={() => setDropdown((d) => !d)}>
-        {value ? <span>{value}</span> : null}
-        <ChevronDown size={10} />
-      </div>
+      <DropdownHead dropdown={dropdown} onClick={() => setDropdown(!dropdown)}>
+        {head}
+        <ChevronDown size={10} className="dropdownIcon" />
+      </DropdownHead>
       {dropdown ? <DropdownContainer>{children}</DropdownContainer> : null}
     </DropdownWrapper>
   );
@@ -43,8 +43,10 @@ export function Dropdown({ value, display, setDisplay, children }: IProps) {
 
 const DropdownWrapper = styled.div`
   z-index: 2;
-  & > svg {
-    padding: 0 0.1rem;
+  &:hover {
+    .dropdownIcon {
+      display: block;
+    }
   }
 `;
 
@@ -52,4 +54,13 @@ const DropdownContainer = styled.div`
   position: absolute;
   top: 100%;
   left: 0;
+`;
+
+const DropdownHead = styled.div<{ dropdown: boolean }>`
+  display: flex;
+  align-items: center;
+  & > svg {
+    display: ${({ dropdown }) => (dropdown ? "block" : "none")};
+    padding: 0 0.1rem;
+  }
 `;

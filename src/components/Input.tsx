@@ -16,6 +16,7 @@ export const Input: FC<IInput> = ({ value, onChange, readOnly }) => {
         onChange={onChange}
         readOnly={readOnly}
         style={{ opacity: readOnly ? 0.9 : 1 }}
+        onClick={(e) => e.stopPropagation()}
       />
       {typeof value === "string" && <span>"</span>}
     </div>

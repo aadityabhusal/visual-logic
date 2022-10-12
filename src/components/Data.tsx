@@ -26,28 +26,31 @@ export function Data({ data, handleData, readOnly }: IProps) {
 
   return (
     <DataWrapper>
-      <Input
-        value={data.value}
-        onChange={(e) =>
-          handleData({ ...data, value: ValueConstructor(e.target.value) })
+      <Dropdown
+        display={dropdown}
+        setDisplay={setDropdown}
+        head={
+          <Input
+            value={data.value}
+            onChange={(e) =>
+              handleData({ ...data, value: ValueConstructor(e.target.value) })
+            }
+            readOnly={readOnly}
+          />
         }
-        readOnly={readOnly}
-      />
-      {!readOnly ? (
-        <Dropdown display={dropdown} setDisplay={setDropdown}>
-          <DropdownOptions>
-            {Object.keys(typeToObject).map((item) => (
-              <DropdownOption
-                key={item}
-                onClick={() => handleDropdown(item)}
-                selected={typeof data.value === item}
-              >
-                {item}
-              </DropdownOption>
-            ))}
-          </DropdownOptions>
-        </Dropdown>
-      ) : null}
+      >
+        <DropdownOptions>
+          {Object.keys(typeToObject).map((item) => (
+            <DropdownOption
+              key={item}
+              onClick={() => handleDropdown(item)}
+              selected={typeof data.value === item}
+            >
+              {item}
+            </DropdownOption>
+          ))}
+        </DropdownOptions>
+      </Dropdown>
     </DataWrapper>
   );
 }
