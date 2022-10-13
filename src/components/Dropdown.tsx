@@ -1,5 +1,5 @@
 import { ChevronDown } from "@styled-icons/fa-solid";
-import { ReactNode, useEffect, useRef } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { useUncontrolled } from "../hooks/useUncontrolled";
 
@@ -15,6 +15,7 @@ export function Dropdown({ display, setDisplay, head, children }: IProps) {
     value: display,
     onChange: setDisplay,
   });
+  const [mouseover, setMouseover] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -24,6 +25,7 @@ export function Dropdown({ display, setDisplay, head, children }: IProps) {
 
     if (dropdown) document.addEventListener("click", clickHandler);
     else document.removeEventListener("click", clickHandler);
+    setMouseover(dropdown);
 
     return () => {
       document.removeEventListener("click", clickHandler);
@@ -31,42 +33,64 @@ export function Dropdown({ display, setDisplay, head, children }: IProps) {
   }, [dropdown]);
 
   return (
-    <DropdownWrapper ref={ref}>
+    <DropdownWrapper mouseover={mouseover} ref={ref}>
       <DropdownHead
-        dropdown={dropdown}
-        onClick={(e) => {
+        onMouseOver={(e) => {
           e.stopPropagation();
-          setDropdown(!dropdown);
+          setMouseover(true);
+        }}
+        onMouseOut={(e) => {
+          e.stopPropagation();
+          setMouseover(dropdown);
         }}
       >
-        {head}
-        <ChevronDown size={10} className="dropdownIcon" />
+        <div style={{ display: "flex" }}>{head}</div>
+        {mouseover ? (
+          <DropdownHeadBottom
+            onClick={(e) => {
+              e.stopPropagation();
+              setDropdown(!dropdown);
+            }}
+          >
+            <div />
+            <ChevronDown size={10} className="dropdownIcon" />
+          </DropdownHeadBottom>
+        ) : null}
       </DropdownHead>
       {dropdown ? <DropdownContainer>{children}</DropdownContainer> : null}
     </DropdownWrapper>
   );
 }
 
-const DropdownWrapper = styled.div`
+const DropdownWrapper = styled.div<{ mouseover: boolean }>`
   z-index: 2;
-  &:hover {
-    .dropdownIcon {
-      display: block;
-    }
-  }
+  border: 1px solid ${({ mouseover }) => (mouseover ? "#ddd" : "transparent")};
 `;
 
 const DropdownContainer = styled.div`
   position: absolute;
-  top: 100%;
-  left: 0;
+  top: calc(100% + 10px);
+  left: -1px;
+  min-width: 100%;
+  border: 1px solid #444;
 `;
 
-const DropdownHead = styled.div<{ dropdown: boolean }>`
+const DropdownHead = styled.div`
+  position: relative;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   & > svg {
-    display: ${({ dropdown }) => (dropdown ? "block" : "none")};
     padding: 0 0.1rem;
   }
+`;
+
+const DropdownHeadBottom = styled.div`
+  position: absolute;
+  top: 100%;
+  left: -1px;
+  min-width: 100%;
+  display: flex;
+  justify-content: space-between;
+  border: 1px solid #ddd;
+  background-color: #444;
 `;

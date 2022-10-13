@@ -15,7 +15,7 @@ export function ArrayInput({ data, handleData }: IArrayInput) {
         ...data,
         value: {
           type: "array",
-          subType: "string",
+          subType: data.value.subType,
           value: [...data.value.value, ""],
         },
       });
