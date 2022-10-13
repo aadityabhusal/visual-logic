@@ -4,18 +4,20 @@ import { IData, IMethod, IOperation } from "./types";
 
 export function createMethod(
   name: IMethod["name"],
-  parameters: IMethod["parameters"],
+  parameters: IMethod["parameters"] = [],
+  returnType: IMethod["returnType"],
   handler: IMethod["handler"]
 ): IMethod {
   return {
     name,
     parameters,
     handler,
+    returnType,
   };
 }
 
 export function createOperation(data: IData): IOperation {
-  const methods = operationMethods[typeof data.value];
+  const methods = operationMethods[data.value.type];
   return {
     id: nanoid(),
     entityType: "operation",

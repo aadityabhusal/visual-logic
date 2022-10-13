@@ -1,14 +1,14 @@
-import { ChangeEventHandler } from "react";
+export type IType = string | number | Array<string | number>;
+export type ITypeName = "string" | "number" | "array";
+export type ITypeConstructor =
+  | StringConstructor
+  | NumberConstructor
+  | ArrayConstructor;
 
-export type IValue = string | number;
-export type IValueConstructor = StringConstructor | NumberConstructor;
-export type IValueObject = String | Number;
-
-export interface IInput {
-  value: IValue;
-  onChange: ChangeEventHandler<HTMLInputElement>;
-  readOnly?: boolean;
-}
+export type IValue = {
+  type: ITypeName;
+  value: IType;
+};
 
 export interface IData {
   id: string;
@@ -20,6 +20,7 @@ export interface IMethod {
   name: string;
   parameters: IValue[];
   handler: Function;
+  returnType: ITypeName;
 }
 
 export interface IOperation {
