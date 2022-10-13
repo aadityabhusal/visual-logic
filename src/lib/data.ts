@@ -1,8 +1,6 @@
-import { IData, ITypeName, ITypeConstructor, IType } from "./types";
+import { IData, ITypeName, IType } from "./types";
 import { nanoid } from "nanoid";
 import { createOperation } from "./utils";
-import { Input } from "../components/Input/Input";
-import { ArrayInput } from "../components/Input/ArrayInput";
 
 export const initialData: IData = {
   id: nanoid(),
@@ -10,28 +8,15 @@ export const initialData: IData = {
   value: { type: "string", value: "" },
 };
 
-export const TypeMapper: Record<
-  ITypeName,
-  {
-    constructor: ITypeConstructor;
-    component: Function;
-    value: IType;
-  }
-> = {
+export const TypeMapper: Record<ITypeName, { defaultValue: IType }> = {
   string: {
-    constructor: String,
-    component: Input,
-    value: "",
+    defaultValue: "",
   },
   number: {
-    constructor: Number,
-    component: Input,
-    value: 0,
+    defaultValue: 0,
   },
   array: {
-    constructor: Array,
-    component: ArrayInput,
-    value: [],
+    defaultValue: [],
   },
 };
 

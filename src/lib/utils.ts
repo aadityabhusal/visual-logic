@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
+import { TypeMapper } from "./data";
 import { operationMethods } from "./methods";
-import { IData, IMethod, IOperation } from "./types";
+import { IData, IMethod, IOperation, IType, ITypeName } from "./types";
 
 export function createMethod(
   name: IMethod["name"],
@@ -26,14 +27,29 @@ export function createOperation(data: IData): IOperation {
   };
 }
 
-export function createData(operation: IOperation, data: IData): IData {
+export function createEmptyData(type: ITypeName, value?: IType): IData {
   return {
     id: nanoid(),
     entityType: "data",
-    value: operation.selectedMethod?.handler(
-      data.value,
-      ...operation.selectedMethod.parameters
-    ),
+    value: {
+      type: type,
+      value: value || TypeMapper[type].defaultValue,
+    },
+  };
+}
+
+export function createData(operation: IOperation, data: IData): IData {
+  const value = operation.selectedMethod?.handler(
+    data.value,
+    ...operation.selectedMethod.parameters
+  );
+  return {
+    id: nanoid(),
+    entityType: "data",
+    value: {
+      type: operation.selectedMethod.returnType,
+      value,
+    },
   };
 }
 

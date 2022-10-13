@@ -1,26 +1,29 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { typeToComponent, typeToObject } from "../lib/data";
-import { IData, IValue } from "../lib/types";
+import { TypeMapper } from "../lib/data";
+import { IData, ITypeName } from "../lib/types";
 import { Dropdown } from "./Dropdown";
+import { ArrayInput } from "./Input/ArrayInput";
+import { Input } from "./Input/Input";
 
 interface IProps {
   data: IData;
   handleData: (data: IData) => void;
-  readOnly?: boolean;
 }
 
-export function Data({ data, handleData, readOnly }: IProps) {
+export function Data({ data, handleData }: IProps) {
   const [dropdown, setDropdown] = useState(false);
-  const ValueConstructor = typeToObject[typeof data.value];
-  const Input = typeToComponent[typeof data.value];
 
-  function handleDropdown(value: IValue) {
+  function handleDropdown(value: ITypeName) {
     setDropdown(false);
-    value !== typeof data.value &&
+    const inputDefaultValue = TypeMapper[value].defaultValue;
+    value !== data.value.type &&
       handleData({
         ...data,
-        value: typeToObject[value](Number(data.value) || ""),
+        value: {
+          type: value,
+          value: inputDefaultValue,
+        },
       });
   }
 
@@ -30,20 +33,20 @@ export function Data({ data, handleData, readOnly }: IProps) {
         display={dropdown}
         setDisplay={setDropdown}
         head={
-          <Input
-            value={data.value}
-            onChange={(e) =>
-              handleData({ ...data, value: ValueConstructor(e.target.value) })
-            }
-            readOnly={readOnly}
-          />
+          <>
+            {data.value.type === "array" ? (
+              <ArrayInput data={data} handleData={handleData} />
+            ) : (
+              <Input data={data} handleData={handleData} />
+            )}
+          </>
         }
       >
         <DropdownOptions>
-          {Object.keys(typeToObject).map((item) => (
+          {Object.keys(TypeMapper).map((item) => (
             <DropdownOption
               key={item}
-              onClick={() => handleDropdown(item)}
+              onClick={() => handleDropdown(item as ITypeName)}
               selected={typeof data.value === item}
             >
               {item}

@@ -32,7 +32,13 @@ export function Dropdown({ display, setDisplay, head, children }: IProps) {
 
   return (
     <DropdownWrapper ref={ref}>
-      <DropdownHead dropdown={dropdown} onClick={() => setDropdown(!dropdown)}>
+      <DropdownHead
+        dropdown={dropdown}
+        onClick={(e) => {
+          e.stopPropagation();
+          setDropdown(!dropdown);
+        }}
+      >
         {head}
         <ChevronDown size={10} className="dropdownIcon" />
       </DropdownHead>

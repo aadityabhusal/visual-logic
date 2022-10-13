@@ -1,12 +1,9 @@
 export type IType = string | number | Array<string | number>;
 export type ITypeName = "string" | "number" | "array";
-export type ITypeConstructor =
-  | StringConstructor
-  | NumberConstructor
-  | ArrayConstructor;
 
 export type IValue = {
   type: ITypeName;
+  subType?: ITypeName;
   value: IType;
 };
 
@@ -19,7 +16,7 @@ export interface IData {
 export interface IMethod {
   name: string;
   parameters: IValue[];
-  handler: Function;
+  handler: (...args: any[]) => IType;
   returnType: ITypeName;
 }
 
