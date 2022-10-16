@@ -40,9 +40,10 @@ export function createOperationResult(
 }
 
 export function sequenceToCode(sequence: (IData | IOperation)[]): string {
+  // @todo: need a recursive function to parse through data
   function parseData(value: IData["value"][]) {
     return value
-      .map((item) => (typeof item === "number" ? item : `"${item}"`))
+      .map((item) => (typeof item === "number" ? item : `"${item.value}"`))
       .join();
   }
   let codeText = sequence.slice(1, -1).map((item) => {

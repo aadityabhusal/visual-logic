@@ -1,10 +1,9 @@
+import { nanoid } from "nanoid";
 import { useState } from "react";
 import styled from "styled-components";
-import { typeToObject } from "../lib/data";
-import { IOperation, IValue } from "../lib/types";
-import { DropdownOption, DropdownOptions } from "./Data";
+import { IOperation, IData } from "../lib/types";
+import { Data, DropdownOption, DropdownOptions } from "./Data";
 import { Dropdown } from "./Dropdown";
-import { Input } from "./Input";
 
 export function Operation({
   operation,
@@ -26,10 +25,12 @@ export function Operation({
       });
   }
 
-  function handleParameter(item: IValue, value: string, index: number) {
-    const ValueConstructor = typeToObject[typeof item];
+  function handleParameter(item: IData, index: number) {
     let parameters = [...operation.selectedMethod.parameters];
-    parameters[index] = ValueConstructor(value);
+    parameters[index] = {
+      type: item.value.type,
+      value: item.value.value,
+    };
     handleOperation({
       ...operation,
       selectedMethod: {
@@ -45,9 +46,13 @@ export function Operation({
         <span>{"("}</span>
         {operation.selectedMethod.parameters.map((item, i, arr) => (
           <span key={i} style={{ display: "flex" }}>
-            <Input
-              value={item}
-              onChange={(e) => handleParameter(item, e.target.value, i)}
+            <Data
+              data={{
+                id: nanoid(),
+                entityType: "data",
+                value: item,
+              }}
+              handleData={(val) => handleParameter(val, i)}
             />
             {i < arr.length - 1 ? <span>{", "}</span> : null}
           </span>

@@ -58,7 +58,7 @@ export const stringMethods: IMethod[] = [
     },
   },
   {
-    name: "toNumber",
+    name: "toUpperCase",
     parameters: [],
     handler: (value: IValue) => {
       return {
