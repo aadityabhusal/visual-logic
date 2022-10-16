@@ -45,30 +45,26 @@ export function ArrayInput({ data, handleData }: IArrayInput) {
   }
   return (
     <ArrayContainer>
-      <>
-        <span>{"["}</span>
-        {Array.isArray(data.value.value)
-          ? data.value.value.map((item, i, arr) => {
-              return (
-                <div key={i} style={{ display: "flex" }}>
-                  <Data
-                    data={item}
-                    handleData={(val) => handleUpdate(val, i)}
-                  />
-                  {i < arr.length - 1 ? <span>{", "}</span> : null}
-                </div>
-              );
-            })
-          : null}
-        <div onClick={addToArray} style={{ cursor: "pointer" }}>
-          +
-        </div>
-        <span>{"]"}</span>
-      </>
+      <span>{"["}</span>
+      {Array.isArray(data.value.value)
+        ? data.value.value.map((item, i, arr) => {
+            return (
+              <div key={i} style={{ display: "flex" }}>
+                <Data data={item} handleData={(val) => handleUpdate(val, i)} />
+                {i < arr.length - 1 ? <span>{", "}</span> : null}
+              </div>
+            );
+          })
+        : null}
+      <div onClick={addToArray} style={{ cursor: "pointer" }}>
+        +
+      </div>
+      <span>{"]"}</span>
     </ArrayContainer>
   );
 }
 
 const ArrayContainer = styled.div`
   display: flex;
+  align-items: center;
 `;
