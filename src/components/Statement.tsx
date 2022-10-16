@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { initialStatement } from "../lib/data";
 import { IData, IOperation } from "../lib/types";
-import { createData, createOperation } from "../lib/utils";
+import { createOperationResult, createOperation } from "../lib/utils";
 import { Data } from "./Data";
 import { Operation } from "./Operation";
 import { Result } from "./Result";
@@ -22,7 +22,10 @@ export function Statement() {
     setSequence((prev) => {
       let lastItem = prev[prev.length - 1];
       if (lastItem.entityType === "operation") {
-        let data = createData(lastItem, prev[prev.length - 2] as IData);
+        let data = createOperationResult(
+          lastItem,
+          prev[prev.length - 2] as IData
+        );
         let operation = createOperation(data);
         return [...prev, data, operation];
       } else return prev;

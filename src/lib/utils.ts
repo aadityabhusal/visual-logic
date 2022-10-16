@@ -1,21 +1,7 @@
 import { nanoid } from "nanoid";
 import { TypeMapper } from "./data";
 import { operationMethods } from "./methods";
-import { IData, IMethod, IOperation, IType, ITypeName } from "./types";
-
-export function createMethod(
-  name: IMethod["name"],
-  parameters: IMethod["parameters"] = [],
-  returnType: IMethod["returnType"],
-  handler: IMethod["handler"]
-): IMethod {
-  return {
-    name,
-    parameters,
-    handler,
-    returnType,
-  };
-}
+import { IData, IOperation, IType, ITypeName } from "./types";
 
 export function createOperation(data: IData): IOperation {
   const methods = operationMethods[data.value.type];
@@ -27,18 +13,21 @@ export function createOperation(data: IData): IOperation {
   };
 }
 
-export function createEmptyData(type: ITypeName, value?: IType): IData {
+export function createData(type: ITypeName, value?: IType): IData {
   return {
     id: nanoid(),
     entityType: "data",
     value: {
       type: type,
-      value: value || TypeMapper[type].defaultValue,
+      value: value || TypeMapper[type].defaultValue.value.value,
     },
   };
 }
 
-export function createData(operation: IOperation, data: IData): IData {
+export function createOperationResult(
+  operation: IOperation,
+  data: IData
+): IData {
   const value = operation.selectedMethod?.handler(
     data.value,
     ...operation.selectedMethod.parameters
@@ -46,10 +35,7 @@ export function createData(operation: IOperation, data: IData): IData {
   return {
     id: nanoid(),
     entityType: "data",
-    value: {
-      type: operation.selectedMethod.returnType,
-      value,
-    },
+    value,
   };
 }
 

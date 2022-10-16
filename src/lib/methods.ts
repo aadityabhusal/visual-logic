@@ -1,106 +1,165 @@
-import { IMethod, ITypeName } from "./types";
-import { createMethod } from "./utils";
+import { nanoid } from "nanoid";
+import { IData, IMethod, ITypeName, IValue } from "./types";
 
-export const stringMethods = [
-  createMethod("capitalize", [], "string", (value: string) => {
-    let func = (word: string) =>
-      word.length ? word[0].toUpperCase() + word.slice(1) : "";
-    return value.split(" ").map(func).join(" ");
-  }),
-  createMethod(
-    "concat",
-    [{ type: "string", value: "" }],
-    "string",
-    (value: string, p1: string) => {
-      return value.concat(p1);
-    }
-  ),
-  createMethod("length", [], "number", (value: string) => {
-    return value.length;
-  }),
-  createMethod(
-    "slice",
-    [
+export const stringMethods: IMethod[] = [
+  {
+    name: "capitalize",
+    parameters: [],
+    handler: (value: IValue) => {
+      let func = (word: string) =>
+        word.length ? word[0].toUpperCase() + word.slice(1) : "";
+      return {
+        type: "string",
+        value: value.value.split(" ").map(func).join(" "),
+      };
+    },
+  },
+  {
+    name: "concat",
+    parameters: [{ type: "string", value: "" }],
+    handler: (value: IValue, p1: IValue) => {
+      return {
+        type: "string",
+        value: value.value.concat(p1.value),
+      } as IValue;
+    },
+  },
+  {
+    name: "length",
+    parameters: [],
+    handler: (value: IValue) => {
+      return {
+        type: "number",
+        value: value.value.length,
+      } as IValue<number, "number">;
+    },
+  },
+  {
+    name: "slice",
+    parameters: [
       { type: "number", value: 0 },
       { type: "number", value: 0 },
     ],
-    "string",
-    (value: string, p1: number, p2: number) => {
-      return value.slice(p1, p2);
-    }
-  ),
-  createMethod("toLowerCase", [], "string", (value: string) => {
-    return value.toLowerCase();
-  }),
-  createMethod("toNumber", [], "string", (value: string) => {
-    return Number(value) || 0;
-  }),
-  createMethod("toUpperCase", [], "string", (value: string) => {
-    return value.toUpperCase();
-  }),
+    handler: (value: IValue, p1: IValue<number>, p2: IValue<number>) => {
+      return {
+        type: "string",
+        value: value.value.slice(p1.value, p2.value),
+      } as IValue;
+    },
+  },
+  {
+    name: "toNumber",
+    parameters: [],
+    handler: (value: IValue) => {
+      return {
+        type: "number",
+        value: Number(value.value) || 0,
+      } as IValue<number, "number">;
+    },
+  },
+  {
+    name: "toNumber",
+    parameters: [],
+    handler: (value: IValue) => {
+      return {
+        type: "string",
+        value: value.value.toUpperCase(),
+      } as IValue;
+    },
+  },
 ];
 
-export const numberMethods = [
-  createMethod(
-    "add",
-    [{ type: "number", value: 0 }],
-    "number",
-    (value: number, p1: number) => {
-      return value + p1;
-    }
-  ),
-  createMethod(
-    "subtract",
-    [{ type: "number", value: 0 }],
-    "number",
-    (value: number, p1: number) => {
-      return value - p1;
-    }
-  ),
-  createMethod(
-    "multiply",
-    [{ type: "number", value: 0 }],
-    "number",
-    (value: number, p1: number) => {
-      return value * p1;
-    }
-  ),
-  createMethod(
-    "divide",
-    [{ type: "number", value: 0 }],
-    "number",
-    (value: number, p1: number) => {
-      return value / p1;
-    }
-  ),
-  createMethod("toString", [], "string", (value: number) => {
-    return String(value);
-  }),
+export const numberMethods: IMethod[] = [
+  {
+    name: "add",
+    parameters: [{ type: "number", value: 0 }],
+    handler: (value: IValue<number>, p1: IValue<number>) => {
+      return {
+        type: "number",
+        value: value.value + p1.value,
+      } as IValue<number, "number">;
+    },
+  },
+  {
+    name: "subtract",
+    parameters: [{ type: "number", value: 0 }],
+    handler: (value: IValue<number>, p1: IValue<number>) => {
+      return {
+        type: "number",
+        value: value.value - p1.value,
+      } as IValue<number, "number">;
+    },
+  },
+  {
+    name: "multiply",
+    parameters: [{ type: "number", value: 0 }],
+    handler: (value: IValue<number>, p1: IValue<number>) => {
+      return {
+        type: "number",
+        value: value.value * p1.value,
+      } as IValue<number, "number">;
+    },
+  },
+  {
+    name: "divide",
+    parameters: [{ type: "number", value: 0 }],
+    handler: (value: IValue<number>, p1: IValue<number>) => {
+      return {
+        type: "number",
+        value: value.value / p1.value,
+      } as IValue<number, "number">;
+    },
+  },
+  {
+    name: "toString",
+    parameters: [{ type: "number", value: 0 }],
+    handler: (value: IValue) => {
+      return {
+        type: "string",
+        value: String(value),
+      } as IValue;
+    },
+  },
 ];
 
-export const arrayMethods = [
-  createMethod(
-    "concat",
-    [{ type: "array", value: [] }],
-    "array",
-    (value: string[], p1: string[]) => {
-      return value.concat(p1);
-    }
-  ),
-  createMethod("length", [], "array", (value: string) => {
-    return value.length;
-  }),
-  createMethod(
-    "slice",
-    [
-      { type: "number", value: 0 },
-      { type: "number", value: 0 },
-    ],
-    "array",
-    (value: string, p1: number, p2: number) => {
-      return value.slice(p1, p2);
-    }
-  ),
+export const arrayMethods: IMethod[] = [
+  {
+    name: "concat",
+    parameters: [{ type: "array", value: [] }],
+    handler: (
+      value: IValue<IData[], "array">,
+      p1: IValue<IData[], "array">
+    ) => {
+      return {
+        type: "array",
+        value: [...value.value, ...p1.value],
+      } as IValue<IData[], "array">;
+    },
+  },
+  {
+    name: "length",
+    parameters: [],
+    handler: (value: IValue<Array<string | number>>) => {
+      return {
+        type: "number",
+        value: value.value.length,
+      } as IValue<number, "number">;
+    },
+  },
+  {
+    name: "slice",
+    parameters: [],
+    handler: (
+      value: IValue<IData[], "array">,
+      p1: IValue<number>,
+      p2: IValue<number>
+    ) => {
+      return {
+        type: "array",
+        value: value.value.slice(p1.value, p2.value),
+      } as IValue<IData[], "array">;
+    },
+  },
 ];
 
 export const operationMethods: Record<ITypeName, IMethod[]> = {

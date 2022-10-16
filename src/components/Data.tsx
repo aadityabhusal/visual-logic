@@ -22,7 +22,7 @@ export function Data({ data, handleData }: IProps) {
         ...data,
         value: {
           type: value,
-          value: inputDefaultValue,
+          value: inputDefaultValue.value.value,
         },
       });
   }

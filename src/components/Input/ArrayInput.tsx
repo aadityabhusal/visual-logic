@@ -1,6 +1,6 @@
+import { nanoid } from "nanoid";
 import styled from "styled-components";
-import { IData, IValue } from "../../lib/types";
-import { createEmptyData } from "../../lib/utils";
+import { IData } from "../../lib/types";
 import { Data } from "../Data";
 
 export interface IArrayInput {
@@ -15,8 +15,17 @@ export function ArrayInput({ data, handleData }: IArrayInput) {
         ...data,
         value: {
           type: "array",
-          subType: data.value.subType,
-          value: [...data.value.value, ""],
+          value: [
+            ...data.value.value,
+            {
+              id: nanoid(),
+              entityType: "data",
+              value: {
+                type: "string",
+                value: "",
+              },
+            },
+          ],
         },
       });
   }
@@ -24,12 +33,11 @@ export function ArrayInput({ data, handleData }: IArrayInput) {
   function handleUpdate(result: IData, index: number) {
     if (Array.isArray(data.value.value)) {
       let resList = [...data.value.value];
-      resList[index] = result.value.value as string | number;
+      resList[index] = result;
       handleData({
         ...data,
         value: {
           type: "array",
-          subType: result.value.type,
           value: resList,
         },
       });
@@ -41,19 +49,14 @@ export function ArrayInput({ data, handleData }: IArrayInput) {
         <span>{"["}</span>
         {Array.isArray(data.value.value)
           ? data.value.value.map((item, i, arr) => {
-              let createData = createEmptyData(
-                data.value.subType || "string",
-                item
-              );
               return (
-                <>
+                <div key={i} style={{ display: "flex" }}>
                   <Data
-                    key={i}
-                    data={createData}
+                    data={item}
                     handleData={(val) => handleUpdate(val, i)}
                   />
                   {i < arr.length - 1 ? <span>{", "}</span> : null}
-                </>
+                </div>
               );
             })
           : null}
