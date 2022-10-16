@@ -8,21 +8,26 @@ export interface IInput {
 }
 
 export function Input({ data, handleData }: IInput) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
   const inputData = {
-    wrap: data.value.type === "string" ? `"` : "",
+    quote: data.value.type === "string",
     type: data.value.type === "string" ? `text` : "number",
+    placeholder: data.value.type === "string" ? `..` : "0",
+    text:
+      typeof data.value.value === "number"
+        ? BigInt(data.value.value)
+        : data.value.value,
     constructor: data.value.type === "string" ? String : Number,
   };
   return typeof data.value.value === "string" ||
     typeof data.value.value === "number" ? (
-    <div>
-      {inputData.wrap && <span>"</span>}
-      <InputWrapper
-        ref={inputRef}
-        width={inputRef.current?.value.length}
+    <InputWrapper quote={inputData.quote}>
+      <div ref={textRef}>{inputData.text.toString()}</div>
+      <InputStyled
         type={inputData.type}
         value={data.value.value}
+        placeholder={inputData.placeholder}
+        textWidth={inputData.text.toString() ? textRef.current?.clientWidth : 0}
         onChange={(e) =>
           handleData({
             ...data,
@@ -34,17 +39,43 @@ export function Input({ data, handleData }: IInput) {
         }
         onClick={(e) => e.stopPropagation()}
       />
-      {inputData.wrap && <span>"</span>}
-    </div>
+    </InputWrapper>
   ) : null;
 }
 
-const InputWrapper = styled.input<{ width?: number }>`
+const InputWrapper = styled.div<{ quote?: boolean }>`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 0 ${({ quote }) => (quote ? "1ch" : "0")};
+
+  & > div {
+    align-self: flex-start;
+    height: 0px;
+    overflow: hidden;
+  }
+
+  &::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    content: ${({ quote }) => (quote ? "open-quote" : "")};
+  }
+  &::after {
+    position: absolute;
+    top: 0;
+    right: 0;
+    content: ${({ quote }) => (quote ? "close-quote" : "")};
+  }
+`;
+
+const InputStyled = styled.input<{ textWidth?: number }>`
   outline: none;
   background-color: inherit;
   border: none;
   color: #eee;
-  width: ${({ width }) => width || 1}ch;
+  padding: 0;
+  ${({ textWidth }) => `width: ${7 + (textWidth || 0)}px`};
 
   &::-webkit-outer-spin-button,
   &::-webkit-inner-spin-button {
