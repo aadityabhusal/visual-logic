@@ -160,6 +160,16 @@ export const arrayMethods: IMethod[] = [
       } as IValue<IData[], "array">;
     },
   },
+  {
+    name: "toString",
+    parameters: [],
+    handler: (value: IValue<Array<string | number>>) => {
+      return {
+        type: "string",
+        value: value.value.toString(),
+      } as IValue;
+    },
+  },
 ];
 
 export const operationMethods: Record<ITypeName, IMethod[]> = {

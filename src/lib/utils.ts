@@ -40,10 +40,15 @@ export function createOperationResult(
 }
 
 export function sequenceToCode(sequence: (IData | IOperation)[]): string {
-  // @todo: need a recursive function to parse through data
-  function parseData(value: IData["value"][]) {
+  function parseData(value: IData["value"][]): string {
     return value
-      .map((item) => (typeof item === "number" ? item : `"${item.value}"`))
+      .map((item) => {
+        if (Array.isArray(item.value)) {
+          return "[" + item.value.map((item) => parseData([item.value])) + "]";
+        } else {
+          return typeof item === "number" ? item : `"${item.value}"`;
+        }
+      })
       .join();
   }
   let codeText = sequence.slice(1, -1).map((item) => {
