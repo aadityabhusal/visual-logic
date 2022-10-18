@@ -1,4 +1,4 @@
-import { nanoid } from "nanoid";
+import { TypeMapper } from "../../lib/data";
 import styled from "styled-components";
 import { IData } from "../../lib/types";
 import { Data } from "../Data";
@@ -15,17 +15,7 @@ export function ArrayInput({ data, handleData }: IArrayInput) {
         ...data,
         value: {
           type: "array",
-          value: [
-            ...data.value.value,
-            {
-              id: nanoid(),
-              entityType: "data",
-              value: {
-                type: "string",
-                value: "",
-              },
-            },
-          ],
+          value: [...data.value.value, TypeMapper.string.defaultValue],
         },
       });
   }

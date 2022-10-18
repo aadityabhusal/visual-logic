@@ -2,9 +2,11 @@ import { useState } from "react";
 import styled from "styled-components";
 import { TypeMapper } from "../lib/data";
 import { IData, ITypeName } from "../lib/types";
+import { getValueType } from "../lib/utils";
 import { Dropdown } from "./Dropdown";
 import { ArrayInput } from "./Input/ArrayInput";
 import { Input } from "./Input/Input";
+import { ObjectInput } from "./Input/ObjectInput";
 
 interface IProps {
   data: IData;
@@ -36,6 +38,8 @@ export function Data({ data, handleData }: IProps) {
           <>
             {data.value.type === "array" ? (
               <ArrayInput data={data} handleData={handleData} />
+            ) : getValueType(data.value.value) === "object" ? (
+              <ObjectInput data={data} handleData={handleData} />
             ) : (
               <Input data={data} handleData={handleData} />
             )}
