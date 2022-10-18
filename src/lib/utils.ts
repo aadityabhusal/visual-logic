@@ -61,3 +61,10 @@ export function sequenceToCode(sequence: (IData | IOperation)[]): string {
   let firstItem = sequence[0] as IData;
   return parseData([firstItem.value]) + codeText.join("");
 }
+
+export function getValueType(value: IType): ITypeName | undefined {
+  if (typeof value === "object" && !Array.isArray(value) && value !== null) {
+    return "object";
+  }
+  return undefined;
+}

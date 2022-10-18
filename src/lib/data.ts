@@ -39,6 +39,16 @@ export const TypeMapper: Record<ITypeName, { defaultValue: IData }> = {
       },
     },
   },
+  object: {
+    defaultValue: {
+      id: nanoid(),
+      entityType: "data",
+      value: {
+        type: "object",
+        value: {},
+      },
+    },
+  },
 };
 
 export const initialStatement = [initialData, createOperation(initialData)];

@@ -172,8 +172,22 @@ export const arrayMethods: IMethod[] = [
   },
 ];
 
+export const objectMethods: IMethod[] = [
+  {
+    name: "length",
+    parameters: [],
+    handler: (value: { [x: string]: IData }) => {
+      return {
+        type: "number",
+        value: Object.keys(value.value).length,
+      } as IValue<number, "number">;
+    },
+  },
+];
+
 export const operationMethods: Record<ITypeName, IMethod[]> = {
   string: stringMethods,
   number: numberMethods,
   array: arrayMethods,
+  object: objectMethods,
 };
