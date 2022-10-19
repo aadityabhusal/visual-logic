@@ -45,7 +45,7 @@ export const TypeMapper: Record<ITypeName, { defaultValue: IData }> = {
       entityType: "data",
       value: {
         type: "object",
-        value: {},
+        value: new Map(),
       },
     },
   },

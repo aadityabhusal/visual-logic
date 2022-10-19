@@ -176,10 +176,10 @@ export const objectMethods: IMethod[] = [
   {
     name: "length",
     parameters: [],
-    handler: (value: { [x: string]: IData }) => {
+    handler: (value: IValue<Map<string, IData>>) => {
       return {
         type: "number",
-        value: Object.keys(value.value).length,
+        value: value.value.size,
       } as IValue<number, "number">;
     },
   },

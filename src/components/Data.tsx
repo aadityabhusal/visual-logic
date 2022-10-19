@@ -2,7 +2,6 @@ import { useState } from "react";
 import styled from "styled-components";
 import { TypeMapper } from "../lib/data";
 import { IData, ITypeName } from "../lib/types";
-import { getValueType } from "../lib/utils";
 import { Dropdown } from "./Dropdown";
 import { ArrayInput } from "./Input/ArrayInput";
 import { Input } from "./Input/Input";
@@ -38,7 +37,7 @@ export function Data({ data, handleData }: IProps) {
           <>
             {data.value.type === "array" ? (
               <ArrayInput data={data} handleData={handleData} />
-            ) : getValueType(data.value.value) === "object" ? (
+            ) : data.value.value instanceof Map ? (
               <ObjectInput data={data} handleData={handleData} />
             ) : (
               <Input data={data} handleData={handleData} />
@@ -51,7 +50,7 @@ export function Data({ data, handleData }: IProps) {
             <DropdownOption
               key={item}
               onClick={() => handleDropdown(item as ITypeName)}
-              selected={typeof data.value === item}
+              selected={data.value.type === item}
             >
               {item}
             </DropdownOption>

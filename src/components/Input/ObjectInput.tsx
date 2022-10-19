@@ -2,7 +2,6 @@ import { nanoid } from "nanoid";
 import styled from "styled-components";
 import { TypeMapper } from "../../lib/data";
 import { IData } from "../../lib/types";
-import { getValueType } from "../../lib/utils";
 import { Data } from "../Data";
 import { Input } from "./Input";
 
@@ -12,56 +11,50 @@ export interface IObjectInput {
 }
 export function ObjectInput({ data, handleData }: IObjectInput) {
   function addToObject() {
-    if (
-      typeof data.value.value === "object" &&
-      !Array.isArray(data.value.value) &&
-      data.value.value !== null
-    ) {
+    if (data.value.value instanceof Map && !data.value.value.has("")) {
+      let newMap = new Map(data.value.value);
+      newMap.set("", TypeMapper.string.defaultValue);
       handleData({
         ...data,
         value: {
           type: "object",
-          value: {
-            ...data.value.value,
-            "": TypeMapper.string.defaultValue,
-          },
+          value: newMap,
         },
       });
     }
   }
 
-  function handleUpdate(result: IData, key: string) {
-    if (
-      typeof data.value.value === "object" &&
-      !Array.isArray(data.value.value) &&
-      data.value.value !== null
-    ) {
-      let resList = Object.assign({}, data.value.value);
-      resList[key] = result;
-      handleData({
-        ...data,
-        value: {
-          type: "object",
-          value: resList,
-        },
-      });
-    }
+  function handleUpdate(
+    dataArray: [string, IData][],
+    index: number,
+    result: IData
+  ) {
+    dataArray[index] = [dataArray[index][0], result];
+    handleData({
+      ...data,
+      value: {
+        type: "object",
+        value: new Map(dataArray),
+      },
+    });
   }
 
   function handleKeyUpdate(
     dataArray: [string, IData][],
     index: number,
-    key: IData
+    result: IData
   ) {
-    if (typeof key.value.value === "string") {
-      let prevValue = dataArray[index];
-      let resList = [...dataArray];
-      resList[index] = [key.value.value, prevValue[1]];
+    if (
+      typeof result.value.value === "string" &&
+      data.value.value instanceof Map &&
+      !data.value.value.has(result.value.value)
+    ) {
+      dataArray[index] = [result.value.value, dataArray[index][1]];
       handleData({
         ...data,
         value: {
           type: "object",
-          value: Object.fromEntries(resList),
+          value: new Map(dataArray),
         },
       });
     }
@@ -70,8 +63,8 @@ export function ObjectInput({ data, handleData }: IObjectInput) {
   return (
     <ObjectContainer>
       <span>{"{"}</span>
-      {getValueType(data.value.value) === "object"
-        ? Object.entries(data.value.value).map(([key, value], i, arr) => {
+      {data.value.value instanceof Map
+        ? Array.from(data.value.value.entries()).map(([key, value], i, arr) => {
             return (
               <div key={i} style={{ display: "flex" }}>
                 <Input
@@ -85,7 +78,7 @@ export function ObjectInput({ data, handleData }: IObjectInput) {
                 <span>:</span>
                 <Data
                   data={value}
-                  handleData={(val) => handleUpdate(val, key)}
+                  handleData={(val) => handleUpdate(arr, i, val)}
                 />
                 {i < arr.length - 1 ? <span>{", "}</span> : null}
               </div>

@@ -1,4 +1,4 @@
-export type IType = string | number | IData[] | { [x: string]: IData };
+export type IType = string | number | IData[] | Map<string, IData>;
 export type ITypeName = "string" | "number" | "array" | "object";
 
 export type IValue<V = string, T = "string"> = {
