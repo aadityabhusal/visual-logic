@@ -48,6 +48,20 @@ export const stringMethods: IMethod[] = [
     },
   },
   {
+    name: "split",
+    parameters: [{ type: "string", value: "" }],
+    handler: (value: IValue, p1: IValue) => {
+      return {
+        type: "array",
+        value: value.value.split(p1.value).map((item) => ({
+          id: nanoid(),
+          entityType: "data",
+          value: { type: "string", value: item },
+        })),
+      } as IValue<IData[], "array">;
+    },
+  },
+  {
     name: "toNumber",
     parameters: [],
     handler: (value: IValue) => {
