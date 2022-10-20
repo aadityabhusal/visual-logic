@@ -64,7 +64,7 @@ export function ObjectInput({ data, handleData }: IObjectInput) {
     <ObjectContainer>
       <span>{"{"}</span>
       {data.value.value instanceof Map
-        ? Array.from(data.value.value.entries()).map(([key, value], i, arr) => {
+        ? Array.from(data.value.value).map(([key, value], i, arr) => {
             return (
               <div key={i} style={{ display: "flex" }}>
                 <Input

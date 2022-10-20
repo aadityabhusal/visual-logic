@@ -45,6 +45,14 @@ export function sequenceToCode(sequence: (IData | IOperation)[]): string {
       .map((item) => {
         if (Array.isArray(item.value)) {
           return "[" + item.value.map((item) => parseData([item.value])) + "]";
+        } else if (item.value instanceof Map) {
+          return (
+            "{" +
+            Array.from(item.value).map(
+              ([key, val]) => `${key}: ` + parseData([val.value])
+            ) +
+            "}"
+          );
         } else {
           return typeof item === "number" ? item : `"${item.value}"`;
         }
