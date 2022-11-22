@@ -21,6 +21,19 @@ Creating programming logic visually in a functional way.
    - The values are of type: string, number, array, object, void
 4. Method/Operation - A Function called upon a fixed Data
 
+
+# Entities
+## Function
+- Function provided function could be inside a Namespace (possible entity)
+  - A name space will have a collection of function (e.g. Elixir)
+- Functions cannot access any outer variable
+  - There will be a collection of readonly `global` values created at the start
+  - User can use those values inside the any function e.g. `global.theme.color`
+  - Global values will be available similar to a Namespace
+
 # Notes
 - I need to create a Function type and then use it for Methods and series of Statements (could have recursive behavior where you need a Method for Function and Function for Method)
-- Could there be just two entities Data and Function(with context)? If so, both Data and Function is created. Just need to create context for the function 
+- Could there be just two entities Data and Function(with context)? If so, both Data and Function is created. Just need to create context for the function
+- Should there be the concept of Closures? If yes, how restricted should it be?
+- The program need to allow the developes to their own Data with a collection of primitive Data and methods. Should there be the concept of instantiation similar to OOP
+- There could be another entity called Type for creating types and interfaces
