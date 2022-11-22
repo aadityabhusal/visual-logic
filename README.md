@@ -37,3 +37,10 @@ Creating programming logic visually in a functional way.
 - Should there be the concept of Closures? If yes, how restricted should it be?
 - The program need to allow the developes to their own Data with a collection of primitive Data and methods. Should there be the concept of instantiation similar to OOP
 - There could be another entity called Type for creating types and interfaces
+
+
+# Tasks
+- [ ] Create an implementation of a `Function` from scratch.
+- [ ] Improve the Method interface to have the concept of parameters
+- [ ] Add readonly attribute to Data's value
+- [ ] Build a context in a Function/Method to get external variables 

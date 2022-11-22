@@ -162,7 +162,10 @@ export const arrayMethods: IMethod[] = [
   },
   {
     name: "slice",
-    parameters: [],
+    parameters: [
+      { type: "number", value: 0 },
+      { type: "number", value: 0 },
+    ],
     handler: (
       value: IValue<IData[], "array">,
       p1: IValue<number>,
