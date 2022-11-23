@@ -1,84 +1,71 @@
-import { nanoid } from "nanoid";
-import { IData, IMethod, ITypeName, IValue } from "./types";
+import { IMethod, IData, IType } from "./types";
+import { createData } from "./utils";
 
 export const stringMethods: IMethod[] = [
   {
     name: "capitalize",
     parameters: [],
-    handler: (value: IValue) => {
+    handler: (data: IData<"string">) => {
       let func = (word: string) =>
         word.length ? word[0].toUpperCase() + word.slice(1) : "";
-      return {
-        type: "string",
-        value: value.value.split(" ").map(func).join(" "),
-      };
+      return createData(
+        "string",
+        data.value.value.split(" ").map(func).join(" ")
+      );
     },
   },
   {
     name: "concat",
-    parameters: [{ type: "string", value: "" }],
-    handler: (value: IValue, p1: IValue) => {
-      return {
-        type: "string",
-        value: value.value.concat(p1.value),
-      } as IValue;
+    parameters: [createData("string", "")],
+    handler: (data: IData<"string">, p1: IData<"string">) => {
+      return createData("string", data.value.value.concat(p1.value.value));
     },
   },
   {
     name: "length",
     parameters: [],
-    handler: (value: IValue) => {
-      return {
-        type: "number",
-        value: value.value.length,
-      } as IValue<number, "number">;
+    handler: (data: IData<"string">) => {
+      return createData("number", data.value.value.length);
     },
   },
   {
     name: "slice",
-    parameters: [
-      { type: "number", value: 0 },
-      { type: "number", value: 0 },
-    ],
-    handler: (value: IValue, p1: IValue<number>, p2: IValue<number>) => {
-      return {
-        type: "string",
-        value: value.value.slice(p1.value, p2.value),
-      } as IValue;
+    parameters: [createData("number", 0), createData("number", 0)],
+    handler: (
+      data: IData<"string">,
+      p1: IData<"number">,
+      p2: IData<"number">
+    ) => {
+      return createData(
+        "string",
+        data.value.value.slice(p1.value.value, p2.value.value)
+      );
     },
   },
   {
     name: "split",
-    parameters: [{ type: "string", value: "" }],
-    handler: (value: IValue, p1: IValue) => {
-      return {
-        type: "array",
-        value: value.value.split(p1.value).map((item) => ({
-          id: nanoid(),
-          entityType: "data",
-          value: { type: "string", value: item },
-        })),
-      } as IValue<IData[], "array">;
+    parameters: [createData("string", "")],
+    handler: (data: IData<"string">, p1: IData<"string">) => {
+      return createData(
+        "array",
+        data.value.value
+          .split(p1.value.value)
+          .map((item) => createData("string", item))
+      );
     },
   },
   {
     name: "toNumber",
     parameters: [],
-    handler: (value: IValue) => {
-      return {
-        type: "number",
-        value: Number(value.value) || 0,
-      } as IValue<number, "number">;
+    handler: (data: IData<"string">) => {
+      return createData("number", Number(data.value.value) || 0);
     },
   },
   {
     name: "toUpperCase",
     parameters: [],
-    handler: (value: IValue) => {
-      return {
-        type: "string",
-        value: value.value.toUpperCase(),
-      } as IValue;
+    handler: (data: IData<"string">) => {
+      return createData("string", data.value.value.toUpperCase());
     },
   },
 ];
@@ -86,52 +73,37 @@ export const stringMethods: IMethod[] = [
 export const numberMethods: IMethod[] = [
   {
     name: "add",
-    parameters: [{ type: "number", value: 0 }],
-    handler: (value: IValue<number>, p1: IValue<number>) => {
-      return {
-        type: "number",
-        value: value.value + p1.value,
-      } as IValue<number, "number">;
+    parameters: [createData("number", 0)],
+    handler: (data: IData<"number">, p1: IData<"number">) => {
+      return createData("number", data.value.value + p1.value.value);
     },
   },
   {
     name: "subtract",
-    parameters: [{ type: "number", value: 0 }],
-    handler: (value: IValue<number>, p1: IValue<number>) => {
-      return {
-        type: "number",
-        value: value.value - p1.value,
-      } as IValue<number, "number">;
+    parameters: [createData("number", 0)],
+    handler: (data: IData<"number">, p1: IData<"number">) => {
+      return createData("number", data.value.value - p1.value.value);
     },
   },
   {
     name: "multiply",
-    parameters: [{ type: "number", value: 0 }],
-    handler: (value: IValue<number>, p1: IValue<number>) => {
-      return {
-        type: "number",
-        value: value.value * p1.value,
-      } as IValue<number, "number">;
+    parameters: [createData("number", 0)],
+    handler: (data: IData<"number">, p1: IData<"number">) => {
+      return createData("number", data.value.value * p1.value.value);
     },
   },
   {
     name: "divide",
-    parameters: [{ type: "number", value: 0 }],
-    handler: (value: IValue<number>, p1: IValue<number>) => {
-      return {
-        type: "number",
-        value: value.value / p1.value,
-      } as IValue<number, "number">;
+    parameters: [createData("number", 0)],
+    handler: (data: IData<"number">, p1: IData<"number">) => {
+      return createData("number", data.value.value / p1.value.value);
     },
   },
   {
     name: "toString",
-    parameters: [{ type: "number", value: 0 }],
-    handler: (value: IValue) => {
-      return {
-        type: "string",
-        value: String(value),
-      } as IValue;
+    parameters: [createData("number", 0)],
+    handler: (data: IData<"number">) => {
+      return createData("string", String(data.value.value));
     },
   },
 ];
@@ -139,52 +111,37 @@ export const numberMethods: IMethod[] = [
 export const arrayMethods: IMethod[] = [
   {
     name: "concat",
-    parameters: [{ type: "array", value: [] }],
-    handler: (
-      value: IValue<IData[], "array">,
-      p1: IValue<IData[], "array">
-    ) => {
-      return {
-        type: "array",
-        value: [...value.value, ...p1.value],
-      } as IValue<IData[], "array">;
+    parameters: [createData("array", [])],
+    handler: (data: IData<"array">, p1: IData<"array">) => {
+      return createData("array", [...data.value.value, ...p1.value.value]);
     },
   },
   {
     name: "length",
     parameters: [],
-    handler: (value: IValue<Array<string | number>>) => {
-      return {
-        type: "number",
-        value: value.value.length,
-      } as IValue<number, "number">;
+    handler: (data: IData<"array">) => {
+      return createData("number", data.value.value.length);
     },
   },
   {
     name: "slice",
-    parameters: [
-      { type: "number", value: 0 },
-      { type: "number", value: 0 },
-    ],
+    parameters: [createData("number", 0), createData("number", 0)],
     handler: (
-      value: IValue<IData[], "array">,
-      p1: IValue<number>,
-      p2: IValue<number>
+      data: IData<"array">,
+      p1: IData<"number">,
+      p2: IData<"number">
     ) => {
-      return {
-        type: "array",
-        value: value.value.slice(p1.value, p2.value),
-      } as IValue<IData[], "array">;
+      return createData(
+        "array",
+        data.value.value.slice(p1.value.value, p2.value.value)
+      );
     },
   },
   {
     name: "toString",
     parameters: [],
-    handler: (value: IValue<Array<string | number>>) => {
-      return {
-        type: "string",
-        value: value.value.toString(),
-      } as IValue;
+    handler: (data: IData<"array">) => {
+      return createData("string", data.value.value.toString());
     },
   },
 ];
@@ -193,16 +150,13 @@ export const objectMethods: IMethod[] = [
   {
     name: "length",
     parameters: [],
-    handler: (value: IValue<Map<string, IData>>) => {
-      return {
-        type: "number",
-        value: value.value.size,
-      } as IValue<number, "number">;
+    handler: (data: IData<"object">) => {
+      return createData("number", data.value.value.size);
     },
   },
 ];
 
-export const operationMethods: Record<ITypeName, IMethod[]> = {
+export const operationMethods: Record<keyof IType, IMethod[]> = {
   string: stringMethods,
   number: numberMethods,
   array: arrayMethods,

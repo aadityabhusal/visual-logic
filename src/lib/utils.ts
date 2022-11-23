@@ -1,9 +1,11 @@
 import { nanoid } from "nanoid";
 import { TypeMapper } from "./data";
 import { operationMethods } from "./methods";
-import { IData, IOperation, IType, ITypeName } from "./types";
+import { IData, IOperation, IType } from "./types";
 
-export function createOperation(data: IData): IOperation {
+export function createOperation<T extends keyof IType>(
+  data: IData<T>
+): IOperation {
   const methods = operationMethods[data.value.type];
   return {
     id: nanoid(),
@@ -13,48 +15,51 @@ export function createOperation(data: IData): IOperation {
   };
 }
 
-export function createData(type: ITypeName, value?: IType): IData {
+export function createData<T extends keyof IType>(
+  type: T,
+  value: IType[T]
+): IData<T> {
   return {
     id: nanoid(),
     entityType: "data",
     value: {
       type: type,
-      value: value || TypeMapper[type].defaultValue.value.value,
+      value: value || TypeMapper[type].defaultValue,
     },
   };
 }
 
-export function createOperationResult(
+export function createOperationResult<T extends keyof IType>(
   operation: IOperation,
-  data: IData
-): IData {
-  const value = operation.selectedMethod?.handler(
+  data: IData<T>
+): IData<keyof IType> {
+  return operation.selectedMethod?.handler(
     data.value,
     ...operation.selectedMethod.parameters
   );
-  return {
-    id: nanoid(),
-    entityType: "data",
-    value,
-  };
 }
 
-export function sequenceToCode(sequence: (IData | IOperation)[]): string {
-  function parseData(value: IData["value"][]): string {
-    return value
+export function sequenceToCode(
+  sequence: (IData<keyof IType> | IOperation)[]
+): string {
+  function parseData(data: IData<keyof IType>[]): string {
+    return data
       .map((item) => {
-        if (Array.isArray(item.value)) {
-          return "[" + item.value.map((item) => parseData([item.value])) + "]";
-        } else if (item.value instanceof Map) {
+        if (Array.isArray(item.value.value)) {
+          return "[" + item.value.value.map((item) => parseData([item])) + "]";
+        } else if (item.value.value instanceof Map) {
           return (
             "{" +
-            Array.from(item.value).map(
-              ([key, val]) => `${key}: ` + parseData([val.value])
+            Array.from(item.value.value).map(
+              ([key, val]: [string, IData<keyof IType>]) =>
+                `${key}: ` + parseData([val])
             ) +
             "}"
           );
         } else {
-          return typeof item === "number" ? item : `"${item.value}"`;
+          return typeof item.value.type === "number"
+            ? item.value.value
+            : `"${item.value.value}"`;
         }
       })
       .join();
@@ -66,6 +71,6 @@ export function sequenceToCode(sequence: (IData | IOperation)[]): string {
       )})`;
     }
   });
-  let firstItem = sequence[0] as IData;
-  return parseData([firstItem.value]) + codeText.join("");
+  let firstItem = sequence[0] as IData<keyof IType>;
+  return parseData([firstItem]) + codeText.join("");
 }

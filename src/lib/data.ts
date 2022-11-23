@@ -1,54 +1,21 @@
-import { IData, ITypeName } from "./types";
-import { nanoid } from "nanoid";
-import { createOperation } from "./utils";
+import { IData, IType } from "./types";
+import { createData, createOperation } from "./utils";
 
-export const initialData: IData = {
-  id: nanoid(),
-  entityType: "data",
-  value: { type: "string", value: "" },
-};
-
-export const TypeMapper: Record<ITypeName, { defaultValue: IData }> = {
+export const TypeMapper: {
+  [T in keyof IType]: { defaultValue: IType[T] };
+} = {
   string: {
-    defaultValue: {
-      id: nanoid(),
-      entityType: "data",
-      value: {
-        type: "string",
-        value: "",
-      },
-    },
+    defaultValue: "",
   },
   number: {
-    defaultValue: {
-      id: nanoid(),
-      entityType: "data",
-      value: {
-        type: "string",
-        value: "",
-      },
-    },
+    defaultValue: 0,
   },
   array: {
-    defaultValue: {
-      id: nanoid(),
-      entityType: "data",
-      value: {
-        type: "array",
-        value: [],
-      },
-    },
+    defaultValue: [],
   },
   object: {
-    defaultValue: {
-      id: nanoid(),
-      entityType: "data",
-      value: {
-        type: "object",
-        value: new Map(),
-      },
-    },
+    defaultValue: new Map(),
   },
 };
-
+export const initialData = createData("string", "");
 export const initialStatement = [initialData, createOperation(initialData)];
