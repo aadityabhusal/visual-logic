@@ -27,10 +27,7 @@ export function Operation({
 
   function handleParameter(item: IData, index: number) {
     let parameters = [...operation.selectedMethod.parameters];
-    parameters[index] = {
-      type: item.value.type,
-      value: item.value.value,
-    };
+    parameters[index] = item;
     handleOperation({
       ...operation,
       selectedMethod: {
@@ -50,7 +47,7 @@ export function Operation({
               data={{
                 id: nanoid(),
                 entityType: "data",
-                value: item,
+                value: item.value,
               }}
               handleData={(val) => handleParameter(val, i)}
             />

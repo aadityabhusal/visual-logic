@@ -1,7 +1,7 @@
 import { useState } from "react";
 import styled from "styled-components";
 import { TypeMapper } from "../lib/data";
-import { IData, ITypeName } from "../lib/types";
+import { IData, IType } from "../lib/types";
 import { Dropdown } from "./Dropdown";
 import { ArrayInput } from "./Input/ArrayInput";
 import { Input } from "./Input/Input";
@@ -15,7 +15,7 @@ interface IProps {
 export function Data({ data, handleData }: IProps) {
   const [dropdown, setDropdown] = useState(false);
 
-  function handleDropdown(value: ITypeName) {
+  function handleDropdown(value: keyof IType) {
     setDropdown(false);
     const inputDefaultValue = TypeMapper[value].defaultValue;
     value !== data.value.type &&
@@ -23,7 +23,7 @@ export function Data({ data, handleData }: IProps) {
         ...data,
         value: {
           type: value,
-          value: inputDefaultValue.value.value,
+          value: inputDefaultValue,
         },
       });
   }
@@ -49,7 +49,7 @@ export function Data({ data, handleData }: IProps) {
           {Object.keys(TypeMapper).map((item) => (
             <DropdownOption
               key={item}
-              onClick={() => handleDropdown(item as ITypeName)}
+              onClick={() => handleDropdown(item as keyof IType)}
               selected={data.value.type === item}
             >
               {item}

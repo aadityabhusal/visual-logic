@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import styled from "styled-components";
 import { TypeMapper } from "../../lib/data";
 import { IData } from "../../lib/types";
+import { createData } from "../../lib/utils";
 import { Data } from "../Data";
 import { Input } from "./Input";
 
@@ -13,7 +14,7 @@ export function ObjectInput({ data, handleData }: IObjectInput) {
   function addToObject() {
     if (data.value.value instanceof Map && !data.value.value.has("")) {
       let newMap = new Map(data.value.value);
-      newMap.set("", TypeMapper.string.defaultValue);
+      newMap.set("", createData("string", TypeMapper.string.defaultValue));
       handleData({
         ...data,
         value: {

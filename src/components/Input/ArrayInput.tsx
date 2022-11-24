@@ -2,6 +2,7 @@ import { TypeMapper } from "../../lib/data";
 import styled from "styled-components";
 import { IData } from "../../lib/types";
 import { Data } from "../Data";
+import { createData } from "../../lib/utils";
 
 export interface IArrayInput {
   data: IData;
@@ -15,7 +16,10 @@ export function ArrayInput({ data, handleData }: IArrayInput) {
         ...data,
         value: {
           type: "array",
-          value: [...data.value.value, TypeMapper.string.defaultValue],
+          value: [
+            ...data.value.value,
+            createData("string", TypeMapper.string.defaultValue),
+          ],
         },
       });
   }

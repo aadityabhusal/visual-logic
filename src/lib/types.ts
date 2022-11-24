@@ -1,11 +1,11 @@
 export type IType = {
   string: string;
   number: number;
-  array: IData<keyof IType>[];
-  object: Map<string, IData<keyof IType>>;
+  array: IData[];
+  object: Map<string, IData>;
 };
 
-export interface IData<T extends keyof IType> {
+export interface IData<T extends keyof IType = keyof IType> {
   id: string;
   entityType: "data";
   value: {
@@ -16,8 +16,8 @@ export interface IData<T extends keyof IType> {
 
 export interface IMethod {
   name: string;
-  parameters: IData<keyof IType>[];
-  handler: (...args: any[]) => IData<keyof IType>; // @todo: multiple params type issue
+  parameters: IData[];
+  handler: (...args: any[]) => IData; // @todo: multiple params type issue
 }
 
 export interface IOperation {
