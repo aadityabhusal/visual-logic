@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { IData, IOperation } from "../lib/types";
+import { IData } from "../lib/types";
 import { sequenceToCode } from "../lib/utils";
 
-export function Result({ sequence }: { sequence: (IData | IOperation)[] }) {
+export function Result({ sequence }: { sequence: IData[] }) {
   const [codeText, setCodeText] = useState("");
   useEffect(() => {
     setCodeText(sequenceToCode(sequence));

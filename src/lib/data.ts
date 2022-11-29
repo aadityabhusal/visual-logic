@@ -1,5 +1,4 @@
-import { IData, IType } from "./types";
-import { createData, createOperation } from "./utils";
+import { IType } from "./types";
 
 export const TypeMapper: {
   [T in keyof IType]: { defaultValue: IType[T] };
@@ -17,5 +16,3 @@ export const TypeMapper: {
     defaultValue: new Map(),
   },
 };
-export const initialData = createData("string", "");
-export const initialStatement = [initialData, createOperation(initialData)];
