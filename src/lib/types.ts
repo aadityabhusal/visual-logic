@@ -8,23 +8,20 @@ export type IType = {
 export interface IData<T extends keyof IType = keyof IType> {
   id: string;
   entityType: "data";
+  variable?: string;
   value: {
     type: T;
     value: IType[T];
   };
+  methods: IMethod[];
+  selectedMethod?: IMethod;
 }
 
 export interface IMethod {
   name: string;
   parameters: IData[];
-  handler: (...args: any[]) => IData; // @todo: multiple params type issue
-}
-
-export interface IOperation {
-  id: string;
-  entityType: "operation";
-  methods: IMethod[];
-  selectedMethod: IMethod;
+  result: IData;
+  handler(...args: IData[]): IData;
 }
 
 export interface IFunction {

@@ -1,11 +1,13 @@
 import { useState } from "react";
 import styled from "styled-components";
 import { TypeMapper } from "../lib/data";
+import { operationMethods } from "../lib/methods";
 import { IData, IType } from "../lib/types";
 import { Dropdown } from "./Dropdown";
 import { ArrayInput } from "./Input/ArrayInput";
 import { Input } from "./Input/Input";
 import { ObjectInput } from "./Input/ObjectInput";
+import { Operation } from "./Operation";
 
 interface IProps {
   data: IData;
@@ -26,6 +28,13 @@ export function Data({ data, handleData }: IProps) {
           value: inputDefaultValue,
         },
       });
+  }
+
+  function addMethods() {
+    handleData({
+      ...data,
+      methods: operationMethods[data.value.type],
+    });
   }
 
   return (
@@ -57,6 +66,11 @@ export function Data({ data, handleData }: IProps) {
           ))}
         </DropdownOptions>
       </Dropdown>
+      {data.methods.length ? (
+        <Operation data={data} handleData={(data) => handleData(data)} />
+      ) : (
+        <button onClick={addMethods}>{">"}</button>
+      )}
     </DataWrapper>
   );
 }
@@ -64,6 +78,7 @@ export function Data({ data, handleData }: IProps) {
 const DataWrapper = styled.div`
   position: relative;
   display: flex;
+  flex-wrap: wrap;
 `;
 
 export const DropdownOptions = styled.div`

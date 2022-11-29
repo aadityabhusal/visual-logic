@@ -1,18 +1,6 @@
 import { nanoid } from "nanoid";
 import { operationMethods } from "./methods";
-import { IData, IFunction, IOperation, IType } from "./types";
-
-export function createOperation<T extends keyof IType>(
-  data: IData<T>
-): IOperation {
-  const methods = operationMethods[data.value.type];
-  return {
-    id: nanoid(),
-    entityType: "operation",
-    methods,
-    selectedMethod: methods[0],
-  };
-}
+import { IData, IFunction, IType } from "./types";
 
 export function createData<T extends keyof IType>(
   type: T,
@@ -21,10 +9,13 @@ export function createData<T extends keyof IType>(
   return {
     id: nanoid(),
     entityType: "data",
+    variable: undefined,
     value: {
       type: type,
       value: value,
     },
+    methods: [],
+    selectedMethod: undefined,
   };
 }
 
@@ -41,17 +32,23 @@ export function createFunction(): IFunction {
   };
 }
 
-export function createOperationResult<T extends keyof IType>(
-  operation: IOperation,
+export function createDataResult<T extends keyof IType>(
   data: IData<T>
-): IData {
-  return operation.selectedMethod?.handler(
+): IData | undefined {
+  let result = data.selectedMethod?.handler(
     data,
-    ...operation.selectedMethod.parameters
+    ...data.selectedMethod.parameters
   );
+  if (result) {
+    return {
+      ...result,
+      methods: operationMethods[result?.value.type],
+    };
+  }
 }
 
-export function sequenceToCode(sequence: (IData | IOperation)[]): string {
+/*
+export function sequenceToCode(sequence: IData[]): string {
   function parseData(data: IData[]): string {
     return data
       .map((item) => {
@@ -83,3 +80,4 @@ export function sequenceToCode(sequence: (IData | IOperation)[]): string {
   let firstItem = sequence[0] as IData;
   return parseData([firstItem]) + codeText.join("");
 }
+*/

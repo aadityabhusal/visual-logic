@@ -1,37 +1,37 @@
-import { nanoid } from "nanoid";
 import { useState } from "react";
 import styled from "styled-components";
-import { IOperation, IData } from "../lib/types";
+import { IData } from "../lib/types";
+import { createData, createDataResult } from "../lib/utils";
 import { Data, DropdownOption, DropdownOptions } from "./Data";
 import { Dropdown } from "./Dropdown";
 
 export function Operation({
-  operation,
-  handleOperation,
+  data,
+  handleData,
 }: {
-  operation: IOperation;
-  handleOperation: (data: IOperation) => void;
+  data: IData;
+  handleData: (data: IData) => void;
 }) {
   const [dropdown, setDropdown] = useState(false);
 
   function handleDropdown(name: string) {
     setDropdown(false);
-    operation.selectedMethod.name !== name &&
-      handleOperation({
-        ...operation,
-        selectedMethod:
-          operation.methods.find((method) => method.name === name) ||
-          operation.methods[0],
+    if (data.selectedMethod?.name !== name) {
+      handleData({
+        ...data,
+        selectedMethod: data.methods.find((method) => method.name === name),
       });
+    }
   }
 
   function handleParameter(item: IData, index: number) {
-    let parameters = [...operation.selectedMethod.parameters];
+    if (!data.selectedMethod) return;
+    let parameters = [...data.selectedMethod.parameters];
     parameters[index] = item;
-    handleOperation({
-      ...operation,
+    handleData({
+      ...data,
       selectedMethod: {
-        ...operation.selectedMethod,
+        ...data.selectedMethod,
         parameters,
       },
     });
@@ -41,14 +41,10 @@ export function Operation({
     return (
       <>
         <span>{"("}</span>
-        {operation.selectedMethod.parameters.map((item, i, arr) => (
+        {data.selectedMethod?.parameters.map((item, i, arr) => (
           <span key={i} style={{ display: "flex" }}>
             <Data
-              data={{
-                id: nanoid(),
-                entityType: "data",
-                value: item.value,
-              }}
+              data={createData("string", item.value.value as string)}
               handleData={(val) => handleParameter(val, i)}
             />
             {i < arr.length - 1 ? <span>{", "}</span> : null}
@@ -59,13 +55,23 @@ export function Operation({
     );
   }
 
+  // @todo: Need run this function to re-create data result when previous values are updated
+  function handleSelectedMethod(value?: IData) {
+    let result = value || createDataResult(data);
+    if (result && data.selectedMethod)
+      handleData({
+        ...data,
+        selectedMethod: { ...data.selectedMethod, result },
+      });
+  }
+
   return (
     <OperationWrapper>
       <span>{"."}</span>
       <Dropdown
         head={
           <>
-            {operation.selectedMethod.name}
+            {data.selectedMethod?.name || "..."}
             {methodParams()}
           </>
         }
@@ -73,17 +79,25 @@ export function Operation({
         setDisplay={setDropdown}
       >
         <DropdownOptions>
-          {operation.methods.map((method) => (
+          {data.methods.map((method) => (
             <DropdownOption
               key={method.name}
               onClick={(e) => handleDropdown(method.name)}
-              selected={operation.selectedMethod.name === method.name}
+              selected={data.selectedMethod?.name === method.name}
             >
               {method.name}
             </DropdownOption>
           ))}
         </DropdownOptions>
       </Dropdown>
+      {data.selectedMethod?.result ? (
+        <Operation
+          data={data.selectedMethod.result}
+          handleData={(data) => handleSelectedMethod(data)}
+        />
+      ) : data.selectedMethod ? (
+        <button onClick={(e) => handleSelectedMethod()}>{">"}</button>
+      ) : null}
     </OperationWrapper>
   );
 }
