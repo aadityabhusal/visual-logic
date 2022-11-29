@@ -1,4 +1,3 @@
-import { nanoid } from "nanoid";
 import styled from "styled-components";
 import { TypeMapper } from "../../lib/data";
 import { IData } from "../../lib/types";
@@ -69,11 +68,7 @@ export function ObjectInput({ data, handleData }: IObjectInput) {
             return (
               <div key={i} style={{ display: "flex" }}>
                 <Input
-                  data={{
-                    id: nanoid(),
-                    entityType: "data",
-                    value: { type: "string", value: key },
-                  }}
+                  data={createData("string", key)}
                   handleData={(val) => handleKeyUpdate(arr, i, val)}
                 />
                 <span>:</span>

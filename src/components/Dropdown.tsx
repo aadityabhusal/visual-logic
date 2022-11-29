@@ -63,7 +63,6 @@ export function Dropdown({ display, setDisplay, head, children }: IProps) {
 }
 
 const DropdownWrapper = styled.div<{ mouseover: boolean }>`
-  z-index: 2;
   border: 1px solid ${({ mouseover }) => (mouseover ? "#ddd" : "transparent")};
 `;
 
@@ -90,6 +89,7 @@ const DropdownHeadBottom = styled.div`
   left: -1px;
   min-width: 100%;
   display: flex;
+  z-index: 1;
   justify-content: space-between;
   border: 1px solid #ddd;
   background-color: #444;
