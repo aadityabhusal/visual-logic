@@ -28,6 +28,19 @@ export function createData<T extends keyof IType>(
   };
 }
 
+export function createFunction(): IFunction {
+  return {
+    id: nanoid(),
+    context: {},
+    entityType: "function",
+    handler: undefined,
+    name: "",
+    parameter: [],
+    return: createData("string", ""),
+    statements: [],
+  };
+}
+
 export function createOperationResult<T extends keyof IType>(
   operation: IOperation,
   data: IData<T>
