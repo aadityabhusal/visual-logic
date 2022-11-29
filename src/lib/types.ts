@@ -26,3 +26,14 @@ export interface IOperation {
   methods: IMethod[];
   selectedMethod: IMethod;
 }
+
+export interface IFunction {
+  id: string;
+  entityType: "function";
+  name: string;
+  parameter: IData[];
+  context: any; // global and local context
+  statements: IData[];
+  return: IData;
+  handler?: (...args: IData[]) => IData; // handler optional for function
+}
