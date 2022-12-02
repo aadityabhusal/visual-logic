@@ -17,11 +17,16 @@ export interface IData<T extends keyof IType = keyof IType> {
   selectedMethod?: IMethod;
 }
 
+// SINCE METHOD AND OPERATIONS ARE VERY SIMILAR WITH SOME MODIFICATION IN STATEMENT AND HANDLER PROPERTIES
+// WE CAN NAME THEM INTO A SINGLE TYPE: OPERATION OR FUNCTION
+
 export interface IMethod {
   name: string;
   parameters: IData[];
-  result: IData;
+  result?: IData;
   handler(...args: IData[]): IData;
+  // need to add context here
+  // will only have a single statement because of parameters
 }
 
 export interface IFunction {
