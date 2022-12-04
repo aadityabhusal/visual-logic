@@ -63,7 +63,9 @@ export function Func({
   );
 }
 
-const FunctionWrapper = styled.div``;
+const FunctionWrapper = styled.div`
+  max-width: max-content;
+`;
 
 const FunctionHead = styled.div`
   display: flex;

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
+import { Play } from "@styled-icons/fa-solid";
 import { TypeMapper } from "../lib/data";
 import { operationMethods } from "../lib/methods";
 import { IData, IType } from "../lib/types";
@@ -27,6 +28,8 @@ export function Data({ data, handleData }: IProps) {
           type: value,
           value: inputDefaultValue,
         },
+        methods: [],
+        selectedMethod: undefined,
       });
   }
 
@@ -35,6 +38,7 @@ export function Data({ data, handleData }: IProps) {
       ...data,
       methods: operationMethods[data.value.type],
     });
+    setDropdown(false);
   }
 
   return (
@@ -42,6 +46,15 @@ export function Data({ data, handleData }: IProps) {
       <Dropdown
         display={dropdown}
         setDisplay={setDropdown}
+        hoverContent={
+          !data.methods.length ? (
+            <Play
+              size={10}
+              onClick={addMethods}
+              style={{ marginLeft: "auto", cursor: "pointer" }}
+            />
+          ) : null
+        }
         head={
           <>
             {data.value.type === "array" ? (
@@ -68,9 +81,7 @@ export function Data({ data, handleData }: IProps) {
       </Dropdown>
       {data.methods.length ? (
         <Operation data={data} handleData={(data) => handleData(data)} />
-      ) : (
-        <button onClick={addMethods}>{">"}</button>
-      )}
+      ) : null}
     </DataWrapper>
   );
 }

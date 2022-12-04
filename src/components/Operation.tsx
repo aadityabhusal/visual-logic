@@ -1,7 +1,8 @@
 import { useState } from "react";
 import styled from "styled-components";
 import { IData } from "../lib/types";
-import { createData, createDataResult } from "../lib/utils";
+import { createDataResult } from "../lib/utils";
+import { Play } from "@styled-icons/fa-solid";
 import { Data, DropdownOption, DropdownOptions } from "./Data";
 import { Dropdown } from "./Dropdown";
 
@@ -43,10 +44,7 @@ export function Operation({
         <span>{"("}</span>
         {data.selectedMethod?.parameters.map((item, i, arr) => (
           <span key={i} style={{ display: "flex" }}>
-            <Data
-              data={createData("string", item.value.value as string)}
-              handleData={(val) => handleParameter(val, i)}
-            />
+            <Data data={item} handleData={(val) => handleParameter(val, i)} />
             {i < arr.length - 1 ? <span>{", "}</span> : null}
           </span>
         ))}
@@ -63,15 +61,25 @@ export function Operation({
         ...data,
         selectedMethod: { ...data.selectedMethod, result },
       });
+    setDropdown(false);
   }
 
   return (
     <OperationWrapper>
-      <span>{"."}</span>
       <Dropdown
+        hoverContent={
+          data.selectedMethod && !data.selectedMethod.result ? (
+            <Play
+              size={10}
+              onClick={(e) => handleSelectedMethod()}
+              style={{ marginLeft: "auto", cursor: "pointer" }}
+            />
+          ) : null
+        }
         head={
           <>
-            {data.selectedMethod?.name || "..."}
+            {"."}
+            {data.selectedMethod?.name || ".."}
             {methodParams()}
           </>
         }
@@ -95,8 +103,6 @@ export function Operation({
           data={data.selectedMethod.result}
           handleData={(data) => handleSelectedMethod(data)}
         />
-      ) : data.selectedMethod ? (
-        <button onClick={(e) => handleSelectedMethod()}>{">"}</button>
       ) : null}
     </OperationWrapper>
   );
@@ -105,4 +111,5 @@ export function Operation({
 const OperationWrapper = styled.div`
   position: relative;
   display: flex;
+  flex-wrap: wrap;
 `;

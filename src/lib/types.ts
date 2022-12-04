@@ -27,6 +27,7 @@ export interface IMethod {
   handler(...args: IData[]): IData;
   // need to add context here
   // will only have a single statement because of parameters
+  // need to make several properties readonly
 }
 
 export interface IFunction {

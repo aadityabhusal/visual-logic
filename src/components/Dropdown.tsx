@@ -7,10 +7,17 @@ interface IProps {
   display?: boolean;
   setDisplay?: React.Dispatch<React.SetStateAction<boolean>>;
   head?: ReactNode;
+  hoverContent?: ReactNode;
   children?: ReactNode;
 }
 
-export function Dropdown({ display, setDisplay, head, children }: IProps) {
+export function Dropdown({
+  display,
+  setDisplay,
+  head,
+  hoverContent,
+  children,
+}: IProps) {
   const [dropdown, setDropdown] = useUncontrolled<boolean>({
     value: display,
     onChange: setDisplay,
@@ -46,14 +53,16 @@ export function Dropdown({ display, setDisplay, head, children }: IProps) {
       >
         <div style={{ display: "flex" }}>{head}</div>
         {mouseover ? (
-          <DropdownHeadBottom
-            onClick={(e) => {
-              e.stopPropagation();
-              setDropdown(!dropdown);
-            }}
-          >
-            <div />
-            <ChevronDown size={10} className="dropdownIcon" />
+          <DropdownHeadBottom>
+            <div>{hoverContent}</div>
+            <ChevronDown
+              size={10}
+              className="dropdownIcon"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDropdown(!dropdown);
+              }}
+            />
           </DropdownHeadBottom>
         ) : null}
       </DropdownHead>
@@ -89,8 +98,16 @@ const DropdownHeadBottom = styled.div`
   left: -1px;
   min-width: 100%;
   display: flex;
+  align-items: center;
   z-index: 1;
-  justify-content: space-between;
+  gap: 0.25rem;
   border: 1px solid #ddd;
   background-color: #444;
+  & > div {
+    display: flex;
+    flex: 1;
+  }
+  & > svg {
+    cursor: pointer;
+  }
 `;
