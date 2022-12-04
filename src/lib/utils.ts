@@ -10,10 +10,8 @@ export function createData<T extends keyof IType>(
     id: nanoid(),
     entityType: "data",
     variable: undefined,
-    value: {
-      type: type,
-      value: value,
-    },
+    type: type,
+    value: value,
     methods: [],
     selectedMethod: undefined,
   };
@@ -42,7 +40,7 @@ export function createDataResult<T extends keyof IType>(
   if (result) {
     return {
       ...result,
-      methods: operationMethods[result?.value.type],
+      methods: operationMethods[result.type],
     };
   }
 }

@@ -11,15 +11,13 @@ export interface IObjectInput {
 }
 export function ObjectInput({ data, handleData }: IObjectInput) {
   function addToObject() {
-    if (data.value.value instanceof Map && !data.value.value.has("")) {
-      let newMap = new Map(data.value.value);
+    if (data.value instanceof Map && !data.value.has("")) {
+      let newMap = new Map(data.value);
       newMap.set("", createData("string", TypeMapper.string.defaultValue));
       handleData({
         ...data,
-        value: {
-          type: "object",
-          value: newMap,
-        },
+        type: "object",
+        value: newMap,
       });
     }
   }
@@ -32,10 +30,8 @@ export function ObjectInput({ data, handleData }: IObjectInput) {
     dataArray[index] = [dataArray[index][0], result];
     handleData({
       ...data,
-      value: {
-        type: "object",
-        value: new Map(dataArray),
-      },
+      type: "object",
+      value: new Map(dataArray),
     });
   }
 
@@ -45,17 +41,15 @@ export function ObjectInput({ data, handleData }: IObjectInput) {
     result: IData
   ) {
     if (
-      typeof result.value.value === "string" &&
-      data.value.value instanceof Map &&
-      !data.value.value.has(result.value.value)
+      typeof result.value === "string" &&
+      data.value instanceof Map &&
+      !data.value.has(result.value)
     ) {
-      dataArray[index] = [result.value.value, dataArray[index][1]];
+      dataArray[index] = [result.value, dataArray[index][1]];
       handleData({
         ...data,
-        value: {
-          type: "object",
-          value: new Map(dataArray),
-        },
+        type: "object",
+        value: new Map(dataArray),
       });
     }
   }
@@ -63,8 +57,8 @@ export function ObjectInput({ data, handleData }: IObjectInput) {
   return (
     <ObjectContainer>
       <span>{"{"}</span>
-      {data.value.value instanceof Map
-        ? Array.from(data.value.value).map(([key, value], i, arr) => {
+      {data.value instanceof Map
+        ? Array.from(data.value).map(([key, value], i, arr) => {
             return (
               <div key={i} style={{ display: "flex" }}>
                 <Input

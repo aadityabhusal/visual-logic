@@ -10,31 +10,24 @@ export interface IInput {
 export function Input({ data, handleData }: IInput) {
   const textRef = useRef<HTMLDivElement>(null);
   const inputData = {
-    quote: data.value.type === "string",
-    type: data.value.type === "string" ? `text` : "number",
-    placeholder: data.value.type === "string" ? `..` : "0",
-    text:
-      typeof data.value.value === "number"
-        ? BigInt(data.value.value)
-        : data.value.value,
-    constructor: data.value.type === "string" ? String : Number,
+    quote: data.type === "string",
+    type: data.type === "string" ? `text` : "number",
+    placeholder: data.type === "string" ? `..` : "0",
+    text: typeof data.value === "number" ? BigInt(data.value) : data.value,
+    constructor: data.type === "string" ? String : Number,
   };
-  return typeof data.value.value === "string" ||
-    typeof data.value.value === "number" ? (
+  return typeof data.value === "string" || typeof data.value === "number" ? (
     <InputWrapper quote={inputData.quote}>
       <div ref={textRef}>{inputData.text.toString()}</div>
       <InputStyled
         type={inputData.type}
-        value={data.value.value}
+        value={data.value}
         placeholder={inputData.placeholder}
         textWidth={inputData.text.toString() ? textRef.current?.clientWidth : 0}
         onChange={(e) =>
           handleData({
             ...data,
-            value: {
-              ...data.value,
-              value: inputData.constructor(e.target.value),
-            },
+            value: inputData.constructor(e.target.value),
           })
         }
         onClick={(e) => e.stopPropagation()}

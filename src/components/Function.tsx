@@ -45,7 +45,7 @@ export function Func({
       <FunctionHead>
         <Input
           data={createData("string", func.name)}
-          handleData={(data) => handleFunctionProps("name", data.value.value)}
+          handleData={(data) => handleFunctionProps("name", data.value)}
         />
         <span>{"("}</span>
         <span>{") {"}</span>

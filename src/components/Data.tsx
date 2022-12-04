@@ -21,13 +21,11 @@ export function Data({ data, handleData }: IProps) {
   function handleDropdown(value: keyof IType) {
     setDropdown(false);
     const inputDefaultValue = TypeMapper[value].defaultValue;
-    value !== data.value.type &&
+    value !== data.type &&
       handleData({
         ...data,
-        value: {
-          type: value,
-          value: inputDefaultValue,
-        },
+        type: value,
+        value: inputDefaultValue,
         methods: [],
         selectedMethod: undefined,
       });
@@ -36,7 +34,7 @@ export function Data({ data, handleData }: IProps) {
   function addMethods() {
     handleData({
       ...data,
-      methods: operationMethods[data.value.type],
+      methods: operationMethods[data.type],
     });
     setDropdown(false);
   }
@@ -57,9 +55,9 @@ export function Data({ data, handleData }: IProps) {
         }
         head={
           <>
-            {data.value.type === "array" ? (
+            {data.type === "array" ? (
               <ArrayInput data={data} handleData={handleData} />
-            ) : data.value.value instanceof Map ? (
+            ) : data.value instanceof Map ? (
               <ObjectInput data={data} handleData={handleData} />
             ) : (
               <Input data={data} handleData={handleData} />
@@ -72,7 +70,7 @@ export function Data({ data, handleData }: IProps) {
             <DropdownOption
               key={item}
               onClick={() => handleDropdown(item as keyof IType)}
-              selected={data.value.type === item}
+              selected={data.type === item}
             >
               {item}
             </DropdownOption>

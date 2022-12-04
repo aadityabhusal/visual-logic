@@ -11,37 +11,33 @@ export interface IArrayInput {
 
 export function ArrayInput({ data, handleData }: IArrayInput) {
   function addToArray() {
-    Array.isArray(data.value.value) &&
+    Array.isArray(data.value) &&
       handleData({
         ...data,
-        value: {
-          type: "array",
-          value: [
-            ...data.value.value,
-            createData("string", TypeMapper.string.defaultValue),
-          ],
-        },
+        type: "array",
+        value: [
+          ...data.value,
+          createData("string", TypeMapper.string.defaultValue),
+        ],
       });
   }
 
   function handleUpdate(result: IData, index: number) {
-    if (Array.isArray(data.value.value)) {
-      let resList = [...data.value.value];
+    if (Array.isArray(data.value)) {
+      let resList = [...data.value];
       resList[index] = result;
       handleData({
         ...data,
-        value: {
-          type: "array",
-          value: resList,
-        },
+        type: "array",
+        value: resList,
       });
     }
   }
   return (
     <ArrayContainer>
       <span>{"["}</span>
-      {Array.isArray(data.value.value)
-        ? data.value.value.map((item, i, arr) => {
+      {Array.isArray(data.value)
+        ? data.value.map((item, i, arr) => {
             return (
               <div key={i} style={{ display: "flex" }}>
                 <Data data={item} handleData={(val) => handleUpdate(val, i)} />

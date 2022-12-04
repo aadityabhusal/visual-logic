@@ -9,10 +9,8 @@ export interface IData<T extends keyof IType = keyof IType> {
   id: string;
   entityType: "data";
   variable?: string;
-  value: {
-    type: T;
-    value: IType[T];
-  };
+  type: T;
+  value: IType[T];
   methods: IMethod[];
   selectedMethod?: IMethod;
 }
