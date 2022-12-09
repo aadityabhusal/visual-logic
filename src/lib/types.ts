@@ -15,17 +15,14 @@ export interface IData<T extends keyof IType = keyof IType> {
   selectedMethod?: IMethod;
 }
 
-// SINCE METHOD AND OPERATIONS ARE VERY SIMILAR WITH SOME MODIFICATION IN STATEMENT AND HANDLER PROPERTIES
-// WE CAN NAME THEM INTO A SINGLE TYPE: OPERATION OR FUNCTION
+// Can make function and method into a single type because of their similarity
+// but need to separated Function definition (IFunction) with function call (IMethod)
 
 export interface IMethod {
   name: string;
   parameters: IData[];
   result?: IData;
   handler(...args: IData[]): IData;
-  // need to add context here
-  // will only have a single statement because of parameters
-  // need to make several properties readonly
 }
 
 export interface IFunction {
@@ -33,8 +30,14 @@ export interface IFunction {
   entityType: "function";
   name: string;
   parameter: IData[];
-  context: any; // global and local context
+  context: Record<string, any>; // global and local context
   statements: IData[];
-  return: IData;
+  return?: IData;
   handler?: (...args: IData[]) => IData; // handler optional for function
+}
+
+export interface IStore {
+  functions: Record<string, IFunction>;
+  context: Record<string, any>;
+  setFunction: (id: string, func: IFunction) => void;
 }

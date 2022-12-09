@@ -1,3 +1,5 @@
+import { Play } from "@styled-icons/fa-solid";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { IData, IFunction } from "../lib/types";
 import { createData } from "../lib/utils";
@@ -5,47 +7,53 @@ import { Data } from "./Data";
 import { Input } from "./Input/Input";
 
 export function Func({
-  func,
+  funcData,
   handleFunc,
 }: {
-  func: IFunction;
-  handleFunc: React.Dispatch<React.SetStateAction<IFunction>>;
+  funcData: IFunction;
+  handleFunc(fn: IFunction): void;
 }) {
+  const [func, setFunc] = useState<IFunction>(funcData);
+
   function handleFunctionProps(
     key: keyof IFunction,
     value: IFunction[typeof key]
   ) {
-    handleFunc((prev) => ({
+    setFunc((prev) => ({
       ...prev,
       [key]: value,
     }));
   }
 
   function addStatement() {
-    handleFunc((prev) => ({
+    setFunc((prev) => ({
       ...prev,
       statements: [...prev.statements, createData("string", "")],
     }));
   }
 
   function handleData(statement: IData, index: number) {
-    handleFunc((prev) => {
-      let statements = [...prev.statements];
-      // let index = statements.findIndex((item) => item.id === statement.id);
-      statements[index] = statement;
-      return {
-        ...prev,
-        statements,
-      };
-    });
+    let statements = [...func.statements];
+    statements[index] = statement;
+    setFunc((prev) => ({
+      ...prev,
+      statements,
+    }));
   }
 
-  return (
+  return func ? (
     <FunctionWrapper>
       <FunctionHead>
+        <Play
+          size={14}
+          onClick={() => handleFunc(func)}
+          style={{ cursor: "pointer" }}
+        />
         <Input
           data={createData("string", func.name)}
-          handleData={(data) => handleFunctionProps("name", data.value)}
+          handleData={(data) =>
+            handleFunctionProps("name", data.value as string)
+          }
         />
         <span>{"("}</span>
         <span>{") {"}</span>
@@ -60,7 +68,7 @@ export function Func({
       <div onClick={addStatement}>+</div>
       <div>{"}"}</div>
     </FunctionWrapper>
-  );
+  ) : null;
 }
 
 const FunctionWrapper = styled.div`
@@ -69,4 +77,6 @@ const FunctionWrapper = styled.div`
 
 const FunctionHead = styled.div`
   display: flex;
+  align-items: center;
+  gap: 0.25rem;
 `;
