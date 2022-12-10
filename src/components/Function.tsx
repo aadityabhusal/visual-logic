@@ -1,5 +1,5 @@
 import { Play } from "@styled-icons/fa-solid";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import styled from "styled-components";
 import { IData, IFunction } from "../lib/types";
 import { createData } from "../lib/utils";
@@ -58,14 +58,16 @@ export function Func({
         <span>{"("}</span>
         <span>{") {"}</span>
       </FunctionHead>
-      {func.statements.map((statement, i) => (
-        <Data
-          key={i}
-          data={statement}
-          handleData={(value) => handleData(value, i)}
-        />
-      ))}
-      <div onClick={addStatement}>+</div>
+      <FunctionBody>
+        {func.statements.map((statement, i) => (
+          <Data
+            key={i}
+            data={statement}
+            handleData={(value) => handleData(value, i)}
+          />
+        ))}
+        <div onClick={addStatement}>+</div>
+      </FunctionBody>
       <div>{"}"}</div>
     </FunctionWrapper>
   ) : null;
@@ -79,4 +81,8 @@ const FunctionHead = styled.div`
   display: flex;
   align-items: center;
   gap: 0.25rem;
+`;
+
+const FunctionBody = styled.div`
+  padding-left: 1rem;
 `;

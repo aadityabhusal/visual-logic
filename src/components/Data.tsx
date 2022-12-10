@@ -1,6 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { Play } from "@styled-icons/fa-solid";
+import { Equals, NotEqual, Play, X } from "@styled-icons/fa-solid";
 import { TypeMapper } from "../lib/data";
 import { operationMethods } from "../lib/methods";
 import { IData, IType } from "../lib/types";
@@ -9,6 +9,7 @@ import { ArrayInput } from "./Input/ArrayInput";
 import { Input } from "./Input/Input";
 import { ObjectInput } from "./Input/ObjectInput";
 import { Operation } from "./Operation";
+import { createData } from "../lib/utils";
 
 interface IProps {
   data: IData;
@@ -31,27 +32,51 @@ export function Data({ data, handleData }: IProps) {
       });
   }
 
-  function addMethods() {
+  function addMethods(remove?: boolean) {
     handleData({
       ...data,
-      methods: operationMethods[data.type],
+      methods: remove ? [] : operationMethods[data.type],
+      selectedMethod: remove ? undefined : data.selectedMethod,
     });
     setDropdown(false);
   }
 
+  function handleVariable(value?: string, remove?: boolean) {
+    setDropdown(false);
+    handleData({ ...data, variable: remove ? undefined : value || "" });
+  }
+
   return (
     <DataWrapper>
+      {data.variable !== undefined ? (
+        <>
+          <div>let</div>
+          <div>
+            <Input
+              data={createData("string", data.variable)}
+              handleData={(value) => handleVariable(value.value as string)}
+              noQuotes
+            />
+          </div>
+          <div>=</div>
+        </>
+      ) : null}
       <Dropdown
         display={dropdown}
         setDisplay={setDropdown}
         hoverContent={
-          !data.methods.length ? (
-            <Play
-              size={10}
-              onClick={addMethods}
-              style={{ marginLeft: "auto", cursor: "pointer" }}
-            />
-          ) : null
+          <>
+            {data.variable === undefined ? (
+              <Equals size={10} onClick={() => handleVariable()} />
+            ) : (
+              <NotEqual size={10} onClick={() => handleVariable("", true)} />
+            )}
+            {!data.methods.length ? (
+              <Play size={10} onClick={() => addMethods()} />
+            ) : (
+              <X size={10} onClick={() => addMethods(true)} />
+            )}
+          </>
         }
         head={
           <>
@@ -88,6 +113,7 @@ const DataWrapper = styled.div`
   position: relative;
   display: flex;
   flex-wrap: wrap;
+  gap: 0.25rem;
 `;
 
 export const DropdownOptions = styled.div`

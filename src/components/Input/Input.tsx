@@ -5,12 +5,13 @@ import { IData } from "../../lib/types";
 export interface IInput {
   data: IData;
   handleData: (data: IData) => void;
+  noQuotes?: boolean;
 }
 
-export function Input({ data, handleData }: IInput) {
+export function Input({ data, handleData, noQuotes }: IInput) {
   const textRef = useRef<HTMLDivElement>(null);
   const inputData = {
-    quote: data.type === "string",
+    quote: !noQuotes && data.type === "string",
     type: data.type === "string" ? `text` : "number",
     placeholder: data.type === "string" ? `..` : "0",
     text: typeof data.value === "number" ? BigInt(data.value) : data.value,
