@@ -1,6 +1,5 @@
 import { nanoid } from "nanoid";
-import { operationMethods } from "./methods";
-import { IData, IFunction, IType } from "./types";
+import { IData, IFunction, IMethod, IType } from "./types";
 
 export function createData<T extends keyof IType>(
   type: T,
@@ -31,18 +30,11 @@ export function createFunction(): IFunction {
 }
 
 export function createDataResult<T extends keyof IType>(
-  data: IData<T>
+  data: IData<T>,
+  selectedMethod?: IMethod
 ): IData | undefined {
-  let result = data.selectedMethod?.handler(
-    data,
-    ...data.selectedMethod.parameters
-  );
-  if (result) {
-    return {
-      ...result,
-      methods: operationMethods[result.type],
-    };
-  }
+  let method = selectedMethod || data.selectedMethod;
+  return method?.handler(data, ...method.parameters);
 }
 
 /*

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { Equals, NotEqual, Play, X } from "@styled-icons/fa-solid";
+import { Equals, NotEqual, Play } from "@styled-icons/fa-solid";
 import { TypeMapper } from "../lib/data";
 import { operationMethods } from "../lib/methods";
 import { IData, IType } from "../lib/types";
@@ -13,7 +13,7 @@ import { createData } from "../lib/utils";
 
 interface IProps {
   data: IData;
-  handleData: (data: IData) => void;
+  handleData: (data?: IData) => void;
 }
 
 export function Data({ data, handleData }: IProps) {
@@ -32,11 +32,11 @@ export function Data({ data, handleData }: IProps) {
       });
   }
 
-  function addMethods(remove?: boolean) {
+  function addMethod() {
     handleData({
       ...data,
-      methods: remove ? [] : operationMethods[data.type],
-      selectedMethod: remove ? undefined : data.selectedMethod,
+      methods: operationMethods[data.type],
+      selectedMethod: data.selectedMethod,
     });
     setDropdown(false);
   }
@@ -64,6 +64,7 @@ export function Data({ data, handleData }: IProps) {
       <Dropdown
         display={dropdown}
         setDisplay={setDropdown}
+        handleDelete={handleData}
         hoverContent={
           <>
             {data.variable === undefined ? (
@@ -71,10 +72,8 @@ export function Data({ data, handleData }: IProps) {
             ) : (
               <NotEqual size={10} onClick={() => handleVariable("", true)} />
             )}
-            {!data.methods.length ? (
-              <Play size={10} onClick={() => addMethods()} />
-            ) : (
-              <X size={10} onClick={() => addMethods(true)} />
+            {!data.methods.length && (
+              <Play size={10} onClick={() => addMethod()} />
             )}
           </>
         }

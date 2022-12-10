@@ -1,4 +1,4 @@
-import { ChevronDown } from "@styled-icons/fa-solid";
+import { ChevronDown, X } from "@styled-icons/fa-solid";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { useUncontrolled } from "../hooks/useUncontrolled";
@@ -9,6 +9,7 @@ interface IProps {
   head?: ReactNode;
   hoverContent?: ReactNode;
   children?: ReactNode;
+  handleDelete?: () => void;
 }
 
 export function Dropdown({
@@ -17,6 +18,7 @@ export function Dropdown({
   head,
   hoverContent,
   children,
+  handleDelete,
 }: IProps) {
   const [dropdown, setDropdown] = useUncontrolled<boolean>({
     value: display,
@@ -63,6 +65,7 @@ export function Dropdown({
                 setDropdown(!dropdown);
               }}
             />
+            {handleDelete && <X size={10} onClick={() => handleDelete()} />}
           </DropdownHeadBottom>
         ) : null}
       </DropdownHead>

@@ -32,9 +32,10 @@ export function Func({
     }));
   }
 
-  function handleData(statement: IData, index: number) {
+  function handleData(index: number, data?: IData) {
     let statements = [...func.statements];
-    statements[index] = statement;
+    if (data === undefined) statements.splice(index, 1);
+    else statements[index] = data;
     setFunc((prev) => ({
       ...prev,
       statements,
@@ -63,7 +64,7 @@ export function Func({
           <Data
             key={i}
             data={statement}
-            handleData={(value) => handleData(value, i)}
+            handleData={(value) => handleData(i, value)}
           />
         ))}
         <div style={{ cursor: "pointer" }} onClick={addStatement}>
