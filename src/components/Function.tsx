@@ -66,7 +66,9 @@ export function Func({
             handleData={(value) => handleData(value, i)}
           />
         ))}
-        <div onClick={addStatement}>+</div>
+        <div style={{ cursor: "pointer" }} onClick={addStatement}>
+          +
+        </div>
       </FunctionBody>
       <div>{"}"}</div>
     </FunctionWrapper>

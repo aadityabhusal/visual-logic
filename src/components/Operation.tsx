@@ -2,7 +2,7 @@ import { useState } from "react";
 import styled from "styled-components";
 import { IData } from "../lib/types";
 import { createDataResult } from "../lib/utils";
-import { Play } from "@styled-icons/fa-solid";
+import { Play, X } from "@styled-icons/fa-solid";
 import { Data, DropdownOption, DropdownOptions } from "./Data";
 import { Dropdown } from "./Dropdown";
 
@@ -53,27 +53,28 @@ export function Operation({
     );
   }
 
-  // @todo: Need run this function to re-create data result when previous values are updated
-  function handleSelectedMethod(value?: IData) {
-    let result = value || createDataResult(data);
-    if (result && data.selectedMethod)
+  function handleSelectedMethod(value?: IData, remove?: boolean) {
+    setDropdown(false);
+    let result = remove ? undefined : value || createDataResult(data);
+    if (data.selectedMethod) {
       handleData({
         ...data,
         selectedMethod: { ...data.selectedMethod, result },
       });
-    setDropdown(false);
+    }
   }
 
   return (
     <OperationWrapper>
       <Dropdown
         hoverContent={
-          data.selectedMethod && !data.selectedMethod.result ? (
-            <Play
+          data.selectedMethod?.result ? (
+            <X
               size={10}
-              onClick={(e) => handleSelectedMethod()}
-              style={{ marginLeft: "auto", cursor: "pointer" }}
+              onClick={() => handleSelectedMethod(undefined, true)}
             />
+          ) : data.selectedMethod ? (
+            <Play size={10} onClick={(e) => handleSelectedMethod()} />
           ) : null
         }
         head={
