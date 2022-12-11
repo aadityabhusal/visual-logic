@@ -1,15 +1,16 @@
 import { TypeMapper } from "../../lib/data";
 import styled from "styled-components";
-import { IData } from "../../lib/types";
+import { IData, IFunction } from "../../lib/types";
 import { Data } from "../Data";
 import { createData } from "../../lib/utils";
 
 export interface IArrayInput {
   data: IData;
   handleData: (data: IData) => void;
+  context: IFunction["context"];
 }
 
-export function ArrayInput({ data, handleData }: IArrayInput) {
+export function ArrayInput({ data, handleData, context }: IArrayInput) {
   function addToArray() {
     Array.isArray(data.value) &&
       handleData({
@@ -44,6 +45,7 @@ export function ArrayInput({ data, handleData }: IArrayInput) {
                 <Data
                   data={item}
                   handleData={(val, remove) => handleUpdate(val, i, remove)}
+                  context={context}
                 />
                 {i < arr.length - 1 ? <span>{", "}</span> : null}
               </div>

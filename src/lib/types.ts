@@ -30,7 +30,7 @@ export interface IFunction {
   entityType: "function";
   name: string;
   parameter: IData[];
-  context: Record<string, any>; // global and local context
+  context: Record<string, IData>;
   statements: IData[];
   return?: IData;
   handler?: (...args: IData[]) => IData; // handler optional for function
@@ -38,6 +38,6 @@ export interface IFunction {
 
 export interface IStore {
   functions: Record<string, IFunction>;
-  context: Record<string, any>;
+  context?: IFunction["context"];
   setFunction: (id: string, func: IFunction) => void;
 }

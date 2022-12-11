@@ -65,6 +65,7 @@ export function Func({
             key={i}
             data={statement}
             handleData={(value, remove) => handleData(i, value, remove)}
+            context={func.context}
           />
         ))}
         <div style={{ cursor: "pointer" }} onClick={addStatement}>

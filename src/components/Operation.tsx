@@ -1,6 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { IData } from "../lib/types";
+import { IData, IFunction } from "../lib/types";
 import { createDataResult } from "../lib/utils";
 import { Play } from "@styled-icons/fa-solid";
 import { Data, DropdownOption, DropdownOptions } from "./Data";
@@ -10,9 +10,11 @@ import { operationMethods } from "../lib/methods";
 export function Operation({
   data,
   handleData,
+  context,
 }: {
   data: IData;
   handleData: (data: IData) => void;
+  context: IFunction["context"];
 }) {
   const [dropdown, setDropdown] = useState(false);
 
@@ -89,6 +91,7 @@ export function Operation({
                 <Data
                   data={item}
                   handleData={(val) => val && handleParameter(val, i)}
+                  context={context}
                 />
                 {i < arr.length - 1 ? <span>{", "}</span> : null}
               </span>
@@ -122,6 +125,7 @@ export function Operation({
         <Operation
           data={data.selectedMethod.result}
           handleData={(value) => handleSelectedMethod(value)}
+          context={context}
         />
       ) : null}
     </OperationWrapper>

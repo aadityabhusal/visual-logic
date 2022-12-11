@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { Equals, NotEqual, Play } from "@styled-icons/fa-solid";
 import { TypeMapper } from "../lib/data";
 import { operationMethods } from "../lib/methods";
-import { IData, IType } from "../lib/types";
+import { IData, IFunction, IType } from "../lib/types";
 import { Dropdown } from "./Dropdown";
 import { ArrayInput } from "./Input/ArrayInput";
 import { Input } from "./Input/Input";
@@ -14,9 +14,10 @@ import { createData } from "../lib/utils";
 interface IProps {
   data: IData;
   handleData: (data: IData, remove?: boolean) => void;
+  context: IFunction["context"];
 }
 
-export function Data({ data, handleData }: IProps) {
+export function Data({ data, handleData, context }: IProps) {
   const [dropdown, setDropdown] = useState(false);
 
   function handleDropdown(value: keyof IType) {
@@ -80,9 +81,17 @@ export function Data({ data, handleData }: IProps) {
         head={
           <>
             {data.type === "array" ? (
-              <ArrayInput data={data} handleData={handleData} />
+              <ArrayInput
+                data={data}
+                handleData={handleData}
+                context={context}
+              />
             ) : data.value instanceof Map ? (
-              <ObjectInput data={data} handleData={handleData} />
+              <ObjectInput
+                data={data}
+                handleData={handleData}
+                context={context}
+              />
             ) : (
               <Input data={data} handleData={handleData} />
             )}
@@ -99,10 +108,18 @@ export function Data({ data, handleData }: IProps) {
               {item}
             </DropdownOption>
           ))}
+          <hr />
+          {Object.entries(context).map(([key, value]) => (
+            <DropdownOption>{key}</DropdownOption>
+          ))}
         </DropdownOptions>
       </Dropdown>
       {data.methods.length ? (
-        <Operation data={data} handleData={(data) => handleData(data)} />
+        <Operation
+          data={data}
+          handleData={(data) => handleData(data)}
+          context={context}
+        />
       ) : null}
     </DataWrapper>
   );
