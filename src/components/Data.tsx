@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { Equals, NotEqual, Play } from "@styled-icons/fa-solid";
 import { TypeMapper } from "../lib/data";
 import { operationMethods } from "../lib/methods";
-import { IData, IFunction, IType } from "../lib/types";
+import { IContextProps, IData, IType } from "../lib/types";
 import { Dropdown } from "./Dropdown";
 import { ArrayInput } from "./Input/ArrayInput";
 import { Input } from "./Input/Input";
@@ -14,7 +14,7 @@ import { createData } from "../lib/utils";
 interface IProps {
   data: IData;
   handleData: (data: IData, remove?: boolean) => void;
-  context: IFunction["context"];
+  context: IContextProps;
 }
 
 export function Data({ data, handleData, context }: IProps) {
@@ -109,9 +109,11 @@ export function Data({ data, handleData, context }: IProps) {
             </DropdownOption>
           ))}
           <hr />
-          {Object.entries(context).map(([key, value]) => (
-            <DropdownOption>{key}</DropdownOption>
-          ))}
+          {/* {context.statements.map(([key, value]) =>
+            data.id !== key ? (
+              <DropdownOption key={key}>{value}</DropdownOption>
+            ) : null
+          )} */}
         </DropdownOptions>
       </Dropdown>
       {data.methods.length ? (

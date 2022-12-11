@@ -30,14 +30,16 @@ export interface IFunction {
   entityType: "function";
   name: string;
   parameter: IData[];
-  context: Record<string, IData>;
   statements: IData[];
   return?: IData;
-  handler?: (...args: IData[]) => IData; // handler optional for function
+  handler?: (...args: IData[]) => IData;
 }
 
 export interface IStore {
-  functions: Record<string, IFunction>;
-  context?: IFunction["context"];
-  setFunction: (id: string, func: IFunction) => void;
+  functions: IFunction[];
+  setFunction: (func: IFunction, index: number) => void;
+}
+
+export interface IContextProps extends IFunction {
+  parent?: IContextProps;
 }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { IData, IFunction } from "../lib/types";
+import { IData, IContextProps } from "../lib/types";
 import { createDataResult } from "../lib/utils";
 import { Play } from "@styled-icons/fa-solid";
 import { Data, DropdownOption, DropdownOptions } from "./Data";
@@ -14,7 +14,7 @@ export function Operation({
 }: {
   data: IData;
   handleData: (data: IData) => void;
-  context: IFunction["context"];
+  context: IContextProps;
 }) {
   const [dropdown, setDropdown] = useState(false);
 

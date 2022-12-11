@@ -1,7 +1,7 @@
 import { Play } from "@styled-icons/fa-solid";
 import { useState } from "react";
 import styled from "styled-components";
-import { IData, IFunction } from "../lib/types";
+import { IContextProps, IData, IFunction } from "../lib/types";
 import { createData } from "../lib/utils";
 import { Data } from "./Data";
 import { Input } from "./Input/Input";
@@ -9,9 +9,11 @@ import { Input } from "./Input/Input";
 export function Func({
   funcData,
   handleFunc,
+  context,
 }: {
   funcData: IFunction;
   handleFunc(fn: IFunction): void;
+  context: IContextProps;
 }) {
   const [func, setFunc] = useState<IFunction>(funcData);
 
@@ -65,7 +67,7 @@ export function Func({
             key={i}
             data={statement}
             handleData={(value, remove) => handleData(i, value, remove)}
-            context={func.context}
+            context={{ ...func, parent: context }}
           />
         ))}
         <div style={{ cursor: "pointer" }} onClick={addStatement}>

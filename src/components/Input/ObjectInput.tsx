@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { TypeMapper } from "../../lib/data";
-import { IData, IFunction } from "../../lib/types";
+import { IData, IContextProps } from "../../lib/types";
 import { createData } from "../../lib/utils";
 import { Data } from "../Data";
 import { Input } from "./Input";
@@ -8,7 +8,7 @@ import { Input } from "./Input";
 export interface IObjectInput {
   data: IData;
   handleData: (data: IData) => void;
-  context: IFunction["context"];
+  context: IContextProps;
 }
 export function ObjectInput({ data, handleData, context }: IObjectInput) {
   function addToObject() {

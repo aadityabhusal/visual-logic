@@ -16,12 +16,9 @@ export function createData<T extends keyof IType>(
   };
 }
 
-export function createFunction(params?: {
-  context?: IFunction["context"];
-}): IFunction {
+export function createFunction(): IFunction {
   return {
     id: nanoid(),
-    context: params?.context || {},
     entityType: "function",
     handler: undefined,
     name: "",

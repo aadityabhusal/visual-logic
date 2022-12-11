@@ -1,5 +1,6 @@
 import { Func } from "./components/Function";
 import { useStore } from "./lib/store";
+import { createFunction } from "./lib/utils";
 
 function App() {
   const [func, setFunc] = useStore((state) => [
@@ -11,11 +12,12 @@ function App() {
       <h1 style={{ textAlign: "center", marginBottom: "1rem" }}>
         Visual Logic
       </h1>
-      {Object.entries(func).map(([key, value]) => (
+      {func.map((value, i) => (
         <Func
-          key={key}
+          key={i}
           funcData={value}
-          handleFunc={(fn) => setFunc(key, fn)}
+          handleFunc={(fn) => setFunc(fn, i)}
+          context={createFunction()}
         />
       ))}
     </div>

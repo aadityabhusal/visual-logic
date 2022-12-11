@@ -1,13 +1,13 @@
 import { TypeMapper } from "../../lib/data";
 import styled from "styled-components";
-import { IData, IFunction } from "../../lib/types";
+import { IData, IContextProps } from "../../lib/types";
 import { Data } from "../Data";
 import { createData } from "../../lib/utils";
 
 export interface IArrayInput {
   data: IData;
   handleData: (data: IData) => void;
-  context: IFunction["context"];
+  context: IContextProps;
 }
 
 export function ArrayInput({ data, handleData, context }: IArrayInput) {

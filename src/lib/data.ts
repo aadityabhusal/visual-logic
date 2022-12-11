@@ -1,5 +1,4 @@
-import { IFunction, IType } from "./types";
-import { createData } from "./utils";
+import { IType } from "./types";
 
 export const TypeMapper: {
   [T in keyof IType]: { defaultValue: IType[T] };
@@ -16,8 +15,4 @@ export const TypeMapper: {
   object: {
     defaultValue: new Map(),
   },
-};
-
-export const globalContext: IFunction["context"] = {
-  browser: createData("string", "firefox"),
 };
