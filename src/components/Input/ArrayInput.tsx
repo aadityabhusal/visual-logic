@@ -22,10 +22,11 @@ export function ArrayInput({ data, handleData }: IArrayInput) {
       });
   }
 
-  function handleUpdate(result: IData, index: number) {
+  function handleUpdate(result: IData, index: number, remove?: boolean) {
     if (Array.isArray(data.value)) {
       let resList = [...data.value];
-      resList[index] = result;
+      if (remove) resList.splice(index, 1);
+      else resList[index] = result;
       handleData({
         ...data,
         type: "array",
@@ -40,7 +41,10 @@ export function ArrayInput({ data, handleData }: IArrayInput) {
         ? data.value.map((item, i, arr) => {
             return (
               <div key={i} style={{ display: "flex" }}>
-                <Data data={item} handleData={(val) => handleUpdate(val, i)} />
+                <Data
+                  data={item}
+                  handleData={(val, remove) => handleUpdate(val, i, remove)}
+                />
                 {i < arr.length - 1 ? <span>{", "}</span> : null}
               </div>
             );

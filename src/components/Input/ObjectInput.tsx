@@ -25,9 +25,11 @@ export function ObjectInput({ data, handleData }: IObjectInput) {
   function handleUpdate(
     dataArray: [string, IData][],
     index: number,
-    result: IData
+    result: IData,
+    remove?: boolean
   ) {
-    dataArray[index] = [dataArray[index][0], result];
+    if (remove) dataArray.splice(index, 1);
+    else dataArray[index] = [dataArray[index][0], result];
     handleData({
       ...data,
       type: "object",
@@ -68,7 +70,9 @@ export function ObjectInput({ data, handleData }: IObjectInput) {
                 <span>:</span>
                 <Data
                   data={value}
-                  handleData={(val) => handleUpdate(arr, i, val)}
+                  handleData={(val, remove) =>
+                    handleUpdate(arr, i, val, remove)
+                  }
                 />
                 {i < arr.length - 1 ? <span>{", "}</span> : null}
               </div>

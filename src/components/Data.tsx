@@ -13,7 +13,7 @@ import { createData } from "../lib/utils";
 
 interface IProps {
   data: IData;
-  handleData: (data?: IData) => void;
+  handleData: (data: IData, remove?: boolean) => void;
 }
 
 export function Data({ data, handleData }: IProps) {
@@ -64,7 +64,7 @@ export function Data({ data, handleData }: IProps) {
       <Dropdown
         display={dropdown}
         setDisplay={setDropdown}
-        handleDelete={handleData}
+        handleDelete={() => handleData(data, true)}
         hoverContent={
           <>
             {data.variable === undefined ? (

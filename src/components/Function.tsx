@@ -32,9 +32,9 @@ export function Func({
     }));
   }
 
-  function handleData(index: number, data?: IData) {
+  function handleData(index: number, data: IData, remove?: boolean) {
     let statements = [...func.statements];
-    if (data === undefined) statements.splice(index, 1);
+    if (remove) statements.splice(index, 1);
     else statements[index] = data;
     setFunc((prev) => ({
       ...prev,
@@ -64,7 +64,7 @@ export function Func({
           <Data
             key={i}
             data={statement}
-            handleData={(value) => handleData(i, value)}
+            handleData={(value, remove) => handleData(i, value, remove)}
           />
         ))}
         <div style={{ cursor: "pointer" }} onClick={addStatement}>
