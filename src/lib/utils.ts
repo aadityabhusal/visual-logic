@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { IData, IFunction, IMethod, IType } from "./types";
+import { IContextProps, IData, IFunction, IMethod, IType } from "./types";
 
 export function createData<T extends keyof IType>(
   type: T,
@@ -34,6 +34,21 @@ export function createDataResult<T extends keyof IType>(
 ): IData | undefined {
   let method = selectedMethod || data.selectedMethod;
   return method?.handler(data, ...method.parameters);
+}
+
+export function getValueFromContext({
+  id,
+  context,
+}: {
+  id: string;
+  context: IContextProps;
+}): IData | undefined {
+  let value = context.statements.find((statement) => statement.id === id);
+  if (!value && context.parent) {
+    return getValueFromContext({ id, context: context.parent });
+  } else if (value?.entityType === "variable") {
+    return getValueFromContext({ id: value.referenceId, context });
+  } else if (value?.entityType === "data") return value;
 }
 
 /*
