@@ -11,7 +11,6 @@ export function createData<T extends keyof IType>(
     variable: undefined,
     type: type,
     value: value,
-    methods: [],
     selectedMethod: undefined,
   };
 }

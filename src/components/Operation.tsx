@@ -21,7 +21,7 @@ export function Operation({
   function handleDropdown(name: string, index: number) {
     setDropdown(false);
     if (data.selectedMethod?.name !== name) {
-      let method = data.methods[index];
+      let method = operationMethods[data.type][index];
       let result = createDataResult(data, method);
       handleData({
         ...data,
@@ -60,13 +60,15 @@ export function Operation({
   function addResultMethod() {
     setDropdown(false);
     if (!data.selectedMethod?.result) return;
+    const resultSelectedMethod =
+      operationMethods[data.selectedMethod?.result.type][0];
     handleData({
       ...data,
       selectedMethod: {
         ...data.selectedMethod,
         result: {
           ...data.selectedMethod.result,
-          methods: operationMethods[data.selectedMethod.result.type],
+          selectedMethod: resultSelectedMethod,
         },
       },
     });
@@ -76,9 +78,8 @@ export function Operation({
     <OperationWrapper>
       <Dropdown
         hoverContent={
-          data.selectedMethod &&
-          !data.selectedMethod?.result?.methods.length ? (
-            <Play size={10} onClick={(e) => addResultMethod()} />
+          !data.selectedMethod?.result?.selectedMethod ? (
+            <Play size={10} onClick={addResultMethod} />
           ) : null
         }
         head={
@@ -101,16 +102,10 @@ export function Operation({
         }
         display={dropdown}
         setDisplay={setDropdown}
-        handleDelete={() =>
-          handleData({
-            ...data,
-            methods: [],
-            selectedMethod: undefined,
-          })
-        }
+        handleDelete={() => handleData({ ...data, selectedMethod: undefined })}
       >
         <DropdownOptions>
-          {data.methods.map((method, i) => (
+          {operationMethods[data.type].map((method, i) => (
             <DropdownOption
               key={method.name}
               onClick={(e) => handleDropdown(method.name, i)}
@@ -121,7 +116,7 @@ export function Operation({
           ))}
         </DropdownOptions>
       </Dropdown>
-      {data.selectedMethod?.result?.methods.length ? (
+      {data.selectedMethod?.result?.selectedMethod ? (
         <Operation
           data={data.selectedMethod.result}
           handleData={(value) => handleSelectedMethod(value)}

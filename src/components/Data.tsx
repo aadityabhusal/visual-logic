@@ -9,7 +9,7 @@ import { ArrayInput } from "./Input/ArrayInput";
 import { Input } from "./Input/Input";
 import { ObjectInput } from "./Input/ObjectInput";
 import { Operation } from "./Operation";
-import { createData } from "../lib/utils";
+import { createData, createDataResult } from "../lib/utils";
 
 interface IProps {
   data: IData;
@@ -28,18 +28,15 @@ export function Data({ data, handleData, context }: IProps) {
         ...data,
         type: value,
         value: inputDefaultValue,
-        methods: [],
         selectedMethod: undefined,
       });
   }
 
   function addMethod() {
-    handleData({
-      ...data,
-      methods: operationMethods[data.type],
-      selectedMethod: data.selectedMethod,
-    });
     setDropdown(false);
+    const selectedMethod = operationMethods[data.type][0];
+    selectedMethod.result = createDataResult(data, selectedMethod);
+    handleData({ ...data, selectedMethod });
   }
 
   function handleVariable(value?: string, remove?: boolean) {
@@ -73,9 +70,7 @@ export function Data({ data, handleData, context }: IProps) {
             ) : (
               <NotEqual size={10} onClick={() => handleVariable("", true)} />
             )}
-            {!data.methods.length && (
-              <Play size={10} onClick={() => addMethod()} />
-            )}
+            {!data.selectedMethod && <Play size={10} onClick={addMethod} />}
           </>
         }
         head={
@@ -108,15 +103,9 @@ export function Data({ data, handleData, context }: IProps) {
               {item}
             </DropdownOption>
           ))}
-          <hr />
-          {/* {context.statements.map(([key, value]) =>
-            data.id !== key ? (
-              <DropdownOption key={key}>{value}</DropdownOption>
-            ) : null
-          )} */}
         </DropdownOptions>
       </Dropdown>
-      {data.methods.length ? (
+      {data.selectedMethod ? (
         <Operation
           data={data}
           handleData={(data) => handleData(data)}

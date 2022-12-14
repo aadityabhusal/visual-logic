@@ -11,7 +11,6 @@ export interface IData<T extends keyof IType = keyof IType> {
   variable?: string;
   type: T;
   value: IType[T];
-  methods: IMethod[];
   selectedMethod?: IMethod;
 }
 
@@ -30,7 +29,7 @@ export interface IFunction {
   entityType: "function";
   name: string;
   parameter: IData[];
-  statements: IData[];
+  statements: (IData | IVariable)[];
   return?: IData;
   handler?: (...args: IData[]) => IData;
 }
@@ -42,4 +41,13 @@ export interface IStore {
 
 export interface IContextProps extends IFunction {
   parent?: IContextProps;
+}
+
+export interface IVariable {
+  id: string;
+  entityType: "variable";
+  name: string;
+  variable?: string;
+  referenceId: string;
+  selectedMethod?: IMethod;
 }
