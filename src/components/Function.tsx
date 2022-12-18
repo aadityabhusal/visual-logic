@@ -2,7 +2,7 @@ import { Play } from "@styled-icons/fa-solid";
 import { useState } from "react";
 import styled from "styled-components";
 import { IContextProps, IData, IFunction } from "../lib/types";
-import { createData } from "../lib/utils";
+import { createData, getDataFromVariable } from "../lib/utils";
 import { Data } from "./Data";
 import { Input } from "./Input/Input";
 
@@ -65,7 +65,11 @@ export function Func({
         {func.statements.map((statement, i) => (
           <Data
             key={i}
-            data={statement}
+            data={
+              statement.entityType === "variable"
+                ? getDataFromVariable(statement, { ...func, parent: context })
+                : statement
+            }
             handleData={(value, remove) => handleData(i, value, remove)}
             context={{ ...func, parent: context }}
           />

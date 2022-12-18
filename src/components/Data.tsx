@@ -10,6 +10,7 @@ import { Input } from "./Input/Input";
 import { ObjectInput } from "./Input/ObjectInput";
 import { Operation } from "./Operation";
 import { createData, createDataResult } from "../lib/utils";
+import { nanoid } from "nanoid";
 
 interface IProps {
   data: IData;
@@ -19,6 +20,9 @@ interface IProps {
 
 export function Data({ data, handleData, context }: IProps) {
   const [dropdown, setDropdown] = useState(false);
+  const dataIndex = context.statements.findIndex(
+    (statement) => statement.id === data.id
+  );
 
   function handleDropdown(value: keyof IType) {
     setDropdown(false);
@@ -39,9 +43,21 @@ export function Data({ data, handleData, context }: IProps) {
     handleData({ ...data, selectedMethod });
   }
 
-  function handleVariable(value?: string, remove?: boolean) {
+  function createVariable(value?: string, remove?: boolean) {
     setDropdown(false);
     handleData({ ...data, variable: remove ? undefined : value || "" });
+  }
+
+  function selectVariable(variable: IData) {
+    handleData({
+      id: nanoid(),
+      type: variable.type,
+      value: variable.value,
+      variable: undefined,
+
+      entityType: "variable",
+      referenceId: variable.id,
+    });
   }
 
   return (
@@ -52,7 +68,7 @@ export function Data({ data, handleData, context }: IProps) {
           <div>
             <Input
               data={createData("string", data.variable)}
-              handleData={(value) => handleVariable(value.value as string)}
+              handleData={(value) => createVariable(value.value as string)}
               noQuotes
             />
           </div>
@@ -66,31 +82,35 @@ export function Data({ data, handleData, context }: IProps) {
         hoverContent={
           <>
             {data.variable === undefined ? (
-              <Equals size={10} onClick={() => handleVariable()} />
+              <Equals size={10} onClick={() => createVariable()} />
             ) : (
-              <NotEqual size={10} onClick={() => handleVariable("", true)} />
+              <NotEqual size={10} onClick={() => createVariable("", true)} />
             )}
             {!data.selectedMethod && <Play size={10} onClick={addMethod} />}
           </>
         }
         head={
-          <>
-            {data.type === "array" ? (
-              <ArrayInput
-                data={data}
-                handleData={handleData}
-                context={context}
-              />
-            ) : data.value instanceof Map ? (
-              <ObjectInput
-                data={data}
-                handleData={handleData}
-                context={context}
-              />
-            ) : (
-              <Input data={data} handleData={handleData} />
-            )}
-          </>
+          data.entityType === "variable" ? (
+            data.name
+          ) : (
+            <>
+              {data.type === "array" ? (
+                <ArrayInput
+                  data={data}
+                  handleData={handleData}
+                  context={context}
+                />
+              ) : data.value instanceof Map ? (
+                <ObjectInput
+                  data={data}
+                  handleData={handleData}
+                  context={context}
+                />
+              ) : (
+                <Input data={data} handleData={handleData} />
+              )}
+            </>
+          )
         }
       >
         <DropdownOptions>
@@ -103,6 +123,17 @@ export function Data({ data, handleData, context }: IProps) {
               {item}
             </DropdownOption>
           ))}
+          <hr />
+          {context.statements.map((statement, i) =>
+            i < dataIndex && statement.variable ? (
+              <DropdownOption
+                key={statement.id}
+                onClick={() => selectVariable(statement)}
+              >
+                {statement.variable}
+              </DropdownOption>
+            ) : null
+          )}
         </DropdownOptions>
       </Dropdown>
       {data.selectedMethod ? (

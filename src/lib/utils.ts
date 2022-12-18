@@ -39,15 +39,28 @@ export function getValueFromContext({
   id,
   context,
 }: {
-  id: string;
+  id?: string;
   context: IContextProps;
 }): IData | undefined {
   let value = context.statements.find((statement) => statement.id === id);
   if (!value && context.parent) {
     return getValueFromContext({ id, context: context.parent });
-  } else if (value?.entityType === "variable") {
-    return getValueFromContext({ id: value.referenceId, context });
-  } else if (value?.entityType === "data") return value;
+  } else return value;
+}
+
+export function getDataFromVariable(variable: IData, context: IContextProps) {
+  let data = getValueFromContext({
+    id: variable.referenceId,
+    context,
+  });
+  return {
+    ...variable,
+    name: data?.variable,
+    type: data?.type || variable.type,
+    value: data?.value || variable.value,
+    selectedMethod:
+      variable.type === data?.type ? variable.selectedMethod : undefined,
+  } as IData;
 }
 
 /*

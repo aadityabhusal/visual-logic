@@ -7,11 +7,14 @@ export type IType = {
 
 export interface IData<T extends keyof IType = keyof IType> {
   id: string;
-  entityType: "data";
+  entityType: "data" | "variable";
   variable?: string;
   type: T;
   value: IType[T];
   selectedMethod?: IMethod;
+  name?: string;
+  referenceId?: string;
+  returnValue?: keyof IType;
 }
 
 // Can make function and method into a single type because of their similarity
@@ -29,7 +32,7 @@ export interface IFunction {
   entityType: "function";
   name: string;
   parameter: IData[];
-  statements: (IData | IVariable)[];
+  statements: IData[];
   return?: IData;
   handler?: (...args: IData[]) => IData;
 }
@@ -41,13 +44,4 @@ export interface IStore {
 
 export interface IContextProps extends IFunction {
   parent?: IContextProps;
-}
-
-export interface IVariable {
-  id: string;
-  entityType: "variable";
-  name: string;
-  variable?: string;
-  referenceId: string;
-  selectedMethod?: IMethod;
 }
