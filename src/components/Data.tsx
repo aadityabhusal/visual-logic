@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { Equals, NotEqual, Play } from "@styled-icons/fa-solid";
 import { TypeMapper } from "../lib/data";
@@ -10,7 +10,6 @@ import { Input } from "./Input/Input";
 import { ObjectInput } from "./Input/ObjectInput";
 import { Operation } from "./Operation";
 import { createData, createDataResult } from "../lib/utils";
-import { nanoid } from "nanoid";
 
 interface IProps {
   data: IData;
@@ -50,7 +49,7 @@ export function Data({ data, handleData, context }: IProps) {
 
   function selectVariable(variable: IData) {
     handleData({
-      id: nanoid(),
+      id: data.id,
       type: variable.type,
       value: variable.value,
       variable: undefined,
@@ -59,6 +58,10 @@ export function Data({ data, handleData, context }: IProps) {
       referenceId: variable.id,
     });
   }
+
+  useEffect(() => {
+    handleData(data);
+  }, [data?.variable, data?.type]);
 
   return (
     <DataWrapper>

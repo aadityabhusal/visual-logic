@@ -58,6 +58,7 @@ export function getDataFromVariable(variable: IData, context: IContextProps) {
     name: data?.variable,
     type: data?.type || variable.type,
     value: data?.value || variable.value,
+    // Do not remove method here, instead show error for incompatible methods
     selectedMethod:
       variable.type === data?.type ? variable.selectedMethod : undefined,
   } as IData;
