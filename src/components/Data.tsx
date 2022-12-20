@@ -26,11 +26,12 @@ export function Data({ data, handleData, context }: IProps) {
   function handleDropdown(value: keyof IType) {
     setDropdown(false);
     const inputDefaultValue = TypeMapper[value].defaultValue;
+    let returnVal = { type: value, value: inputDefaultValue };
     value !== data.type &&
       handleData({
         ...data,
-        type: value,
-        value: inputDefaultValue,
+        ...returnVal,
+        return: returnVal,
         selectedMethod: undefined,
       });
   }
@@ -38,8 +39,13 @@ export function Data({ data, handleData, context }: IProps) {
   function addMethod() {
     setDropdown(false);
     const selectedMethod = operationMethods[data.type][0];
-    selectedMethod.result = createDataResult(data, selectedMethod);
-    handleData({ ...data, selectedMethod });
+    let returnVal = createDataResult(data, selectedMethod);
+    if (!returnVal) return;
+    handleData({
+      ...data,
+      selectedMethod: { ...selectedMethod, result: returnVal },
+      return: returnVal.return,
+    });
   }
 
   function createVariable(value?: string, remove?: boolean) {
@@ -50,12 +56,11 @@ export function Data({ data, handleData, context }: IProps) {
   function selectVariable(variable: IData) {
     handleData({
       id: data.id,
-      type: variable.type,
-      value: variable.value,
-      variable: undefined,
-
       entityType: "variable",
+      variable: undefined,
       referenceId: variable.id,
+      return: variable.return,
+      ...variable.return,
     });
   }
 

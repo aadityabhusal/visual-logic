@@ -13,8 +13,11 @@ export interface IData<T extends keyof IType = keyof IType> {
   value: IType[T];
   selectedMethod?: IMethod;
   name?: string;
+  return: {
+    type: T;
+    value: IType[T];
+  };
   referenceId?: string;
-  returnValue?: keyof IType;
 }
 
 // Can make function and method into a single type because of their similarity
@@ -45,3 +48,9 @@ export interface IStore {
 export interface IContextProps extends IFunction {
   parent?: IContextProps;
 }
+
+/** Tasks
+ * - When the variable is used, its data value should be the result of the last operation
+ * - When the type of a variable changes the methods the methods should show error instead of getting removes
+ *    this will show user what has changed and what is wrong instead of doing things under the hood
+ */

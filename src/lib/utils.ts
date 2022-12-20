@@ -5,12 +5,13 @@ export function createData<T extends keyof IType>(
   type: T,
   value: IType[T]
 ): IData<T> {
+  let returnVal = { type: type, value: value };
   return {
     id: nanoid(),
     entityType: "data",
     variable: undefined,
-    type: type,
-    value: value,
+    return: returnVal,
+    ...returnVal,
     selectedMethod: undefined,
   };
 }
@@ -48,20 +49,24 @@ export function getValueFromContext({
   } else return value;
 }
 
-export function getDataFromVariable(variable: IData, context: IContextProps) {
+export function getDataFromVariable(
+  variable: IData,
+  context: IContextProps
+): IData {
   let data = getValueFromContext({
     id: variable.referenceId,
     context,
   });
+  let returnVal = { type: variable.type, value: variable.value };
   return {
     ...variable,
     name: data?.variable,
-    type: data?.type || variable.type,
-    value: data?.value || variable.value,
+    return: data?.return || returnVal,
+    ...(data?.return || returnVal),
     // Do not remove method here, instead show error for incompatible methods
     selectedMethod:
-      variable.type === data?.type ? variable.selectedMethod : undefined,
-  } as IData;
+      variable.type === data?.return.type ? variable.selectedMethod : undefined,
+  };
 }
 
 /*
