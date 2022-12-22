@@ -20,17 +20,18 @@ export function Operation({
 
   function handleDropdown(name: string, index: number) {
     setDropdown(false);
-    if (data.selectedMethod?.name !== name) {
-      let method = operationMethods[data.type][index];
-      let result = createDataResult(data, method);
-      handleData({
-        ...data,
-        selectedMethod: method && {
-          ...method,
-          result,
-        },
-      });
-    }
+    if (data.selectedMethod?.name === name) return;
+    let method = operationMethods[data.type][index];
+    let returnVal = createDataResult(data, method);
+    if (!returnVal) return;
+    handleData({
+      ...data,
+      return: returnVal.return,
+      selectedMethod: method && {
+        ...method,
+        result: returnVal,
+      },
+    });
   }
 
   function handleParameter(item: IData, index: number) {
@@ -48,11 +49,13 @@ export function Operation({
 
   function handleSelectedMethod(value?: IData) {
     setDropdown(false);
-    let result = value || createDataResult(data);
+    let returnVal = value || createDataResult(data);
+    if (!returnVal) return;
     if (data.selectedMethod) {
       handleData({
         ...data,
-        selectedMethod: { ...data.selectedMethod, result },
+        return: returnVal.return,
+        selectedMethod: { ...data.selectedMethod, result: returnVal },
       });
     }
   }
@@ -62,13 +65,18 @@ export function Operation({
     if (!data.selectedMethod?.result) return;
     const resultSelectedMethod =
       operationMethods[data.selectedMethod?.result.type][0];
+    const resultReturnVal = createDataResult(data, resultSelectedMethod);
     handleData({
       ...data,
       selectedMethod: {
         ...data.selectedMethod,
         result: {
           ...data.selectedMethod.result,
-          selectedMethod: resultSelectedMethod,
+          ...resultReturnVal?.return,
+          selectedMethod: {
+            ...resultSelectedMethod,
+            result: resultReturnVal,
+          },
         },
       },
     });
