@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import { TypeMapper } from "../../lib/data";
+import { theme } from "../../lib/theme";
 import { IData, IContextProps } from "../../lib/types";
 import { createData } from "../../lib/utils";
 import { Data } from "../Data";
@@ -59,7 +60,7 @@ export function ObjectInput({ data, handleData, context }: IObjectInput) {
 
   return (
     <ObjectContainer>
-      <span>{"{"}</span>
+      <span style={{ color: theme.color.method }}>{"{"}</span>
       {data.value instanceof Map
         ? Array.from(data.value).map(([key, value], i, arr) => {
             return (
@@ -67,6 +68,8 @@ export function ObjectInput({ data, handleData, context }: IObjectInput) {
                 <Input
                   data={createData("string", key)}
                   handleData={(val) => handleKeyUpdate(arr, i, val)}
+                  color={theme.color.property}
+                  noQuotes
                 />
                 <span>:</span>
                 <Data
@@ -84,7 +87,7 @@ export function ObjectInput({ data, handleData, context }: IObjectInput) {
       <div onClick={addToObject} style={{ cursor: "pointer" }}>
         +
       </div>
-      <span>{"}"}</span>
+      <span style={{ color: theme.color.method }}>{"}"}</span>
     </ObjectContainer>
   );
 }

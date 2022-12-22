@@ -1,14 +1,16 @@
 import { useRef } from "react";
 import styled from "styled-components";
+import { theme } from "../../lib/theme";
 import { IData } from "../../lib/types";
 
 export interface IInput {
   data: IData;
   handleData: (data: IData) => void;
   noQuotes?: boolean;
+  color?: string;
 }
 
-export function Input({ data, handleData, noQuotes }: IInput) {
+export function Input({ data, handleData, noQuotes, color }: IInput) {
   const textRef = useRef<HTMLDivElement>(null);
   const inputData = {
     quote: !noQuotes && data.type === "string",
@@ -25,6 +27,7 @@ export function Input({ data, handleData, noQuotes }: IInput) {
         value={data.value}
         placeholder={inputData.placeholder}
         textWidth={inputData.text.toString() ? textRef.current?.clientWidth : 0}
+        color={color}
         onChange={(e) =>
           handleData({
             ...data,
@@ -53,21 +56,23 @@ const InputWrapper = styled.div<{ quote?: boolean }>`
     position: absolute;
     top: 0;
     left: 0;
+    color: ${theme.color.string};
     content: ${({ quote }) => (quote ? "open-quote" : "")};
   }
   &::after {
     position: absolute;
     top: 0;
     right: 0;
+    color: ${theme.color.string};
     content: ${({ quote }) => (quote ? "close-quote" : "")};
   }
 `;
 
-const InputStyled = styled.input<{ textWidth?: number }>`
+const InputStyled = styled.input<{ textWidth?: number; color?: string }>`
   outline: none;
   background-color: inherit;
   border: none;
-  color: #eee;
+  color: ${({ color }) => color || theme.color.white};
   padding: 0;
   ${({ textWidth }) => `width: ${7 + (textWidth || 0)}px`};
 
@@ -78,6 +83,7 @@ const InputStyled = styled.input<{ textWidth?: number }>`
   }
 
   &[type="number"] {
+    color: ${theme.color.number};
     -moz-appearance: textfield;
   }
 `;

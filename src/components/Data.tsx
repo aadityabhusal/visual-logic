@@ -10,6 +10,7 @@ import { Input } from "./Input/Input";
 import { ObjectInput } from "./Input/ObjectInput";
 import { Operation } from "./Operation";
 import { createData, createDataResult } from "../lib/utils";
+import { theme } from "../lib/theme";
 
 interface IProps {
   data: IData;
@@ -72,11 +73,12 @@ export function Data({ data, handleData, context }: IProps) {
     <DataWrapper>
       {data.variable !== undefined ? (
         <>
-          <div>let</div>
+          <div style={{ color: theme.color.reserved }}>let</div>
           <div>
             <Input
               data={createData("string", data.variable)}
               handleData={(value) => createVariable(value.value as string)}
+              color={theme.color.variable}
               noQuotes
             />
           </div>
@@ -99,7 +101,7 @@ export function Data({ data, handleData, context }: IProps) {
         }
         head={
           data.entityType === "variable" ? (
-            data.name
+            <span style={{ color: theme.color.variable }}>{data.name}</span>
           ) : (
             <>
               {data.type === "array" ? (
@@ -115,7 +117,13 @@ export function Data({ data, handleData, context }: IProps) {
                   context={context}
                 />
               ) : (
-                <Input data={data} handleData={handleData} />
+                <Input
+                  data={data}
+                  handleData={handleData}
+                  color={
+                    theme.color[data.type === "number" ? "number" : "string"]
+                  }
+                />
               )}
             </>
           )

@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { IData, IContextProps } from "../../lib/types";
 import { Data } from "../Data";
 import { createData } from "../../lib/utils";
+import { theme } from "../../lib/theme";
 
 export interface IArrayInput {
   data: IData;
@@ -37,7 +38,7 @@ export function ArrayInput({ data, handleData, context }: IArrayInput) {
   }
   return (
     <ArrayContainer>
-      <span>{"["}</span>
+      <span style={{ color: theme.color.method }}>{"["}</span>
       {Array.isArray(data.value)
         ? data.value.map((item, i, arr) => {
             return (
@@ -55,7 +56,7 @@ export function ArrayInput({ data, handleData, context }: IArrayInput) {
       <div onClick={addToArray} style={{ cursor: "pointer" }}>
         +
       </div>
-      <span>{"]"}</span>
+      <span style={{ color: theme.color.method }}>{"]"}</span>
     </ArrayContainer>
   );
 }

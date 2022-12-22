@@ -6,6 +6,7 @@ import { Play } from "@styled-icons/fa-solid";
 import { Data, DropdownOption, DropdownOptions } from "./Data";
 import { Dropdown } from "./Dropdown";
 import { operationMethods } from "../lib/methods";
+import { theme } from "../lib/theme";
 
 export function Operation({
   data,
@@ -93,7 +94,9 @@ export function Operation({
         head={
           <>
             {"."}
-            {data.selectedMethod?.name || ".."}
+            <span style={{ color: theme.color.method }}>
+              {data.selectedMethod?.name || ".."}
+            </span>
             <span>{"("}</span>
             {data.selectedMethod?.parameters.map((item, i, arr) => (
               <span key={i} style={{ display: "flex" }}>

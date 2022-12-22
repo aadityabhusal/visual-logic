@@ -1,6 +1,7 @@
 import { Play } from "@styled-icons/fa-solid";
 import { useState } from "react";
 import styled from "styled-components";
+import { theme } from "../lib/theme";
 import { IContextProps, IData, IFunction } from "../lib/types";
 import { createData, getDataFromVariable } from "../lib/utils";
 import { Data } from "./Data";
@@ -57,6 +58,8 @@ export function Func({
           handleData={(data) =>
             handleFunctionProps("name", data.value as string)
           }
+          color={theme.color.variable}
+          noQuotes
         />
         <span>{"("}</span>
         <span>{") {"}</span>

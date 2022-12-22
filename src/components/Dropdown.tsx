@@ -2,6 +2,7 @@ import { ChevronDown, X } from "@styled-icons/fa-solid";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { useUncontrolled } from "../hooks/useUncontrolled";
+import { theme } from "../lib/theme";
 
 interface IProps {
   display?: boolean;
@@ -53,7 +54,7 @@ export function Dropdown({
           setMouseover(dropdown);
         }}
       >
-        <div style={{ display: "flex" }}>{head}</div>
+        <div style={{ display: "flex", alignItems: "center" }}>{head}</div>
         {mouseover ? (
           <DropdownHeadBottom>
             <div>{hoverContent}</div>
