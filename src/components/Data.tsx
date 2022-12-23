@@ -32,7 +32,10 @@ export function Data({ data, handleData, context }: IProps) {
       handleData({
         ...data,
         ...returnVal,
+        entityType: "data",
         return: returnVal,
+        referenceId: undefined,
+        name: undefined,
         selectedMethod: undefined,
       });
   }
@@ -58,7 +61,7 @@ export function Data({ data, handleData, context }: IProps) {
     handleData({
       id: data.id,
       entityType: "variable",
-      variable: undefined,
+      variable: data.variable,
       referenceId: variable.id,
       return: variable.return,
       ...variable.return,
@@ -134,17 +137,21 @@ export function Data({ data, handleData, context }: IProps) {
             <DropdownOption
               key={item}
               onClick={() => handleDropdown(item as keyof IType)}
-              selected={data.type === item}
+              selected={!data.referenceId && data.type === item}
             >
               {item}
             </DropdownOption>
           ))}
-          <hr />
+          <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
           {context.statements.map((statement, i) =>
             i < dataIndex && statement.variable ? (
               <DropdownOption
                 key={statement.id}
-                onClick={() => selectVariable(statement)}
+                onClick={() => {
+                  setDropdown(false);
+                  selectVariable(statement);
+                }}
+                selected={statement.id === data.referenceId}
               >
                 {statement.variable}
               </DropdownOption>
@@ -166,21 +173,23 @@ export function Data({ data, handleData, context }: IProps) {
 const DataWrapper = styled.div`
   position: relative;
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: 0.25rem;
 `;
 
 export const DropdownOptions = styled.div`
   cursor: pointer;
-  background-color: #fff;
-  color: #000;
+  background-color: ${theme.background.dropdown.default};
+  color: ${theme.color.white};
 `;
 
 export const DropdownOption = styled.div<{ selected?: boolean }>`
   font-size: 0.8rem;
   padding: 0.1rem 0.2rem;
-  background-color: ${({ selected }) => (selected ? "#bbb" : "inherit")};
+  background-color: ${({ selected }) =>
+    selected ? theme.background.dropdown.selected : "inherit"};
   &:hover {
-    background-color: #ddd;
+    background-color: ${theme.background.dropdown.hover};
   }
 `;

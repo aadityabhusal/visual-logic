@@ -1,5 +1,12 @@
 export const theme = {
-  background: "#1e1e1e",
+  background: {
+    editor: "#1e1e1e",
+    dropdown: {
+      default: "#252526",
+      hover: "#2a2d2e",
+      selected: "#04395e",
+    },
+  },
   color: {
     white: "#fafafa",
     reserved: "#569cd6",
@@ -8,5 +15,6 @@ export const theme = {
     string: "#ce9178",
     number: "#b5cea8",
     method: "#dcdcaa",
+    border: "#444444",
   },
 };

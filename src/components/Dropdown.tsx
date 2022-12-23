@@ -76,7 +76,8 @@ export function Dropdown({
 }
 
 const DropdownWrapper = styled.div<{ mouseover: boolean }>`
-  border: 1px solid ${({ mouseover }) => (mouseover ? "#ddd" : "transparent")};
+  border: 1px solid
+    ${({ mouseover }) => (mouseover ? theme.color.border : "transparent")};
 `;
 
 const DropdownContainer = styled.div`
@@ -84,7 +85,7 @@ const DropdownContainer = styled.div`
   top: calc(100% + 10px);
   left: -1px;
   min-width: 100%;
-  border: 1px solid #444;
+  border: 1px solid ${theme.color.border};
 `;
 
 const DropdownHead = styled.div`
@@ -105,8 +106,8 @@ const DropdownHeadBottom = styled.div`
   align-items: center;
   z-index: 1;
   gap: 0.25rem;
-  border: 1px solid #ddd;
-  background-color: #444;
+  border: 1px solid ${theme.color.border};
+  background-color: ${theme.background.dropdown.default};
   & > div {
     display: flex;
     flex: 1;
