@@ -20,8 +20,18 @@ export interface IData<T extends keyof IType = keyof IType> {
   referenceId?: string;
 }
 
-// Can make function and method into a single type because of their similarity
-// but need to separated Function definition (IFunction) with function call (IMethod)
+// @todo
+export interface IOperation {
+  id: string;
+  entityType: "function" | "method";
+  variable?: string;
+  name: string;
+  parameter: IData[];
+  statements?: IData[]; // only for function
+  return?: IData;
+  referenceId?: string; // only for method
+  handler?: (...args: IData[]) => IData;
+}
 
 export interface IMethod {
   name: string;
@@ -43,14 +53,23 @@ export interface IFunction {
 export interface IStore {
   functions: IFunction[];
   setFunction: (func: IFunction, index: number) => void;
+  dropdown: {
+    display: boolean;
+    targetRef?: React.RefObject<HTMLDivElement>;
+    data?: IData;
+    method?: IMethod;
+    options?: (IData | IMethod)[];
+    position?: { top: number; left: number };
+    context?: IContextProps;
+    toggleVariable?: (remove: boolean) => void;
+    addMethod?: () => void;
+    showResultData?: () => void;
+    selectOption?: (option: IMethod | IData, index: number) => void;
+    handleDelete?: () => void;
+  };
+  setDropdown: (tooltip: IStore["dropdown"]) => void;
 }
 
 export interface IContextProps extends IFunction {
   parent?: IContextProps;
 }
-
-/** Tasks
- * - When the variable is used, its data value should be the result of the last operation
- * - When the type of a variable changes the methods the methods should show error instead of getting removes
- *    this will show user what has changed and what is wrong instead of doing things under the hood
- */

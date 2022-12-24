@@ -34,7 +34,6 @@ export function Input({ data, handleData, noQuotes, color }: IInput) {
             value: inputData.constructor(e.target.value),
           })
         }
-        onClick={(e) => e.stopPropagation()}
       />
     </InputWrapper>
   ) : null;

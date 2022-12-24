@@ -10,4 +10,13 @@ export const useStore = create<IStore>((set) => ({
       funcs[index] = func;
       return { functions: funcs };
     }),
+  dropdown: { display: false },
+  setDropdown: (val) =>
+    set(({ dropdown }) => ({
+      dropdown: {
+        ...dropdown,
+        ...val,
+        position: val.position || dropdown.position,
+      },
+    })),
 }));

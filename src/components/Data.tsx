@@ -1,16 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import styled from "styled-components";
-import { Equals, NotEqual, Play } from "@styled-icons/fa-solid";
 import { TypeMapper } from "../lib/data";
 import { operationMethods } from "../lib/methods";
 import { IContextProps, IData, IType } from "../lib/types";
-import { Dropdown } from "./Dropdown";
 import { ArrayInput } from "./Input/ArrayInput";
 import { Input } from "./Input/Input";
 import { ObjectInput } from "./Input/ObjectInput";
 import { Operation } from "./Operation";
-import { createData, createDataResult } from "../lib/utils";
+import { createData, createDataResult, getPosition } from "../lib/utils";
 import { theme } from "../lib/theme";
+import { useStore } from "../lib/store";
 
 interface IProps {
   data: IData;
@@ -19,13 +18,13 @@ interface IProps {
 }
 
 export function Data({ data, handleData, context }: IProps) {
-  const [dropdown, setDropdown] = useState(false);
+  const setDropdown = useStore((state) => state.setDropdown);
+  let ref = useRef<HTMLDivElement>(null);
   const dataIndex = context.statements.findIndex(
     (statement) => statement.id === data.id
   );
 
   function handleDropdown(value: keyof IType) {
-    setDropdown(false);
     const inputDefaultValue = TypeMapper[value].defaultValue;
     let returnVal = { type: value, value: inputDefaultValue };
     value !== data.type &&
@@ -41,7 +40,6 @@ export function Data({ data, handleData, context }: IProps) {
   }
 
   function addMethod() {
-    setDropdown(false);
     const selectedMethod = operationMethods[data.type][0];
     let returnVal = createDataResult(data, selectedMethod);
     if (!returnVal) return;
@@ -53,7 +51,6 @@ export function Data({ data, handleData, context }: IProps) {
   }
 
   function createVariable(value?: string, remove?: boolean) {
-    setDropdown(false);
     handleData({ ...data, variable: remove ? undefined : value || "" });
   }
 
@@ -88,7 +85,35 @@ export function Data({ data, handleData, context }: IProps) {
           <div>=</div>
         </>
       ) : null}
-      <Dropdown
+      <DataInner
+        ref={ref}
+        onClick={(e) => {
+          e.stopPropagation();
+          setDropdown({
+            position: getPosition(e.currentTarget),
+            display: true,
+            data,
+            targetRef: ref,
+            options: [],
+            toggleVariable: (remove: boolean) => createVariable("", remove),
+            addMethod: !data.selectedMethod ? addMethod : undefined,
+            handleDelete: () => handleData(data, true),
+          });
+        }}
+      >
+        {data.type === "array" ? (
+          <ArrayInput data={data} handleData={handleData} context={context} />
+        ) : data.value instanceof Map ? (
+          <ObjectInput data={data} handleData={handleData} context={context} />
+        ) : (
+          <Input
+            data={data}
+            handleData={handleData}
+            color={theme.color[data.type === "number" ? "number" : "string"]}
+          />
+        )}
+      </DataInner>
+      {/*<Dropdown
         display={dropdown}
         setDisplay={setDropdown}
         handleDelete={() => handleData(data, true)}
@@ -158,7 +183,7 @@ export function Data({ data, handleData, context }: IProps) {
             ) : null
           )}
         </DropdownOptions>
-      </Dropdown>
+        </Dropdown>*/}
       {data.selectedMethod ? (
         <Operation
           data={data}
@@ -171,25 +196,15 @@ export function Data({ data, handleData, context }: IProps) {
 }
 
 const DataWrapper = styled.div`
-  position: relative;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.25rem;
 `;
 
-export const DropdownOptions = styled.div`
-  cursor: pointer;
-  background-color: ${theme.background.dropdown.default};
-  color: ${theme.color.white};
-`;
-
-export const DropdownOption = styled.div<{ selected?: boolean }>`
-  font-size: 0.8rem;
-  padding: 0.1rem 0.2rem;
-  background-color: ${({ selected }) =>
-    selected ? theme.background.dropdown.selected : "inherit"};
+const DataInner = styled.div`
+  background-color: inherit;
   &:hover {
-    background-color: ${theme.background.dropdown.hover};
+    background-color: ${theme.color.hover};
   }
 `;

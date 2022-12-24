@@ -69,6 +69,14 @@ export function getDataFromVariable(
   };
 }
 
+export function getPosition(target?: HTMLDivElement | null) {
+  if (!target) return { top: 0, left: 0 };
+  return {
+    top: target.offsetTop + target.offsetHeight,
+    left: target.offsetLeft,
+  };
+}
+
 /*
 export function sequenceToCode(sequence: IData[]): string {
   function parseData(data: IData[]): string {

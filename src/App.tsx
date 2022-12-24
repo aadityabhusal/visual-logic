@@ -1,12 +1,11 @@
+import { Dropdown } from "./components/Dropdown";
 import { Func } from "./components/Function";
 import { useStore } from "./lib/store";
 import { createFunction } from "./lib/utils";
 
 function App() {
-  const [func, setFunc] = useStore((state) => [
-    state.functions,
-    state.setFunction,
-  ]);
+  const func = useStore((state) => state.functions);
+  const setFunc = useStore((state) => state.setFunction);
   return (
     <div>
       <h1 style={{ textAlign: "center", marginBottom: "1rem" }}>
@@ -20,6 +19,7 @@ function App() {
           context={createFunction()}
         />
       ))}
+      <Dropdown />
     </div>
   );
 }

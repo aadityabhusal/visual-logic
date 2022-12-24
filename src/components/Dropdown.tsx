@@ -1,119 +1,90 @@
-import { ChevronDown, X } from "@styled-icons/fa-solid";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ChevronDown, Equals, Play, X } from "@styled-icons/fa-solid";
+import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import { useUncontrolled } from "../hooks/useUncontrolled";
+import { useStore } from "../lib/store";
 import { theme } from "../lib/theme";
+import { getPosition } from "../lib/utils";
 
-interface IProps {
-  display?: boolean;
-  setDisplay?: React.Dispatch<React.SetStateAction<boolean>>;
-  head?: ReactNode;
-  hoverContent?: ReactNode;
-  children?: ReactNode;
-  handleDelete?: () => void;
-}
-
-export function Dropdown({
-  display,
-  setDisplay,
-  head,
-  hoverContent,
-  children,
-  handleDelete,
-}: IProps) {
-  const [dropdown, setDropdown] = useUncontrolled<boolean>({
-    value: display,
-    onChange: setDisplay,
-  });
-  const [mouseover, setMouseover] = useState(false);
+export function Dropdown() {
+  const dropdown = useStore((state) => state.dropdown);
+  const setDropdown = useStore((state) => state.setDropdown);
+  const [showOptions, setShowOptions] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const [hasVariable, setHasVariable] = useState(
+    dropdown.data?.variable !== undefined
+  );
 
   useEffect(() => {
     function clickHandler(e: MouseEvent) {
-      setDropdown(Boolean(ref.current?.contains(e.target as Node)));
+      setDropdown({
+        display: Boolean(
+          ref.current?.contains(e.target as Node) ||
+            dropdown.targetRef?.current?.contains(e.target as Node)
+        ),
+        position: getPosition(dropdown.targetRef?.current),
+      });
     }
-
     if (dropdown) document.addEventListener("click", clickHandler);
     else document.removeEventListener("click", clickHandler);
-    setMouseover(dropdown);
-
     return () => {
       document.removeEventListener("click", clickHandler);
     };
-  }, [dropdown]);
+  }, [dropdown.display, dropdown.targetRef]);
 
   return (
-    <DropdownWrapper mouseover={mouseover} ref={ref}>
-      <DropdownHead
-        onMouseOver={(e) => {
-          e.stopPropagation();
-          setMouseover(true);
-        }}
-        onMouseOut={(e) => {
-          e.stopPropagation();
-          setMouseover(dropdown);
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center" }}>{head}</div>
-        {mouseover ? (
-          <DropdownHeadBottom>
-            <div>{hoverContent}</div>
-            <ChevronDown
-              size={10}
-              className="dropdownIcon"
-              onClick={(e) => {
-                e.stopPropagation();
-                setDropdown(!dropdown);
-              }}
-            />
-            {handleDelete && <X size={10} onClick={() => handleDelete()} />}
-          </DropdownHeadBottom>
+    <DropdownWrapper
+      ref={ref}
+      position={dropdown.position}
+      show={dropdown.display}
+    >
+      <DropdownHead>
+        {dropdown.toggleVariable ? (
+          <Equals
+            size={10}
+            onClick={() => {
+              setHasVariable((prev) => !prev);
+              dropdown.toggleVariable?.(hasVariable);
+            }}
+            color={theme.color[hasVariable ? "variable" : "white"]}
+          />
+        ) : null}
+        {dropdown.addMethod ? (
+          <Play size={10} onClick={dropdown.addMethod} />
+        ) : null}
+        {dropdown.handleDelete ? (
+          <X size={10} onClick={() => dropdown.handleDelete?.()} />
+        ) : null}
+        {dropdown.options ? (
+          <ChevronDown
+            size={10}
+            className="dropdownIcon"
+            onClick={(e) => setShowOptions((prev) => !prev)}
+          />
         ) : null}
       </DropdownHead>
-      {dropdown ? <DropdownContainer>{children}</DropdownContainer> : null}
     </DropdownWrapper>
   );
 }
 
-const DropdownWrapper = styled.div<{ mouseover: boolean }>`
-  border: 1px solid
-    ${({ mouseover }) => (mouseover ? theme.color.border : "transparent")};
-`;
-
-const DropdownContainer = styled.div`
+const DropdownWrapper = styled.div<{
+  position?: { top: number; left: number };
+  show: boolean;
+}>`
   position: absolute;
-  top: calc(100% + 10px);
-  left: -1px;
-  min-width: 100%;
-  border: 1px solid ${theme.color.border};
+  z-index: 10;
+  top: ${({ position }) => position?.top}px;
+  left: ${({ position }) => position?.left}px;
+  display: ${({ show }) => (show ? "flex" : "none")};
+  flex-direction: column;
 `;
 
 const DropdownHead = styled.div`
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  & > svg {
-    padding: 0 0.1rem;
-  }
-`;
-
-const DropdownHeadBottom = styled.div`
-  position: absolute;
-  top: 100%;
-  left: -1px;
-  min-width: 100%;
   display: flex;
   align-items: center;
-  z-index: 1;
-  gap: 0.25rem;
-  border: 1px solid ${theme.color.border};
   background-color: ${theme.background.dropdown.default};
-  & > div {
-    display: flex;
-    flex: 1;
-    gap: 0.25rem;
-  }
-  & svg {
+  border: 1px solid ${theme.color.border};
+  & > svg {
+    padding: 0 0.1rem;
     cursor: pointer;
   }
 `;

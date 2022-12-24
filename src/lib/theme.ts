@@ -16,5 +16,6 @@ export const theme = {
     number: "#b5cea8",
     method: "#dcdcaa",
     border: "#444444",
+    hover: "#202a34",
   },
 };
