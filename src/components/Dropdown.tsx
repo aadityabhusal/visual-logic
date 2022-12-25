@@ -1,5 +1,5 @@
-import { ChevronDown, Equals, Play, X } from "@styled-icons/fa-solid";
-import { useEffect, useRef, useState } from "react";
+import { Equals, Play, X } from "@styled-icons/fa-solid";
+import { useEffect, useRef } from "react";
 import styled from "styled-components";
 import { useStore } from "../lib/store";
 import { theme } from "../lib/theme";
@@ -8,11 +8,8 @@ import { getPosition } from "../lib/utils";
 export function Dropdown() {
   const dropdown = useStore((state) => state.dropdown);
   const setDropdown = useStore((state) => state.setDropdown);
-  const [showOptions, setShowOptions] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const [hasVariable, setHasVariable] = useState(
-    dropdown.data?.variable !== undefined
-  );
+  const hasVariable = dropdown.data?.variable !== undefined;
 
   useEffect(() => {
     function clickHandler(e: MouseEvent) {
@@ -41,10 +38,10 @@ export function Dropdown() {
         {dropdown.toggleVariable ? (
           <Equals
             size={10}
-            onClick={() => {
-              setHasVariable((prev) => !prev);
-              dropdown.toggleVariable?.(hasVariable);
-            }}
+            onClick={() =>
+              dropdown.data &&
+              dropdown.toggleVariable?.(dropdown.data, hasVariable)
+            }
             color={theme.color[hasVariable ? "variable" : "white"]}
           />
         ) : null}
@@ -54,14 +51,29 @@ export function Dropdown() {
         {dropdown.handleDelete ? (
           <X size={10} onClick={() => dropdown.handleDelete?.()} />
         ) : null}
-        {dropdown.options ? (
-          <ChevronDown
-            size={10}
-            className="dropdownIcon"
-            onClick={(e) => setShowOptions((prev) => !prev)}
-          />
-        ) : null}
       </DropdownHead>
+      {dropdown.options?.length ? (
+        <DropdownOptions>
+          {dropdown.options?.map((option, index) => (
+            <DropdownOption
+              key={index}
+              onClick={(e) => {
+                dropdown.data && dropdown.selectOption?.(option, dropdown.data);
+              }}
+              selected={
+                option.id ===
+                dropdown.data?.[
+                  dropdown.data?.referenceId ? "referenceId" : "type"
+                ]
+              }
+            >
+              {option.name}
+            </DropdownOption>
+          ))}
+        </DropdownOptions>
+      ) : (
+        <DropdownOption>No Options</DropdownOption>
+      )}
     </DropdownWrapper>
   );
 }
@@ -72,6 +84,7 @@ const DropdownWrapper = styled.div<{
 }>`
   position: absolute;
   z-index: 10;
+  border: 1px solid ${theme.color.border};
   top: ${({ position }) => position?.top}px;
   left: ${({ position }) => position?.left}px;
   display: ${({ show }) => (show ? "flex" : "none")};
@@ -82,9 +95,25 @@ const DropdownHead = styled.div`
   display: flex;
   align-items: center;
   background-color: ${theme.background.dropdown.default};
-  border: 1px solid ${theme.color.border};
+  border-bottom: 1px solid ${theme.color.border};
   & > svg {
     padding: 0 0.1rem;
     cursor: pointer;
+  }
+`;
+
+export const DropdownOptions = styled.div`
+  cursor: pointer;
+  background-color: ${theme.background.dropdown.default};
+  color: ${theme.color.white};
+`;
+
+export const DropdownOption = styled.div<{ selected?: boolean }>`
+  font-size: 0.8rem;
+  padding: 0.1rem 0.2rem;
+  background-color: ${({ selected }) =>
+    selected ? theme.background.dropdown.selected : "inherit"};
+  &:hover {
+    background-color: ${theme.background.dropdown.hover};
   }
 `;

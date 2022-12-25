@@ -58,13 +58,13 @@ export interface IStore {
     targetRef?: React.RefObject<HTMLDivElement>;
     data?: IData;
     method?: IMethod;
-    options?: (IData | IMethod)[];
+    options?: { id: string; name: string }[];
     position?: { top: number; left: number };
     context?: IContextProps;
-    toggleVariable?: (remove: boolean) => void;
+    toggleVariable?: (data: IData, remove: boolean) => void;
     addMethod?: () => void;
     showResultData?: () => void;
-    selectOption?: (option: IMethod | IData, index: number) => void;
+    selectOption?: (option: { id: string; name: string }, data: IData) => void;
     handleDelete?: () => void;
   };
   setDropdown: (tooltip: IStore["dropdown"]) => void;

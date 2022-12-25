@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { MouseEvent, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { TypeMapper } from "../lib/data";
 import { operationMethods } from "../lib/methods";
@@ -24,7 +24,7 @@ export function Data({ data, handleData, context }: IProps) {
     (statement) => statement.id === data.id
   );
 
-  function handleDropdown(value: keyof IType) {
+  function handleDropdown(value: keyof IType, data: IData) {
     const inputDefaultValue = TypeMapper[value].defaultValue;
     let returnVal = { type: value, value: inputDefaultValue };
     value !== data.type &&
@@ -50,10 +50,6 @@ export function Data({ data, handleData, context }: IProps) {
     });
   }
 
-  function createVariable(value?: string, remove?: boolean) {
-    handleData({ ...data, variable: remove ? undefined : value || "" });
-  }
-
   function selectVariable(variable: IData) {
     handleData({
       id: data.id,
@@ -65,7 +61,28 @@ export function Data({ data, handleData, context }: IProps) {
     });
   }
 
+  function handleClick(e: MouseEvent) {
+    e.stopPropagation();
+    setDropdown({
+      position: getPosition(e.currentTarget as HTMLDivElement),
+      display: true,
+      data: data,
+      targetRef: ref,
+      options: Object.keys(TypeMapper).map((item, i) => ({
+        id: item,
+        name: item,
+      })),
+      toggleVariable: (data, remove: boolean) =>
+        handleData({ ...data, variable: remove ? undefined : "" }),
+      addMethod: !data?.selectedMethod ? addMethod : undefined,
+      handleDelete: () => handleData(data, true),
+      selectOption: (option, data) =>
+        handleDropdown(option.id as keyof IType, data),
+    });
+  }
+
   useEffect(() => {
+    setDropdown({ display: false, data });
     handleData(data);
   }, [data?.variable, data?.type]);
 
@@ -77,7 +94,9 @@ export function Data({ data, handleData, context }: IProps) {
           <div>
             <Input
               data={createData("string", data.variable)}
-              handleData={(value) => createVariable(value.value as string)}
+              handleData={(value) =>
+                handleData({ ...data, variable: value.value as string })
+              }
               color={theme.color.variable}
               noQuotes
             />
@@ -87,18 +106,14 @@ export function Data({ data, handleData, context }: IProps) {
       ) : null}
       <DataInner
         ref={ref}
-        onClick={(e) => {
+        onClick={handleClick}
+        onMouseOver={(e) => {
           e.stopPropagation();
-          setDropdown({
-            position: getPosition(e.currentTarget),
-            display: true,
-            data,
-            targetRef: ref,
-            options: [],
-            toggleVariable: (remove: boolean) => createVariable("", remove),
-            addMethod: !data.selectedMethod ? addMethod : undefined,
-            handleDelete: () => handleData(data, true),
-          });
+          e.currentTarget.style.backgroundColor = theme.color.hover;
+        }}
+        onMouseOut={(e) => {
+          e.stopPropagation();
+          e.currentTarget.style.backgroundColor = "";
         }}
       >
         {data.type === "array" ? (
@@ -202,9 +217,4 @@ const DataWrapper = styled.div`
   gap: 0.25rem;
 `;
 
-const DataInner = styled.div`
-  background-color: inherit;
-  &:hover {
-    background-color: ${theme.color.hover};
-  }
-`;
+const DataInner = styled.div``;

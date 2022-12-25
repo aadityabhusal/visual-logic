@@ -1,3 +1,4 @@
+import { MouseEvent } from "react";
 import styled from "styled-components";
 import { TypeMapper } from "../../lib/data";
 import { theme } from "../../lib/theme";
@@ -12,7 +13,8 @@ export interface IObjectInput {
   context: IContextProps;
 }
 export function ObjectInput({ data, handleData, context }: IObjectInput) {
-  function addToObject() {
+  function addToObject(e: MouseEvent) {
+    e.stopPropagation();
     if (data.value instanceof Map && !data.value.has("")) {
       let newMap = new Map(data.value);
       newMap.set("", createData("string", TypeMapper.string.defaultValue));

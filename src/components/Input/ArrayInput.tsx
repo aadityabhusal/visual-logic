@@ -4,6 +4,7 @@ import { IData, IContextProps } from "../../lib/types";
 import { Data } from "../Data";
 import { createData } from "../../lib/utils";
 import { theme } from "../../lib/theme";
+import { MouseEvent } from "react";
 
 export interface IArrayInput {
   data: IData;
@@ -12,7 +13,8 @@ export interface IArrayInput {
 }
 
 export function ArrayInput({ data, handleData, context }: IArrayInput) {
-  function addToArray() {
+  function addToArray(e: MouseEvent) {
+    e.stopPropagation();
     Array.isArray(data.value) &&
       handleData({
         ...data,
