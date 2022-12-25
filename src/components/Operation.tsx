@@ -2,8 +2,8 @@ import { useState } from "react";
 import styled from "styled-components";
 import { IData, IContextProps } from "../lib/types";
 import { createDataResult } from "../lib/utils";
-import { Play } from "@styled-icons/fa-solid";
-import { Data, DropdownOption, DropdownOptions } from "./Data";
+import { Data } from "./Data";
+import { DropdownOption, DropdownOptions } from "./Dropdown";
 import { Dropdown } from "./Dropdown";
 import { operationMethods } from "../lib/methods";
 import { theme } from "../lib/theme";
@@ -86,11 +86,13 @@ export function Operation({
   return (
     <OperationWrapper>
       <Dropdown
-        hoverContent={
-          !data.selectedMethod?.result?.selectedMethod ? (
-            <Play size={10} onClick={addResultMethod} />
-          ) : null
+        data={{}}
+        handleMethod={
+          !data.selectedMethod?.result?.selectedMethod
+            ? addResultMethod
+            : undefined
         }
+        handleDelete={() => handleData({ ...data, selectedMethod: undefined })}
         head={
           <>
             {"."}
@@ -111,9 +113,6 @@ export function Operation({
             <span>{")"}</span>
           </>
         }
-        display={dropdown}
-        setDisplay={setDropdown}
-        handleDelete={() => handleData({ ...data, selectedMethod: undefined })}
       >
         <DropdownOptions>
           {operationMethods[data.type].map((method, i) => (

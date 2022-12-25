@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import styled from "styled-components";
-import { Equals, NotEqual, Play } from "@styled-icons/fa-solid";
 import { TypeMapper } from "../lib/data";
 import { operationMethods } from "../lib/methods";
 import { IContextProps, IData, IType } from "../lib/types";
-import { Dropdown } from "./Dropdown";
+import { Dropdown, DropdownOption, DropdownOptions } from "./Dropdown";
 import { ArrayInput } from "./Input/ArrayInput";
 import { Input } from "./Input/Input";
 import { ObjectInput } from "./Input/ObjectInput";
@@ -19,13 +18,13 @@ interface IProps {
 }
 
 export function Data({ data, handleData, context }: IProps) {
-  const [dropdown, setDropdown] = useState(false);
+  // const [dropdown, setDropdown] = useState(false);
   const dataIndex = context.statements.findIndex(
     (statement) => statement.id === data.id
   );
 
   function handleDropdown(value: keyof IType) {
-    setDropdown(false);
+    // setDropdown(false);
     const inputDefaultValue = TypeMapper[value].defaultValue;
     let returnVal = { type: value, value: inputDefaultValue };
     value !== data.type &&
@@ -41,7 +40,7 @@ export function Data({ data, handleData, context }: IProps) {
   }
 
   function addMethod() {
-    setDropdown(false);
+    // setDropdown(false);
     const selectedMethod = operationMethods[data.type][0];
     let returnVal = createDataResult(data, selectedMethod);
     if (!returnVal) return;
@@ -50,11 +49,6 @@ export function Data({ data, handleData, context }: IProps) {
       selectedMethod: { ...selectedMethod, result: returnVal },
       return: returnVal.return,
     });
-  }
-
-  function createVariable(value?: string, remove?: boolean) {
-    setDropdown(false);
-    handleData({ ...data, variable: remove ? undefined : value || "" });
   }
 
   function selectVariable(variable: IData) {
@@ -80,7 +74,9 @@ export function Data({ data, handleData, context }: IProps) {
           <div>
             <Input
               data={createData("string", data.variable)}
-              handleData={(value) => createVariable(value.value as string)}
+              handleData={(value) =>
+                handleData({ ...data, variable: value.value as string })
+              }
               color={theme.color.variable}
               noQuotes
             />
@@ -89,19 +85,12 @@ export function Data({ data, handleData, context }: IProps) {
         </>
       ) : null}
       <Dropdown
-        display={dropdown}
-        setDisplay={setDropdown}
+        data={{ variable: data.variable }}
         handleDelete={() => handleData(data, true)}
-        hoverContent={
-          <>
-            {data.variable === undefined ? (
-              <Equals size={10} onClick={() => createVariable()} />
-            ) : (
-              <NotEqual size={10} onClick={() => createVariable("", true)} />
-            )}
-            {!data.selectedMethod && <Play size={10} onClick={addMethod} />}
-          </>
+        handleVariable={(remove) =>
+          handleData({ ...data, variable: remove ? undefined : "" })
         }
+        handleMethod={!data.selectedMethod ? addMethod : undefined}
         head={
           data.entityType === "variable" ? (
             <span style={{ color: theme.color.variable }}>{data.name}</span>
@@ -148,7 +137,7 @@ export function Data({ data, handleData, context }: IProps) {
               <DropdownOption
                 key={statement.id}
                 onClick={() => {
-                  setDropdown(false);
+                  // setDropdown(false);
                   selectVariable(statement);
                 }}
                 selected={statement.id === data.referenceId}
@@ -176,20 +165,4 @@ const DataWrapper = styled.div`
   align-items: center;
   flex-wrap: wrap;
   gap: 0.25rem;
-`;
-
-export const DropdownOptions = styled.div`
-  cursor: pointer;
-  background-color: ${theme.background.dropdown.default};
-  color: ${theme.color.white};
-`;
-
-export const DropdownOption = styled.div<{ selected?: boolean }>`
-  font-size: 0.8rem;
-  padding: 0.1rem 0.2rem;
-  background-color: ${({ selected }) =>
-    selected ? theme.background.dropdown.selected : "inherit"};
-  &:hover {
-    background-color: ${theme.background.dropdown.hover};
-  }
 `;
