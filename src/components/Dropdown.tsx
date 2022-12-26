@@ -1,7 +1,9 @@
-import { ChevronDown, Equals, Play, X } from "@styled-icons/fa-solid";
+import { ChevronDown, Equals, Play, R, X } from "@styled-icons/fa-solid";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
+import { IData } from "../lib/types";
+import { parseData } from "../lib/utils";
 
 interface IProps {
   head?: ReactNode;
@@ -11,6 +13,7 @@ interface IProps {
   handleMethod?: () => void;
   data: {
     variable?: string;
+    result?: IData["return"];
   };
 }
 
@@ -24,6 +27,7 @@ export function Dropdown({
 }: IProps) {
   const [display, setDisplay] = useState(false);
   const [content, setContent] = useState(false);
+  const [result, setResult] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const hasVariable = data.variable !== undefined;
 
@@ -32,6 +36,7 @@ export function Dropdown({
       if (!Boolean(ref.current?.contains(e.target as Node))) {
         setDisplay(false);
         setContent(false);
+        setResult(false);
       }
     }
     document.addEventListener("click", clickHandler);
@@ -48,13 +53,13 @@ export function Dropdown({
       }}
       onMouseOut={(e) => {
         e.stopPropagation();
-        !content && setDisplay(false);
+        !content && !result && setDisplay(false);
       }}
-      style={{ zIndex: display ? (content ? 101 : 100) : 99 }}
+      style={{ zIndex: display ? (content ? 1001 : 1000) : 999 }}
     >
       <div style={{ display: "flex", alignItems: "center" }}>{head}</div>
       {display ? (
-        <DropdownHeadBottom onClick={(e) => setContent((c) => !c)}>
+        <DropdownHead>
           {handleVariable ? (
             <Equals
               size={10}
@@ -74,6 +79,15 @@ export function Dropdown({
               }}
             />
           ) : null}
+          <R
+            size={10}
+            color={theme.color[result ? "variable" : "white"]}
+            onClick={(e) => {
+              e.stopPropagation();
+              setContent(false);
+              setResult((r) => !r);
+            }}
+          />
           {handleDelete && (
             <X
               size={10}
@@ -83,10 +97,26 @@ export function Dropdown({
               }}
             />
           )}
-          <ChevronDown size={10} style={{ marginLeft: "auto" }} />
-        </DropdownHeadBottom>
+          <ChevronDown
+            size={10}
+            style={{ marginLeft: "auto" }}
+            color={theme.color[content ? "variable" : "white"]}
+            onClick={(e) => {
+              setResult(false);
+              setContent((c) => !c);
+            }}
+          />
+        </DropdownHead>
       ) : null}
       {content ? <DropdownContainer>{children}</DropdownContainer> : null}
+      {data.result && result && (
+        <DropdownContainer>
+          <DropdownContainerHead style={{ fontSize: "0.6rem" }}>
+            Type: {data.result.type}
+          </DropdownContainerHead>
+          {parseData(data.result)}
+        </DropdownContainer>
+      )}
     </DropdownWrapper>
   );
 }
@@ -103,18 +133,17 @@ const DropdownContainer = styled.div`
   left: -1px;
   min-width: max-content;
   border: 1px solid ${theme.color.border};
+  background-color: ${theme.background.dropdown.default};
+`;
+
+const DropdownContainerHead = styled.div`
+  font-size: 0.6rem;
+  padding: 0.1rem;
+  border-bottom: 1px solid ${theme.color.border};
+  background-color: ${theme.background.dropdown.default};
 `;
 
 const DropdownHead = styled.div`
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  & > svg {
-    padding: 0 0.1rem;
-  }
-`;
-
-const DropdownHeadBottom = styled.div`
   position: absolute;
   top: 100%;
   left: -1px;

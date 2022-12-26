@@ -69,6 +69,17 @@ export function getDataFromVariable(
   };
 }
 
+export function parseData(data: IData["return"]): string {
+  if (Array.isArray(data.value)) {
+    return "[" + data.value.map((item) => parseData(item)) + "]";
+  } else if (data.value instanceof Map) {
+    let val = Array.from(data.value);
+    return `{ ${val.map(([key, val]) => ` "${key}": ${parseData(val)}`)} }`;
+  } else {
+    return typeof data.value === "number" ? `${data.value}` : `"${data.value}"`;
+  }
+}
+
 /*
 export function sequenceToCode(sequence: IData[]): string {
   function parseData(data: IData[]): string {

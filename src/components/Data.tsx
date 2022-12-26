@@ -18,13 +18,11 @@ interface IProps {
 }
 
 export function Data({ data, handleData, context }: IProps) {
-  // const [dropdown, setDropdown] = useState(false);
   const dataIndex = context.statements.findIndex(
     (statement) => statement.id === data.id
   );
 
   function handleDropdown(value: keyof IType) {
-    // setDropdown(false);
     const inputDefaultValue = TypeMapper[value].defaultValue;
     let returnVal = { type: value, value: inputDefaultValue };
     value !== data.type &&
@@ -40,7 +38,6 @@ export function Data({ data, handleData, context }: IProps) {
   }
 
   function addMethod() {
-    // setDropdown(false);
     const selectedMethod = operationMethods[data.type][0];
     let returnVal = createDataResult(data, selectedMethod);
     if (!returnVal) return;
@@ -85,7 +82,10 @@ export function Data({ data, handleData, context }: IProps) {
         </>
       ) : null}
       <Dropdown
-        data={{ variable: data.variable }}
+        data={{
+          variable: data.variable,
+          result: { type: data.type, value: data.value },
+        }}
         handleDelete={() => handleData(data, true)}
         handleVariable={(remove) =>
           handleData({ ...data, variable: remove ? undefined : "" })
@@ -136,10 +136,7 @@ export function Data({ data, handleData, context }: IProps) {
             i < dataIndex && statement.variable ? (
               <DropdownOption
                 key={statement.id}
-                onClick={() => {
-                  // setDropdown(false);
-                  selectVariable(statement);
-                }}
+                onClick={() => selectVariable(statement)}
                 selected={statement.id === data.referenceId}
               >
                 {statement.variable}
