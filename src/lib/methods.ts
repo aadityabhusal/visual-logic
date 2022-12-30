@@ -1,7 +1,9 @@
 import { IMethod, IData, IType } from "./types";
 import { createData } from "./utils";
 
-export const stringMethods: IMethod[] = [
+type IMethodOmit = Omit<IMethod, "result" | "id" | "entityType">;
+
+export const stringMethods: IMethodOmit[] = [
   {
     name: "capitalize",
     parameters: [],
@@ -62,7 +64,7 @@ export const stringMethods: IMethod[] = [
   },
 ];
 
-export const numberMethods: IMethod[] = [
+export const numberMethods: IMethodOmit[] = [
   {
     name: "add",
     parameters: [createData("number", 0)],
@@ -100,7 +102,7 @@ export const numberMethods: IMethod[] = [
   },
 ];
 
-export const arrayMethods: IMethod[] = [
+export const arrayMethods: IMethodOmit[] = [
   {
     name: "concat",
     parameters: [createData("array", [])],
@@ -135,7 +137,7 @@ export const arrayMethods: IMethod[] = [
   },
 ];
 
-export const objectMethods: IMethod[] = [
+export const objectMethods: IMethodOmit[] = [
   {
     name: "length",
     parameters: [],
@@ -145,7 +147,7 @@ export const objectMethods: IMethod[] = [
   },
 ];
 
-export const operationMethods: Record<keyof IType, IMethod[]> = {
+export const operationMethods: Record<keyof IType, IMethodOmit[]> = {
   string: stringMethods,
   number: numberMethods,
   array: arrayMethods,

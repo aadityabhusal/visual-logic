@@ -1,4 +1,6 @@
 import { nanoid } from "nanoid";
+import { operationMethods } from "./methods";
+import { ICreateMethodProps } from "./props";
 import { IContextProps, IData, IFunction, IMethod, IType } from "./types";
 
 export function createData<T extends keyof IType>(
@@ -26,6 +28,19 @@ export function createFunction(): IFunction {
     return: createData("string", ""),
     statements: [],
   };
+}
+
+export function createMethod({ data, index, name }: ICreateMethodProps) {
+  let methods = operationMethods[data.type];
+  let methodByName = name && methods.find((method) => (method.name = name));
+  let newMethod = methodByName || methods[index || 0];
+  let result = newMethod.handler(data, ...newMethod.parameters);
+  return {
+    ...newMethod,
+    id: nanoid(),
+    entityType: "method",
+    result,
+  } as IMethod;
 }
 
 export function createDataResult<T extends keyof IType>(

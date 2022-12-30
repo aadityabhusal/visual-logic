@@ -24,10 +24,12 @@ export interface IData<T extends keyof IType = keyof IType> {
 // but need to separated Function definition (IFunction) with function call (IMethod)
 
 export interface IMethod {
+  id: string;
   name: string;
+  entityType: "method";
   parameters: IData[];
-  result?: IData;
   handler(...args: IData[]): IData;
+  result: ReturnType<IMethod["handler"]>;
 }
 
 export interface IFunction {
@@ -48,9 +50,3 @@ export interface IStore {
 export interface IContextProps extends IFunction {
   parent?: IContextProps;
 }
-
-/** Tasks
- * - When the variable is used, its data value should be the result of the last operation
- * - When the type of a variable changes the methods the methods should show error instead of getting removes
- *    this will show user what has changed and what is wrong instead of doing things under the hood
- */
