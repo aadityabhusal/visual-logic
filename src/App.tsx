@@ -15,7 +15,7 @@ function App() {
       {func.map((value, i) => (
         <Func
           key={i}
-          funcData={value}
+          func={value}
           handleFunc={(fn) => setFunc(fn, i)}
           context={createFunction()}
         />

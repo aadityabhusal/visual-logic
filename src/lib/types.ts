@@ -37,7 +37,7 @@ export interface IFunction {
   entityType: "function";
   name: string;
   parameter: IData[];
-  statements: IData[];
+  statements: IStatement[];
   return?: IData;
   handler?: (...args: IData[]) => IData;
 }
@@ -49,4 +49,11 @@ export interface IStore {
 
 export interface IContextProps extends IFunction {
   parent?: IContextProps;
+}
+
+export interface IStatement {
+  id: string;
+  entities: (IData | IMethod)[];
+  return: IData;
+  variable?: string;
 }

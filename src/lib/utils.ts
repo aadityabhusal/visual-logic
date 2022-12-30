@@ -1,7 +1,14 @@
 import { nanoid } from "nanoid";
 import { operationMethods } from "./methods";
 import { ICreateMethodProps } from "./props";
-import { IContextProps, IData, IFunction, IMethod, IType } from "./types";
+import {
+  IContextProps,
+  IData,
+  IFunction,
+  IMethod,
+  IStatement,
+  IType,
+} from "./types";
 
 export function createData<T extends keyof IType>(
   type: T,
@@ -28,6 +35,11 @@ export function createFunction(): IFunction {
     return: createData("string", ""),
     statements: [],
   };
+}
+
+export function createStatement(): IStatement {
+  let data = createData("string", "");
+  return { id: nanoid(), return: data, entities: [data] };
 }
 
 export function createMethod({ data, index, name }: ICreateMethodProps) {

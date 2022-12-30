@@ -1,5 +1,5 @@
-import { IContextProps, IVariable } from "../lib/types";
-import { getValueFromContext } from "../lib/utils";
+import { IContextProps, IVariable } from "../src/lib/types";
+import { getValueFromContext } from "../src/lib/utils";
 
 export function Variable({
   variable,
