@@ -1,7 +1,10 @@
+import { Equals } from "@styled-icons/fa-solid";
 import styled from "styled-components";
+import { theme } from "../lib/theme";
 import { IContextProps, IData, IMethod, IStatement } from "../lib/types";
-import { createMethod, getDataFromVariable } from "../lib/utils";
+import { createData, createMethod, getDataFromVariable } from "../lib/utils";
 import { Data } from "./Data";
+import { Input } from "./Input/Input";
 
 export function Statement({
   statement,
@@ -13,6 +16,7 @@ export function Statement({
   context: IContextProps;
 }) {
   const firstData = statement.entities[0] as IData;
+  const hasVariable = statement.variable !== undefined;
 
   function addMethod() {
     function getLastEntity(entities: IStatement["entities"]) {
@@ -36,6 +40,27 @@ export function Statement({
 
   return (
     <StatementWrapper>
+      <StatementVariable>
+        {hasVariable ? (
+          <Input
+            data={createData("string", statement.variable || "")}
+            handleData={(value) =>
+              handleStatement({ ...statement, variable: value.value as string })
+            }
+            color={theme.color.variable}
+            noQuotes
+          />
+        ) : null}
+        <Equals
+          size={10}
+          onClick={() =>
+            handleStatement({
+              ...statement,
+              variable: hasVariable ? undefined : "",
+            })
+          }
+        />
+      </StatementVariable>
       <Data
         data={
           firstData.entityType === "variable"
@@ -53,4 +78,16 @@ export function Statement({
 const StatementWrapper = styled.div`
   display: flex;
   align-items: center;
+  gap: 0.25rem;
+`;
+
+const StatementVariable = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-right: 0.25rem;
+
+  & svg {
+    cursor: pointer;
+  }
 `;

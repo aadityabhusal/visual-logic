@@ -1,4 +1,4 @@
-import { ChevronDown, Equals, Play, R, X } from "@styled-icons/fa-solid";
+import { ChevronDown, R, X } from "@styled-icons/fa-solid";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
@@ -8,28 +8,15 @@ import { parseData } from "../lib/utils";
 interface IProps {
   head?: ReactNode;
   children?: ReactNode;
+  data: { result?: IData };
   handleDelete?: () => void;
-  handleVariable?: (remove: boolean) => void;
-  handleMethod?: () => void;
-  data: {
-    variable?: string;
-    result?: IData["return"];
-  };
 }
 
-export function Dropdown({
-  head,
-  children,
-  handleMethod,
-  handleDelete,
-  handleVariable,
-  data,
-}: IProps) {
+export function Dropdown({ head, children, data, handleDelete }: IProps) {
   const [display, setDisplay] = useState(false);
   const [content, setContent] = useState(false);
   const [result, setResult] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const hasVariable = data.variable !== undefined;
 
   useEffect(() => {
     function clickHandler(e: MouseEvent) {
@@ -60,25 +47,6 @@ export function Dropdown({
       <div style={{ display: "flex", alignItems: "center" }}>{head}</div>
       {display ? (
         <DropdownHead>
-          {handleVariable ? (
-            <Equals
-              size={10}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleVariable?.(hasVariable);
-              }}
-              color={theme.color[hasVariable ? "variable" : "white"]}
-            />
-          ) : null}
-          {handleMethod ? (
-            <Play
-              size={10}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleMethod();
-              }}
-            />
-          ) : null}
           <R
             size={10}
             color={theme.color[result ? "variable" : "white"]}

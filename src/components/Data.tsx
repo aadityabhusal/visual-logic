@@ -1,14 +1,11 @@
 import { useEffect } from "react";
 import styled from "styled-components";
 import { TypeMapper } from "../lib/data";
-import { operationMethods } from "../lib/methods";
-import { IContextProps, IData, IType } from "../lib/types";
+import { IContextProps, IData, IStatement, IType } from "../lib/types";
 import { Dropdown, DropdownOption, DropdownOptions } from "./Dropdown";
 import { ArrayInput } from "./Input/ArrayInput";
 import { Input } from "./Input/Input";
 import { ObjectInput } from "./Input/ObjectInput";
-import { Operation } from "./Operation";
-import { createData, createDataResult } from "../lib/utils";
 import { theme } from "../lib/theme";
 
 interface IProps {
@@ -30,67 +27,31 @@ export function Data({ data, handleData, context }: IProps) {
         ...data,
         ...returnVal,
         entityType: "data",
-        return: returnVal,
         referenceId: undefined,
         name: undefined,
-        selectedMethod: undefined,
       });
   }
 
-  function addMethod() {
-    const selectedMethod = operationMethods[data.type][0];
-    let returnVal = createDataResult(data, selectedMethod);
-    if (!returnVal) return;
-    handleData({
-      ...data,
-      selectedMethod: { ...selectedMethod, result: returnVal },
-      return: returnVal.return,
-    });
-  }
-
-  function selectVariable(variable: IData) {
+  function selectVariable(statement: IStatement) {
     handleData({
       id: data.id,
       entityType: "variable",
-      variable: data.variable,
-      referenceId: variable.id,
-      return: variable.return,
-      ...variable.return,
+      referenceId: statement.id,
+      name: statement.variable,
+      type: statement.return.type,
+      value: statement.return.value,
     });
   }
 
   useEffect(() => {
     handleData(data);
-  }, [data?.variable, data?.type]);
+  }, [data?.type]);
 
   return (
     <DataWrapper>
-      {data.variable !== undefined ? (
-        <>
-          <div style={{ color: theme.color.reserved }}>let</div>
-          <div>
-            <Input
-              data={createData("string", data.variable)}
-              handleData={(value) =>
-                handleData({ ...data, variable: value.value as string })
-              }
-              color={theme.color.variable}
-              noQuotes
-            />
-          </div>
-          <div>=</div>
-        </>
-      ) : null}
       <Dropdown
-        data={{
-          variable: data.variable,
-          result: { type: data.type, value: data.value },
-        }}
+        data={{ result: data }}
         handleDelete={() => handleData(data, true)}
-        handleVariable={(remove) =>
-          handleData({ ...data, variable: remove ? undefined : "" })
-        }
-        handleMethod={!data.selectedMethod ? addMethod : undefined}
         head={
           data.entityType === "variable" ? (
             <span style={{ color: theme.color.variable }}>{data.name}</span>
@@ -145,13 +106,6 @@ export function Data({ data, handleData, context }: IProps) {
           )}
         </DropdownOptions>
       </Dropdown>
-      {data.selectedMethod ? (
-        <Operation
-          data={data}
-          handleData={(data) => handleData(data)}
-          context={context}
-        />
-      ) : null}
     </DataWrapper>
   );
 }
