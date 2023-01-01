@@ -1,106 +1,48 @@
-import { useState } from "react";
 import styled from "styled-components";
-import { IData, IContextProps } from "../lib/types";
-import { createDataResult } from "../lib/utils";
+import { IData, IContextProps, IMethod } from "../lib/types";
 import { Data } from "./Data";
 import { DropdownOption, DropdownOptions } from "./Dropdown";
 import { Dropdown } from "./Dropdown";
 import { operationMethods } from "../lib/methods";
 import { theme } from "../lib/theme";
+import { createMethod } from "../lib/utils";
 
 export function Operation({
   data,
-  handleData,
+  operation,
+  handleOperation,
   context,
 }: {
   data: IData;
-  handleData: (data: IData) => void;
+  operation: IMethod;
+  handleOperation: (operation: IMethod, remove?: boolean) => void;
   context: IContextProps;
 }) {
-  const [dropdown, setDropdown] = useState(false);
-
   function handleDropdown(name: string, index: number) {
-    setDropdown(false);
-    if (data.selectedMethod?.name === name) return;
-    let method = operationMethods[data.type][index];
-    let returnVal = createDataResult(data, method);
-    if (!returnVal) return;
-    handleData({
-      ...data,
-      return: returnVal.return,
-      selectedMethod: method && {
-        ...method,
-        result: returnVal,
-      },
-    });
+    if (operation.name === name) return;
+    handleOperation({ ...createMethod({ data, index }) });
   }
 
   function handleParameter(item: IData, index: number) {
-    if (!data.selectedMethod) return;
-    let parameters = [...data.selectedMethod.parameters];
+    let parameters = [...operation.parameters];
     parameters[index] = item;
-    handleData({
-      ...data,
-      selectedMethod: {
-        ...data.selectedMethod,
-        parameters,
-      },
-    });
-  }
-
-  function handleSelectedMethod(value?: IData) {
-    setDropdown(false);
-    let returnVal = value || createDataResult(data);
-    if (!returnVal) return;
-    if (data.selectedMethod) {
-      handleData({
-        ...data,
-        return: returnVal.return,
-        selectedMethod: { ...data.selectedMethod, result: returnVal },
-      });
-    }
-  }
-
-  function addResultMethod() {
-    setDropdown(false);
-    if (!data.selectedMethod?.result) return;
-    const resultSelectedMethod =
-      operationMethods[data.selectedMethod?.result.type][0];
-    const resultReturnVal = createDataResult(data, resultSelectedMethod);
-    handleData({
-      ...data,
-      selectedMethod: {
-        ...data.selectedMethod,
-        result: {
-          ...data.selectedMethod.result,
-          ...resultReturnVal?.return,
-          selectedMethod: {
-            ...resultSelectedMethod,
-            result: resultReturnVal,
-          },
-        },
-      },
-    });
+    let result = operation.handler(data, ...parameters);
+    handleOperation({ ...operation, parameters, result });
   }
 
   return (
     <OperationWrapper>
       <Dropdown
-        data={{}}
-        handleMethod={
-          !data.selectedMethod?.result?.selectedMethod
-            ? addResultMethod
-            : undefined
-        }
-        handleDelete={() => handleData({ ...data, selectedMethod: undefined })}
+        data={{ result: operation.result }}
+        handleDelete={() => handleOperation(operation, true)}
         head={
           <>
             {"."}
             <span style={{ color: theme.color.method }}>
-              {data.selectedMethod?.name || ".."}
+              {operation.name || ".."}
             </span>
             <span>{"("}</span>
-            {data.selectedMethod?.parameters.map((item, i, arr) => (
+            {operation.parameters.map((item, i, arr) => (
               <span key={i} style={{ display: "flex" }}>
                 <Data
                   data={item}
@@ -118,21 +60,14 @@ export function Operation({
           {operationMethods[data.type].map((method, i) => (
             <DropdownOption
               key={method.name}
-              onClick={(e) => handleDropdown(method.name, i)}
-              selected={data.selectedMethod?.name === method.name}
+              onClick={() => handleDropdown(method.name, i)}
+              selected={operation.name === method.name}
             >
               {method.name}
             </DropdownOption>
           ))}
         </DropdownOptions>
       </Dropdown>
-      {data.selectedMethod?.result?.selectedMethod ? (
-        <Operation
-          data={data.selectedMethod.result}
-          handleData={(value) => handleSelectedMethod(value)}
-          context={context}
-        />
-      ) : null}
     </OperationWrapper>
   );
 }

@@ -34,9 +34,9 @@ export function createFunction(): IFunction {
   };
 }
 
-export function createStatement(): IStatement {
-  let data = createData("string", "");
-  return { id: nanoid(), return: data, entities: [data] };
+export function createStatement(data?: IData): IStatement {
+  let newData = data || createData("string", "");
+  return { id: nanoid(), return: newData, entities: [newData] };
 }
 
 export function createMethod({ data, index, name }: ICreateMethodProps) {
@@ -50,14 +50,6 @@ export function createMethod({ data, index, name }: ICreateMethodProps) {
     entityType: "method",
     result,
   } as IMethod;
-}
-
-export function createDataResult<T extends keyof IType>(
-  data: IData<T>,
-  selectedMethod?: IMethod
-): IData | undefined {
-  let method = selectedMethod || data.selectedMethod;
-  return method?.handler(data, ...method.parameters);
 }
 
 export function getValueFromContext({

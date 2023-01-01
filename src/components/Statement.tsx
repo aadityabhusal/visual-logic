@@ -5,6 +5,7 @@ import { IContextProps, IData, IMethod, IStatement } from "../lib/types";
 import { createData, createMethod, getDataFromVariable } from "../lib/utils";
 import { Data } from "./Data";
 import { Input } from "./Input/Input";
+import { Operation } from "./Operation";
 
 export function Statement({
   statement,
@@ -31,10 +32,21 @@ export function Statement({
     });
   }
 
-  function handleEntity(data: IData, index: number, remove?: boolean) {
+  function handleEntity(
+    entity: IData | IMethod,
+    index: number,
+    remove?: boolean
+  ) {
     let entities = [...statement.entities];
     if (remove) entities.splice(index, 1);
-    else entities[index] = data;
+    else {
+      let [prevData, newData] = [
+        index === 0 ? entities[index] : (entities[index] as IMethod).result,
+        index === 0 ? entity : (entity as IMethod).result,
+      ] as IData[];
+      if (prevData.type !== newData.type) entities.splice(index + 1);
+      entities[index] = entity;
+    }
     handleStatement({ ...statement, entities });
   }
 
@@ -44,8 +56,8 @@ export function Statement({
         {hasVariable ? (
           <Input
             data={createData("string", statement.variable || "")}
-            handleData={(value) =>
-              handleStatement({ ...statement, variable: value.value as string })
+            handleData={(data) =>
+              handleStatement({ ...statement, variable: data.value as string })
             }
             color={theme.color.variable}
             noQuotes
@@ -67,9 +79,22 @@ export function Statement({
             ? getDataFromVariable(firstData, context)
             : firstData
         }
-        handleData={(data) => handleEntity(data, 0)}
+        handleData={(data, remove) => handleEntity(data, 0, remove)}
         context={context}
       />
+      {(statement.entities.slice(1) as IMethod[]).map((method, i, entities) => {
+        let data = i === 0 ? firstData : entities[i - 1].result;
+        method.result = method.handler(data, ...method.parameters);
+        return (
+          <Operation
+            key={method.id}
+            data={data}
+            operation={method}
+            handleOperation={(method, rem) => handleEntity(method, i + 1, rem)}
+            context={context}
+          />
+        );
+      })}
       <div onClick={addMethod}>+</div>
     </StatementWrapper>
   );
