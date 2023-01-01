@@ -52,6 +52,22 @@ export function createMethod({ data, index, name }: ICreateMethodProps) {
   } as IMethod;
 }
 
+export function getLastEntity(entities: IStatement["entities"]) {
+  if (entities.length === 1) return entities[0] as IData;
+  else return (entities[entities.length - 1] as IMethod).result;
+}
+
+export function updateEntities(entities: IStatement["entities"]) {
+  let result = [...entities];
+  result.forEach((_, i) => {
+    if (i === 0) return;
+    let methods = result as IMethod[];
+    let data = i === 1 ? (result[0] as IData) : methods[i - 1].result;
+    methods[i].result = methods[i].handler(data, ...methods[i].parameters);
+  });
+  return result;
+}
+
 export function getValueFromContext({
   id,
   context,
@@ -73,7 +89,7 @@ export function getDataFromVariable(
   return {
     ...variable,
     type: data?.return.type || variable.type,
-    value: data?.return.value || variable.value,
+    value: data?.return.value ?? variable.value,
     name: data?.variable,
   };
 }

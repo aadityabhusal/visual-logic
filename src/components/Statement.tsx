@@ -1,8 +1,14 @@
-import { Equals } from "@styled-icons/fa-solid";
+import { Equals, Plus } from "@styled-icons/fa-solid";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
 import { IContextProps, IData, IMethod, IStatement } from "../lib/types";
-import { createData, createMethod, getDataFromVariable } from "../lib/utils";
+import {
+  createData,
+  createMethod,
+  getDataFromVariable,
+  getLastEntity,
+  updateEntities,
+} from "../lib/utils";
 import { Data } from "./Data";
 import { Input } from "./Input/Input";
 import { Operation } from "./Operation";
@@ -20,10 +26,6 @@ export function Statement({
   const hasVariable = statement.variable !== undefined;
 
   function addMethod() {
-    function getLastEntity(entities: IStatement["entities"]) {
-      if (entities.length === 1) return entities[0] as IData;
-      else return (entities[entities.length - 1] as IMethod).result;
-    }
     let data = getLastEntity(statement.entities);
     let method = createMethod({ data, index: 0 });
     handleStatement({
@@ -47,7 +49,11 @@ export function Statement({
       if (prevData.type !== newData.type) entities.splice(index + 1);
       entities[index] = entity;
     }
-    handleStatement({ ...statement, entities });
+    entities = updateEntities(entities);
+    handleStatement(
+      { ...statement, entities, return: getLastEntity(entities) },
+      remove && index === 0
+    );
   }
 
   return (
@@ -84,18 +90,21 @@ export function Statement({
       />
       {(statement.entities.slice(1) as IMethod[]).map((method, i, entities) => {
         let data = i === 0 ? firstData : entities[i - 1].result;
-        method.result = method.handler(data, ...method.parameters);
         return (
           <Operation
             key={method.id}
             data={data}
             operation={method}
-            handleOperation={(method, rem) => handleEntity(method, i + 1, rem)}
+            handleOperation={(method, remove) =>
+              handleEntity(method, i + 1, remove)
+            }
             context={context}
           />
         );
       })}
-      <div onClick={addMethod}>+</div>
+      <Plus size={10} onClick={addMethod}>
+        +
+      </Plus>
     </StatementWrapper>
   );
 }
@@ -104,6 +113,9 @@ const StatementWrapper = styled.div`
   display: flex;
   align-items: center;
   gap: 0.25rem;
+  & svg {
+    cursor: pointer;
+  }
 `;
 
 const StatementVariable = styled.div`
@@ -111,8 +123,4 @@ const StatementVariable = styled.div`
   align-items: center;
   gap: 0.25rem;
   margin-right: 0.25rem;
-
-  & svg {
-    cursor: pointer;
-  }
 `;

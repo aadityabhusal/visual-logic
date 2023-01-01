@@ -54,6 +54,7 @@ export function Func({
       <FunctionBody>
         {func.statements.map((statement, i) => (
           <Statement
+            key={statement.id}
             statement={statement}
             handleStatement={(statement, remove) =>
               handleStatement(i, statement, remove)
