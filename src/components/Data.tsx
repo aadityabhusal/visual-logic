@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import styled from "styled-components";
 import { TypeMapper } from "../lib/data";
 import { IContextProps, IData, IStatement, IType } from "../lib/types";
@@ -16,7 +15,7 @@ interface IProps {
 
 export function Data({ data, handleData, context }: IProps) {
   const dataIndex = context.statements.findIndex(
-    (statement) => statement.id === data.id
+    (statement) => statement.entities[0].id === data.id
   );
 
   function handleDropdown(value: keyof IType) {
@@ -37,15 +36,10 @@ export function Data({ data, handleData, context }: IProps) {
       id: data.id,
       entityType: "variable",
       referenceId: statement.id,
-      name: statement.variable,
       type: statement.return.type,
       value: statement.return.value,
     });
   }
-
-  useEffect(() => {
-    handleData(data);
-  }, [data?.type]);
 
   return (
     <DataWrapper>

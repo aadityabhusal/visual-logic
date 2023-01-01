@@ -14,14 +14,11 @@ export function createData<T extends keyof IType>(
   type: T,
   value: IType[T]
 ): IData<T> {
-  let returnVal = { type: type, value: value };
   return {
     id: nanoid(),
     entityType: "data",
-    variable: undefined,
-    return: returnVal,
-    ...returnVal,
-    selectedMethod: undefined,
+    type: type,
+    value: value,
   };
 }
 
@@ -69,7 +66,7 @@ export function getValueFromContext({
 }: {
   id?: string;
   context: IContextProps;
-}): IData | undefined {
+}): IStatement | undefined {
   let value = context.statements.find((statement) => statement.id === id);
   if (!value && context.parent) {
     return getValueFromContext({ id, context: context.parent });
@@ -80,23 +77,16 @@ export function getDataFromVariable(
   variable: IData,
   context: IContextProps
 ): IData {
-  let data = getValueFromContext({
-    id: variable.referenceId,
-    context,
-  });
-  let returnVal = { type: variable.type, value: variable.value };
+  let data = getValueFromContext({ id: variable.referenceId, context });
   return {
     ...variable,
+    type: data?.return.type || variable.type,
+    value: data?.return.value || variable.value,
     name: data?.variable,
-    return: data?.return || returnVal,
-    ...(data?.return || returnVal),
-    // Do not remove method here, instead show error for incompatible methods
-    selectedMethod:
-      variable.type === data?.return.type ? variable.selectedMethod : undefined,
   };
 }
 
-export function parseData(data: IData["return"]): string {
+export function parseData(data: IData): string {
   if (Array.isArray(data.value)) {
     return "[" + data.value.map((item) => parseData(item)) + "]";
   } else if (data.value instanceof Map) {
