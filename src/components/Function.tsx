@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { theme } from "../lib/theme";
-import { IContextProps, IFunction, IStatement } from "../lib/types";
+import { IFunction, IStatement } from "../lib/types";
 import { createData, createStatement } from "../lib/utils";
 import { Input } from "./Input/Input";
 import { Statement } from "./Statement";
@@ -8,11 +8,9 @@ import { Statement } from "./Statement";
 export function Func({
   func,
   handleFunc,
-  context,
 }: {
   func: IFunction;
   handleFunc(fn: IFunction): void;
-  context: IContextProps;
 }) {
   function handleFunctionProps(
     key: keyof IFunction,
@@ -59,7 +57,6 @@ export function Func({
             handleStatement={(statement, remove) =>
               handleStatement(i, statement, remove)
             }
-            context={{ ...func, parent: context }}
           />
         ))}
         <div style={{ cursor: "pointer" }} onClick={addStatement}>

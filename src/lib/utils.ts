@@ -1,14 +1,7 @@
 import { nanoid } from "nanoid";
 import { operationMethods } from "./methods";
 import { ICreateMethodProps } from "./props";
-import {
-  IContextProps,
-  IData,
-  IFunction,
-  IMethod,
-  IStatement,
-  IType,
-} from "./types";
+import { IData, IFunction, IMethod, IStatement, IType } from "./types";
 
 export function createData<T extends keyof IType>(
   type: T,
@@ -66,32 +59,6 @@ export function updateEntities(entities: IStatement["entities"]) {
     methods[i].result = methods[i].handler(data, ...methods[i].parameters);
   });
   return result;
-}
-
-export function getValueFromContext({
-  id,
-  context,
-}: {
-  id?: string;
-  context: IContextProps;
-}): IStatement | undefined {
-  let value = context.statements.find((statement) => statement.id === id);
-  if (!value && context.parent) {
-    return getValueFromContext({ id, context: context.parent });
-  } else return value;
-}
-
-export function getDataFromVariable(
-  variable: IData,
-  context: IContextProps
-): IData {
-  let data = getValueFromContext({ id: variable.referenceId, context });
-  return {
-    ...variable,
-    type: data?.return.type || variable.type,
-    value: data?.return.value ?? variable.value,
-    name: data?.variable,
-  };
 }
 
 export function parseData(data: IData): string {

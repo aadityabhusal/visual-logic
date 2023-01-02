@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { IData, IContextProps, IMethod } from "../lib/types";
+import { IData, IMethod } from "../lib/types";
 import { Data } from "./Data";
 import { DropdownOption, DropdownOptions } from "./Dropdown";
 import { Dropdown } from "./Dropdown";
@@ -11,12 +11,10 @@ export function Operation({
   data,
   operation,
   handleOperation,
-  context,
 }: {
   data: IData;
   operation: IMethod;
   handleOperation: (operation: IMethod, remove?: boolean) => void;
-  context: IContextProps;
 }) {
   function handleDropdown(name: string, index: number) {
     if (operation.name === name) return;
@@ -47,7 +45,6 @@ export function Operation({
                 <Data
                   data={item}
                   handleData={(val) => val && handleParameter(val, i)}
-                  context={context}
                 />
                 {i < arr.length - 1 ? <span>{", "}</span> : null}
               </span>

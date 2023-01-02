@@ -1,11 +1,10 @@
 import { Equals, Plus } from "@styled-icons/fa-solid";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
-import { IContextProps, IData, IMethod, IStatement } from "../lib/types";
+import { IData, IMethod, IStatement } from "../lib/types";
 import {
   createData,
   createMethod,
-  getDataFromVariable,
   getLastEntity,
   updateEntities,
 } from "../lib/utils";
@@ -16,11 +15,9 @@ import { Operation } from "./Operation";
 export function Statement({
   statement,
   handleStatement,
-  context,
 }: {
   statement: IStatement;
   handleStatement: (statement: IStatement, remove?: boolean) => void;
-  context: IContextProps;
 }) {
   const firstData = statement.entities[0] as IData;
   const hasVariable = statement.variable !== undefined;
@@ -80,13 +77,8 @@ export function Statement({
         />
       </StatementVariable>
       <Data
-        data={
-          firstData.entityType === "variable"
-            ? getDataFromVariable(firstData, context)
-            : firstData
-        }
+        data={firstData}
         handleData={(data, remove) => handleEntity(data, 0, remove)}
-        context={context}
       />
       {(statement.entities.slice(1) as IMethod[]).map((method, i, entities) => {
         let data = i === 0 ? firstData : entities[i - 1].result;
@@ -98,7 +90,6 @@ export function Statement({
             handleOperation={(method, remove) =>
               handleEntity(method, i + 1, remove)
             }
-            context={context}
           />
         );
       })}

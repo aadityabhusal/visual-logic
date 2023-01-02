@@ -1,22 +1,26 @@
 import styled from "styled-components";
 import { TypeMapper } from "../lib/data";
-import { IContextProps, IData, IStatement, IType } from "../lib/types";
+import { IData, IStatement, IType } from "../lib/types";
 import { Dropdown, DropdownOption, DropdownOptions } from "./Dropdown";
 import { ArrayInput } from "./Input/ArrayInput";
 import { Input } from "./Input/Input";
 import { ObjectInput } from "./Input/ObjectInput";
 import { theme } from "../lib/theme";
+import { useEffect } from "react";
+import { useStore } from "../lib/store";
 
 interface IProps {
   data: IData;
   handleData: (data: IData, remove?: boolean) => void;
-  context: IContextProps;
 }
 
-export function Data({ data, handleData, context }: IProps) {
-  const dataIndex = context.statements.findIndex(
-    (statement) => statement.entities[0].id === data.id
-  );
+export function Data({ data, handleData }: IProps) {
+  const context = useStore((state) => state.functions);
+  const reference = data.referenceId
+    ? context
+        .flatMap((func) => func.statements)
+        .find((statement) => statement.id === data.referenceId)
+    : undefined;
 
   function handleDropdown(value: keyof IType) {
     const inputDefaultValue = TypeMapper[value].defaultValue;
@@ -36,10 +40,28 @@ export function Data({ data, handleData, context }: IProps) {
       id: data.id,
       entityType: "variable",
       referenceId: statement.id,
+      name: statement.variable,
       type: statement.return.type,
       value: statement.return.value,
     });
   }
+
+  useEffect(() => {
+    if (reference) {
+      if (
+        data.type !== reference.return.type ||
+        data.name !== reference.variable ||
+        JSON.stringify(data.value) !== JSON.stringify(reference.return.value)
+      ) {
+        handleData({
+          ...data,
+          name: reference.variable,
+          type: reference.return.type,
+          value: reference.return.value,
+        });
+      }
+    }
+  }, [reference?.variable, reference?.return.type, reference?.return.value]);
 
   return (
     <DataWrapper>
@@ -52,17 +74,9 @@ export function Data({ data, handleData, context }: IProps) {
           ) : (
             <>
               {data.type === "array" ? (
-                <ArrayInput
-                  data={data}
-                  handleData={handleData}
-                  context={context}
-                />
+                <ArrayInput data={data} handleData={handleData} />
               ) : data.value instanceof Map ? (
-                <ObjectInput
-                  data={data}
-                  handleData={handleData}
-                  context={context}
-                />
+                <ObjectInput data={data} handleData={handleData} />
               ) : (
                 <Input
                   data={data}
@@ -87,17 +101,27 @@ export function Data({ data, handleData, context }: IProps) {
             </DropdownOption>
           ))}
           <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
-          {context.statements.map((statement, i) =>
-            i < dataIndex && statement.variable ? (
-              <DropdownOption
-                key={statement.id}
-                onClick={() => selectVariable(statement)}
-                selected={statement.id === data.referenceId}
-              >
-                {statement.variable}
-              </DropdownOption>
-            ) : null
-          )}
+          {context.map((func, fi) => {
+            return (
+              <div key={fi}>
+                {func.name ? (
+                  <DropdownOption key={func.id}>{func.name}</DropdownOption>
+                ) : null}
+                {func.statements.map((statement, i) => {
+                  let arrived = data.id === statement.entities[0].id;
+                  return !arrived && statement.variable ? (
+                    <DropdownOption
+                      key={statement.id}
+                      onClick={() => selectVariable(statement)}
+                      selected={statement.id === data.referenceId}
+                    >
+                      {statement.variable}
+                    </DropdownOption>
+                  ) : null;
+                })}
+              </div>
+            );
+          })}
         </DropdownOptions>
       </Dropdown>
     </DataWrapper>

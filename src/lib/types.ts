@@ -41,10 +41,6 @@ export interface IStore {
   setFunction: (func: IFunction, index: number) => void;
 }
 
-export interface IContextProps extends IFunction {
-  parent?: IContextProps;
-}
-
 export interface IStatement {
   id: string;
   entities: (IData | IMethod)[];
