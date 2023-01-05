@@ -71,38 +71,3 @@ export function parseData(data: IData): string {
     return typeof data.value === "number" ? `${data.value}` : `"${data.value}"`;
   }
 }
-
-/*
-export function sequenceToCode(sequence: IData[]): string {
-  function parseData(data: IData[]): string {
-    return data
-      .map((item) => {
-        if (Array.isArray(item.value.value)) {
-          return "[" + item.value.value.map((item) => parseData([item])) + "]";
-        } else if (item.value.value instanceof Map) {
-          return (
-            "{" +
-            Array.from(item.value.value).map(
-              ([key, val]: [string, IData]) => `${key}: ` + parseData([val])
-            ) +
-            "}"
-          );
-        } else {
-          return typeof item.value.type === "number"
-            ? item.value.value
-            : `"${item.value.value}"`;
-        }
-      })
-      .join();
-  }
-  let codeText = sequence.slice(1, -1).map((item) => {
-    if (item.entityType === "operation") {
-      return `.${item.selectedMethod.name}(${parseData(
-        item.selectedMethod.parameters
-      )})`;
-    }
-  });
-  let firstItem = sequence[0] as IData;
-  return parseData([firstItem]) + codeText.join("");
-}
-*/

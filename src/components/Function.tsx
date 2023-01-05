@@ -1,8 +1,11 @@
+import { Play } from "@styled-icons/fa-solid";
+import { useState } from "react";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
 import { IFunction, IStatement } from "../lib/types";
 import { createData, createStatement } from "../lib/utils";
 import { Input } from "./Input/Input";
+import { Result } from "./Result";
 import { Statement } from "./Statement";
 
 export function Func({
@@ -12,6 +15,8 @@ export function Func({
   func: IFunction;
   handleFunc(fn: IFunction): void;
 }) {
+  const [toggleResult, setToggleResult] = useState(false);
+
   function handleFunctionProps(
     key: keyof IFunction,
     value: IFunction[typeof key]
@@ -63,7 +68,15 @@ export function Func({
           +
         </div>
       </FunctionBody>
-      <div>{"}"}</div>
+      <div>
+        {"}"}
+        <Play
+          size={10}
+          style={{ cursor: "pointer" }}
+          onClick={() => setToggleResult((t) => !t)}
+        />
+      </div>
+      {toggleResult ? <Result func={func} /> : null}
     </FunctionWrapper>
   );
 }
