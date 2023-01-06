@@ -10,21 +10,29 @@ Creating programming logic visually in a functional way.
 
 ## Hierarchy
   
-1. Function - A series of Data/Function Call with a context that has:
-   - A set of parameters
-   - A collection of local, parent and global values and their references
+1. **Function**
+   - Has a series of Statements with a context
+   - Has a set of parameters
+   - Context has a collection of local, parent and global values
    - A return value (Data or void)
-2. Conditionals - A block accessing parent and global scope with a return value
-3. Data - A value with a set of Operation to manipulate its value or type
-   - The values are of type: string, number, array, object, void
-4. Method/Operation - A Function called upon a fixed Data
+2. **Statement**
+   - A Data with chain of Operations (or a function definition)
+   - Returns a Data
+   - Has a variable for referencing its returned data
+3. **Condition**
+   - A block accessing parent and global scope with a return value
+4. **Data**
+   - A value of type: string, number, array, object, void
+   - Has the value of a referenced Data's variable as name 
+5. **Method** 
+   - A Function called upon a fixed Data
 
 
-# Entities
-## Function
+## Entities
+### Function
 - Function provided function could be inside a Namespace (possible entity)
   - A name space will have a collection of function (e.g. Elixir)
-- Functions cannot access any outer variable
+  - Functions cannot modify any outer variable (need to provide a way to modify)
   - There will be a collection of readonly `global` values created at the start
-  - User can use those values inside the any function e.g. `global.theme.color`
+  - User can use those values inside any function e.g. `global.theme.color`
   - Global values will be available similar to a Namespace
