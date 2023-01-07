@@ -64,12 +64,14 @@ export function Data({
         data.name !== reference.variable ||
         JSON.stringify(data.value) !== JSON.stringify(reference.return.value)
       ) {
-        handleData({
-          ...data,
-          name: reference.variable,
-          type: reference.return.type,
-          value: reference.return.value,
-        });
+        if (fixedType) handleDropdown(data.type);
+        else
+          handleData({
+            ...data,
+            name: reference.variable,
+            type: reference.return.type,
+            value: reference.return.value,
+          });
       }
     } else if (data.referenceId) handleDropdown(data.type);
   }, [reference?.variable, reference?.return.type, reference?.return.value]);
@@ -124,8 +126,8 @@ export function Data({
           })}
           <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
           {contextStatements.map((statement, i) => {
-            if (i > dataIndex || !statement.variable) return;
-            let statementData = statement.entities[0] as IData;
+            if (i >= dataIndex || !statement.variable) return;
+            let statementData = statement.return;
             if (fixedType && statementData.type !== fixedType) return;
             return (
               <DropdownOption

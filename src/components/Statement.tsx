@@ -47,9 +47,8 @@ export function Statement({
       entities[index] = entity;
     }
     entities = updateEntities(entities);
-    let result = !remove && { return: getLastEntity(entities) };
     handleStatement(
-      { ...statement, entities, ...result },
+      { ...statement, entities, return: getLastEntity(entities) },
       remove && index === 0
     );
   }
