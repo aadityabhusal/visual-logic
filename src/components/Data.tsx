@@ -16,10 +16,12 @@ interface IProps {
 
 export function Data({ data, handleData }: IProps) {
   const context = useStore((state) => state.functions);
+  const contextStatements = context.flatMap((func) => func.statements);
+  const dataIndex = contextStatements.findIndex(
+    (statement) => statement.entities[0].id === data.id
+  );
   const reference = data.referenceId
-    ? context
-        .flatMap((func) => func.statements)
-        .find((statement) => statement.id === data.referenceId)
+    ? contextStatements.find((statement) => statement.id === data.referenceId)
     : undefined;
 
   function handleDropdown(value: keyof IType) {
@@ -101,27 +103,18 @@ export function Data({ data, handleData }: IProps) {
             </DropdownOption>
           ))}
           <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
-          {context.map((func, fi) => {
-            return (
-              <div key={fi}>
-                {func.name ? (
-                  <DropdownOption key={func.id}>{func.name}</DropdownOption>
-                ) : null}
-                {func.statements.map((statement, i) => {
-                  let arrived = data.id === statement.entities[0].id;
-                  return !arrived && statement.variable ? (
-                    <DropdownOption
-                      key={statement.id}
-                      onClick={() => selectVariable(statement)}
-                      selected={statement.id === data.referenceId}
-                    >
-                      {statement.variable}
-                    </DropdownOption>
-                  ) : null;
-                })}
-              </div>
-            );
-          })}
+          {contextStatements.map(
+            (statement, i) =>
+              i < dataIndex && (
+                <DropdownOption
+                  key={statement.id}
+                  onClick={() => selectVariable(statement)}
+                  selected={statement.id === data.referenceId}
+                >
+                  {statement.variable}
+                </DropdownOption>
+              )
+          )}
         </DropdownOptions>
       </Dropdown>
     </DataWrapper>
