@@ -12,13 +12,22 @@ import { useStore } from "../lib/store";
 interface IProps {
   data: IData;
   handleData: (data: IData, remove?: boolean) => void;
+  fixedType?: keyof IType;
+  allowDelete?: boolean;
+  parentStatement?: IStatement;
 }
 
-export function Data({ data, handleData }: IProps) {
+export function Data({
+  data,
+  handleData,
+  fixedType,
+  allowDelete,
+  parentStatement,
+}: IProps) {
   const context = useStore((state) => state.functions);
   const contextStatements = context.flatMap((func) => func.statements);
   const dataIndex = contextStatements.findIndex(
-    (statement) => statement.entities[0].id === data.id
+    (item) => item.entities[0].id === parentStatement?.entities[0].id
   );
   const reference = data.referenceId
     ? contextStatements.find((statement) => statement.id === data.referenceId)
@@ -27,7 +36,7 @@ export function Data({ data, handleData }: IProps) {
   function handleDropdown(value: keyof IType) {
     const inputDefaultValue = TypeMapper[value].defaultValue;
     let returnVal = { type: value, value: inputDefaultValue };
-    value !== data.type &&
+    (data.referenceId || value !== data.type) &&
       handleData({
         ...data,
         ...returnVal,
@@ -62,23 +71,31 @@ export function Data({ data, handleData }: IProps) {
           value: reference.return.value,
         });
       }
-    }
+    } else if (data.referenceId) handleDropdown(data.type);
   }, [reference?.variable, reference?.return.type, reference?.return.value]);
 
   return (
     <DataWrapper>
       <Dropdown
         data={{ result: data }}
-        handleDelete={() => handleData(data, true)}
+        handleDelete={!allowDelete ? () => handleData(data, true) : undefined}
         head={
           data.entityType === "variable" ? (
             <span style={{ color: theme.color.variable }}>{data.name}</span>
           ) : (
             <>
               {data.type === "array" ? (
-                <ArrayInput data={data} handleData={handleData} />
+                <ArrayInput
+                  data={data}
+                  handleData={handleData}
+                  parentStatement={parentStatement}
+                />
               ) : data.value instanceof Map ? (
-                <ObjectInput data={data} handleData={handleData} />
+                <ObjectInput
+                  data={data}
+                  handleData={handleData}
+                  parentStatement={parentStatement}
+                />
               ) : (
                 <Input
                   data={data}
@@ -93,28 +110,33 @@ export function Data({ data, handleData }: IProps) {
         }
       >
         <DropdownOptions>
-          {Object.keys(TypeMapper).map((item) => (
-            <DropdownOption
-              key={item}
-              onClick={() => handleDropdown(item as keyof IType)}
-              selected={!data.referenceId && data.type === item}
-            >
-              {item}
-            </DropdownOption>
-          ))}
+          {Object.keys(TypeMapper).map((item) => {
+            if (fixedType && item !== fixedType) return;
+            return (
+              <DropdownOption
+                key={item}
+                onClick={() => handleDropdown(item as keyof IType)}
+                selected={!data.referenceId && data.type === item}
+              >
+                {item}
+              </DropdownOption>
+            );
+          })}
           <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
-          {contextStatements.map(
-            (statement, i) =>
-              i < dataIndex && (
-                <DropdownOption
-                  key={statement.id}
-                  onClick={() => selectVariable(statement)}
-                  selected={statement.id === data.referenceId}
-                >
-                  {statement.variable}
-                </DropdownOption>
-              )
-          )}
+          {contextStatements.map((statement, i) => {
+            if (i > dataIndex || !statement.variable) return;
+            let statementData = statement.entities[0] as IData;
+            if (fixedType && statementData.type !== fixedType) return;
+            return (
+              <DropdownOption
+                key={statement.id}
+                onClick={() => selectVariable(statement)}
+                selected={statement.id === data.referenceId}
+              >
+                {statement.variable}
+              </DropdownOption>
+            );
+          })}
         </DropdownOptions>
       </Dropdown>
     </DataWrapper>

@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { TypeMapper } from "../../lib/data";
 import { theme } from "../../lib/theme";
-import { IData } from "../../lib/types";
+import { IData, IStatement } from "../../lib/types";
 import { createData } from "../../lib/utils";
 import { Data } from "../Data";
 import { Input } from "./Input";
@@ -9,8 +9,13 @@ import { Input } from "./Input";
 export interface IObjectInput {
   data: IData;
   handleData: (data: IData) => void;
+  parentStatement?: IStatement;
 }
-export function ObjectInput({ data, handleData }: IObjectInput) {
+export function ObjectInput({
+  data,
+  handleData,
+  parentStatement,
+}: IObjectInput) {
   function addToObject() {
     if (data.value instanceof Map && !data.value.has("")) {
       let newMap = new Map(data.value);
@@ -76,6 +81,7 @@ export function ObjectInput({ data, handleData }: IObjectInput) {
                   handleData={(val, remove) =>
                     handleUpdate(arr, i, val, remove)
                   }
+                  parentStatement={parentStatement}
                 />
                 {i < arr.length - 1 ? <span>{", "}</span> : null}
               </div>

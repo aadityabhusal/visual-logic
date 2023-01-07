@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { IData, IMethod } from "../lib/types";
+import { IData, IMethod, IStatement } from "../lib/types";
 import { Data } from "./Data";
 import { DropdownOption, DropdownOptions } from "./Dropdown";
 import { Dropdown } from "./Dropdown";
@@ -7,15 +7,19 @@ import { operationMethods } from "../lib/methods";
 import { theme } from "../lib/theme";
 import { createMethod } from "../lib/utils";
 
+interface IProps {
+  data: IData;
+  operation: IMethod;
+  handleOperation: (operation: IMethod, remove?: boolean) => void;
+  parentStatement?: IStatement;
+}
+
 export function Operation({
   data,
   operation,
   handleOperation,
-}: {
-  data: IData;
-  operation: IMethod;
-  handleOperation: (operation: IMethod, remove?: boolean) => void;
-}) {
+  parentStatement,
+}: IProps) {
   function handleDropdown(name: string, index: number) {
     if (operation.name === name) return;
     handleOperation({ ...createMethod({ data, index }) });
@@ -45,6 +49,9 @@ export function Operation({
                 <Data
                   data={item}
                   handleData={(val) => val && handleParameter(val, i)}
+                  fixedType={item.type}
+                  allowDelete={true}
+                  parentStatement={parentStatement}
                 />
                 {i < arr.length - 1 ? <span>{", "}</span> : null}
               </span>

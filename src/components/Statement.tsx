@@ -47,8 +47,9 @@ export function Statement({
       entities[index] = entity;
     }
     entities = updateEntities(entities);
+    let result = !remove && { return: getLastEntity(entities) };
     handleStatement(
-      { ...statement, entities, return: getLastEntity(entities) },
+      { ...statement, entities, ...result },
       remove && index === 0
     );
   }
@@ -79,6 +80,7 @@ export function Statement({
       <Data
         data={firstData}
         handleData={(data, remove) => handleEntity(data, 0, remove)}
+        parentStatement={statement}
       />
       {(statement.entities.slice(1) as IMethod[]).map((method, i, entities) => {
         let data = i === 0 ? firstData : entities[i - 1].result;
@@ -90,6 +92,7 @@ export function Statement({
             handleOperation={(method, remove) =>
               handleEntity(method, i + 1, remove)
             }
+            parentStatement={statement}
           />
         );
       })}
