@@ -14,6 +14,8 @@ export const theme = {
     property: "#9cdcfe",
     string: "#ce9178",
     number: "#b5cea8",
+    array: "#fafafa",
+    object: "#fafafa",
     method: "#dcdcaa",
     border: "#444444",
   },

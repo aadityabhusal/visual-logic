@@ -13,7 +13,7 @@ export function Result({ func }: { func: IFunction }) {
         let variable = Boolean(statement.variable) && (
           <div style={{ display: "flex", gap: "0.5rem" }}>
             <Reserved>let</Reserved> <Variable>{statement.variable}</Variable>
-            <span>=</span>
+            <span style={{ marginRight: "0.25rem" }}>=</span>
           </div>
         );
         let data = statement.entities[0] as IData;
@@ -21,16 +21,20 @@ export function Result({ func }: { func: IFunction }) {
         return (
           <div style={{ display: "flex", paddingLeft: "1rem" }} key={i}>
             {variable}
-            <Data type={data.type}>{data.name || parseData(data)}</Data>
+            <Data type={data.type} variable={data.name}>
+              {data.name || parseData(data)}
+            </Data>
             <div style={{ display: "flex" }}>
               {methods.map((method) => {
-                let params = method.parameters.map((params) =>
-                  parseData(params)
-                );
                 return (
                   <>
-                    <Method>.{method.name}</Method>
-                    <span>{`(${params.join(", ")})`}</span>
+                    <Method>{`.${method.name}(`}</Method>
+                    {method.parameters.map((param) => (
+                      <Data type={param.type} variable={param.name}>
+                        {param.name || parseData(param)}
+                      </Data>
+                    ))}
+                    <span>{")"}</span>
                   </>
                 );
               })}
@@ -55,7 +59,10 @@ const Method = styled.div`
   color: ${theme.color.method};
 `;
 
-const Data = styled.div<{ type: string }>`
-  color: ${({ type }) => theme.color[type === "string" ? "string" : "white"]};
-  margin-left: 0.5rem;
+const Data = styled.div<{
+  type: keyof typeof theme["color"];
+  variable?: string;
+}>`
+  color: ${({ type, variable }) =>
+    theme.color[variable ? "variable" : type] || "white"};
 `;

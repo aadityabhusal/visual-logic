@@ -54,7 +54,7 @@ export function createMethod({
 
 export function getLastEntity(entities: IStatement["entities"]) {
   if (entities.length === 1) return entities[0] as IData;
-  else return (entities[entities.length - 1] as IMethod).result;
+  else return (entities[entities.length - 1] as IMethod)?.result;
 }
 
 export function updateEntities(entities: IStatement["entities"]) {
