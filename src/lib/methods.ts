@@ -102,6 +102,15 @@ export const numberMethods: IMethodOmit[] = [
   },
 ];
 
+export const booleanMethods: IMethodOmit[] = [
+  {
+    name: "toString",
+    parameters: [],
+    handler: (data: IData<"boolean">) => {
+      return createData("string", String(data.value));
+    },
+  },
+];
 export const arrayMethods: IMethodOmit[] = [
   {
     name: "concat",
@@ -150,6 +159,7 @@ export const objectMethods: IMethodOmit[] = [
 export const operationMethods: Record<keyof IType, IMethodOmit[]> = {
   string: stringMethods,
   number: numberMethods,
+  boolean: booleanMethods,
   array: arrayMethods,
   object: objectMethods,
 };

@@ -1,6 +1,7 @@
 export type IType = {
   string: string;
   number: number;
+  boolean: boolean;
   array: IData[];
   object: Map<string, IData>;
 };

@@ -14,6 +14,7 @@ export const theme = {
     property: "#9cdcfe",
     string: "#ce9178",
     number: "#b5cea8",
+    boolean: "#569cd6",
     array: "#fafafa",
     object: "#fafafa",
     method: "#dcdcaa",

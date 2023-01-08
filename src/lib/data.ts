@@ -9,6 +9,9 @@ export const TypeMapper: {
   number: {
     defaultValue: 0,
   },
+  boolean: {
+    defaultValue: false,
+  },
   array: {
     defaultValue: [],
   },

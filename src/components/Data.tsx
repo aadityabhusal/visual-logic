@@ -5,6 +5,7 @@ import { Dropdown, DropdownOption, DropdownOptions } from "./Dropdown";
 import { ArrayInput } from "./Input/ArrayInput";
 import { Input } from "./Input/Input";
 import { ObjectInput } from "./Input/ObjectInput";
+import { BooleanInput } from "./Input/BooleanInput";
 import { theme } from "../lib/theme";
 import { useEffect } from "react";
 import { useStore } from "../lib/store";
@@ -98,6 +99,8 @@ export function Data({
                   handleData={handleData}
                   parentStatement={parentStatement}
                 />
+              ) : typeof data.value === "boolean" ? (
+                <BooleanInput data={data} handleData={handleData} />
               ) : (
                 <Input
                   data={data}

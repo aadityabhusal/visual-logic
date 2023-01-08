@@ -75,6 +75,6 @@ export function parseData(data: IData): string {
     let val = Array.from(data.value);
     return `{ ${val.map(([key, val]) => ` "${key}": ${parseData(val)}`)} }`;
   } else {
-    return typeof data.value === "number" ? `${data.value}` : `"${data.value}"`;
+    return typeof data.value === "string" ? `"${data.value}"` : `${data.value}`;
   }
 }
