@@ -1,6 +1,14 @@
 import { nanoid } from "nanoid";
+import { operators } from "./data";
 import { operationMethods } from "./methods";
-import { IData, IFunction, IMethod, IStatement, IType } from "./types";
+import {
+  ICondition,
+  IData,
+  IFunction,
+  IMethod,
+  IStatement,
+  IType,
+} from "./types";
 
 export function createData<T extends keyof IType>(
   type: T,
@@ -50,6 +58,31 @@ export function createMethod({
     entityType: "method",
     result,
   } as IMethod;
+}
+
+export function createCondition(): ICondition {
+  let first = createData("string", "");
+  let second = createData("string", "");
+  let operatorMethod = operators["=="];
+  return {
+    id: nanoid(),
+    entityType: "condition",
+    first,
+    second,
+    operator: "==",
+    return: operatorMethod(first, second),
+  };
+}
+
+export function getConditionResult(
+  first: ICondition["first"],
+  second: ICondition["second"],
+  operator: keyof typeof operators
+) {
+  let operatorFunc = operators[operator];
+  let firstItem = first.entityType === "condition" ? first.return : first;
+  let secondItem = second.entityType === "condition" ? second.return : second;
+  return operatorFunc(firstItem, secondItem);
 }
 
 export function getLastEntity(entities: IStatement["entities"]) {

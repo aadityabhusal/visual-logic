@@ -15,9 +15,6 @@ export interface IData<T extends keyof IType = keyof IType> {
   referenceId?: string;
 }
 
-// Can make function and method into a single type because of their similarity
-// but need to separated Function definition (IFunction) with function call (IMethod)
-
 export interface IMethod {
   id: string;
   name: string;
@@ -47,4 +44,13 @@ export interface IStatement {
   entities: (IData | IMethod)[];
   return: IData;
   variable?: string;
+}
+
+export interface ICondition {
+  id: string;
+  entityType: "condition";
+  first: IData | ICondition;
+  second: IData | ICondition;
+  operator: string;
+  return: IData<"boolean">;
 }
