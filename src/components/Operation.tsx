@@ -50,7 +50,7 @@ export function Operation({
                   data={item}
                   handleData={(val) => val && handleParameter(val, i)}
                   fixedType={item.type}
-                  allowDelete={true}
+                  disableDelete={true}
                   parentStatement={parentStatement}
                 />
                 {i < arr.length - 1 ? <span>{", "}</span> : null}

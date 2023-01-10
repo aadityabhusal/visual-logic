@@ -14,7 +14,7 @@ interface IProps {
   data: IData;
   handleData: (data: IData, remove?: boolean) => void;
   fixedType?: keyof IType;
-  allowDelete?: boolean;
+  disableDelete?: boolean;
   parentStatement?: IStatement;
 }
 
@@ -22,7 +22,7 @@ export function Data({
   data,
   handleData,
   fixedType,
-  allowDelete,
+  disableDelete,
   parentStatement,
 }: IProps) {
   const context = useStore((state) => state.functions);
@@ -81,7 +81,7 @@ export function Data({
     <DataWrapper>
       <Dropdown
         data={{ result: data }}
-        handleDelete={!allowDelete ? () => handleData(data, true) : undefined}
+        handleDelete={!disableDelete ? () => handleData(data, true) : undefined}
         head={
           data.entityType === "variable" ? (
             <span style={{ color: theme.color.variable }}>{data.name}</span>

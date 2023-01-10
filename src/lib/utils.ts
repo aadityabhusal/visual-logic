@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import { operators } from "./data";
 import { operationMethods } from "./methods";
 import {
+  IConditionBlock,
   ICondition,
   IData,
   IFunction,
@@ -60,28 +61,34 @@ export function createMethod({
   } as IMethod;
 }
 
-export function createCondition(): ICondition {
-  let first = createData("string", "");
-  let second = createData("string", "");
+export function createCondition(): IConditionBlock {
+  let left = createData("string", "");
+  let right = createData("string", "");
   let operatorMethod = operators["=="];
   return {
     id: nanoid(),
-    entityType: "condition",
-    first,
-    second,
-    operator: "==",
-    return: operatorMethod(first, second),
+    entityType: "conditionBlock",
+    condition: {
+      id: nanoid(),
+      entityType: "condition",
+      left,
+      right,
+      operator: "==",
+      result: operatorMethod(left, right),
+    },
+    true: createData("string", ""),
+    false: createData("string", ""),
   };
 }
 
 export function getConditionResult(
-  first: ICondition["first"],
-  second: ICondition["second"],
+  left: ICondition["left"],
+  right: ICondition["right"],
   operator: keyof typeof operators
 ) {
   let operatorFunc = operators[operator];
-  let firstItem = first.entityType === "condition" ? first.return : first;
-  let secondItem = second.entityType === "condition" ? second.return : second;
+  let firstItem = left.entityType === "condition" ? left.result : left;
+  let secondItem = right.entityType === "condition" ? right.result : right;
   return operatorFunc(firstItem, secondItem);
 }
 

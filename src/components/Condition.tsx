@@ -1,5 +1,5 @@
 import { operators } from "../lib/data";
-import { ICondition } from "../lib/types";
+import { ICondition, IOperator } from "../lib/types";
 import { getConditionResult } from "../lib/utils";
 import { Data } from "./Data";
 import { Dropdown, DropdownOption, DropdownOptions } from "./Dropdown";
@@ -11,54 +11,56 @@ export function Condition({
   condition: ICondition;
   handleCondition: (condition: ICondition, remove?: boolean) => void;
 }) {
-  function handleOperator(operator: string) {
+  function handleOperator(operator: IOperator) {
     handleCondition({
       ...condition,
       operator,
-      return: getConditionResult(
-        condition.first,
-        condition.second,
+      result: getConditionResult(
+        condition.left,
+        condition.right,
         operator as keyof typeof operators
       ),
     });
   }
 
   function handleOperand(
-    key: "first" | "second",
-    operand: ICondition["first"],
+    key: "left" | "right",
+    operand: ICondition["left"],
     remove?: boolean
   ) {
     if (remove) return handleCondition(condition, true);
     let result = getConditionResult(
-      key === "first" ? operand : condition.first,
-      key === "second" ? operand : condition.second,
+      key === "left" ? operand : condition.left,
+      key === "right" ? operand : condition.right,
       condition.operator as keyof typeof operators
     );
-    handleCondition({ ...condition, [key]: operand, return: result });
+    handleCondition({ ...condition, [key]: operand, result });
   }
-
   return (
-    <div style={{ display: "flex", gap: "0.25rem" }}>
-      {condition.first.entityType === "condition" ? (
+    <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+      {condition.left.entityType === "condition" ? (
         <Condition
-          condition={condition.first}
-          handleCondition={(cond, remove) =>
-            handleOperand("first", cond, remove)
-          }
+          condition={condition.left}
+          handleCondition={(cond, remove) => {
+            handleOperand("left", cond, remove);
+          }}
         />
       ) : (
         <Data
-          data={condition.first}
-          handleData={(data, remove) => handleOperand("first", data, remove)}
+          data={condition.left}
+          handleData={(data, remove) => {
+            handleOperand("left", data, remove);
+          }}
+          disableDelete={true}
         />
       )}
       <Dropdown
-        data={{ result: condition.return }}
+        data={{ result: condition.result }}
         head={<>{condition.operator}</>}
         handleDelete={() => handleCondition(condition, true)}
       >
         <DropdownOptions>
-          {Object.keys(operators).map((item) => (
+          {(Object.keys(operators) as IOperator[]).map((item) => (
             <DropdownOption
               key={item}
               selected={item === condition.operator}
@@ -69,17 +71,18 @@ export function Condition({
           ))}
         </DropdownOptions>
       </Dropdown>
-      {condition.second.entityType === "condition" ? (
+      {condition.right.entityType === "condition" ? (
         <Condition
-          condition={condition.second}
+          condition={condition.right}
           handleCondition={(cond, remove) =>
-            handleOperand("second", cond, remove)
+            handleOperand("right", cond, remove)
           }
         />
       ) : (
         <Data
-          data={condition.second}
-          handleData={(data, remove) => handleOperand("second", data, remove)}
+          data={condition.right}
+          handleData={(data, remove) => handleOperand("right", data, remove)}
+          disableDelete={true}
         />
       )}
     </div>

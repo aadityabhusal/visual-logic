@@ -34,4 +34,8 @@ export const operators = {
     createData("boolean", first.value === second.value),
   "!=": (first: IData, second: IData) =>
     createData("boolean", first.value !== second.value),
+  "&&": (first: IData, second: IData) =>
+    createData("boolean", Boolean(first.value && second.value)),
+  "||": (first: IData, second: IData) =>
+    createData("boolean", Boolean(first.value || second.value)),
 };
