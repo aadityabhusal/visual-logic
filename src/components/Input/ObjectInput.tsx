@@ -19,7 +19,8 @@ export function ObjectInput({
   function addToObject() {
     if (data.value instanceof Map && !data.value.has("")) {
       let newMap = new Map(data.value);
-      newMap.set("", createData("string", TypeMapper.string.defaultValue));
+      let newData = createData("string", TypeMapper.string.defaultValue, true);
+      newMap.set("", newData);
       handleData({
         ...data,
         type: "object",

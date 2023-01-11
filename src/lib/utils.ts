@@ -13,13 +13,15 @@ import {
 
 export function createData<T extends keyof IType>(
   type: T,
-  value: IType[T]
+  value: IType[T],
+  isGeneric?: boolean
 ): IData<T> {
   return {
     id: nanoid(),
     entityType: "data",
     type: type,
     value: value,
+    isGeneric: isGeneric || false,
   };
 }
 
@@ -36,7 +38,7 @@ export function createFunction(): IFunction {
 }
 
 export function createStatement(data?: IData): IStatement {
-  let newData = data || createData("string", "");
+  let newData = data || createData("string", "", true);
   return { id: nanoid(), return: newData, entities: [newData] };
 }
 

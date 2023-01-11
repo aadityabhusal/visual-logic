@@ -13,7 +13,6 @@ import { useStore } from "../lib/store";
 interface IProps {
   data: IData;
   handleData: (data: IData, remove?: boolean) => void;
-  fixedType?: keyof IType;
   disableDelete?: boolean;
   parentStatement?: IStatement;
 }
@@ -21,7 +20,6 @@ interface IProps {
 export function Data({
   data,
   handleData,
-  fixedType,
   disableDelete,
   parentStatement,
 }: IProps) {
@@ -55,6 +53,7 @@ export function Data({
       name: statement.variable,
       type: statement.return.type,
       value: statement.return.value,
+      isGeneric: statement.return.isGeneric,
     });
   }
 
@@ -65,7 +64,7 @@ export function Data({
         data.name !== reference.variable ||
         JSON.stringify(data.value) !== JSON.stringify(reference.return.value)
       ) {
-        if (fixedType) handleDropdown(data.type);
+        if (!data.isGeneric) handleDropdown(data.type);
         else
           handleData({
             ...data,
@@ -116,7 +115,7 @@ export function Data({
       >
         <DropdownOptions>
           {Object.keys(TypeMapper).map((item) => {
-            if (fixedType && item !== fixedType) return;
+            if (!data.isGeneric && item !== data.type) return;
             return (
               <DropdownOption
                 key={item}
@@ -131,7 +130,7 @@ export function Data({
           {contextStatements.map((statement, i) => {
             if (i >= dataIndex || !statement.variable) return;
             let statementData = statement.return;
-            if (fixedType && statementData.type !== fixedType) return;
+            if (!data.isGeneric && statementData.type !== data.type) return;
             return (
               <DropdownOption
                 key={statement.id}

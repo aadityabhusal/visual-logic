@@ -49,7 +49,6 @@ export function Operation({
                 <Data
                   data={item}
                   handleData={(val) => val && handleParameter(val, i)}
-                  fixedType={item.type}
                   disableDelete={true}
                   parentStatement={parentStatement}
                 />

@@ -19,7 +19,7 @@ export function ArrayInput({ data, handleData, parentStatement }: IArrayInput) {
         type: "array",
         value: [
           ...data.value,
-          createData("string", TypeMapper.string.defaultValue),
+          createData("string", TypeMapper.string.defaultValue, true),
         ],
       });
   }
