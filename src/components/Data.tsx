@@ -32,13 +32,12 @@ export function Data({
     ? contextStatements.find((statement) => statement.id === data.referenceId)
     : undefined;
 
-  function handleDropdown(value: keyof IType) {
-    const inputDefaultValue = TypeMapper[value].defaultValue;
-    let returnVal = { type: value, value: inputDefaultValue };
-    (data.referenceId || value !== data.type) &&
+  function handleDropdown(type: keyof IType) {
+    (data.referenceId || type !== data.type) &&
       handleData({
         ...data,
-        ...returnVal,
+        type,
+        value: TypeMapper[type].defaultValue,
         entityType: "data",
         referenceId: undefined,
         name: undefined,
@@ -53,7 +52,7 @@ export function Data({
       name: statement.variable,
       type: statement.return.type,
       value: statement.return.value,
-      isGeneric: statement.return.isGeneric,
+      isGeneric: data.isGeneric,
     });
   }
 
@@ -64,7 +63,8 @@ export function Data({
         data.name !== reference.variable ||
         JSON.stringify(data.value) !== JSON.stringify(reference.return.value)
       ) {
-        if (!data.isGeneric) handleDropdown(data.type);
+        if (!data.isGeneric && data.type !== reference.return.type)
+          handleDropdown(data.type);
         else
           handleData({
             ...data,

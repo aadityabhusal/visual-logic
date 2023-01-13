@@ -11,7 +11,7 @@ export interface IData<T extends keyof IType = keyof IType> {
   entityType: "data" | "variable";
   type: T;
   value: IType[T];
-  isGeneric: boolean;
+  isGeneric?: boolean;
   name?: string;
   referenceId?: string;
 }

@@ -21,7 +21,7 @@ export function createData<T extends keyof IType>(
     entityType: "data",
     type: type,
     value: value,
-    isGeneric: isGeneric || false,
+    isGeneric,
   };
 }
 
