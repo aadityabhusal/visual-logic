@@ -102,6 +102,15 @@ const DropdownContainer = styled.div`
   min-width: max-content;
   border: 1px solid ${theme.color.border};
   background-color: ${theme.background.dropdown.default};
+  max-height: 7rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: ${theme.background.dropdown.scrollbar};
+  }
 `;
 
 const DropdownContainerHead = styled.div`

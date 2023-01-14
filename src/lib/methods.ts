@@ -3,6 +3,57 @@ import { createData } from "./utils";
 
 type IMethodOmit = Omit<IMethod, "result" | "id" | "entityType">;
 
+export const comparisonMethods: IMethodOmit[] = [
+  {
+    name: "==",
+    parameters: [createData("string", "", true)],
+    handler: (data: IData, p1: IData<typeof data.type>) =>
+      createData("boolean", data.value === p1.value),
+  },
+  {
+    name: "!=",
+    parameters: [createData("string", "", true)],
+    handler: (data: IData, p1: IData<typeof data.type>) =>
+      createData("boolean", data.value !== p1.value),
+  },
+  {
+    name: "<",
+    parameters: [createData("string", "", true)],
+    handler: (data: IData, p1: IData<typeof data.type>) =>
+      createData("boolean", data.value < p1.value),
+  },
+  {
+    name: "<=",
+    parameters: [createData("string", "", true)],
+    handler: (data: IData, p1: IData<typeof data.type>) =>
+      createData("boolean", data.value <= p1.value),
+  },
+  {
+    name: ">",
+    parameters: [createData("string", "", true)],
+    handler: (data: IData, p1: IData<typeof data.type>) =>
+      createData("boolean", data.value > p1.value),
+  },
+  {
+    name: ">=",
+    parameters: [createData("string", "", true)],
+    handler: (data: IData, p1: IData<typeof data.type>) =>
+      createData("boolean", data.value >= p1.value),
+  },
+  {
+    name: "&&",
+    parameters: [createData("string", "", true)],
+    handler: (data: IData, p1: IData<typeof data.type>) =>
+      createData("boolean", Boolean(data.value) && Boolean(p1.value)),
+  },
+  {
+    name: "||",
+    parameters: [createData("string", "", true)],
+    handler: (data: IData, p1: IData<typeof data.type>) =>
+      createData("boolean", Boolean(data.value) || Boolean(p1.value)),
+  },
+];
+
 export const stringMethods: IMethodOmit[] = [
   {
     name: "capitalize",
@@ -157,9 +208,9 @@ export const objectMethods: IMethodOmit[] = [
 ];
 
 export const operationMethods: Record<keyof IType, IMethodOmit[]> = {
-  string: stringMethods,
-  number: numberMethods,
-  boolean: booleanMethods,
-  array: arrayMethods,
-  object: objectMethods,
+  string: stringMethods.concat(comparisonMethods),
+  number: numberMethods.concat(comparisonMethods),
+  boolean: booleanMethods.concat(comparisonMethods),
+  array: arrayMethods.concat(comparisonMethods),
+  object: objectMethods.concat(comparisonMethods),
 };

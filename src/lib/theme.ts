@@ -4,6 +4,7 @@ export const theme = {
     dropdown: {
       default: "#252526",
       hover: "#2a2d2e",
+      scrollbar: "#464647",
       selected: "#04395e",
     },
   },
