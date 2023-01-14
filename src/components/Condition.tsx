@@ -4,6 +4,7 @@ import { ICondition } from "../lib/types";
 import { createData } from "../lib/utils";
 import { Data } from "./Data";
 import { Input } from "./Input/Input";
+import { Statement } from "./Statement";
 
 export function Condition({
   condition,
@@ -39,7 +40,14 @@ export function Condition({
           })
         }
       />
-      <div>Condition</div>
+      <Statement
+        statement={condition.condition}
+        handleStatement={(statement) => {
+          handleCondition({ ...condition, condition: statement });
+        }}
+        disableVariable={true}
+        disableDelete={true}
+      />
       <span>?</span>
       <Data
         data={condition.true}

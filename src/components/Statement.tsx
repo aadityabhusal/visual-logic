@@ -15,9 +15,13 @@ import { Operation } from "./Operation";
 export function Statement({
   statement,
   handleStatement,
+  disableVariable,
+  disableDelete,
 }: {
   statement: IStatement;
   handleStatement: (statement: IStatement, remove?: boolean) => void;
+  disableVariable?: boolean;
+  disableDelete?: boolean;
 }) {
   const firstData = statement.entities[0] as IData;
   const hasVariable = statement.variable !== undefined;
@@ -55,31 +59,37 @@ export function Statement({
 
   return (
     <StatementWrapper>
-      <StatementVariable>
-        {hasVariable ? (
-          <Input
-            data={createData("string", statement.variable || "")}
-            handleData={(data) =>
-              handleStatement({ ...statement, variable: data.value as string })
+      {!disableVariable ? (
+        <StatementVariable>
+          {hasVariable ? (
+            <Input
+              data={createData("string", statement.variable || "")}
+              handleData={(data) =>
+                handleStatement({
+                  ...statement,
+                  variable: data.value as string,
+                })
+              }
+              color={theme.color.variable}
+              noQuotes
+            />
+          ) : null}
+          <Equals
+            size={10}
+            onClick={() =>
+              handleStatement({
+                ...statement,
+                variable: hasVariable ? undefined : "",
+              })
             }
-            color={theme.color.variable}
-            noQuotes
           />
-        ) : null}
-        <Equals
-          size={10}
-          onClick={() =>
-            handleStatement({
-              ...statement,
-              variable: hasVariable ? undefined : "",
-            })
-          }
-        />
-      </StatementVariable>
+        </StatementVariable>
+      ) : null}
       <Data
         data={firstData}
         handleData={(data, remove) => handleEntity(data, 0, remove)}
         parentStatement={statement}
+        disableDelete={disableDelete}
       />
       {(statement.entities.slice(1) as IMethod[]).map((method, i, entities) => {
         let data = i === 0 ? firstData : entities[i - 1].result;

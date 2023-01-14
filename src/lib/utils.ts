@@ -54,7 +54,7 @@ export function createMethod({
   name?: string;
 }) {
   let methods = operationMethods[data.type];
-  let methodByName = name && methods.find((method) => (method.name = name));
+  let methodByName = name && methods.find((method) => method.name === name);
   let newMethod = methodByName || methods[index || 0];
   let result = newMethod.handler(data, ...newMethod.parameters);
   return {
