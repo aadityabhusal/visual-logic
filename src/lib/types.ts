@@ -47,21 +47,10 @@ export interface IStatement {
   variable?: string;
 }
 
-export type IOperator = ">" | "<" | "<=" | ">=" | "==" | "!=" | "&&" | "||";
-
 export interface ICondition {
   id: string;
   entityType: "condition";
-  left: IData | ICondition;
-  right: IData | ICondition;
-  operator: IOperator;
-  result: IData<"boolean">;
-}
-
-export interface IConditionBlock {
-  id: string;
-  entityType: "conditionBlock";
-  condition: ICondition;
+  condition: IStatement;
   true: IData;
   false: IData;
   variable?: string;

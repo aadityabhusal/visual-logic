@@ -1,8 +1,6 @@
 import { nanoid } from "nanoid";
-import { operators } from "./data";
 import { operationMethods } from "./methods";
 import {
-  IConditionBlock,
   ICondition,
   IData,
   IFunction,
@@ -37,9 +35,13 @@ export function createFunction(): IFunction {
   };
 }
 
-export function createStatement(data?: IData): IStatement {
+export function createStatement(data?: IData, methods?: IMethod[]): IStatement {
   let newData = data || createData("string", "", true);
-  return { id: nanoid(), return: newData, entities: [newData] };
+  return {
+    id: nanoid(),
+    return: newData,
+    entities: [newData, ...(methods || [])],
+  };
 }
 
 export function createMethod({
@@ -63,35 +65,17 @@ export function createMethod({
   } as IMethod;
 }
 
-export function createCondition(): IConditionBlock {
-  let left = createData("string", "");
-  let right = createData("string", "");
-  let operatorMethod = operators["=="];
+export function createCondition(): ICondition {
+  let data = createData("string", "");
+  const method = createMethod({ data, name: "==" });
+  const condition = createStatement(data, [method]);
   return {
     id: nanoid(),
-    entityType: "conditionBlock",
-    condition: {
-      id: nanoid(),
-      entityType: "condition",
-      left,
-      right,
-      operator: "==",
-      result: operatorMethod(left, right),
-    },
+    entityType: "condition",
+    condition,
     true: createData("string", ""),
     false: createData("string", ""),
   };
-}
-
-export function getConditionResult(
-  left: ICondition["left"],
-  right: ICondition["right"],
-  operator: keyof typeof operators
-) {
-  let operatorFunc = operators[operator];
-  let firstItem = left.entityType === "condition" ? left.result : left;
-  let secondItem = right.entityType === "condition" ? right.result : right;
-  return operatorFunc(firstItem, secondItem);
 }
 
 export function getLastEntity(entities: IStatement["entities"]) {

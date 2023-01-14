@@ -162,6 +162,7 @@ export const booleanMethods: IMethodOmit[] = [
     },
   },
 ];
+
 export const arrayMethods: IMethodOmit[] = [
   {
     name: "concat",
