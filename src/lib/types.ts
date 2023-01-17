@@ -42,7 +42,8 @@ export interface IStore {
 
 export interface IStatement {
   id: string;
-  entities: (IData | IMethod)[];
+  data: IData;
+  methods: IMethod[];
   return: IData;
   variable?: string;
 }

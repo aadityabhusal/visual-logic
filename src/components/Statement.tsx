@@ -23,38 +23,25 @@ export function Statement({
   disableVariable?: boolean;
   disableDelete?: boolean;
 }) {
-  const firstData = statement.entities[0] as IData;
   const hasVariable = statement.variable !== undefined;
 
   function addMethod() {
-    let data = getLastEntity(statement.entities);
-    let method = createMethod({ data, index: 0 });
-    handleStatement({
-      ...statement,
-      entities: [...statement.entities, method],
-    });
+    let method = createMethod({ data: getLastEntity(statement), index: 0 });
+    let methods = [...statement.methods, method];
+    handleStatement({ ...statement, methods });
   }
 
-  function handleEntity(
-    entity: IData | IMethod,
-    index: number,
-    remove?: boolean
-  ) {
-    let entities = [...statement.entities];
-    if (remove) entities.splice(index, 1);
+  function handleMethod(method: IMethod, index: number, remove?: boolean) {
+    let methods = [...statement.methods];
+    if (remove) methods.splice(index, 1);
     else {
-      let [prevData, newData] = [
-        index === 0 ? entities[index] : (entities[index] as IMethod).result,
-        index === 0 ? entity : (entity as IMethod).result,
-      ] as IData[];
-      if (prevData.type !== newData.type) entities.splice(index + 1);
-      entities[index] = entity;
+      if (method.result.type !== methods[index].result.type)
+        methods.splice(index + 1);
+      methods[index] = method;
     }
-    entities = updateEntities(entities);
-    handleStatement(
-      { ...statement, entities, return: getLastEntity(entities) },
-      remove && index === 0
-    );
+    methods = updateEntities(statement);
+    let result = { ...statement, methods };
+    handleStatement({ ...result, return: getLastEntity(result) });
   }
 
   return (
@@ -86,20 +73,21 @@ export function Statement({
         </StatementVariable>
       ) : null}
       <Data
-        data={firstData}
-        handleData={(data, remove) => handleEntity(data, 0, remove)}
+        data={statement.data}
+        handleData={(data, remove) =>
+          handleStatement({ ...statement, data }, remove)
+        }
         parentStatement={statement}
         disableDelete={disableDelete}
       />
-      {(statement.entities.slice(1) as IMethod[]).map((method, i, entities) => {
-        let data = i === 0 ? firstData : entities[i - 1].result;
+      {statement.methods.map((method, i) => {
         return (
           <Operation
             key={method.id}
-            data={data}
+            data={method.result}
             operation={method}
             handleOperation={(method, remove) =>
-              handleEntity(method, i + 1, remove)
+              handleMethod(method, i + 1, remove)
             }
             parentStatement={statement}
           />

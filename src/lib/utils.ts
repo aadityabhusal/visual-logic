@@ -39,8 +39,9 @@ export function createStatement(data?: IData, methods?: IMethod[]): IStatement {
   let newData = data || createData("string", "", true);
   return {
     id: nanoid(),
+    data: newData,
     return: newData,
-    entities: [newData, ...(methods || [])],
+    methods: methods || [],
   };
 }
 
@@ -78,20 +79,19 @@ export function createCondition(): ICondition {
   };
 }
 
-export function getLastEntity(entities: IStatement["entities"]) {
-  if (entities.length === 1) return entities[0] as IData;
-  else return (entities[entities.length - 1] as IMethod)?.result;
+export function getLastEntity(statement: IStatement) {
+  if (!statement.methods.length) return statement.data;
+  return statement.methods[statement.methods.length - 1].result;
 }
 
-export function updateEntities(entities: IStatement["entities"]) {
-  let result = [...entities];
-  result.forEach((_, i) => {
-    if (i === 0) return;
-    let methods = result as IMethod[];
-    let data = i === 1 ? (result[0] as IData) : methods[i - 1].result;
-    methods[i].result = methods[i].handler(data, ...methods[i].parameters);
+export function updateEntities(statement: IStatement) {
+  let methods = [...statement.methods];
+  methods.map((method, i) => {
+    let data = i === 0 ? statement.data : methods[i - 1].result;
+    let result = method.handler(data, ...methods[i].parameters);
+    return { ...method, result };
   });
-  return result;
+  return methods;
 }
 
 export function parseData(data: IData): string {

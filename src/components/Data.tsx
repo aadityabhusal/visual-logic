@@ -26,7 +26,7 @@ export function Data({
   const context = useStore((state) => state.functions);
   const contextStatements = context.flatMap((func) => func.statements);
   const dataIndex = contextStatements.findIndex(
-    (item) => item.entities[0].id === parentStatement?.entities[0].id
+    (item) => item.data.id === parentStatement?.data.id
   );
   const reference = data.referenceId
     ? contextStatements.find((statement) => statement.id === data.referenceId)
