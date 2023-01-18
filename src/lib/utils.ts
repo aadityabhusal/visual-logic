@@ -86,12 +86,12 @@ export function getLastEntity(statement: IStatement) {
 
 export function updateEntities(statement: IStatement) {
   let methods = [...statement.methods];
-  methods.map((method, i) => {
-    let data = i === 0 ? statement.data : methods[i - 1].result;
-    let result = method.handler(data, ...methods[i].parameters);
-    return { ...method, result };
-  });
-  return methods;
+  let result = methods.reduce((prev, method, i) => {
+    let data = i === 0 ? statement.data : prev[i - 1].result;
+    let result = method.handler(data, ...method.parameters);
+    return [...prev, { ...method, result }];
+  }, [] as IMethod[]);
+  return { ...statement, methods: result };
 }
 
 export function parseData(data: IData): string {

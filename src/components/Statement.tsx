@@ -31,6 +31,16 @@ export function Statement({
     handleStatement({ ...statement, methods });
   }
 
+  function handleData(data: IData, remove?: boolean) {
+    if (remove) handleStatement(statement, remove);
+    else {
+      let methods = [...statement.methods];
+      if (statement.data.type !== data.type) methods = [];
+      let result = updateEntities({ ...statement, data, methods });
+      handleStatement({ ...result, return: getLastEntity(result) });
+    }
+  }
+
   function handleMethod(method: IMethod, index: number, remove?: boolean) {
     let methods = [...statement.methods];
     if (remove) methods.splice(index, 1);
@@ -39,8 +49,7 @@ export function Statement({
         methods.splice(index + 1);
       methods[index] = method;
     }
-    methods = updateEntities(statement);
-    let result = { ...statement, methods };
+    let result = updateEntities({ ...statement, methods });
     handleStatement({ ...result, return: getLastEntity(result) });
   }
 
@@ -74,21 +83,18 @@ export function Statement({
       ) : null}
       <Data
         data={statement.data}
-        handleData={(data, remove) =>
-          handleStatement({ ...statement, data }, remove)
-        }
+        handleData={(data, remove) => handleData(data, remove)}
         parentStatement={statement}
         disableDelete={disableDelete}
       />
-      {statement.methods.map((method, i) => {
+      {statement.methods.map((method, i, methods) => {
+        let data = i === 0 ? statement.data : methods[i - 1].result;
         return (
           <Operation
             key={method.id}
-            data={method.result}
+            data={data}
             operation={method}
-            handleOperation={(method, remove) =>
-              handleMethod(method, i + 1, remove)
-            }
+            handleOperation={(meth, remove) => handleMethod(meth, i, remove)}
             parentStatement={statement}
           />
         );
