@@ -42,23 +42,28 @@ export function Condition({
       />
       <Statement
         statement={condition.condition}
-        handleStatement={(statement) => {
-          handleCondition({ ...condition, condition: statement });
+        handleStatement={(statement, remove) => {
+          handleCondition({ ...condition, condition: statement }, remove);
         }}
         disableVariable={true}
-        disableDelete={true}
       />
       <span>?</span>
-      <Data
-        data={condition.true}
-        handleData={(data) => handleCondition({ ...condition, true: data })}
+      <Statement
+        statement={condition.true}
+        handleStatement={(statement) =>
+          handleCondition({ ...condition, true: statement })
+        }
         disableDelete={true}
+        disableVariable={true}
       />
       <span>:</span>
-      <Data
-        data={condition.false}
-        handleData={(data) => handleCondition({ ...condition, false: data })}
+      <Statement
+        statement={condition.false}
+        handleStatement={(statement) =>
+          handleCondition({ ...condition, false: statement })
+        }
         disableDelete={true}
+        disableVariable={true}
       />
     </div>
   );

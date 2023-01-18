@@ -30,7 +30,7 @@ export interface IFunction {
   entityType: "function";
   name: string;
   parameter: IData[];
-  statements: IStatement[];
+  statements: (IStatement | ICondition)[];
   return?: IData;
   handler?: (...args: IData[]) => IData;
 }
@@ -42,6 +42,7 @@ export interface IStore {
 
 export interface IStatement {
   id: string;
+  entityType: "statement";
   data: IData;
   methods: IMethod[];
   return: IData;
@@ -52,7 +53,8 @@ export interface ICondition {
   id: string;
   entityType: "condition";
   condition: IStatement;
-  true: IData;
-  false: IData;
+  true: IStatement;
+  false: IStatement;
+  result: IData;
   variable?: string;
 }

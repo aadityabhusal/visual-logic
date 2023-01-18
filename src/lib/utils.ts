@@ -39,6 +39,7 @@ export function createStatement(data?: IData, methods?: IMethod[]): IStatement {
   let newData = data || createData("string", "", true);
   return {
     id: nanoid(),
+    entityType: "statement",
     data: newData,
     return: newData,
     methods: methods || [],
@@ -70,12 +71,14 @@ export function createCondition(): ICondition {
   let data = createData("string", "");
   const method = createMethod({ data, name: "==" });
   const condition = createStatement(data, [method]);
+  const first = createStatement();
   return {
     id: nanoid(),
     entityType: "condition",
     condition,
-    true: createData("string", ""),
-    false: createData("string", ""),
+    true: first,
+    false: createStatement(),
+    result: first.return,
   };
 }
 

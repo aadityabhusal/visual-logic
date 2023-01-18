@@ -24,7 +24,9 @@ export function Data({
   parentStatement,
 }: IProps) {
   const context = useStore((state) => state.functions);
-  const contextStatements = context.flatMap((func) => func.statements);
+  const contextStatements = context
+    .flatMap((func) => func.statements)
+    .filter((item) => item.entityType === "statement") as IStatement[];
   const dataIndex = contextStatements.findIndex(
     (item) => item.data.id === parentStatement?.data.id
   );
