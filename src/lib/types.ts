@@ -31,7 +31,7 @@ export interface IFunction {
   name: string;
   parameter: IData[];
   statements: (IStatement | ICondition)[];
-  return?: IData;
+  result?: IData;
   handler?: (...args: IData[]) => IData;
 }
 
@@ -45,7 +45,7 @@ export interface IStatement {
   entityType: "statement";
   data: IData;
   methods: IMethod[];
-  return: IData;
+  result: IData;
   variable?: string;
 }
 

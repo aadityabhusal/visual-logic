@@ -30,7 +30,7 @@ export function createFunction(): IFunction {
     handler: undefined,
     name: "",
     parameter: [],
-    return: createData("string", ""),
+    result: createData("string", ""),
     statements: [],
   };
 }
@@ -41,7 +41,7 @@ export function createStatement(data?: IData, methods?: IMethod[]): IStatement {
     id: nanoid(),
     entityType: "statement",
     data: newData,
-    return: newData,
+    result: newData,
     methods: methods || [],
   };
 }
@@ -78,7 +78,7 @@ export function createCondition(): ICondition {
     condition,
     true: first,
     false: createStatement(),
-    result: first.return,
+    result: first.result,
   };
 }
 

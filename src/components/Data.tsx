@@ -52,8 +52,8 @@ export function Data({
       entityType: "variable",
       referenceId: statement.id,
       name: statement.variable,
-      type: statement.return.type,
-      value: statement.return.value,
+      type: statement.result.type,
+      value: statement.result.value,
       isGeneric: data.isGeneric,
     });
   }
@@ -61,22 +61,22 @@ export function Data({
   useEffect(() => {
     if (reference) {
       if (
-        data.type !== reference.return.type ||
+        data.type !== reference.result.type ||
         data.name !== reference.variable ||
-        JSON.stringify(data.value) !== JSON.stringify(reference.return.value)
+        JSON.stringify(data.value) !== JSON.stringify(reference.result.value)
       ) {
-        if (!data.isGeneric && data.type !== reference.return.type)
+        if (!data.isGeneric && data.type !== reference.result.type)
           handleDropdown(data.type);
         else
           handleData({
             ...data,
             name: reference.variable,
-            type: reference.return.type,
-            value: reference.return.value,
+            type: reference.result.type,
+            value: reference.result.value,
           });
       }
     } else if (data.referenceId) handleDropdown(data.type);
-  }, [reference?.variable, reference?.return.type, reference?.return.value]);
+  }, [reference?.variable, reference?.result.type, reference?.result.value]);
 
   return (
     <DataWrapper>
@@ -131,7 +131,7 @@ export function Data({
           <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
           {contextStatements.map((statement, i) => {
             if (i >= dataIndex || !statement.variable) return;
-            let statementData = statement.return;
+            let statementData = statement.result;
             if (!data.isGeneric && statementData.type !== data.type) return;
             return (
               <DropdownOption

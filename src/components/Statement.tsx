@@ -37,7 +37,7 @@ export function Statement({
       let methods = [...statement.methods];
       if (statement.data.type !== data.type) methods = [];
       let result = updateEntities({ ...statement, data, methods });
-      handleStatement({ ...result, return: getLastEntity(result) });
+      handleStatement({ ...result, result: getLastEntity(result) });
     }
   }
 
@@ -50,7 +50,7 @@ export function Statement({
       methods[index] = method;
     }
     let result = updateEntities({ ...statement, methods });
-    handleStatement({ ...result, return: getLastEntity(result) });
+    handleStatement({ ...result, result: getLastEntity(result) });
   }
 
   return (
