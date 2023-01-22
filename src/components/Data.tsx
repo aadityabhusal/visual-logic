@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { TypeMapper } from "../lib/data";
-import { IData, IStatement, IType } from "../lib/types";
+import { ICondition, IData, IStatement, IType } from "../lib/types";
 import { Dropdown, DropdownOption, DropdownOptions } from "./Dropdown";
 import { ArrayInput } from "./Input/ArrayInput";
 import { Input } from "./Input/Input";
@@ -24,12 +24,11 @@ export function Data({
   parentStatement,
 }: IProps) {
   const context = useStore((state) => state.functions);
-  const contextStatements = context
-    .flatMap((func) => func.statements)
-    .filter((item) => item.entityType === "statement") as IStatement[];
-  const dataIndex = contextStatements.findIndex(
-    (item) => item.data.id === parentStatement?.data.id
-  );
+  const contextStatements = context.flatMap((func) => func.statements);
+  const dataIndex = contextStatements.findIndex((item) => {
+    let itemData = item.entityType === "statement" ? item.data : item.result;
+    return itemData.id === parentStatement?.data.id;
+  });
   const reference = data.referenceId
     ? contextStatements.find((statement) => statement.id === data.referenceId)
     : undefined;
@@ -46,7 +45,7 @@ export function Data({
       });
   }
 
-  function selectVariable(statement: IStatement) {
+  function selectVariable(statement: IStatement | ICondition) {
     handleData({
       id: data.id,
       entityType: "variable",

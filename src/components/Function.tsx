@@ -70,6 +70,7 @@ export function Func({
             />
           ) : (
             <Condition
+              key={statement.id}
               condition={statement}
               handleCondition={(condition, remove) =>
                 handleStatement(i, condition, remove)

@@ -1,8 +1,7 @@
 import { Equals } from "@styled-icons/fa-solid";
 import { theme } from "../lib/theme";
-import { ICondition } from "../lib/types";
+import { ICondition, IStatement } from "../lib/types";
 import { createData } from "../lib/utils";
-import { Data } from "./Data";
 import { Input } from "./Input/Input";
 import { Statement } from "./Statement";
 
@@ -14,6 +13,30 @@ export function Condition({
   handleCondition: (condition: ICondition, remove?: boolean) => void;
 }) {
   const hasVariable = condition.variable !== undefined;
+
+  function handleOperators(
+    operator: ICondition["condition"],
+    remove?: boolean
+  ) {
+    let result = Boolean(operator.result.value)
+      ? condition.true
+      : condition.false;
+    handleCondition(
+      { ...condition, condition: operator, result: result.result },
+      remove
+    );
+  }
+
+  function handleResult(key: "true" | "false", statement: IStatement) {
+    let result = Boolean(condition.condition.result.value)
+      ? key === "true"
+        ? statement
+        : condition.true
+      : key === "false"
+      ? statement
+      : condition.false;
+    handleCondition({ ...condition, [key]: statement, result: result.result });
+  }
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
@@ -42,26 +65,20 @@ export function Condition({
       />
       <Statement
         statement={condition.condition}
-        handleStatement={(statement, remove) => {
-          handleCondition({ ...condition, condition: statement }, remove);
-        }}
+        handleStatement={handleOperators}
         disableVariable={true}
       />
       <span>?</span>
       <Statement
         statement={condition.true}
-        handleStatement={(statement) =>
-          handleCondition({ ...condition, true: statement })
-        }
+        handleStatement={(statement) => handleResult("true", statement)}
         disableDelete={true}
         disableVariable={true}
       />
       <span>:</span>
       <Statement
         statement={condition.false}
-        handleStatement={(statement) =>
-          handleCondition({ ...condition, false: statement })
-        }
+        handleStatement={(statement) => handleResult("false", statement)}
         disableDelete={true}
         disableVariable={true}
       />
