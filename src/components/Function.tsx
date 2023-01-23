@@ -6,7 +6,7 @@ import { IFunction } from "../lib/types";
 import { createCondition, createData, createStatement } from "../lib/utils";
 import { Condition } from "./Condition";
 import { Input } from "./Input/Input";
-import { Result } from "./Result";
+import { ParseFunction } from "./Parse/ParseFunction";
 import { Statement } from "./Statement";
 
 export function Func({
@@ -91,7 +91,7 @@ export function Func({
           onClick={() => setToggleResult((t) => !t)}
         />
       </div>
-      {toggleResult ? <Result func={func} /> : null}
+      {toggleResult ? <ParseFunction func={func} /> : null}
     </FunctionWrapper>
   );
 }
