@@ -69,7 +69,7 @@ export function ObjectInput({
       {data.value instanceof Map
         ? Array.from(data.value).map(([key, value], i, arr) => {
             return (
-              <div key={i} style={{ display: "flex" }}>
+              <div key={i} style={{ display: "flex", alignItems: "center" }}>
                 <Input
                   data={createData("string", key)}
                   handleData={(val) => handleKeyUpdate(arr, i, val)}

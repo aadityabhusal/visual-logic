@@ -3,7 +3,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
 import { IData } from "../lib/types";
-import { parseData } from "../lib/utils";
+import { ParseData } from "./Parse/ParseData";
 
 interface IProps {
   head?: ReactNode;
@@ -82,7 +82,7 @@ export function Dropdown({ head, children, data, handleDelete }: IProps) {
           <DropdownContainerHead style={{ fontSize: "0.6rem" }}>
             Type: {data.result.type}
           </DropdownContainerHead>
-          {parseData(data.result)}
+          <ParseData data={data.result} />
         </DropdownContainer>
       )}
     </DropdownWrapper>

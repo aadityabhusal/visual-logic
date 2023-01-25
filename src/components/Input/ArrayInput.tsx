@@ -42,13 +42,15 @@ export function ArrayInput({ data, handleData, parentStatement }: IArrayInput) {
       {Array.isArray(data.value)
         ? data.value.map((item, i, arr) => {
             return (
-              <div key={i} style={{ display: "flex" }}>
+              <div key={i} style={{ display: "flex", alignItems: "center" }}>
                 <Data
                   data={item}
                   handleData={(val, remove) => handleUpdate(val, i, remove)}
                   parentStatement={parentStatement}
                 />
-                {i < arr.length - 1 ? <span>{", "}</span> : null}
+                {i < arr.length - 1 ? (
+                  <span style={{ marginRight: "4px" }}>{", "}</span>
+                ) : null}
               </div>
             );
           })
