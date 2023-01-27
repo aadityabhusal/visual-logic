@@ -1,54 +1,54 @@
 import { IMethod, IData, IType } from "./types";
-import { createData } from "./utils";
+import { createData, createStatement } from "./utils";
 
 type IMethodOmit = Omit<IMethod, "result" | "id" | "entityType">;
 
 export const comparisonMethods: IMethodOmit[] = [
   {
     name: "==",
-    parameters: [createData("string", "", true)],
+    parameters: [createStatement(createData("string", "", true))],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData("boolean", data.value === p1.value),
   },
   {
     name: "!=",
-    parameters: [createData("string", "", true)],
+    parameters: [createStatement(createData("string", "", true))],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData("boolean", data.value !== p1.value),
   },
   {
     name: "<",
-    parameters: [createData("string", "", true)],
+    parameters: [createStatement(createData("string", "", true))],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData("boolean", data.value < p1.value),
   },
   {
     name: "<=",
-    parameters: [createData("string", "", true)],
+    parameters: [createStatement(createData("string", "", true))],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData("boolean", data.value <= p1.value),
   },
   {
     name: ">",
-    parameters: [createData("string", "", true)],
+    parameters: [createStatement(createData("string", "", true))],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData("boolean", data.value > p1.value),
   },
   {
     name: ">=",
-    parameters: [createData("string", "", true)],
+    parameters: [createStatement(createData("string", "", true))],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData("boolean", data.value >= p1.value),
   },
   {
     name: "&&",
-    parameters: [createData("string", "", true)],
+    parameters: [createStatement(createData("string", "", true))],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData("boolean", Boolean(data.value) && Boolean(p1.value)),
   },
   {
     name: "||",
-    parameters: [createData("string", "", true)],
+    parameters: [createStatement(createData("string", "", true))],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData("boolean", Boolean(data.value) || Boolean(p1.value)),
   },
@@ -66,7 +66,7 @@ export const stringMethods: IMethodOmit[] = [
   },
   {
     name: "concat",
-    parameters: [createData("string", "")],
+    parameters: [createStatement(createData("string", ""))],
     handler: (data: IData<"string">, p1: IData<"string">) => {
       return createData("string", data.value.concat(p1.value));
     },
@@ -80,7 +80,10 @@ export const stringMethods: IMethodOmit[] = [
   },
   {
     name: "slice",
-    parameters: [createData("number", 0), createData("number", 0)],
+    parameters: [
+      createStatement(createData("number", 0)),
+      createStatement(createData("number", 0)),
+    ],
     handler: (
       data: IData<"string">,
       p1: IData<"number">,
@@ -91,7 +94,7 @@ export const stringMethods: IMethodOmit[] = [
   },
   {
     name: "split",
-    parameters: [createData("string", "")],
+    parameters: [createStatement(createData("string", ""))],
     handler: (data: IData<"string">, p1: IData<"string">) => {
       return createData(
         "array",
@@ -118,28 +121,28 @@ export const stringMethods: IMethodOmit[] = [
 export const numberMethods: IMethodOmit[] = [
   {
     name: "add",
-    parameters: [createData("number", 0)],
+    parameters: [createStatement(createData("number", 0))],
     handler: (data: IData<"number">, p1: IData<"number">) => {
       return createData("number", data.value + p1.value);
     },
   },
   {
     name: "subtract",
-    parameters: [createData("number", 0)],
+    parameters: [createStatement(createData("number", 0))],
     handler: (data: IData<"number">, p1: IData<"number">) => {
       return createData("number", data.value - p1.value);
     },
   },
   {
     name: "multiply",
-    parameters: [createData("number", 0)],
+    parameters: [createStatement(createData("number", 0))],
     handler: (data: IData<"number">, p1: IData<"number">) => {
       return createData("number", data.value * p1.value);
     },
   },
   {
     name: "divide",
-    parameters: [createData("number", 0)],
+    parameters: [createStatement(createData("number", 0))],
     handler: (data: IData<"number">, p1: IData<"number">) => {
       return createData("number", data.value / p1.value);
     },
@@ -164,8 +167,8 @@ export const booleanMethods: IMethodOmit[] = [
   {
     name: "then",
     parameters: [
-      createData("string", "", true),
-      createData("string", "", true),
+      createStatement(createData("string", "", true)),
+      createStatement(createData("string", "", true)),
     ],
     handler: (data: IData<"boolean">, p1: IData, p2: IData) => {
       return Boolean(data.value) ? p1 : p2;
@@ -176,7 +179,7 @@ export const booleanMethods: IMethodOmit[] = [
 export const arrayMethods: IMethodOmit[] = [
   {
     name: "concat",
-    parameters: [createData("array", [])],
+    parameters: [createStatement(createData("array", []))],
     handler: (data: IData<"array">, p1: IData<"array">) => {
       return createData("array", [...data.value, ...p1.value]);
     },
@@ -190,7 +193,10 @@ export const arrayMethods: IMethodOmit[] = [
   },
   {
     name: "slice",
-    parameters: [createData("number", 0), createData("number", 0)],
+    parameters: [
+      createStatement(createData("number", 0)),
+      createStatement(createData("number", 0)),
+    ],
     handler: (
       data: IData<"array">,
       p1: IData<"number">,

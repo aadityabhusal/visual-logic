@@ -17,8 +17,8 @@ export function createData<T extends keyof IType>(
   return {
     id: nanoid(),
     entityType: "data",
-    type: type,
-    value: value,
+    type,
+    value,
     isGeneric,
   };
 }
@@ -58,7 +58,8 @@ export function createMethod({
   let methods = operationMethods[data.type];
   let methodByName = name && methods.find((method) => method.name === name);
   let newMethod = methodByName || methods[index || 0];
-  let result = newMethod.handler(data, ...newMethod.parameters);
+  let parameters = newMethod.parameters.map((item) => item.result);
+  let result = newMethod.handler(data, ...parameters);
   return {
     ...newMethod,
     id: nanoid(),
@@ -91,7 +92,8 @@ export function updateEntities(statement: IStatement) {
   let methods = [...statement.methods];
   let result = methods.reduce((prev, method, i) => {
     let data = i === 0 ? statement.data : prev[i - 1].result;
-    let result = method.handler(data, ...method.parameters);
+    let parameters = method.parameters.map((item) => item.result);
+    let result = method.handler(data, ...parameters);
     return [...prev, { ...method, result }];
   }, [] as IMethod[]);
   return { ...statement, methods: result };

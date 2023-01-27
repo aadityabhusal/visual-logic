@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { IData, IMethod, IStatement } from "../lib/types";
-import { Data } from "./Data";
+import { Statement } from "./Statement";
 import { DropdownOption, DropdownOptions } from "./Dropdown";
 import { Dropdown } from "./Dropdown";
 import { operationMethods } from "../lib/methods";
@@ -25,10 +25,13 @@ export function Operation({
     handleOperation({ ...createMethod({ data, index }) });
   }
 
-  function handleParameter(item: IData, index: number) {
+  function handleParameter(item: IStatement, index: number) {
     let parameters = [...operation.parameters];
     parameters[index] = item;
-    let result = operation.handler(data, ...parameters);
+    let result = operation.handler(
+      data,
+      ...parameters.map((item) => item.result)
+    );
     handleOperation({ ...operation, parameters, result });
   }
 
@@ -46,10 +49,11 @@ export function Operation({
             <span>{"("}</span>
             {operation.parameters.map((item, i, arr) => (
               <span key={i} style={{ display: "flex" }}>
-                <Data
-                  data={item}
-                  handleData={(val) => val && handleParameter(val, i)}
+                <Statement
+                  statement={item}
+                  handleStatement={(val) => val && handleParameter(val, i)}
                   disableDelete={true}
+                  disableVariable={true}
                   parentStatement={parentStatement}
                 />
                 {i < arr.length - 1 ? <span>{", "}</span> : null}

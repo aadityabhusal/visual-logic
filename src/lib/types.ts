@@ -20,7 +20,7 @@ export interface IMethod {
   id: string;
   name: string;
   entityType: "method";
-  parameters: IData[];
+  parameters: IStatement[];
   handler(...args: IData[]): IData;
   result: ReturnType<IMethod["handler"]>;
 }

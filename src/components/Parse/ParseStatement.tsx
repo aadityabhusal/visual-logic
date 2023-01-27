@@ -12,7 +12,7 @@ export function ParseStatement({ statement }: { statement: IStatement }) {
           <>
             <Method>{`.${method.name}(`}</Method>
             {method.parameters.map((param) => (
-              <ParseData data={param} />
+              <ParseStatement statement={param} />
             ))}
             <span>{")"}</span>
           </>

@@ -17,11 +17,13 @@ export function Statement({
   handleStatement,
   disableVariable,
   disableDelete,
+  parentStatement,
 }: {
   statement: IStatement;
   handleStatement: (statement: IStatement, remove?: boolean) => void;
   disableVariable?: boolean;
   disableDelete?: boolean;
+  parentStatement?: IStatement;
 }) {
   const hasVariable = statement.variable !== undefined;
 
@@ -84,7 +86,7 @@ export function Statement({
       <Data
         data={statement.data}
         handleData={(data, remove) => handleData(data, remove)}
-        parentStatement={statement}
+        parentStatement={parentStatement || statement}
         disableDelete={disableDelete}
       />
       {statement.methods.map((method, i, methods) => {
@@ -95,7 +97,7 @@ export function Statement({
             data={data}
             operation={method}
             handleOperation={(meth, remove) => handleMethod(meth, i, remove)}
-            parentStatement={statement}
+            parentStatement={parentStatement || statement}
           />
         );
       })}
