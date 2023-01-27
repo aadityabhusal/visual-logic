@@ -161,6 +161,16 @@ export const booleanMethods: IMethodOmit[] = [
       return createData("string", String(data.value));
     },
   },
+  {
+    name: "then",
+    parameters: [
+      createData("string", "", true),
+      createData("string", "", true),
+    ],
+    handler: (data: IData<"boolean">, p1: IData, p2: IData) => {
+      return Boolean(data.value) ? p1 : p2;
+    },
+  },
 ];
 
 export const arrayMethods: IMethodOmit[] = [
