@@ -28,7 +28,7 @@ export function Statement({
   const hasVariable = statement.variable !== undefined;
 
   function addMethod() {
-    let method = createMethod({ data: getLastEntity(statement), index: 0 });
+    let method = createMethod({ data: getLastEntity(statement) });
     let methods = [...statement.methods, method];
     handleStatement({ ...statement, methods });
   }

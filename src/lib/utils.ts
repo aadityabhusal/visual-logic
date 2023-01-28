@@ -39,18 +39,19 @@ export function createStatement(data?: IData, methods?: IMethod[]): IStatement {
   };
 }
 
-export function createMethod({
-  data,
-  index,
-  name,
-}: {
-  data: IData;
-  index?: number;
-  name?: string;
-}) {
-  let methods = operationMethods[data.type];
-  let methodByName = name && methods.find((method) => method.name === name);
-  let newMethod = methodByName || methods[index || 0];
+export function getFilteredMethods(data: IData) {
+  return operationMethods[data.type].filter((item) => {
+    let parameters = item.parameters.map((p) => p.result);
+    let resultType = item.handler(data, ...parameters).type; // Optimize here
+    return data.isGeneric || data.type === resultType;
+  });
+}
+
+export function createMethod({ data, name }: { data: IData; name?: string }) {
+  let methods = getFilteredMethods(data);
+  let methodByName = methods.find((method) => method.name === name);
+  let newMethod = methodByName || methods[0];
+
   let parameters = newMethod.parameters.map((item) => item.result);
   let result = newMethod.handler(data, ...parameters);
   return {

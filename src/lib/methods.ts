@@ -58,7 +58,7 @@ export const comparisonMethods: IMethodOmit[] = [
       createStatement(createData("string", "", true)),
       createStatement(createData("string", "", true)),
     ],
-    handler: (data: IData<"boolean">, p1: IData, p2: IData) => {
+    handler: (data: IData, p1: IData, p2: IData) => {
       return Boolean(data.value) ? p1 : p2;
     },
   },

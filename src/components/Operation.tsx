@@ -3,9 +3,8 @@ import { IData, IMethod, IStatement } from "../lib/types";
 import { Statement } from "./Statement";
 import { DropdownOption, DropdownOptions } from "./Dropdown";
 import { Dropdown } from "./Dropdown";
-import { operationMethods } from "../lib/methods";
+import { createMethod, getFilteredMethods } from "../lib/utils";
 import { theme } from "../lib/theme";
-import { createMethod } from "../lib/utils";
 
 interface IProps {
   data: IData;
@@ -20,9 +19,9 @@ export function Operation({
   handleOperation,
   parentStatement,
 }: IProps) {
-  function handleDropdown(name: string, index: number) {
+  function handleDropdown(name: string) {
     if (operation.name === name) return;
-    handleOperation({ ...createMethod({ data, index }) });
+    handleOperation({ ...createMethod({ data, name }) });
   }
 
   function handleParameter(item: IStatement, index: number) {
@@ -36,14 +35,6 @@ export function Operation({
       ...operation,
       parameters,
       result: { ...result, isGeneric: data.isGeneric },
-    });
-  }
-
-  function getMethods() {
-    return operationMethods[data.type].filter((item) => {
-      let parameters = item.parameters.map((p) => p.result);
-      let resultType = item.handler(data, ...parameters).type; // Optimize here
-      return data.isGeneric || data.type === resultType;
     });
   }
 
@@ -76,10 +67,10 @@ export function Operation({
         }
       >
         <DropdownOptions>
-          {getMethods().map((method, i) => (
+          {getFilteredMethods(data).map((method) => (
             <DropdownOption
               key={method.name}
-              onClick={() => handleDropdown(method.name, i)}
+              onClick={() => handleDropdown(method.name)}
               selected={operation.name === method.name}
             >
               {method.name}
