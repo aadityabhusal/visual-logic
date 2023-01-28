@@ -64,7 +64,7 @@ export function createMethod({
     ...newMethod,
     id: nanoid(),
     entityType: "method",
-    result,
+    result: { ...result, isGeneric: data.isGeneric },
   } as IMethod;
 }
 
@@ -94,7 +94,8 @@ export function updateEntities(statement: IStatement) {
     let data = i === 0 ? statement.data : prev[i - 1].result;
     let parameters = method.parameters.map((item) => item.result);
     let result = method.handler(data, ...parameters);
-    return [...prev, { ...method, result }];
+    let isGeneric = data.isGeneric;
+    return [...prev, { ...method, result: { ...result, isGeneric } }];
   }, [] as IMethod[]);
   return { ...statement, methods: result };
 }

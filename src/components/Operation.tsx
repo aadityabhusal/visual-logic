@@ -32,7 +32,19 @@ export function Operation({
       data,
       ...parameters.map((item) => item.result)
     );
-    handleOperation({ ...operation, parameters, result });
+    handleOperation({
+      ...operation,
+      parameters,
+      result: { ...result, isGeneric: data.isGeneric },
+    });
+  }
+
+  function getMethods() {
+    return operationMethods[data.type].filter((item) => {
+      let parameters = item.parameters.map((p) => p.result);
+      let resultType = item.handler(data, ...parameters).type; // Optimize here
+      return data.isGeneric || data.type === resultType;
+    });
   }
 
   return (
@@ -64,7 +76,7 @@ export function Operation({
         }
       >
         <DropdownOptions>
-          {operationMethods[data.type].map((method, i) => (
+          {getMethods().map((method, i) => (
             <DropdownOption
               key={method.name}
               onClick={() => handleDropdown(method.name, i)}
