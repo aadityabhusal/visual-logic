@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import { theme } from "../../lib/theme";
 import { IData } from "../../lib/types";
+import { Comma } from "./styles";
 
 export function ParseData({ data }: { data: IData }) {
   if (Array.isArray(data.value)) {
@@ -70,8 +71,4 @@ const Brackets = styled.span`
 
 const Variable = styled.span`
   color: ${theme.color.variable};
-`;
-
-const Comma = styled.span`
-  margin-right: 4px;
 `;

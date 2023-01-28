@@ -52,6 +52,16 @@ export const comparisonMethods: IMethodOmit[] = [
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData("boolean", Boolean(data.value) || Boolean(p1.value)),
   },
+  {
+    name: "then",
+    parameters: [
+      createStatement(createData("string", "", true)),
+      createStatement(createData("string", "", true)),
+    ],
+    handler: (data: IData<"boolean">, p1: IData, p2: IData) => {
+      return Boolean(data.value) ? p1 : p2;
+    },
+  },
 ];
 
 export const stringMethods: IMethodOmit[] = [
@@ -162,16 +172,6 @@ export const booleanMethods: IMethodOmit[] = [
     parameters: [],
     handler: (data: IData<"boolean">) => {
       return createData("string", String(data.value));
-    },
-  },
-  {
-    name: "then",
-    parameters: [
-      createStatement(createData("string", "", true)),
-      createStatement(createData("string", "", true)),
-    ],
-    handler: (data: IData<"boolean">, p1: IData, p2: IData) => {
-      return Boolean(data.value) ? p1 : p2;
     },
   },
 ];

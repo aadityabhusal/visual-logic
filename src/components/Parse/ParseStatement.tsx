@@ -1,6 +1,6 @@
 import { IStatement } from "../../lib/types";
 import { ParseData } from "./ParseData";
-import { Method, Reserved, Variable } from "./styles";
+import { Comma, Method, Reserved, Variable } from "./styles";
 
 export function ParseStatement({ statement }: { statement: IStatement }) {
   return (
@@ -11,8 +11,11 @@ export function ParseStatement({ statement }: { statement: IStatement }) {
         {statement.methods.map((method) => (
           <>
             <Method>{`.${method.name}(`}</Method>
-            {method.parameters.map((param) => (
-              <ParseStatement statement={param} />
+            {method.parameters.map((param, i, arr) => (
+              <>
+                <ParseStatement statement={param} />
+                {i + 1 < arr.length && <Comma>,</Comma>}
+              </>
             ))}
             <span>{")"}</span>
           </>
