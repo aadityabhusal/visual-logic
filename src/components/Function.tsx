@@ -1,10 +1,9 @@
-import { Play } from "@styled-icons/fa-solid";
+import { Play, Plus } from "@styled-icons/fa-solid";
 import { useState } from "react";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
 import { IFunction } from "../lib/types";
-import { createCondition, createData, createStatement } from "../lib/utils";
-import { Condition } from "./Condition";
+import { createData, createStatement } from "../lib/utils";
 import { Input } from "./Input/Input";
 import { ParseFunction } from "./Parse/ParseFunction";
 import { Statement } from "./Statement";
@@ -25,11 +24,8 @@ export function Func({
     handleFunc({ ...func, [key]: value });
   }
 
-  function addStatement(type: "statement" | "condition") {
-    let statements = [
-      ...func.statements,
-      type === "condition" ? createCondition() : createStatement(),
-    ];
+  function addStatement() {
+    let statements = [...func.statements, createStatement()];
     handleFunc({ ...func, statements });
   }
 
@@ -59,29 +55,16 @@ export function Func({
         <span>{") {"}</span>
       </FunctionHead>
       <FunctionBody>
-        {func.statements.map((statement, i) =>
-          statement.entityType === "statement" ? (
-            <Statement
-              key={statement.id}
-              statement={statement}
-              handleStatement={(statement, remove) =>
-                handleStatement(i, statement, remove)
-              }
-            />
-          ) : (
-            <Condition
-              key={statement.id}
-              condition={statement}
-              handleCondition={(condition, remove) =>
-                handleStatement(i, condition, remove)
-              }
-            />
-          )
-        )}
-        <div style={{ cursor: "pointer", display: "flex", gap: "8px" }}>
-          <span onClick={() => addStatement("statement")}>+</span>
-          <span onClick={() => addStatement("condition")}>?</span>
-        </div>
+        {func.statements.map((statement, i) => (
+          <Statement
+            key={statement.id}
+            statement={statement}
+            handleStatement={(statement, remove) =>
+              handleStatement(i, statement, remove)
+            }
+          />
+        ))}
+        <Plus size={10} style={{ cursor: "pointer" }} onClick={addStatement} />
       </FunctionBody>
       <div>
         {"}"}

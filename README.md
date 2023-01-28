@@ -19,12 +19,10 @@ Creating programming logic visually in a functional way.
    - A Data with chain of Operations (or a function definition)
    - Returns a Data
    - Has a variable for referencing its returned data
-3. **Condition**
-   - A block accessing parent and global scope with a return value
-4. **Data**
+3. **Data**
    - A value of type: string, number, array, object, void
    - Has the value of a referenced Data's variable as name 
-5. **Method** 
+4. **Method** 
    - A Function called upon a fixed Data
 
 

@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { TypeMapper } from "../lib/data";
-import { ICondition, IData, IStatement, IType } from "../lib/types";
+import { IData, IStatement, IType } from "../lib/types";
 import { Dropdown, DropdownOption, DropdownOptions } from "./Dropdown";
 import { ArrayInput } from "./Input/ArrayInput";
 import { Input } from "./Input/Input";
@@ -45,7 +45,7 @@ export function Data({
       });
   }
 
-  function selectVariable(statement: IStatement | ICondition) {
+  function selectVariable(statement: IStatement) {
     handleData({
       id: data.id,
       entityType: "variable",

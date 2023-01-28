@@ -1,5 +1,8 @@
-import { ICondition } from "../../lib/types";
-import { ParseStatement, ParseVariable } from "./ParseStatement";
+import { ICondition } from "./Condition";
+import {
+  ParseStatement,
+  ParseVariable,
+} from "../src/components/Parse/ParseStatement";
 
 export function ParseCondition({ condition }: { condition: ICondition }) {
   return (

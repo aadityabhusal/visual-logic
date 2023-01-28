@@ -1,13 +1,6 @@
 import { nanoid } from "nanoid";
 import { operationMethods } from "./methods";
-import {
-  ICondition,
-  IData,
-  IFunction,
-  IMethod,
-  IStatement,
-  IType,
-} from "./types";
+import { IData, IFunction, IMethod, IStatement, IType } from "./types";
 
 export function createData<T extends keyof IType>(
   type: T,
@@ -66,21 +59,6 @@ export function createMethod({
     entityType: "method",
     result: { ...result, isGeneric: data.isGeneric },
   } as IMethod;
-}
-
-export function createCondition(): ICondition {
-  let data = createData("string", "");
-  const method = createMethod({ data, name: "==" });
-  const condition = createStatement(data, [method]);
-  const first = createStatement();
-  return {
-    id: nanoid(),
-    entityType: "condition",
-    condition,
-    true: first,
-    false: createStatement(),
-    result: first.result,
-  };
 }
 
 export function getLastEntity(statement: IStatement) {

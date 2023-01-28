@@ -1,9 +1,19 @@
 import { Equals } from "@styled-icons/fa-solid";
-import { theme } from "../lib/theme";
-import { ICondition, IStatement } from "../lib/types";
-import { createData } from "../lib/utils";
-import { Input } from "./Input/Input";
-import { Statement } from "./Statement";
+import { theme } from "../src/lib/theme";
+import { IData, IStatement } from "../src/lib/types";
+import { createData } from "../src/lib/utils";
+import { Input } from "../src/components/Input/Input";
+import { Statement } from "../src/components/Statement";
+
+export interface ICondition {
+  id: string;
+  entityType: "condition";
+  condition: IStatement;
+  true: IStatement;
+  false: IStatement;
+  result: IData;
+  variable?: string;
+}
 
 export function Condition({
   condition,
@@ -85,3 +95,20 @@ export function Condition({
     </div>
   );
 }
+
+/* 
+export function createCondition(): ICondition {
+  let data = createData("string", "");
+  const method = createMethod({ data, name: "==" });
+  const condition = createStatement(data, [method]);
+  const first = createStatement();
+  return {
+    id: nanoid(),
+    entityType: "condition",
+    condition,
+    true: first,
+    false: createStatement(),
+    result: first.result,
+  };
+}
+*/
