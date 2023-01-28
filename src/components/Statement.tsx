@@ -45,8 +45,11 @@ export function Statement({
 
   function handleMethod(method: IMethod, index: number, remove?: boolean) {
     let methods = [...statement.methods];
-    if (remove) methods.splice(index, 1);
-    else {
+    if (remove) {
+      let data = index === 0 ? statement.data : methods[index - 1].result;
+      if (method.result.type !== data.type) methods.splice(index);
+      else methods.splice(index, 1);
+    } else {
       if (method.result.type !== methods[index].result.type)
         methods.splice(index + 1);
       methods[index] = method;
