@@ -81,6 +81,7 @@ export function Data({
     <DataWrapper>
       <Dropdown
         data={{ result: data }}
+        index={contextStatements.length - dataIndex}
         handleDelete={!disableDelete ? () => handleData(data, true) : undefined}
         head={
           data.entityType === "variable" ? (

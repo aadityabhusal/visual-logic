@@ -5,6 +5,7 @@ import { DropdownOption, DropdownOptions } from "./Dropdown";
 import { Dropdown } from "./Dropdown";
 import { createMethod, getFilteredMethods } from "../lib/utils";
 import { theme } from "../lib/theme";
+import { useStore } from "../lib/store";
 
 interface IProps {
   data: IData;
@@ -19,6 +20,13 @@ export function Operation({
   handleOperation,
   parentStatement,
 }: IProps) {
+  const context = useStore((state) => state.functions);
+  const contextStatements = context.flatMap((func) => func.statements);
+  const dataIndex = contextStatements.findIndex((item) => {
+    let itemData = item.entityType === "statement" ? item.data : item.result;
+    return itemData.id === parentStatement?.data.id;
+  });
+
   function handleDropdown(name: string) {
     if (operation.name === name) return;
     handleOperation({ ...createMethod({ data, name }) });
@@ -42,6 +50,7 @@ export function Operation({
     <OperationWrapper>
       <Dropdown
         data={{ result: operation.result }}
+        index={contextStatements.length - dataIndex}
         handleDelete={() => handleOperation(operation, true)}
         head={
           <>

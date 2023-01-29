@@ -6,13 +6,20 @@ import { IData } from "../lib/types";
 import { ParseData } from "./Parse/ParseData";
 
 interface IProps {
+  index?: number;
   head?: ReactNode;
   children?: ReactNode;
   data: { result?: IData };
   handleDelete?: () => void;
 }
 
-export function Dropdown({ head, children, data, handleDelete }: IProps) {
+export function Dropdown({
+  head,
+  children,
+  data,
+  index,
+  handleDelete,
+}: IProps) {
   const [display, setDisplay] = useState(false);
   const [content, setContent] = useState(false);
   const [result, setResult] = useState(false);
@@ -42,7 +49,7 @@ export function Dropdown({ head, children, data, handleDelete }: IProps) {
         e.stopPropagation();
         !content && !result && setDisplay(false);
       }}
-      style={{ zIndex: display ? (content ? 1001 : 1000) : 999 }}
+      style={{ zIndex: index }}
     >
       <div style={{ display: "flex", alignItems: "center" }}>{head}</div>
       {display ? (

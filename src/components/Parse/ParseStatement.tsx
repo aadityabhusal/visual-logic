@@ -12,10 +12,10 @@ export function ParseStatement({ statement }: { statement: IStatement }) {
           <>
             <Method>{`.${method.name}(`}</Method>
             {method.parameters.map((param, i, arr) => (
-              <>
+              <span style={{ display: "flex" }} key={i}>
                 <ParseStatement statement={param} />
                 {i + 1 < arr.length && <Comma>,</Comma>}
-              </>
+              </span>
             ))}
             <span>{")"}</span>
           </>
