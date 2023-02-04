@@ -3,7 +3,7 @@ import { useState } from "react";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
 import { IFunction } from "../lib/types";
-import { createData, createStatement } from "../lib/utils";
+import { createData, createStatement, updateFunction } from "../lib/utils";
 import { Input } from "./Input/Input";
 import { ParseFunction } from "./Parse/ParseFunction";
 import { Statement } from "./Statement";
@@ -37,7 +37,8 @@ export function Func({
     let statements = [...func.statements];
     if (remove) statements.splice(index, 1);
     else statements[index] = statement;
-    handleFunc({ ...func, statements });
+    const result = updateFunction({ ...func, statements }, statement);
+    handleFunc(result);
   }
 
   return (

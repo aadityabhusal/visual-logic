@@ -79,6 +79,42 @@ export function updateEntities(statement: IStatement) {
   return { ...statement, methods: result };
 }
 
+function updateReferences(
+  statement: IStatement,
+  reference: IStatement
+): IStatement {
+  return {
+    ...statement,
+    data: {
+      ...statement.data,
+      name: reference.variable,
+      type: reference.result.type,
+      value: reference.result.value,
+    },
+    methods: statement.methods.map((method) => {
+      return {
+        ...method,
+        parameters: method.parameters.map((param) => {
+          let result = updateEntities(updateReferences(param, reference));
+          return { ...result, result: getLastEntity(result) };
+        }),
+      } as IMethod;
+    }),
+  };
+}
+
+export function updateFunction(func: IFunction, statement: IStatement) {
+  const statements = [...func.statements];
+  let result = statements.map((item) => {
+    if (item.data.referenceId === statement.id) {
+      let result = updateEntities(updateReferences(item, statement));
+      return { ...result, result: getLastEntity(result) };
+    } else if (item.id === statement.id) return statement;
+    else return item;
+  });
+  return { ...func, statements: result } as IFunction;
+}
+
 export function parseData(data: IData): string {
   if (Array.isArray(data.value)) {
     return "[" + data.value.map((item) => parseData(item)) + "]";
