@@ -1,4 +1,5 @@
 import { nanoid } from "nanoid";
+import { TypeMapper } from "./data";
 import { operationMethods } from "./methods";
 import { IData, IFunction, IMethod, IStatement, IType } from "./types";
 
@@ -105,13 +106,14 @@ function updateReferences(
 
 export function updateFunction(func: IFunction, statement: IStatement) {
   const statements = [...func.statements];
-  let result = statements.map((item) => {
+  let result = statements.reduce((prev, item) => {
+    let result = item;
     if (item.data.referenceId === statement.id) {
-      let result = updateEntities(updateReferences(item, statement));
-      return { ...result, result: getLastEntity(result) };
-    } else if (item.id === statement.id) return statement;
-    else return item;
-  });
+      let updated = updateEntities(updateReferences(item, statement));
+      result = { ...updated, result: getLastEntity(updated) };
+    } else if (item.id === statement.id) result = statement;
+    return [...prev, result];
+  }, [] as IStatement[]);
   return { ...func, statements: result } as IFunction;
 }
 
