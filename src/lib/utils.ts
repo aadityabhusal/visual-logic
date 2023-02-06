@@ -96,8 +96,10 @@ function updateReferences(
       return {
         ...method,
         parameters: method.parameters.map((param) => {
-          let result = updateEntities(updateReferences(param, reference));
-          return { ...result, result: getLastEntity(result) };
+          if (param.data.referenceId === reference.id) {
+            let result = updateEntities(updateReferences(param, reference));
+            return { ...result, result: getLastEntity(result) };
+          } else return param;
         }),
       } as IMethod;
     }),
