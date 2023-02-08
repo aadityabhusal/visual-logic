@@ -1,5 +1,4 @@
 import { nanoid } from "nanoid";
-import { TypeMapper } from "./data";
 import { operationMethods } from "./methods";
 import { IData, IFunction, IMethod, IStatement, IType } from "./types";
 
@@ -61,62 +60,6 @@ export function createMethod({ data, name }: { data: IData; name?: string }) {
     entityType: "method",
     result: { ...result, isGeneric: data.isGeneric },
   } as IMethod;
-}
-
-export function getLastEntity(statement: IStatement) {
-  if (!statement.methods.length) return statement.data;
-  return statement.methods[statement.methods.length - 1].result;
-}
-
-export function updateEntities(statement: IStatement) {
-  let methods = [...statement.methods];
-  let result = methods.reduce((prev, method, i) => {
-    let data = i === 0 ? statement.data : prev[i - 1].result;
-    let parameters = method.parameters.map((item) => item.result);
-    let result = method.handler(data, ...parameters);
-    let isGeneric = data.isGeneric;
-    return [...prev, { ...method, result: { ...result, isGeneric } }];
-  }, [] as IMethod[]);
-  return { ...statement, methods: result };
-}
-
-function updateReferences(
-  statement: IStatement,
-  reference: IStatement
-): IStatement {
-  return {
-    ...statement,
-    data: {
-      ...statement.data,
-      name: reference.variable,
-      type: reference.result.type,
-      value: reference.result.value,
-    },
-    methods: statement.methods.map((method) => {
-      return {
-        ...method,
-        parameters: method.parameters.map((param) => {
-          if (param.data.referenceId === reference.id) {
-            let result = updateEntities(updateReferences(param, reference));
-            return { ...result, result: getLastEntity(result) };
-          } else return param;
-        }),
-      } as IMethod;
-    }),
-  };
-}
-
-export function updateFunction(func: IFunction, statement: IStatement) {
-  const statements = [...func.statements];
-  let result = statements.reduce((prev, item) => {
-    let result = item;
-    if (item.data.referenceId === statement.id) {
-      let updated = updateEntities(updateReferences(item, statement));
-      result = { ...updated, result: getLastEntity(updated) };
-    } else if (item.id === statement.id) result = statement;
-    return [...prev, result];
-  }, [] as IStatement[]);
-  return { ...func, statements: result } as IFunction;
 }
 
 export function parseData(data: IData): string {

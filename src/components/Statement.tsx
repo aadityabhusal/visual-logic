@@ -2,12 +2,8 @@ import { Equals, Plus } from "@styled-icons/fa-solid";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
 import { IData, IMethod, IStatement } from "../lib/types";
-import {
-  createData,
-  createMethod,
-  getLastEntity,
-  updateEntities,
-} from "../lib/utils";
+import { updateEntities, getLastEntity } from "../lib/update";
+import { createData, createMethod } from "../lib/utils";
 import { Data } from "./Data";
 import { Input } from "./Input/Input";
 import { Operation } from "./Operation";
