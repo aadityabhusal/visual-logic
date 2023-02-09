@@ -38,7 +38,7 @@ export function Func({
     let statements = [...func.statements];
     if (remove) statements.splice(index, 1);
     else statements[index] = statement;
-    const result = updateFunction({ ...func, statements }, statement);
+    const result = updateFunction({ ...func, statements }, statement, index);
     handleFunc(result);
   }
 

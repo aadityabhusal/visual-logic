@@ -18,80 +18,70 @@ export function updateEntities(statement: IStatement) {
   return { ...statement, methods: result };
 }
 
-/* 
-  When a statement updates and had a variable
-      - search throughout the code for its variable reference
-      - update the variable value and its statement result
-   */
-
-function updateVal(
-  data: IData,
-  reference: IStatement,
-  changedType?: keyof IType
-): IData {
-  console.log(changedType, reference);
-
-  return {
-    ...data,
-    ...(changedType
-      ? {
-          type: changedType,
-          value: TypeMapper[data.type].defaultValue,
-          entityType: "data",
-          referenceId: undefined,
-          name: undefined,
-        }
-      : reference
-      ? {
-          type: reference.result.type,
-          value: reference.result.value,
-          name: reference.variable,
-        }
-      : {}),
-  };
-}
-
 function updateRefVal(data: IData, reference: IStatement) {
-  if (!reference) {
-    return updateVal(data, reference, data.referenceId ? data.type : undefined);
-  }
-  if (
-    data.type !== reference.result.type ||
-    data.name !== reference.variable ||
-    JSON.stringify(data.value) !== JSON.stringify(reference.result.value)
-  ) {
-    let typeChanged = !data.isGeneric && data.type !== reference.result.type;
-    return updateVal(data, reference, typeChanged ? data.type : undefined);
+  let hasTypeChanged = !data.isGeneric && data.type !== reference.result.type;
+  let hasValueChanged =
+    JSON.stringify(data.value) !== JSON.stringify(reference.result.value);
+
+  if (data.name !== reference.variable || hasTypeChanged || hasValueChanged) {
+    return {
+      ...data,
+      type: reference.result.type,
+      value: reference.result.value,
+      name: reference.variable,
+      ...(hasTypeChanged && {
+        type: data.type,
+        value: TypeMapper[data.type].defaultValue,
+        entityType: "data",
+        referenceId: undefined,
+        name: undefined,
+      }),
+    } as IData;
   }
 }
 
 function updateReferences(
   statement: IStatement,
-  reference: IStatement
+  statements: IStatement[]
 ): IStatement {
+  const reference = statements.find(
+    (stmt) => stmt.id === statement.data.referenceId
+  );
   return {
     ...statement,
-    data: { ...statement.data, ...updateRefVal(statement.data, reference) },
+    data: {
+      ...statement.data,
+      ...(reference && updateRefVal(statement.data, reference)),
+    },
     methods: statement.methods.map((method) => {
       return {
         ...method,
         parameters: method.parameters.map((param) => {
-          if (param.data.referenceId === reference.id) {
-            let result = updateEntities(updateReferences(param, reference));
-            return { ...result, result: getLastEntity(result) };
-          } else return param;
+          let result = updateEntities(updateReferences(param, statements));
+          return { ...result, result: getLastEntity(result) };
         }),
       };
     }),
   };
 }
 
-export function updateFunction(func: IFunction, statement: IStatement) {
+export function updateFunction(
+  func: IFunction,
+  changedStatement: IStatement,
+  index: number
+) {
   const statements = [...func.statements];
-  let result = statements.reduce((prev, item) => {
-    if (item.id === statement.id) return [...prev, statement];
+  if (changedStatement.variable === undefined) {
+    statements[index] = changedStatement;
+    return { ...func, statements } as IFunction;
+  }
+  let result = statements.reduce((prev, statement, i) => {
+    if (i < index) return [...prev, statement];
+    else if (statement.id === changedStatement.id)
+      return [...prev, changedStatement];
     else {
-      let updated = updateEntities(updateReferences(item, statement));
+      // if (statement.data.type !== data.type) methods = [];
+      let updated = updateEntities(updateReferences(statement, statements));
       return [...prev, { ...updated, result: getLastEntity(updated) }];
     }
   }, [] as IStatement[]);
