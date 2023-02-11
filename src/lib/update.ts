@@ -1,5 +1,6 @@
 import { TypeMapper } from "./data";
 import { IData, IFunction, IMethod, IStatement, IType } from "./types";
+import { createData } from "./utils";
 
 export function getLastEntity(statement: IStatement) {
   if (!statement.methods.length) return statement.data;
@@ -22,20 +23,18 @@ function updateRefVal(data: IData, reference: IStatement) {
   let hasTypeChanged = !data.isGeneric && data.type !== reference.result.type;
   let hasValueChanged =
     JSON.stringify(data.value) !== JSON.stringify(reference.result.value);
-
+  let { id, ...newData } = createData(
+    data.type,
+    TypeMapper[data.type].defaultValue,
+    data.isGeneric
+  );
   if (data.name !== reference.variable || hasTypeChanged || hasValueChanged) {
     return {
       ...data,
       type: reference.result.type,
       value: reference.result.value,
       name: reference.variable,
-      ...(hasTypeChanged && {
-        type: data.type,
-        value: TypeMapper[data.type].defaultValue,
-        entityType: "data",
-        referenceId: undefined,
-        name: undefined,
-      }),
+      ...(hasTypeChanged && newData),
     } as IData;
   }
 }
@@ -47,21 +46,31 @@ function updateReferences(
   const reference = statements.find(
     (stmt) => stmt.id === statement.data.referenceId
   );
+  let hasTypeChanged =
+    reference && statement.data.type !== reference?.result.type;
+
+  let { id, ...newData } = createData(
+    statement.data.type,
+    TypeMapper[statement.data.type].defaultValue,
+    statement.data.isGeneric
+  );
   return {
     ...statement,
     data: {
       ...statement.data,
-      ...(reference && updateRefVal(statement.data, reference)),
+      ...(reference ? updateRefVal(statement.data, reference) : newData),
     },
-    methods: statement.methods.map((method) => {
-      return {
-        ...method,
-        parameters: method.parameters.map((param) => {
-          let result = updateEntities(updateReferences(param, statements));
-          return { ...result, result: getLastEntity(result) };
+    methods: hasTypeChanged
+      ? []
+      : statement.methods.map((method) => {
+          return {
+            ...method,
+            parameters: method.parameters.map((param) => {
+              let result = updateEntities(updateReferences(param, statements));
+              return { ...result, result: getLastEntity(result) };
+            }),
+          };
         }),
-      };
-    }),
   };
 }
 
@@ -80,7 +89,6 @@ export function updateFunction(
     else if (statement.id === changedStatement.id)
       return [...prev, changedStatement];
     else {
-      // if (statement.data.type !== data.type) methods = [];
       let updated = updateEntities(updateReferences(statement, statements));
       return [...prev, { ...updated, result: getLastEntity(updated) }];
     }

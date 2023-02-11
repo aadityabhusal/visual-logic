@@ -2,7 +2,7 @@ import { Play, Plus } from "@styled-icons/fa-solid";
 import { useState } from "react";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
-import { IFunction } from "../lib/types";
+import { IFunction, IStatement } from "../lib/types";
 import { updateFunction } from "../lib/update";
 import { createData, createStatement } from "../lib/utils";
 import { Input } from "./Input/Input";
@@ -38,7 +38,10 @@ export function Func({
     let statements = [...func.statements];
     if (remove) statements.splice(index, 1);
     else statements[index] = statement;
-    const result = updateFunction({ ...func, statements }, statement, index);
+    let result = { ...func, statements } as IFunction;
+    if (index + 1 < func.statements.length) {
+      result = updateFunction({ ...func, statements }, statement, index);
+    }
     handleFunc(result);
   }
 
