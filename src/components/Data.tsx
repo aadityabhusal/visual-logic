@@ -7,7 +7,6 @@ import { Input } from "./Input/Input";
 import { ObjectInput } from "./Input/ObjectInput";
 import { BooleanInput } from "./Input/BooleanInput";
 import { theme } from "../lib/theme";
-import { useEffect } from "react";
 import { useStore } from "../lib/store";
 
 interface IProps {
@@ -29,9 +28,6 @@ export function Data({
     let itemData = item.entityType === "statement" ? item.data : item.result;
     return itemData.id === parentStatement?.data.id;
   });
-  const reference = data.referenceId
-    ? contextStatements.find((statement) => statement.id === data.referenceId)
-    : undefined;
 
   function handleDropdown(type: keyof IType) {
     (data.referenceId || type !== data.type) &&
@@ -56,26 +52,6 @@ export function Data({
       isGeneric: data.isGeneric,
     });
   }
-
-  useEffect(() => {
-    if (reference) {
-      if (
-        data.type !== reference.result.type ||
-        data.name !== reference.variable ||
-        JSON.stringify(data.value) !== JSON.stringify(reference.result.value)
-      ) {
-        if (!data.isGeneric && data.type !== reference.result.type)
-          handleDropdown(data.type);
-        else
-          handleData({
-            ...data,
-            name: reference.variable,
-            type: reference.result.type,
-            value: reference.result.value,
-          });
-      }
-    } else if (data.referenceId) handleDropdown(data.type);
-  }, [reference?.variable, reference?.result.type, reference?.result.value]);
 
   return (
     <DataWrapper>

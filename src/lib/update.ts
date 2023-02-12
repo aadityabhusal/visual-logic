@@ -89,7 +89,7 @@ export function updateFunction(
     else if (statement.id === changedStatement.id)
       return [...prev, changedStatement];
     else {
-      let updated = updateEntities(updateReferences(statement, statements));
+      let updated = updateEntities(updateReferences(statement, prev));
       return [...prev, { ...updated, result: getLastEntity(updated) }];
     }
   }, [] as IStatement[]);
