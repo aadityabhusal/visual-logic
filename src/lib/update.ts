@@ -58,7 +58,9 @@ function updateReferences(
     ...statement,
     data: {
       ...statement.data,
-      ...(reference ? updateRefVal(statement.data, reference) : newData),
+      ...(reference
+        ? updateRefVal(statement.data, reference)
+        : statement.data.referenceId && newData),
     },
     methods: hasTypeChanged
       ? []
