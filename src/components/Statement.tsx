@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { theme } from "../lib/theme";
 import { IData, IMethod, IStatement } from "../lib/types";
 import { updateEntities, getLastEntity } from "../lib/update";
-import { createData, createMethod } from "../lib/utils";
+import { createMethod } from "../lib/utils";
 import { Data } from "./Data";
 import { Input } from "./Input/Input";
 import { Operation } from "./Operation";
@@ -60,7 +60,12 @@ export function Statement({
         <StatementVariable>
           {hasVariable ? (
             <Input
-              data={createData("string", statement.variable || "")}
+              data={{
+                id: "",
+                type: "string",
+                value: statement.variable || "",
+                entityType: "data",
+              }}
               handleData={(data) =>
                 handleStatement({
                   ...statement,

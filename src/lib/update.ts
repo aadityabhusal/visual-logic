@@ -1,5 +1,5 @@
 import { TypeMapper } from "./data";
-import { IData, IFunction, IMethod, IStatement, IType } from "./types";
+import { IData, IFunction, IMethod, IStatement } from "./types";
 import { createData } from "./utils";
 
 export function getLastEntity(statement: IStatement) {
@@ -23,12 +23,12 @@ function updateRefVal(data: IData, reference: IStatement) {
   let hasTypeChanged = !data.isGeneric && data.type !== reference.result.type;
   let hasValueChanged =
     JSON.stringify(data.value) !== JSON.stringify(reference.result.value);
-  let { id, ...newData } = createData(
-    data.type,
-    TypeMapper[data.type].defaultValue,
-    data.isGeneric
-  );
   if (data.name !== reference.variable || hasTypeChanged || hasValueChanged) {
+    let { id, ...newData } = createData(
+      data.type,
+      TypeMapper[data.type].defaultValue,
+      data.isGeneric
+    );
     return {
       ...data,
       type: reference.result.type,

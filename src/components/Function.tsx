@@ -2,9 +2,9 @@ import { Play, Plus } from "@styled-icons/fa-solid";
 import { useState } from "react";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
-import { IFunction, IStatement } from "../lib/types";
+import { IFunction } from "../lib/types";
 import { updateFunction } from "../lib/update";
-import { createData, createStatement } from "../lib/utils";
+import { createStatement } from "../lib/utils";
 import { Input } from "./Input/Input";
 import { ParseFunction } from "./Parse/ParseFunction";
 import { Statement } from "./Statement";
@@ -49,7 +49,12 @@ export function Func({
     <FunctionWrapper>
       <FunctionHead>
         <Input
-          data={createData("string", func.name)}
+          data={{
+            id: "",
+            type: "string",
+            value: func.name,
+            entityType: "data",
+          }}
           handleData={(data) =>
             handleFunctionProps("name", data.value as string)
           }

@@ -71,7 +71,12 @@ export function ObjectInput({
             return (
               <div key={i} style={{ display: "flex", alignItems: "center" }}>
                 <Input
-                  data={createData("string", key)}
+                  data={{
+                    id: `${i}-${key}`,
+                    type: "string",
+                    value: key,
+                    entityType: "data",
+                  }}
                   handleData={(val) => handleKeyUpdate(arr, i, val)}
                   color={theme.color.property}
                   noQuotes

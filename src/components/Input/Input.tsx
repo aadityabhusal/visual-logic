@@ -68,7 +68,7 @@ const InputWrapper = styled.div<{ quote?: boolean }>`
   }
 `;
 
-const InputStyled = styled.input<{ textWidth?: number; color?: string }>`
+export const InputStyled = styled.input<{ textWidth?: number; color?: string }>`
   outline: none;
   background-color: inherit;
   border: none;
