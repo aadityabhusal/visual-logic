@@ -84,7 +84,7 @@ export function Func({
           onClick={() => setToggleResult((t) => !t)}
         />
       </div>
-      {toggleResult ? <ParseFunction func={func} /> : null}
+      {toggleResult ? <ParseFunction func={func} showVariable={true} /> : null}
     </FunctionWrapper>
   );
 }

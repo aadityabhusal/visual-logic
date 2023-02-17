@@ -1,24 +1,31 @@
+import { Fragment } from "react";
 import { IStatement } from "../../lib/types";
 import { ParseData } from "./ParseData";
 import { Comma, Method, Reserved, Variable } from "./styles";
 
-export function ParseStatement({ statement }: { statement: IStatement }) {
+export function ParseStatement({
+  statement,
+  showVariable,
+}: {
+  statement: IStatement;
+  showVariable?: boolean;
+}) {
   return (
     <div style={{ display: "flex" }}>
       <ParseVariable statement={statement} />
-      <ParseData data={statement.data} />
+      <ParseData data={statement.data} showVariable={showVariable} />
       <div style={{ display: "flex" }}>
-        {statement.methods.map((method) => (
-          <>
+        {statement.methods.map((method, i) => (
+          <Fragment key={i}>
             <Method>{`.${method.name}(`}</Method>
             {method.parameters.map((param, i, arr) => (
               <span style={{ display: "flex" }} key={i}>
-                <ParseStatement statement={param} />
+                <ParseStatement statement={param} showVariable={showVariable} />
                 {i + 1 < arr.length && <Comma>,</Comma>}
               </span>
             ))}
             <span>{")"}</span>
-          </>
+          </Fragment>
         ))}
       </div>
     </div>
