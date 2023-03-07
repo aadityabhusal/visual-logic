@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useState } from "react";
 import styled from "styled-components";
 import { theme } from "../../lib/theme";
 import { IData } from "../../lib/types";
@@ -11,7 +11,7 @@ export interface IInput {
 }
 
 export function Input({ data, handleData, noQuotes, color }: IInput) {
-  const textRef = useRef<HTMLDivElement>(null);
+  const [textWidth, setTextWidth] = useState(0);
   const inputData = {
     quote: !noQuotes && data.type === "string",
     type: data.type === "string" ? `text` : "number",
@@ -21,12 +21,14 @@ export function Input({ data, handleData, noQuotes, color }: IInput) {
   };
   return typeof data.value === "string" || typeof data.value === "number" ? (
     <InputWrapper quote={inputData.quote}>
-      <div ref={textRef}>{inputData.text.toString()}</div>
+      <div ref={(elem) => setTextWidth(7 + (elem?.clientWidth || 0))}>
+        {inputData.text.toString()}
+      </div>
       <InputStyled
         type={inputData.type}
         value={data.value}
         placeholder={inputData.placeholder}
-        textWidth={inputData.text.toString() ? textRef.current?.clientWidth : 0}
+        textWidth={textWidth}
         color={color}
         onChange={(e) =>
           handleData({
@@ -74,7 +76,7 @@ export const InputStyled = styled.input<{ textWidth?: number; color?: string }>`
   border: none;
   color: ${({ color }) => color || theme.color.white};
   padding: 0;
-  ${({ textWidth }) => `width: ${7 + (textWidth || 0)}px`};
+  ${({ textWidth }) => `width: ${textWidth}px`};
 
   &::-webkit-outer-spin-button,
   &::-webkit-inner-spin-button {
