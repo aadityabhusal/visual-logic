@@ -79,11 +79,12 @@ function updateReferences(
 export function updateFunction(
   func: IFunction,
   changedStatement: IStatement,
-  index: number
+  index: number,
+  remove?: boolean
 ) {
   const statements = [...func.statements];
   if (changedStatement.variable === undefined) {
-    statements[index] = changedStatement;
+    if (!remove) statements[index] = changedStatement;
     return { ...func, statements } as IFunction;
   }
   let result = statements.reduce((prev, statement, i) => {

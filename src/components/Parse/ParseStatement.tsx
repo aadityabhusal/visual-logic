@@ -6,9 +6,11 @@ import { Comma, Method, Reserved, Variable } from "./styles";
 export function ParseStatement({
   statement,
   showVariable,
+  isTopLevel,
 }: {
   statement: IStatement;
   showVariable?: boolean;
+  isTopLevel?: boolean;
 }) {
   return (
     <div style={{ display: "flex" }}>
@@ -28,6 +30,7 @@ export function ParseStatement({
           </Fragment>
         ))}
       </div>
+      {isTopLevel ? <span>{";"}</span> : null}
     </div>
   );
 }

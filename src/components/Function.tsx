@@ -36,7 +36,7 @@ export function Func({
     else statements[index] = statement;
     let result = { ...func, statements } as IFunction;
     if (index + 1 < func.statements.length) {
-      result = updateFunction({ ...func, statements }, statement, index);
+      result = updateFunction(result, statement, index, remove);
     }
     handleFunc(result);
   }

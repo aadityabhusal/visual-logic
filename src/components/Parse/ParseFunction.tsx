@@ -20,6 +20,7 @@ export function ParseFunction({
             key={i}
             statement={statement}
             showVariable={showVariable}
+            isTopLevel={true}
           />
         ))}
       </div>
