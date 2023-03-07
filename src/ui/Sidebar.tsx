@@ -1,4 +1,4 @@
-import { Plus, X } from "@styled-icons/fa-solid";
+import { Code, Plus, X } from "@styled-icons/fa-solid";
 import styled from "styled-components";
 import { useStore } from "../lib/store";
 import { theme } from "../lib/theme";
@@ -6,9 +6,11 @@ import { theme } from "../lib/theme";
 export function Sidebar({
   currentId,
   setCurrentId,
+  setToggleCode,
 }: {
   currentId?: string;
   setCurrentId: (id: string) => void;
+  setToggleCode: () => void;
 }) {
   const [functions, addFunction, removeFunction] = useStore((state) => [
     state.functions,
@@ -41,6 +43,9 @@ export function Sidebar({
         </FunctionList>
       </SidebarContainer>
       <SidebarFooter>
+        <Button title="View Code" onClick={setToggleCode}>
+          <Code size={12} /> <span>Code</span>
+        </Button>
         <Button title="Add a new function" onClick={addFunction}>
           <Plus size={12} /> <span>Function</span>
         </Button>
@@ -53,7 +58,6 @@ const SidebarWrapper = styled.div`
   display: flex;
   flex-direction: column;
   margin-left: auto;
-  border-left: 1px solid ${theme.color.border};
   width: 12rem;
 `;
 
@@ -66,6 +70,14 @@ const SidebarContainer = styled.div`
   border: 1px solid ${theme.color.border};
   padding: 0.2rem;
   border-width: 1px 0 1px 0;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: ${theme.background.dropdown.scrollbar};
+  }
 `;
 
 const FunctionList = styled.ul`
@@ -101,7 +113,7 @@ const FunctionListItem = styled.li<{ selected?: boolean }>`
 const SidebarFooter = styled.div`
   padding: 0.25rem;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
 `;
 
 const Button = styled.button`

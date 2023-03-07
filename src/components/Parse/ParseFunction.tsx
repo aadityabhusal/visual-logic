@@ -11,7 +11,7 @@ export function ParseFunction({
 }) {
   return (
     <div>
-      <div style={{ display: "flex" }}>
+      <div style={{ display: "flex", gap: "0.5rem" }}>
         <Reserved>function</Reserved> {func.name} {`() {`}
       </div>
       <div style={{ paddingLeft: "1rem" }}>

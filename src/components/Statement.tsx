@@ -118,6 +118,7 @@ const StatementWrapper = styled.div`
   gap: 0.25rem;
   & svg {
     cursor: pointer;
+    flex-shrink: 0;
   }
 `;
 

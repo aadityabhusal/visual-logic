@@ -1,12 +1,10 @@
-import { Play, Plus } from "@styled-icons/fa-solid";
-import { useState } from "react";
+import { Plus } from "@styled-icons/fa-solid";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
 import { IFunction } from "../lib/types";
 import { updateFunction } from "../lib/update";
 import { createStatement } from "../lib/utils";
 import { Input } from "./Input/Input";
-import { ParseFunction } from "./Parse/ParseFunction";
 import { Statement } from "./Statement";
 
 export function Func({
@@ -16,8 +14,6 @@ export function Func({
   func: IFunction;
   handleFunc(fn: IFunction): void;
 }) {
-  const [toggleResult, setToggleResult] = useState(false);
-
   function handleFunctionProps(
     key: keyof IFunction,
     value: IFunction[typeof key]
@@ -76,15 +72,7 @@ export function Func({
         ))}
         <Plus size={10} style={{ cursor: "pointer" }} onClick={addStatement} />
       </FunctionBody>
-      <div>
-        {"}"}
-        <Play
-          size={10}
-          style={{ cursor: "pointer" }}
-          onClick={() => setToggleResult((t) => !t)}
-        />
-      </div>
-      {toggleResult ? <ParseFunction func={func} showVariable={true} /> : null}
+      <div>{"}"}</div>
     </FunctionWrapper>
   );
 }
