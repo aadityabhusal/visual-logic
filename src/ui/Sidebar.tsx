@@ -1,14 +1,47 @@
-import { Plus } from "@styled-icons/fa-solid";
+import { Plus, X } from "@styled-icons/fa-solid";
 import styled from "styled-components";
+import { useStore } from "../lib/store";
 import { theme } from "../lib/theme";
 
-export function Sidebar() {
+export function Sidebar({
+  currentId,
+  setCurrentId,
+}: {
+  currentId?: string;
+  setCurrentId: (id: string) => void;
+}) {
+  const [functions, addFunction, removeFunction] = useStore((state) => [
+    state.functions,
+    state.addFunction,
+    state.removeFunction,
+  ]);
+
   return (
     <SidebarWrapper>
       <SidebarHead>Functions</SidebarHead>
-      <SidebarContainer></SidebarContainer>
+      <SidebarContainer>
+        <FunctionList>
+          {functions.map((value) => (
+            <FunctionListItem
+              key={value.id}
+              onClick={() => setCurrentId(value.id)}
+              selected={value.id === currentId}
+            >
+              <span>{value.name}</span>
+              <X
+                title="Delete function"
+                size={8}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeFunction(value.id);
+                }}
+              />
+            </FunctionListItem>
+          ))}
+        </FunctionList>
+      </SidebarContainer>
       <SidebarFooter>
-        <Button>
+        <Button title="Add a new function" onClick={addFunction}>
           <Plus size={12} /> <span>Function</span>
         </Button>
       </SidebarFooter>
@@ -21,7 +54,7 @@ const SidebarWrapper = styled.div`
   flex-direction: column;
   margin-left: auto;
   border-left: 1px solid ${theme.color.border};
-  max-width: 200px;
+  width: 12rem;
 `;
 
 const SidebarHead = styled.div`
@@ -31,12 +64,44 @@ const SidebarHead = styled.div`
 const SidebarContainer = styled.div`
   flex: 1;
   border: 1px solid ${theme.color.border};
-  padding: 0.5rem;
+  padding: 0.2rem;
   border-width: 1px 0 1px 0;
+`;
+
+const FunctionList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+`;
+
+const FunctionListItem = styled.li<{ selected?: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 0.25rem;
+  background-color: ${({ selected }) =>
+    selected ? theme.background.dropdown.hover : theme.background.editor};
+
+  &:hover {
+    background-color: ${theme.background.dropdown.hover};
+  }
+
+  & span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  & svg {
+    flex-shrink: 0;
+  }
 `;
 
 const SidebarFooter = styled.div`
   padding: 0.25rem;
+  display: flex;
+  justify-content: flex-end;
 `;
 
 const Button = styled.button`

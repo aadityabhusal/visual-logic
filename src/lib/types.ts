@@ -37,7 +37,9 @@ export interface IFunction {
 
 export interface IStore {
   functions: IFunction[];
-  setFunction: (func: IFunction, index: number) => void;
+  addFunction: () => void;
+  removeFunction: (id: string) => void;
+  setFunction: (func: IFunction) => void;
 }
 
 export interface IStatement {

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import styled from "styled-components";
 import { Func } from "./components/Function";
 import { useStore } from "./lib/store";
@@ -9,16 +10,23 @@ function App() {
     state.functions,
     state.setFunction,
   ]);
+  const [currentId, setCurrentId] = useState<string>();
+  const currentFunction = func.find((item) => item.id === currentId);
   return (
     <AppWrapper>
       <Header />
       <AppContainer>
         <FunctionContainer>
-          {func.map((value, i) => (
-            <Func key={i} func={value} handleFunc={(fn) => setFunc(fn, i)} />
-          ))}
+          {currentFunction ? (
+            <Func func={currentFunction} handleFunc={(fn) => setFunc(fn)} />
+          ) : (
+            <div>Select a function</div>
+          )}
         </FunctionContainer>
-        <Sidebar />
+        <Sidebar
+          currentId={currentId}
+          setCurrentId={(id) => setCurrentId(id)}
+        />
       </AppContainer>
     </AppWrapper>
   );

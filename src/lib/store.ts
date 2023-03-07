@@ -4,10 +4,19 @@ import { createFunction } from "./utils";
 
 export const useStore = create<IStore>((set) => ({
   functions: [createFunction()],
-  setFunction: (func, index) =>
+  addFunction: () =>
+    set((state) => ({ functions: [...state.functions, createFunction()] })),
+  removeFunction: (id: string) => {
     set((state) => {
-      const funcs = [...state.functions];
-      funcs[index] = func;
-      return { functions: funcs };
+      let functions = state.functions.filter((func) => func.id !== id);
+      return { functions };
+    });
+  },
+  setFunction: (func) =>
+    set((state) => {
+      const functions = state.functions.map((item) =>
+        item.id === func.id ? func : item
+      );
+      return { functions };
     }),
 }));

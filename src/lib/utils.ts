@@ -17,11 +17,12 @@ export function createData<T extends keyof IType>(
 }
 
 export function createFunction(): IFunction {
+  let id = nanoid();
   return {
-    id: nanoid(),
+    id,
     entityType: "function",
     handler: undefined,
-    name: "",
+    name: "func_" + id.slice(-4),
     parameter: [],
     result: createData("string", ""),
     statements: [],
