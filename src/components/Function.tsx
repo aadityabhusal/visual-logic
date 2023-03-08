@@ -1,5 +1,6 @@
 import { Plus } from "@styled-icons/fa-solid";
 import styled from "styled-components";
+import { useStore } from "../lib/store";
 import { theme } from "../lib/theme";
 import { IFunction } from "../lib/types";
 import { updateFunction } from "../lib/update";
@@ -14,10 +15,13 @@ export function Func({
   func: IFunction;
   handleFunc(fn: IFunction): void;
 }) {
+  const functions = useStore((state) => state.functions);
+
   function handleFunctionProps(
     key: keyof IFunction,
     value: IFunction[typeof key]
   ) {
+    if (key === "name" && functions.find((item) => item.name === value)) return;
     handleFunc({ ...func, [key]: value });
   }
 
