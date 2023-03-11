@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { useStore } from "../lib/store";
 import { theme } from "../lib/theme";
 import { IFunction } from "../lib/types";
-import { updateFunction } from "../lib/update";
+import { updateFunctionStatements } from "../lib/update";
 import { createStatement } from "../lib/utils";
 import { Input } from "./Input/Input";
 import { Statement } from "./Statement";
@@ -40,7 +40,7 @@ export function Func({
     else statements[index] = statement;
     let result = { ...func, statements } as IFunction;
     if (index + 1 < func.statements.length) {
-      result = updateFunction(result, statement, index, remove);
+      result = updateFunctionStatements(result, statement, index, remove);
     }
     handleFunc(result);
   }

@@ -2,7 +2,7 @@ import { Equals, Plus } from "@styled-icons/fa-solid";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
 import { IData, IMethod, IStatement } from "../lib/types";
-import { updateEntities, getLastEntity } from "../lib/update";
+import { updateStatementMethods, getLastEntity } from "../lib/update";
 import { createMethod } from "../lib/utils";
 import { Data } from "./Data";
 import { Input } from "./Input/Input";
@@ -34,8 +34,7 @@ export function Statement({
     else {
       let methods = [...statement.methods];
       if (statement.data.type !== data.type) methods = [];
-      let result = updateEntities({ ...statement, data, methods });
-      handleStatement({ ...result, result: getLastEntity(result) });
+      handleStatement(updateStatementMethods({ ...statement, data, methods }));
     }
   }
 
@@ -50,8 +49,7 @@ export function Statement({
         methods.splice(index + 1);
       methods[index] = method;
     }
-    let result = updateEntities({ ...statement, methods });
-    handleStatement({ ...result, result: getLastEntity(result) });
+    handleStatement(updateStatementMethods({ ...statement, methods }));
   }
 
   return (
@@ -63,13 +61,13 @@ export function Statement({
               data={{
                 id: "",
                 type: "string",
-                value: statement.variable || "",
+                value: statement.variable || `var_${statement.id.slice(-4)}`,
                 entityType: "data",
               }}
               handleData={(data) =>
                 handleStatement({
                   ...statement,
-                  variable: data.value as string,
+                  variable: (data.value as string) || statement.variable,
                 })
               }
               color={theme.color.variable}
