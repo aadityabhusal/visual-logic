@@ -26,7 +26,7 @@ export function Statement({
   function addMethod() {
     let method = createMethod({ data: getLastEntity(statement) });
     let methods = [...statement.methods, method];
-    handleStatement({ ...statement, methods });
+    handleStatement(updateStatementMethods({ ...statement, methods }));
   }
 
   function handleData(data: IData, remove?: boolean) {
@@ -61,7 +61,7 @@ export function Statement({
               data={{
                 id: "",
                 type: "string",
-                value: statement.variable || `var_${statement.id.slice(-4)}`,
+                value: statement.variable || "",
                 entityType: "data",
               }}
               handleData={(data) =>
@@ -79,7 +79,9 @@ export function Statement({
             onClick={() =>
               handleStatement({
                 ...statement,
-                variable: hasVariable ? undefined : "",
+                variable: hasVariable
+                  ? undefined
+                  : `var_${statement.id.slice(-3)}`,
               })
             }
           />
