@@ -38,9 +38,7 @@ export function updateStatementReference(
     currentStatement.data.referenceId && (!reference || !reference?.variable);
 
   let isTypeChanged =
-    reference &&
-    !currentStatement.data.isGeneric &&
-    currentStatement.data.type !== reference.result.type;
+    reference && currentStatement.data.type !== reference.result.type;
 
   let { id: newId, ...newData } = createData(
     currentStatement.data.type,
@@ -56,16 +54,14 @@ export function updateStatementReference(
       value: reference?.result.value ?? currentStatement.data.value,
       ...((isReferenceRemoved || isTypeChanged) && newData),
     },
-    methods: isTypeChanged
-      ? []
-      : currentStatement.methods.map((method) => ({
-          ...method,
-          parameters: method.parameters.map((param) =>
-            updateStatementMethods(
-              updateStatementReference(param, previousStatements)
-            )
-          ),
-        })),
+    methods: currentStatement.methods.map((method) => ({
+      ...method,
+      parameters: method.parameters.map((param) =>
+        updateStatementMethods(
+          updateStatementReference(param, previousStatements)
+        )
+      ),
+    })),
   };
 }
 
