@@ -72,6 +72,7 @@ export function Func({
             handleStatement={(statement, remove) =>
               handleStatement(i, statement, remove)
             }
+            path={[func.id]}
           />
         ))}
         <Plus size={10} style={{ cursor: "pointer" }} onClick={addStatement} />

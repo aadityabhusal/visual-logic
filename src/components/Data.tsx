@@ -13,21 +13,14 @@ interface IProps {
   data: IData;
   handleData: (data: IData, remove?: boolean) => void;
   disableDelete?: boolean;
-  parentStatement?: IStatement;
+  path: string[];
 }
 
-export function Data({
-  data,
-  handleData,
-  disableDelete,
-  parentStatement,
-}: IProps) {
+export function Data({ data, handleData, disableDelete, path }: IProps) {
   const context = useStore((state) => state.functions);
-  const contextStatements = context.flatMap((func) => func.statements);
-  const dataIndex = contextStatements.findIndex((item) => {
-    let itemData = item.entityType === "statement" ? item.data : item.result;
-    return itemData.id === parentStatement?.data.id;
-  });
+  const statements =
+    context.find((func) => func.id === path[0])?.statements || [];
+  const statementIndex = statements.findIndex((item) => item.id === path[1]);
 
   function handleDropdown(type: keyof IType) {
     (data.referenceId || type !== data.type) &&
@@ -57,7 +50,7 @@ export function Data({
     <DataWrapper>
       <Dropdown
         data={{ result: data }}
-        index={contextStatements.length - dataIndex}
+        index={statements.length - statementIndex}
         handleDelete={!disableDelete ? () => handleData(data, true) : undefined}
         head={
           data.entityType === "variable" ? (
@@ -65,17 +58,9 @@ export function Data({
           ) : (
             <>
               {data.type === "array" ? (
-                <ArrayInput
-                  data={data}
-                  handleData={handleData}
-                  parentStatement={parentStatement}
-                />
+                <ArrayInput data={data} handleData={handleData} path={path} />
               ) : data.value instanceof Map ? (
-                <ObjectInput
-                  data={data}
-                  handleData={handleData}
-                  parentStatement={parentStatement}
-                />
+                <ObjectInput data={data} handleData={handleData} path={path} />
               ) : typeof data.value === "boolean" ? (
                 <BooleanInput data={data} handleData={handleData} />
               ) : (
@@ -105,8 +90,8 @@ export function Data({
             );
           })}
           <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
-          {contextStatements.map((statement, i) => {
-            if (i >= dataIndex || !statement.variable) return;
+          {statements.map((statement, i) => {
+            if (i >= statementIndex || !statement.variable) return;
             let statementData = statement.result;
             if (!data.isGeneric && statementData.type !== data.type) return;
             return (
