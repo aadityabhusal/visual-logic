@@ -95,7 +95,7 @@ export function Statement({
       <Data
         data={statement.data}
         handleData={(data, remove) => handleData(data, remove)}
-        path={[...path, ...(path.length < 2 ? [statement.id] : [])]}
+        path={[...path, statement.id]}
         disableDelete={disableDelete}
       />
       {statement.methods.map((method, i, methods) => {
@@ -106,7 +106,7 @@ export function Statement({
             data={data}
             operation={method}
             handleOperation={(meth, remove) => handleMethod(meth, i, remove)}
-            path={[...path, ...(path.length < 2 ? [statement.id] : [])]}
+            path={[...path, statement.id]}
           />
         );
       })}

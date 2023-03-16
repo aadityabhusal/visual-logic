@@ -1,4 +1,5 @@
 import { nanoid } from "nanoid";
+import { TypeMapper } from "./data";
 import { operationMethods } from "./methods";
 import { IData, IFunction, IMethod, IStatement, IType } from "./types";
 
@@ -44,7 +45,9 @@ export function createStatement(data?: IData, methods?: IMethod[]): IStatement {
 
 export function getFilteredMethods(data: IData) {
   return operationMethods[data.type].filter((item) => {
-    let parameters = item.parameters.map((p) => p.result);
+    let parameters = item.parameters.map((p) =>
+      createData(p.type, TypeMapper[p.type].defaultValue, p.isGeneric)
+    );
     let resultType = item.handler(data, ...parameters).type; // Optimize here
     return data.isGeneric || data.type === resultType;
   });
@@ -55,12 +58,16 @@ export function createMethod({ data, name }: { data: IData; name?: string }) {
   let methodByName = methods.find((method) => method.name === name);
   let newMethod = methodByName || methods[0];
 
-  let parameters = newMethod.parameters.map((item) => item.result);
+  let parameters = newMethod.parameters.map((item) =>
+    createData(item.type, TypeMapper[item.type].defaultValue, item.isGeneric)
+  );
   let result = newMethod.handler(data, ...parameters);
   return {
-    ...newMethod,
     id: nanoid(),
     entityType: "method",
+    name: newMethod.name,
+    parameters: parameters.map((item) => createStatement(item)),
+    handler: newMethod.handler,
     result: { ...result, isGeneric: data.isGeneric },
   } as IMethod;
 }
