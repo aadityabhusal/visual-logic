@@ -1,6 +1,6 @@
 import { TypeMapper } from "../../lib/data";
 import styled from "styled-components";
-import { IData, IStatement } from "../../lib/types";
+import { IData } from "../../lib/types";
 import { Data } from "../Data";
 import { createData } from "../../lib/utils";
 import { theme } from "../../lib/theme";
@@ -8,10 +8,10 @@ import { theme } from "../../lib/theme";
 export interface IArrayInput {
   data: IData;
   handleData: (data: IData) => void;
-  parentStatement?: IStatement;
+  path: string[];
 }
 
-export function ArrayInput({ data, handleData, parentStatement }: IArrayInput) {
+export function ArrayInput({ data, handleData, path }: IArrayInput) {
   function addToArray() {
     Array.isArray(data.value) &&
       handleData({
@@ -46,7 +46,7 @@ export function ArrayInput({ data, handleData, parentStatement }: IArrayInput) {
                 <Data
                   data={item}
                   handleData={(val, remove) => handleUpdate(val, i, remove)}
-                  parentStatement={parentStatement}
+                  path={path}
                 />
                 {i < arr.length - 1 ? (
                   <span style={{ marginRight: "4px" }}>{", "}</span>

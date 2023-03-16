@@ -11,21 +11,14 @@ interface IProps {
   data: IData;
   operation: IMethod;
   handleOperation: (operation: IMethod, remove?: boolean) => void;
-  parentStatement?: IStatement;
+  path: string[];
 }
 
-export function Operation({
-  data,
-  operation,
-  handleOperation,
-  parentStatement,
-}: IProps) {
+export function Operation({ data, operation, handleOperation, path }: IProps) {
   const context = useStore((state) => state.functions);
-  const contextStatements = context.flatMap((func) => func.statements);
-  const dataIndex = contextStatements.findIndex((item) => {
-    let itemData = item.entityType === "statement" ? item.data : item.result;
-    return itemData.id === parentStatement?.data.id;
-  });
+  const statements =
+    context.find((func) => func.id === path[0])?.statements || [];
+  const statementIndex = statements.findIndex((item) => item.id === path[1]);
 
   function handleDropdown(name: string) {
     if (operation.name === name) return;
@@ -50,7 +43,7 @@ export function Operation({
     <OperationWrapper>
       <Dropdown
         data={{ result: operation.result }}
-        index={contextStatements.length - dataIndex}
+        index={statements.length - statementIndex}
         handleDelete={() => handleOperation(operation, true)}
         head={
           <>
@@ -66,7 +59,7 @@ export function Operation({
                   handleStatement={(val) => val && handleParameter(val, i)}
                   disableDelete={true}
                   disableVariable={true}
-                  parentStatement={parentStatement}
+                  path={path}
                 />
                 {i < arr.length - 1 ? <span>{", "}</span> : null}
               </span>
