@@ -1,5 +1,6 @@
 import { Equals, Plus } from "@styled-icons/fa-solid";
 import styled from "styled-components";
+import { useStore } from "../lib/store";
 import { theme } from "../lib/theme";
 import { IData, IMethod, IStatement } from "../lib/types";
 import { updateStatementMethods, getLastEntity } from "../lib/update";
@@ -22,6 +23,9 @@ export function Statement({
   path: string[];
 }) {
   const hasVariable = statement.variable !== undefined;
+  const context = useStore((state) => state.functions);
+  const statements =
+    context.find((func) => func.id === path[0])?.statements || [];
 
   function addMethod() {
     let method = createMethod({ data: getLastEntity(statement) });
@@ -64,12 +68,13 @@ export function Statement({
                 value: statement.variable || "",
                 entityType: "data",
               }}
-              handleData={(data) =>
-                handleStatement({
-                  ...statement,
-                  variable: (data.value as string) || statement.variable,
-                })
-              }
+              handleData={(data) => {
+                let variable = (data.value as string) || statement.variable;
+                const exists = statements.find(
+                  (item) => item.variable === variable
+                );
+                if (!exists) handleStatement({ ...statement, variable });
+              }}
               color={theme.color.variable}
               noQuotes
             />
