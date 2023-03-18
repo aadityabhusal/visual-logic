@@ -23,9 +23,9 @@ export function Statement({
   path: string[];
 }) {
   const hasVariable = statement.variable !== undefined;
-  const context = useStore((state) => state.functions);
+  const context = useStore((state) => state.operations);
   const statements =
-    context.find((func) => func.id === path[0])?.statements || [];
+    context.find((operation) => operation.id === path[0])?.statements || [];
 
   function addMethod() {
     let method = createMethod({ data: getLastEntity(statement) });

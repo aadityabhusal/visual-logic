@@ -15,9 +15,9 @@ interface IProps {
 }
 
 export function Method({ data, method, handleMethod, path }: IProps) {
-  const context = useStore((state) => state.functions);
+  const context = useStore((state) => state.operations);
   const statements =
-    context.find((func) => func.id === path[0])?.statements || [];
+    context.find((operation) => operation.id === path[0])?.statements || [];
   const statementIndex = statements.findIndex((item) => item.id === path[1]);
 
   function handleDropdown(name: string) {

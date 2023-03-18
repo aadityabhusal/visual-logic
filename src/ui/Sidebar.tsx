@@ -12,42 +12,42 @@ export function Sidebar({
   setCurrentId: (id: string) => void;
   setToggleCode: () => void;
 }) {
-  const [functions, addFunction, removeFunction] = useStore((state) => [
-    state.functions,
-    state.addFunction,
-    state.removeFunction,
+  const [operations, addOperation, removeOperation] = useStore((state) => [
+    state.operations,
+    state.addOperation,
+    state.removeOperation,
   ]);
 
   return (
     <SidebarWrapper>
-      <SidebarHead>Functions</SidebarHead>
+      <SidebarHead>Operations</SidebarHead>
       <SidebarContainer>
-        <FunctionList>
-          {functions.map((value) => (
-            <FunctionListItem
+        <OperationList>
+          {operations.map((value) => (
+            <OperationListItem
               key={value.id}
               onClick={() => setCurrentId(value.id)}
               selected={value.id === currentId}
             >
               <span>{value.name}</span>
               <X
-                title="Delete function"
+                title="Delete operation"
                 size={8}
                 onClick={(e) => {
                   e.stopPropagation();
-                  removeFunction(value.id);
+                  removeOperation(value.id);
                 }}
               />
-            </FunctionListItem>
+            </OperationListItem>
           ))}
-        </FunctionList>
+        </OperationList>
       </SidebarContainer>
       <SidebarFooter>
         <Button title="View Code" onClick={setToggleCode}>
           <Code size={12} /> <span>Code</span>
         </Button>
-        <Button title="Add a new function" onClick={addFunction}>
-          <Plus size={12} /> <span>Function</span>
+        <Button title="Add a new operation" onClick={addOperation}>
+          <Plus size={12} /> <span>Operation</span>
         </Button>
       </SidebarFooter>
     </SidebarWrapper>
@@ -80,13 +80,13 @@ const SidebarContainer = styled.div`
   }
 `;
 
-const FunctionList = styled.ul`
+const OperationList = styled.ul`
   list-style: none;
   padding: 0;
   margin: 0;
 `;
 
-const FunctionListItem = styled.li<{ selected?: boolean }>`
+const OperationListItem = styled.li<{ selected?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;

@@ -25,9 +25,9 @@ export interface IMethod {
   result: ReturnType<IMethod["handler"]>;
 }
 
-export interface IFunction {
+export interface IOperation {
   id: string;
-  entityType: "function";
+  entityType: "operation";
   name: string;
   parameter: IData[];
   statements: IStatement[];
@@ -36,10 +36,10 @@ export interface IFunction {
 }
 
 export interface IStore {
-  functions: IFunction[];
-  addFunction: () => void;
-  removeFunction: (id: string) => void;
-  setFunction: (func: IFunction) => void;
+  operations: IOperation[];
+  addOperation: () => void;
+  removeOperation: (id: string) => void;
+  setOperation: (operation: IOperation) => void;
 }
 
 export interface IStatement {

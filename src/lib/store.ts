@@ -1,22 +1,24 @@
 import create from "zustand";
 import { IStore } from "./types";
-import { createFunction } from "./utils";
+import { createOperation } from "./utils";
 
 export const useStore = create<IStore>((set) => ({
-  functions: [createFunction()],
-  addFunction: () =>
-    set((state) => ({ functions: [...state.functions, createFunction()] })),
-  removeFunction: (id: string) => {
+  operations: [createOperation()],
+  addOperation: () =>
+    set((state) => ({ operations: [...state.operations, createOperation()] })),
+  removeOperation: (id: string) => {
     set((state) => {
-      let functions = state.functions.filter((func) => func.id !== id);
-      return { functions };
+      let operations = state.operations.filter(
+        (operation) => operation.id !== id
+      );
+      return { operations };
     });
   },
-  setFunction: (func) =>
+  setOperation: (operation) =>
     set((state) => {
-      const functions = state.functions.map((item) =>
-        item.id === func.id ? func : item
+      const operations = state.operations.map((item) =>
+        item.id === operation.id ? operation : item
       );
-      return { functions };
+      return { operations };
     }),
 }));
