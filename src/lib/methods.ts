@@ -222,7 +222,7 @@ export const objectMethods: IMethodList[] = [
   },
 ];
 
-export const operationMethods: Record<keyof IType, IMethodList[]> = {
+export const methodsList: Record<keyof IType, IMethodList[]> = {
   string: stringMethods.concat(comparisonMethods),
   number: numberMethods.concat(comparisonMethods),
   boolean: booleanMethods.concat(comparisonMethods),

@@ -9,50 +9,47 @@ import { useStore } from "../lib/store";
 
 interface IProps {
   data: IData;
-  operation: IMethod;
-  handleOperation: (operation: IMethod, remove?: boolean) => void;
+  method: IMethod;
+  handleMethod: (method: IMethod, remove?: boolean) => void;
   path: string[];
 }
 
-export function Operation({ data, operation, handleOperation, path }: IProps) {
+export function Method({ data, method, handleMethod, path }: IProps) {
   const context = useStore((state) => state.functions);
   const statements =
     context.find((func) => func.id === path[0])?.statements || [];
   const statementIndex = statements.findIndex((item) => item.id === path[1]);
 
   function handleDropdown(name: string) {
-    if (operation.name === name) return;
-    handleOperation({ ...createMethod({ data, name }) });
+    if (method.name === name) return;
+    handleMethod({ ...createMethod({ data, name }) });
   }
 
   function handleParameter(item: IStatement, index: number) {
-    let parameters = [...operation.parameters];
+    let parameters = [...method.parameters];
     parameters[index] = item;
-    let result = operation.handler(
-      data,
-      ...parameters.map((item) => item.result)
-    );
-    handleOperation({
-      ...operation,
+    let result = method.handler(data, ...parameters.map((item) => item.result));
+    handleMethod({
+      ...method,
       parameters,
       result: { ...result, isGeneric: data.isGeneric },
     });
   }
 
   return (
-    <OperationWrapper>
+    <MethodWrapper>
       <Dropdown
-        data={{ result: operation.result }}
+        data={{ result: method.result }}
         index={statements.length - statementIndex}
-        handleDelete={() => handleOperation(operation, true)}
+        handleDelete={() => handleMethod(method, true)}
         head={
           <>
             {"."}
             <span style={{ color: theme.color.method }}>
-              {operation.name || ".."}
+              {method.name || ".."}
             </span>
             <span>{"("}</span>
-            {operation.parameters.map((item, i, arr) => (
+            {method.parameters.map((item, i, arr) => (
               <span key={i} style={{ display: "flex" }}>
                 <Statement
                   statement={item}
@@ -73,18 +70,18 @@ export function Operation({ data, operation, handleOperation, path }: IProps) {
             <DropdownOption
               key={method.name}
               onClick={() => handleDropdown(method.name)}
-              selected={operation.name === method.name}
+              selected={method.name === method.name}
             >
               {method.name}
             </DropdownOption>
           ))}
         </DropdownOptions>
       </Dropdown>
-    </OperationWrapper>
+    </MethodWrapper>
   );
 }
 
-const OperationWrapper = styled.div`
+const MethodWrapper = styled.div`
   position: relative;
   display: flex;
   flex-wrap: wrap;

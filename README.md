@@ -16,7 +16,7 @@ Creating programming logic visually in a functional way.
    - Context has a collection of local, parent and global values
    - A return value (Data or void)
 2. **Statement**
-   - A Data with chain of Operations (or a function definition)
+   - A Data with chain of Methods (or a function definition)
    - Returns a Data
    - Has a variable for referencing its returned data
 3. **Data**
