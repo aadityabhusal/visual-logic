@@ -66,13 +66,13 @@ export function Method({ data, method, handleMethod, path }: IProps) {
         }
       >
         <DropdownOptions>
-          {getFilteredMethods(data).map((method) => (
+          {getFilteredMethods(data).map((item) => (
             <DropdownOption
-              key={method.name}
-              onClick={() => handleDropdown(method.name)}
-              selected={method.name === method.name}
+              key={item.name}
+              onClick={() => handleDropdown(item.name)}
+              selected={item.name === method.name}
             >
-              {method.name}
+              {item.name}
             </DropdownOption>
           ))}
         </DropdownOptions>
