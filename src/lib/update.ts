@@ -1,5 +1,5 @@
 import { TypeMapper } from "./data";
-import { IFunction, IMethod, IStatement } from "./types";
+import { IOperation, IMethod, IStatement } from "./types";
 import { createData } from "./utils";
 
 export function getLastEntity(statement: IStatement) {
@@ -65,13 +65,13 @@ export function updateStatementReference(
   };
 }
 
-export function updateFunctionStatements(
-  func: IFunction,
+export function updateOperationStatements(
+  operation: IOperation,
   changedStatement: IStatement,
   changedStatementIndex: number,
   removeStatement?: boolean
 ) {
-  let updatedStatements = func.statements.reduce(
+  let updatedStatements = operation.statements.reduce(
     (previousStatements, currentStatement, index) => {
       if (index < changedStatementIndex)
         return [...previousStatements, currentStatement];
@@ -90,5 +90,5 @@ export function updateFunctionStatements(
     },
     [] as IStatement[]
   );
-  return { ...func, statements: updatedStatements } as IFunction;
+  return { ...operation, statements: updatedStatements } as IOperation;
 }

@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 import { TypeMapper } from "./data";
-import { operationMethods } from "./methods";
-import { IData, IFunction, IMethod, IStatement, IType } from "./types";
+import { methodsList } from "./methods";
+import { IData, IOperation, IMethod, IStatement, IType } from "./types";
 
 export function createData<T extends keyof IType>(
   type: T,
@@ -19,11 +19,11 @@ export function createData<T extends keyof IType>(
   };
 }
 
-export function createFunction(): IFunction {
+export function createOperation(): IOperation {
   let id = nanoid();
   return {
     id,
-    entityType: "function",
+    entityType: "operation",
     handler: undefined,
     name: "func_" + id.slice(-4),
     parameter: [],
@@ -44,7 +44,7 @@ export function createStatement(data?: IData, methods?: IMethod[]): IStatement {
 }
 
 export function getFilteredMethods(data: IData) {
-  return operationMethods[data.type].filter((item) => {
+  return methodsList[data.type].filter((item) => {
     let parameters = item.parameters.map((p) =>
       createData(p.type, TypeMapper[p.type].defaultValue, p.isGeneric)
     );

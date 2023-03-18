@@ -1,35 +1,38 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { Func } from "./components/Function";
-import { ParseFunction } from "./components/Parse/ParseFunction";
+import { Operation } from "./components/Operation";
+import { ParseOperation } from "./components/Parse/ParseOperation";
 import { useStore } from "./lib/store";
 import { theme } from "./lib/theme";
 import { Header } from "./ui/Header";
 import { Sidebar } from "./ui/Sidebar";
 
 function App() {
-  const [func, setFunc] = useStore((state) => [
-    state.functions,
-    state.setFunction,
+  const [operations, setOperation] = useStore((state) => [
+    state.operations,
+    state.setOperation,
   ]);
   const [currentId, setCurrentId] = useState<string>();
-  const currentFunction = func.find((item) => item.id === currentId);
+  const currentOperation = operations.find((item) => item.id === currentId);
   const [toggleCode, setToggleCode] = useState(false);
   return (
     <AppWrapper>
       <Header />
       <AppContainer>
-        <FunctionContainer>
-          {currentFunction ? (
-            <Func func={currentFunction} handleFunc={(fn) => setFunc(fn)} />
+        <OperationContainer>
+          {currentOperation ? (
+            <Operation
+              operation={currentOperation}
+              handleOperation={(operation) => setOperation(operation)}
+            />
           ) : (
-            <div>Select a function</div>
+            <div>Select an operation</div>
           )}
-        </FunctionContainer>
-        {toggleCode && currentFunction ? (
-          <FunctionContainer>
-            <ParseFunction func={currentFunction} showVariable={true} />
-          </FunctionContainer>
+        </OperationContainer>
+        {toggleCode && currentOperation ? (
+          <OperationContainer>
+            <ParseOperation operation={currentOperation} showVariable={true} />
+          </OperationContainer>
         ) : null}
         <Sidebar
           currentId={currentId}
@@ -53,7 +56,7 @@ const AppContainer = styled.div`
   min-height: 0;
 `;
 
-const FunctionContainer = styled.div`
+const OperationContainer = styled.div`
   padding: 0.5rem;
   flex: 1;
   overflow-y: auto;

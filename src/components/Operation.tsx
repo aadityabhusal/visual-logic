@@ -1,91 +1,98 @@
+import { Plus } from "@styled-icons/fa-solid";
 import styled from "styled-components";
-import { IData, IMethod, IStatement } from "../lib/types";
-import { Statement } from "./Statement";
-import { DropdownOption, DropdownOptions } from "./Dropdown";
-import { Dropdown } from "./Dropdown";
-import { createMethod, getFilteredMethods } from "../lib/utils";
-import { theme } from "../lib/theme";
 import { useStore } from "../lib/store";
+import { theme } from "../lib/theme";
+import { IOperation } from "../lib/types";
+import { updateOperationStatements } from "../lib/update";
+import { createStatement } from "../lib/utils";
+import { Input } from "./Input/Input";
+import { Statement } from "./Statement";
 
-interface IProps {
-  data: IData;
-  operation: IMethod;
-  handleOperation: (operation: IMethod, remove?: boolean) => void;
-  path: string[];
-}
+export function Operation({
+  operation,
+  handleOperation,
+}: {
+  operation: IOperation;
+  handleOperation(operation: IOperation): void;
+}) {
+  const operations = useStore((state) => state.operations);
 
-export function Operation({ data, operation, handleOperation, path }: IProps) {
-  const context = useStore((state) => state.functions);
-  const statements =
-    context.find((func) => func.id === path[0])?.statements || [];
-  const statementIndex = statements.findIndex((item) => item.id === path[1]);
-
-  function handleDropdown(name: string) {
-    if (operation.name === name) return;
-    handleOperation({ ...createMethod({ data, name }) });
+  function handleOperationProps(
+    key: keyof IOperation,
+    value: IOperation[typeof key]
+  ) {
+    if (key === "name" && operations.find((item) => item.name === value))
+      return;
+    handleOperation({ ...operation, [key]: value });
   }
 
-  function handleParameter(item: IStatement, index: number) {
-    let parameters = [...operation.parameters];
-    parameters[index] = item;
-    let result = operation.handler(
-      data,
-      ...parameters.map((item) => item.result)
-    );
-    handleOperation({
-      ...operation,
-      parameters,
-      result: { ...result, isGeneric: data.isGeneric },
-    });
+  function addStatement() {
+    let statements = [...operation.statements, createStatement()];
+    handleOperation({ ...operation, statements });
+  }
+
+  function handleStatement(
+    index: number,
+    statement: IOperation["statements"][number],
+    remove?: boolean
+  ) {
+    let statements = [...operation.statements];
+    if (remove) statements.splice(index, 1);
+    else statements[index] = statement;
+    let result = { ...operation, statements } as IOperation;
+    if (index + 1 < operation.statements.length) {
+      result = updateOperationStatements(result, statement, index, remove);
+    }
+    handleOperation(result);
   }
 
   return (
     <OperationWrapper>
-      <Dropdown
-        data={{ result: operation.result }}
-        index={statements.length - statementIndex}
-        handleDelete={() => handleOperation(operation, true)}
-        head={
-          <>
-            {"."}
-            <span style={{ color: theme.color.method }}>
-              {operation.name || ".."}
-            </span>
-            <span>{"("}</span>
-            {operation.parameters.map((item, i, arr) => (
-              <span key={i} style={{ display: "flex" }}>
-                <Statement
-                  statement={item}
-                  handleStatement={(val) => val && handleParameter(val, i)}
-                  disableDelete={true}
-                  disableVariable={true}
-                  path={path}
-                />
-                {i < arr.length - 1 ? <span>{", "}</span> : null}
-              </span>
-            ))}
-            <span>{")"}</span>
-          </>
-        }
-      >
-        <DropdownOptions>
-          {getFilteredMethods(data).map((method) => (
-            <DropdownOption
-              key={method.name}
-              onClick={() => handleDropdown(method.name)}
-              selected={operation.name === method.name}
-            >
-              {method.name}
-            </DropdownOption>
-          ))}
-        </DropdownOptions>
-      </Dropdown>
+      <OperationHead>
+        <Input
+          data={{
+            id: "",
+            type: "string",
+            value: operation.name,
+            entityType: "data",
+          }}
+          handleData={(data) =>
+            handleOperationProps("name", data.value as string)
+          }
+          color={theme.color.variable}
+          noQuotes
+        />
+        <span>{"("}</span>
+        <span>{") {"}</span>
+      </OperationHead>
+      <OperationBody>
+        {operation.statements.map((statement, i) => (
+          <Statement
+            key={statement.id}
+            statement={statement}
+            handleStatement={(statement, remove) =>
+              handleStatement(i, statement, remove)
+            }
+            path={[operation.id]}
+          />
+        ))}
+        <Plus size={10} style={{ cursor: "pointer" }} onClick={addStatement} />
+      </OperationBody>
+      <div>{"}"}</div>
     </OperationWrapper>
   );
 }
 
 const OperationWrapper = styled.div`
-  position: relative;
+  max-width: max-content;
+`;
+
+const OperationHead = styled.div`
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+`;
+
+const OperationBody = styled.div`
+  padding-left: 1rem;
 `;

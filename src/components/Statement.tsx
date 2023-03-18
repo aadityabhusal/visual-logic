@@ -7,7 +7,7 @@ import { updateStatementMethods, getLastEntity } from "../lib/update";
 import { createMethod } from "../lib/utils";
 import { Data } from "./Data";
 import { Input } from "./Input/Input";
-import { Operation } from "./Operation";
+import { Method } from "./Method";
 
 export function Statement({
   statement,
@@ -23,9 +23,9 @@ export function Statement({
   path: string[];
 }) {
   const hasVariable = statement.variable !== undefined;
-  const context = useStore((state) => state.functions);
+  const context = useStore((state) => state.operations);
   const statements =
-    context.find((func) => func.id === path[0])?.statements || [];
+    context.find((operation) => operation.id === path[0])?.statements || [];
 
   function addMethod() {
     let method = createMethod({ data: getLastEntity(statement) });
@@ -101,11 +101,11 @@ export function Statement({
       {statement.methods.map((method, i, methods) => {
         let data = i === 0 ? statement.data : methods[i - 1].result;
         return (
-          <Operation
+          <Method
             key={method.id}
             data={data}
-            operation={method}
-            handleOperation={(meth, remove) => handleMethod(meth, i, remove)}
+            method={method}
+            handleMethod={(meth, remove) => handleMethod(meth, i, remove)}
             path={[...path, statement.id]}
           />
         );

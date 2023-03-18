@@ -73,9 +73,9 @@ export const stringMethods: IMethodList[] = [
     name: "capitalize",
     parameters: [],
     handler: (data: IData<"string">) => {
-      let func = (word: string) =>
+      let mapper = (word: string) =>
         word.length ? word[0].toUpperCase() + word.slice(1) : "";
-      return createData("string", data.value.split(" ").map(func).join(" "));
+      return createData("string", data.value.split(" ").map(mapper).join(" "));
     },
   },
   {
@@ -222,7 +222,7 @@ export const objectMethods: IMethodList[] = [
   },
 ];
 
-export const operationMethods: Record<keyof IType, IMethodList[]> = {
+export const methodsList: Record<keyof IType, IMethodList[]> = {
   string: stringMethods.concat(comparisonMethods),
   number: numberMethods.concat(comparisonMethods),
   boolean: booleanMethods.concat(comparisonMethods),
