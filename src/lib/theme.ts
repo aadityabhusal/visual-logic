@@ -12,6 +12,7 @@ export const theme = {
     white: "#fafafa",
     reserved: "#569cd6",
     variable: "#4fc1ff",
+    type: "#4ec9b0",
     property: "#9cdcfe",
     string: "#ce9178",
     number: "#b5cea8",

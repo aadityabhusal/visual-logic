@@ -49,7 +49,7 @@ export function Data({ data, handleData, disableDelete, path }: IProps) {
   return (
     <DataWrapper>
       <Dropdown
-        data={{ result: data }}
+        result={{ data }}
         index={statements.length - statementIndex}
         handleDelete={!disableDelete ? () => handleData(data, true) : undefined}
         head={

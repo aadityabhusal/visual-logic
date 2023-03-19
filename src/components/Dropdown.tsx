@@ -1,4 +1,4 @@
-import { ChevronDown, R, X } from "@styled-icons/fa-solid";
+import { X } from "@styled-icons/fa-solid";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
@@ -9,20 +9,19 @@ interface IProps {
   index?: number;
   head?: ReactNode;
   children?: ReactNode;
-  data: { result?: IData };
+  result: { data: IData };
   handleDelete?: () => void;
 }
 
 export function Dropdown({
   head,
   children,
-  data,
+  result,
   index,
   handleDelete,
 }: IProps) {
   const [display, setDisplay] = useState(false);
   const [content, setContent] = useState(false);
-  const [result, setResult] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,7 +29,6 @@ export function Dropdown({
       if (!Boolean(ref.current?.contains(e.target as Node))) {
         setDisplay(false);
         setContent(false);
-        setResult(false);
       }
     }
     document.addEventListener("click", clickHandler);
@@ -47,51 +45,32 @@ export function Dropdown({
       }}
       onMouseOut={(e) => {
         e.stopPropagation();
-        !content && !result && setDisplay(false);
+        !content && setDisplay(false);
       }}
       style={{ zIndex: index }}
     >
       <div style={{ display: "flex", alignItems: "center" }}>{head}</div>
       {display ? (
-        <DropdownHead>
-          <R
-            size={10}
-            color={theme.color[result ? "variable" : "white"]}
-            onClick={(e) => {
-              e.stopPropagation();
-              setContent(false);
-              setResult((r) => !r);
-            }}
-          />
+        <DropdownHead onClick={() => setContent((c) => !c)}>
+          <DropdownReturnType>{result.data.type}</DropdownReturnType>
           {handleDelete && (
             <X
-              size={10}
+              size={9}
               onClick={(e) => {
                 e.stopPropagation();
                 handleDelete();
               }}
             />
           )}
-          <ChevronDown
-            size={10}
-            style={{ marginLeft: "auto" }}
-            color={theme.color[content ? "variable" : "white"]}
-            onClick={(e) => {
-              setResult(false);
-              setContent((c) => !c);
-            }}
-          />
         </DropdownHead>
       ) : null}
-      {content ? <DropdownContainer>{children}</DropdownContainer> : null}
-      {data.result && result && (
+      {content ? (
+        <DropdownContainer>{children}</DropdownContainer>
+      ) : display ? (
         <DropdownContainer>
-          <DropdownContainerHead style={{ fontSize: "0.6rem" }}>
-            Type: {data.result.type}
-          </DropdownContainerHead>
-          <ParseData data={data.result} />
+          <ParseData data={result.data} />
         </DropdownContainer>
-      )}
+      ) : null}
     </DropdownWrapper>
   );
 }
@@ -104,9 +83,9 @@ const DropdownWrapper = styled.div<{ border: boolean }>`
 
 const DropdownContainer = styled.div`
   position: absolute;
-  top: calc(100% + 11px);
+  top: calc(100% + 12px);
   left: -1px;
-  min-width: max-content;
+  min-width: 100%;
   border: 1px solid ${theme.color.border};
   background-color: ${theme.background.dropdown.default};
   max-height: 7rem;
@@ -120,11 +99,11 @@ const DropdownContainer = styled.div`
   }
 `;
 
-const DropdownContainerHead = styled.div`
-  font-size: 0.6rem;
-  padding: 0.1rem;
-  border-bottom: 1px solid ${theme.color.border};
-  background-color: ${theme.background.dropdown.default};
+const DropdownReturnType = styled.span`
+  font-size: 0.7rem;
+  margin-right: auto;
+  padding-right: 0.5rem;
+  color: ${theme.color.type};
 `;
 
 const DropdownHead = styled.div`
@@ -137,6 +116,10 @@ const DropdownHead = styled.div`
   gap: 0.25rem;
   border: 1px solid ${theme.color.border};
   background-color: ${theme.background.dropdown.default};
+  cursor: pointer;
+  &:hover {
+    background-color: ${theme.background.dropdown.hover};
+  }
   & > div {
     display: flex;
     flex: 1;

@@ -39,7 +39,7 @@ export function Method({ data, method, handleMethod, path }: IProps) {
   return (
     <MethodWrapper>
       <Dropdown
-        data={{ result: method.result }}
+        result={{ data: method.result }}
         index={statements.length - statementIndex}
         handleDelete={() => handleMethod(method, true)}
         head={
