@@ -7,14 +7,20 @@ export function ParseStatement({
   statement,
   showVariable,
   isTopLevel,
+  isLast,
 }: {
   statement: IStatement;
   showVariable?: boolean;
   isTopLevel?: boolean;
+  isLast?: boolean;
 }) {
   return (
     <div style={{ display: "flex" }}>
-      <ParseVariable statement={statement} />
+      {isLast ? (
+        <Reserved style={{ marginRight: 8 }}>return</Reserved>
+      ) : (
+        <ParseVariable statement={statement} />
+      )}
       <ParseData data={statement.data} showVariable={showVariable} />
       <div style={{ display: "flex" }}>
         {statement.methods.map((method, i) => (

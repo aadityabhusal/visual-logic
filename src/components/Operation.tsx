@@ -40,10 +40,9 @@ export function Operation({
     if (remove) statements.splice(index, 1);
     else statements[index] = statement;
     let result = { ...operation, statements } as IOperation;
-    if (index + 1 < operation.statements.length) {
-      result = updateOperationStatements(result, statement, index, remove);
-    }
-    handleOperation(result);
+    handleOperation(
+      updateOperationStatements(result, statement, index, remove)
+    );
   }
 
   return (

@@ -90,5 +90,8 @@ export function updateOperationStatements(
     },
     [] as IStatement[]
   );
-  return { ...operation, statements: updatedStatements } as IOperation;
+
+  let lastStatement = updatedStatements.slice(-1)[0];
+  let result = lastStatement ? getLastEntity(lastStatement) : operation.result;
+  return { ...operation, statements: updatedStatements, result } as IOperation;
 }

@@ -15,12 +15,13 @@ export function ParseOperation({
         <Reserved>function</Reserved> {operation.name} {`() {`}
       </div>
       <div style={{ paddingLeft: "1rem" }}>
-        {operation.statements.map((statement, i) => (
+        {operation.statements.map((statement, i, statements) => (
           <ParseStatement
             key={i}
             statement={statement}
             showVariable={showVariable}
             isTopLevel={true}
+            isLast={i + 1 === statements.length}
           />
         ))}
       </div>
