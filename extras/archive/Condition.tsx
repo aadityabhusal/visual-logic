@@ -1,9 +1,9 @@
 import { Equals } from "@styled-icons/fa-solid";
-import { theme } from "../src/lib/theme";
-import { IData, IStatement } from "../src/lib/types";
-import { createData } from "../src/lib/utils";
-import { Input } from "../src/components/Input/Input";
-import { Statement } from "../src/components/Statement";
+import { theme } from "../../src/lib/theme";
+import { IData, IStatement } from "../../src/lib/types";
+import { createData } from "../../src/lib/utils";
+import { Input } from "../../src/components/Input/Input";
+import { Statement } from "../../src/components/Statement";
 
 export interface ICondition {
   id: string;

@@ -1,6 +1,6 @@
-import { TypeMapper } from "../src/lib/data";
-import { IData, IFunction, IMethod, IStatement } from "../src/lib/types";
-import { createData } from "../src/lib/utils";
+import { TypeMapper } from "../../src/lib/data";
+import { IData, IOperation, IMethod, IStatement } from "../../src/lib/types";
+import { createData } from "../../src/lib/utils";
 
 export function getLastEntity(statement: IStatement) {
   if (!statement.methods.length) return statement.data;
@@ -77,7 +77,7 @@ function updateReferences(
 }
 
 export function updateFunction(
-  func: IFunction,
+  func: IOperation,
   changedStatement: IStatement,
   index: number,
   remove?: boolean
@@ -85,7 +85,7 @@ export function updateFunction(
   const statements = [...func.statements];
   if (changedStatement.variable === undefined) {
     if (!remove) statements[index] = changedStatement;
-    return { ...func, statements } as IFunction;
+    return { ...func, statements } as IOperation;
   }
   let result = statements.reduce((prev, statement, i) => {
     if (i < index) return [...prev, statement];
@@ -96,5 +96,5 @@ export function updateFunction(
       return [...prev, { ...updated, result: getLastEntity(updated) }];
     }
   }, [] as IStatement[]);
-  return { ...func, statements: result } as IFunction;
+  return { ...func, statements: result } as IOperation;
 }

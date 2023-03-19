@@ -2,7 +2,7 @@ import { ICondition } from "./Condition";
 import {
   ParseStatement,
   ParseVariable,
-} from "../src/components/Parse/ParseStatement";
+} from "../../src/components/Parse/ParseStatement";
 
 export function ParseCondition({ condition }: { condition: ICondition }) {
   return (
