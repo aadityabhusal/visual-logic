@@ -32,7 +32,7 @@ export function Method({ data, method, handleMethod, path }: IProps) {
     handleMethod({
       ...method,
       parameters,
-      result: { ...result, isGeneric: data.isGeneric },
+      result: { ...result, id: method.result.id, isGeneric: data.isGeneric },
     });
   }
 

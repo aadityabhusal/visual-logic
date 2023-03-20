@@ -13,11 +13,12 @@ export function updateStatementMethods(statement: IStatement) {
       let data =
         index === 0 ? statement.data : previousMethods[index - 1].result;
       let parameters = currentMethod.parameters.map((item) => item.result);
-      let result = currentMethod.handler(data, ...parameters);
+      let { id: newId, ...result } = currentMethod.handler(data, ...parameters);
+      let rest = { id: currentMethod.result.id, isGeneric: data.isGeneric };
 
       return [
         ...previousMethods,
-        { ...currentMethod, result: { ...result, isGeneric: data.isGeneric } },
+        { ...currentMethod, result: { ...result, ...rest } },
       ];
     },
     [] as IMethod[]
