@@ -8,6 +8,7 @@ import { ObjectInput } from "./Input/ObjectInput";
 import { BooleanInput } from "./Input/BooleanInput";
 import { theme } from "../lib/theme";
 import { useStore } from "../lib/store";
+import { getOperationResult } from "../lib/update";
 
 interface IProps {
   data: IData;
@@ -17,9 +18,9 @@ interface IProps {
 }
 
 export function Data({ data, handleData, disableDelete, path }: IProps) {
-  const context = useStore((state) => state.operations);
-  const statements =
-    context.find((operation) => operation.id === path[0])?.statements || [];
+  const operations = useStore((state) => state.operations);
+  const operationIndex = operations.findIndex((item) => item.id === path[0]);
+  const statements = operations[operationIndex]?.statements || [];
   const statementIndex = statements.findIndex((item) => item.id === path[1]);
 
   function handleDropdown(type: keyof IType) {
@@ -101,6 +102,21 @@ export function Data({ data, handleData, disableDelete, path }: IProps) {
                 selected={statement.id === data.referenceId}
               >
                 {statement.variable}
+              </DropdownOption>
+            );
+          })}
+          <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
+          {operations.map((operation, i) => {
+            if (i >= operationIndex) return;
+            let operationResult = getOperationResult(operation);
+            if (!data.isGeneric && operationResult.type !== data.type) return;
+            return (
+              <DropdownOption
+                key={operation.id}
+                onClick={() => {}}
+                selected={operation.id === data.referenceId}
+              >
+                {operation.name}
               </DropdownOption>
             );
           })}

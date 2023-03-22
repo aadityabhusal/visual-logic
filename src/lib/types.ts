@@ -31,7 +31,7 @@ export interface IOperation {
   name: string;
   parameter: IData[];
   statements: IStatement[];
-  result?: IData;
+  result: IData;
   handler?: (...args: IData[]) => IData;
 }
 

@@ -7,6 +7,11 @@ export function getLastEntity(statement: IStatement) {
   return statement.methods[statement.methods.length - 1].result;
 }
 
+export function getOperationResult(operation: IOperation) {
+  let lastStatement = operation.statements.slice(-1)[0];
+  return lastStatement ? getLastEntity(lastStatement) : operation.result;
+}
+
 export function updateStatementMethods(statement: IStatement) {
   let updatedMethods = statement.methods.reduce(
     (previousMethods, currentMethod, index) => {
@@ -72,7 +77,7 @@ export function updateOperationStatements(
   changedStatementIndex: number,
   removeStatement?: boolean
 ) {
-  let updatedStatements = operation.statements.reduce(
+  let statements = operation.statements.reduce(
     (previousStatements, currentStatement, index) => {
       if (index < changedStatementIndex)
         return [...previousStatements, currentStatement];
@@ -92,7 +97,6 @@ export function updateOperationStatements(
     [] as IStatement[]
   );
 
-  let lastStatement = updatedStatements.slice(-1)[0];
-  let result = lastStatement ? getLastEntity(lastStatement) : operation.result;
-  return { ...operation, statements: updatedStatements, result } as IOperation;
+  let result = getOperationResult({ ...operation, statements });
+  return { ...operation, statements, result } as IOperation;
 }
