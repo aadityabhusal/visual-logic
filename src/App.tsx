@@ -8,13 +8,14 @@ import { Header } from "./ui/Header";
 import { Sidebar } from "./ui/Sidebar";
 
 function App() {
-  const [operations, setOperation] = useStore((state) => [
+  const [operations, setOperation, currentIndex] = useStore((state) => [
     state.operations,
     state.setOperation,
+    state.currentIndex,
   ]);
-  const [currentId, setCurrentId] = useState<string>();
-  const currentOperation = operations.find((item) => item.id === currentId);
+  const currentOperation = operations[currentIndex];
   const [toggleCode, setToggleCode] = useState(false);
+
   return (
     <AppWrapper>
       <Header />
@@ -23,7 +24,9 @@ function App() {
           {currentOperation ? (
             <Operation
               operation={currentOperation}
-              handleOperation={(operation) => setOperation(operation)}
+              handleOperation={(operation) =>
+                setOperation(operation, currentIndex)
+              }
             />
           ) : (
             <div>Select an operation</div>
@@ -34,11 +37,7 @@ function App() {
             <ParseOperation operation={currentOperation} showVariable={true} />
           </OperationContainer>
         ) : null}
-        <Sidebar
-          currentId={currentId}
-          setCurrentId={(id) => setCurrentId(id)}
-          setToggleCode={() => setToggleCode((prev) => !prev)}
-        />
+        <Sidebar setToggleCode={() => setToggleCode((prev) => !prev)} />
       </AppContainer>
     </AppWrapper>
   );

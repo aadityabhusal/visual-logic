@@ -1,23 +1,21 @@
 import create from "zustand";
 import { IStore } from "./types";
+import { updateOperations } from "./update";
 import { createOperation } from "./utils";
 
 export const useStore = create<IStore>((set) => ({
   operations: [createOperation()],
+  currentIndex: -1,
+  setCurrentIndex: (index) => set((state) => ({ currentIndex: index })),
   addOperation: () =>
     set((state) => ({ operations: [...state.operations, createOperation()] })),
-  removeOperation: (id: string) => {
+  setOperation: (operation, index, remove) =>
     set((state) => {
-      let operations = state.operations.filter(
-        (operation) => operation.id !== id
-      );
-      return { operations };
-    });
-  },
-  setOperation: (operation) =>
-    set((state) => {
-      const operations = state.operations.map((item) =>
-        item.id === operation.id ? operation : item
+      const operations = updateOperations(
+        state.operations,
+        operation,
+        index,
+        remove
       );
       return { operations };
     }),

@@ -104,3 +104,21 @@ export function updateOperationStatements(
   let result = getOperationResult({ ...operation, statements });
   return { ...operation, statements, result } as IOperation;
 }
+
+export function updateOperations(
+  operations: IOperation[],
+  changedOperation: IOperation,
+  changedIndex: number,
+  removeOperation?: boolean
+) {
+  return operations.reduce((prevOperations, currentOperation, index) => {
+    if (index < changedIndex) return [...prevOperations, currentOperation];
+
+    if (currentOperation.id === changedOperation.id) {
+      if (removeOperation) return prevOperations;
+      else return [...prevOperations, changedOperation];
+    }
+
+    return [...prevOperations, currentOperation];
+  }, [] as IOperation[]);
+}

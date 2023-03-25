@@ -19,7 +19,7 @@ export interface IReference {
   id: string;
   name: string;
   type: "operation" | "statement";
-  parameter?: IStatement[];
+  parameters?: IStatement[];
 }
 
 export interface IMethod {
@@ -43,9 +43,14 @@ export interface IOperation {
 
 export interface IStore {
   operations: IOperation[];
+  currentIndex: number;
+  setCurrentIndex: (index: number) => void;
   addOperation: () => void;
-  removeOperation: (id: string) => void;
-  setOperation: (operation: IOperation) => void;
+  setOperation: (
+    operation: IOperation,
+    index: number,
+    remove?: boolean
+  ) => void;
 }
 
 export interface IStatement {

@@ -3,31 +3,25 @@ import styled from "styled-components";
 import { useStore } from "../lib/store";
 import { theme } from "../lib/theme";
 
-export function Sidebar({
-  currentId,
-  setCurrentId,
-  setToggleCode,
-}: {
-  currentId?: string;
-  setCurrentId: (id: string) => void;
-  setToggleCode: () => void;
-}) {
-  const [operations, addOperation, removeOperation] = useStore((state) => [
-    state.operations,
-    state.addOperation,
-    state.removeOperation,
-  ]);
+export function Sidebar({ setToggleCode }: { setToggleCode: () => void }) {
+  const {
+    operations,
+    addOperation,
+    setOperation,
+    currentIndex,
+    setCurrentIndex,
+  } = useStore((state) => state);
 
   return (
     <SidebarWrapper>
       <SidebarHead>Operations</SidebarHead>
       <SidebarContainer>
         <OperationList>
-          {operations.map((value) => (
+          {operations.map((value, index) => (
             <OperationListItem
               key={value.id}
-              onClick={() => setCurrentId(value.id)}
-              selected={value.id === currentId}
+              onClick={() => setCurrentIndex(index)}
+              selected={index === currentIndex}
             >
               <span>{value.name}</span>
               <X
@@ -35,7 +29,7 @@ export function Sidebar({
                 size={8}
                 onClick={(e) => {
                   e.stopPropagation();
-                  removeOperation(value.id);
+                  setOperation(value, index, true);
                 }}
               />
             </OperationListItem>
