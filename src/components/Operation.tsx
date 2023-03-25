@@ -40,12 +40,12 @@ export function Operation({
     if (remove) statements.splice(index, 1);
     else statements[index] = statement;
 
-    let updatedStatements = updateStatements(
+    let updatedStatements = updateStatements({
       statements,
-      statement,
-      index,
-      remove
-    );
+      changedStatement: statement,
+      changedStatementIndex: index,
+      removeStatement: remove,
+    });
 
     handleOperation({
       ...operation,

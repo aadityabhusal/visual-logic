@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { TypeMapper } from "../lib/data";
-import { IData, IStatement, IType } from "../lib/types";
+import { IData, IOperation, IStatement, IType } from "../lib/types";
 import { Dropdown, DropdownOption, DropdownOptions } from "./Dropdown";
 import { ArrayInput } from "./Input/ArrayInput";
 import { Input } from "./Input/Input";
@@ -33,7 +33,7 @@ export function Data({ data, handleData, disableDelete, path }: IProps) {
       });
   }
 
-  function selectVariable(statement: IStatement) {
+  function selectStatement(statement: IStatement) {
     handleData({
       ...data,
       type: statement.result.type,
@@ -48,6 +48,19 @@ export function Data({ data, handleData, disableDelete, path }: IProps) {
     });
   }
 
+  function selectOperation(operation: IOperation) {
+    handleData({
+      ...data,
+      type: operation.result.type,
+      value: operation.result.value,
+      reference: {
+        id: operation.id,
+        name: operation.name,
+        type: "operation",
+      },
+    });
+  }
+
   return (
     <DataWrapper>
       <Dropdown
@@ -56,9 +69,12 @@ export function Data({ data, handleData, disableDelete, path }: IProps) {
         handleDelete={!disableDelete ? () => handleData(data, true) : undefined}
         head={
           data.reference?.name ? (
-            <span style={{ color: theme.color.variable }}>
-              {data.reference?.name}
-            </span>
+            <>
+              <span style={{ color: theme.color.variable }}>
+                {data.reference?.name}
+              </span>
+              <span>{data.reference.type === "operation" && "()"}</span>
+            </>
           ) : (
             <>
               {data.type === "array" ? (
@@ -101,7 +117,7 @@ export function Data({ data, handleData, disableDelete, path }: IProps) {
             return (
               <DropdownOption
                 key={statement.id}
-                onClick={() => selectVariable(statement)}
+                onClick={() => selectStatement(statement)}
                 selected={statement.id === data.reference?.id}
               >
                 {statement.variable}
@@ -116,7 +132,7 @@ export function Data({ data, handleData, disableDelete, path }: IProps) {
             return (
               <DropdownOption
                 key={operation.id}
-                onClick={() => {}}
+                onClick={() => selectOperation(operation)}
                 selected={operation.id === data.reference?.id}
               >
                 {operation.name}

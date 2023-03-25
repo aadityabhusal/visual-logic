@@ -9,7 +9,12 @@ export function getLastEntity(statement: IStatement) {
 
 export function getOperationResult(operation: IOperation) {
   let lastStatement = operation.statements.slice(-1)[0];
-  return lastStatement ? getLastEntity(lastStatement) : operation.result;
+  return lastStatement
+    ? getLastEntity(lastStatement)
+    : {
+        ...operation.result,
+        value: TypeMapper[operation.result.type].defaultValue,
+      };
 }
 
 export function updateStatementMethods(statement: IStatement) {
@@ -34,15 +39,25 @@ export function updateStatementMethods(statement: IStatement) {
 
 export function updateStatementReference(
   currentStatement: IStatement,
-  previousStatements: IStatement[]
+  previousStatements: IStatement[],
+  previousOperations?: IOperation[]
 ): IStatement {
   const currentReference = currentStatement.data.reference;
-  const reference = previousStatements.find(
-    (statement) => statement.id === currentReference?.id
-  );
+  const findReference = (item: IStatement | IOperation) =>
+    item.id === currentReference?.id;
+
+  const reference =
+    currentReference?.type === "statement"
+      ? previousStatements.find(findReference)
+      : previousOperations?.find(findReference);
+
+  let referenceName =
+    reference?.entityType === "statement"
+      ? reference?.variable
+      : reference?.name;
 
   let isReferenceRemoved =
-    currentReference?.id && (!reference || !reference?.variable);
+    currentReference?.id && (!reference || !referenceName);
 
   let isTypeChanged =
     reference && currentStatement.data.type !== reference.result.type;
@@ -58,8 +73,8 @@ export function updateStatementReference(
     data: {
       ...currentStatement.data,
       reference:
-        reference?.variable && currentReference
-          ? { ...currentReference, name: reference.variable }
+        referenceName && currentReference
+          ? { ...currentReference, name: referenceName }
           : undefined,
       value: reference?.result.value ?? currentStatement.data.value,
       ...((isReferenceRemoved || isTypeChanged) && newData),
@@ -75,17 +90,24 @@ export function updateStatementReference(
   };
 }
 
-export function updateStatements(
-  statements: IStatement[],
-  changedStatement: IStatement,
-  changedStatementIndex: number,
-  removeStatement?: boolean
-) {
+export function updateStatements({
+  statements,
+  changedStatement,
+  changedStatementIndex,
+  removeStatement,
+  previousOperations,
+}: {
+  statements: IStatement[];
+  changedStatement?: IStatement;
+  changedStatementIndex?: number;
+  removeStatement?: boolean;
+  previousOperations?: IOperation[];
+}) {
   return statements.reduce((previousStatements, currentStatement, index) => {
-    if (index < changedStatementIndex)
+    if (changedStatementIndex && index < changedStatementIndex)
       return [...previousStatements, currentStatement];
 
-    if (currentStatement.id === changedStatement.id) {
+    if (changedStatement && currentStatement.id === changedStatement.id) {
       if (removeStatement) return previousStatements;
       else return [...previousStatements, changedStatement];
     }
@@ -93,7 +115,11 @@ export function updateStatements(
     return [
       ...previousStatements,
       updateStatementMethods(
-        updateStatementReference(currentStatement, previousStatements)
+        updateStatementReference(
+          currentStatement,
+          previousStatements,
+          previousOperations
+        )
       ),
     ];
   }, [] as IStatement[]);
@@ -112,7 +138,21 @@ export function updateOperations(
       if (removeOperation) return prevOperations;
       else return [...prevOperations, changedOperation];
     }
+    let updatedStatements = updateStatements({
+      statements: currentOperation.statements,
+      previousOperations: prevOperations,
+    });
 
-    return [...prevOperations, currentOperation];
+    return [
+      ...prevOperations,
+      {
+        ...currentOperation,
+        statements: updatedStatements,
+        result: getOperationResult({
+          ...currentOperation,
+          statements: updatedStatements,
+        }),
+      },
+    ];
   }, [] as IOperation[]);
 }
