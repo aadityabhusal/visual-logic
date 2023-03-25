@@ -8,7 +8,7 @@ export type IType = {
 
 export interface IData<T extends keyof IType = keyof IType> {
   id: string;
-  entityType: "data" | "variable";
+  entityType: "data";
   type: T;
   value: IType[T];
   isGeneric?: boolean;

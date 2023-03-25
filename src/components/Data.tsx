@@ -29,7 +29,6 @@ export function Data({ data, handleData, disableDelete, path }: IProps) {
         ...data,
         type,
         value: TypeMapper[type].defaultValue,
-        entityType: "data",
         referenceId: undefined,
         name: undefined,
       });
@@ -37,13 +36,11 @@ export function Data({ data, handleData, disableDelete, path }: IProps) {
 
   function selectVariable(statement: IStatement) {
     handleData({
-      id: data.id,
-      entityType: "variable",
+      ...data,
       referenceId: statement.id,
       name: statement.variable,
       type: statement.result.type,
       value: statement.result.value,
-      isGeneric: data.isGeneric,
     });
   }
 
@@ -54,7 +51,7 @@ export function Data({ data, handleData, disableDelete, path }: IProps) {
         index={statements.length - statementIndex}
         handleDelete={!disableDelete ? () => handleData(data, true) : undefined}
         head={
-          data.entityType === "variable" ? (
+          data.name ? (
             <span style={{ color: theme.color.variable }}>{data.name}</span>
           ) : (
             <>
