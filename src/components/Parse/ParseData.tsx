@@ -11,10 +11,10 @@ export function ParseData({
   data: IData;
   showVariable?: boolean;
 }) {
-  if (showVariable && data.name) {
+  if (showVariable && data.reference?.name) {
     return (
-      <Data type={data.type} variable={data.name}>
-        {data.name}
+      <Data type={data.type} variable={data.reference?.name}>
+        {data.reference?.name}
       </Data>
     );
   }
@@ -49,8 +49,8 @@ function ParseObject({
       {val.map(([key, val], i, arr) => (
         <Fragment key={i}>
           <span style={{ marginRight: "4px" }}>{key}:</span>
-          {val.name ? (
-            <Variable>{val.name}</Variable>
+          {val.reference?.name ? (
+            <Variable>{val.reference?.name}</Variable>
           ) : (
             <ParseData data={val} showVariable={showVariable} />
           )}
@@ -74,8 +74,8 @@ function ParseArray({
       <Brackets>{"["}</Brackets>
       {data.value.map((item, i, arr) => (
         <Fragment key={i}>
-          {item.name ? (
-            <Variable>{item.name}</Variable>
+          {item.reference?.name ? (
+            <Variable>{item.reference?.name}</Variable>
           ) : (
             <ParseData data={item} showVariable={showVariable} />
           )}

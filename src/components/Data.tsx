@@ -24,23 +24,27 @@ export function Data({ data, handleData, disableDelete, path }: IProps) {
   const statementIndex = statements.findIndex((item) => item.id === path[1]);
 
   function handleDropdown(type: keyof IType) {
-    (data.referenceId || type !== data.type) &&
+    (data.reference?.id || type !== data.type) &&
       handleData({
         ...data,
         type,
         value: TypeMapper[type].defaultValue,
-        referenceId: undefined,
-        name: undefined,
+        reference: undefined,
       });
   }
 
   function selectVariable(statement: IStatement) {
     handleData({
       ...data,
-      referenceId: statement.id,
-      name: statement.variable,
       type: statement.result.type,
       value: statement.result.value,
+      reference: statement.variable
+        ? {
+            id: statement.id,
+            name: statement.variable,
+            type: "statement",
+          }
+        : undefined,
     });
   }
 
@@ -51,8 +55,10 @@ export function Data({ data, handleData, disableDelete, path }: IProps) {
         index={statements.length - statementIndex}
         handleDelete={!disableDelete ? () => handleData(data, true) : undefined}
         head={
-          data.name ? (
-            <span style={{ color: theme.color.variable }}>{data.name}</span>
+          data.reference?.name ? (
+            <span style={{ color: theme.color.variable }}>
+              {data.reference?.name}
+            </span>
           ) : (
             <>
               {data.type === "array" ? (
@@ -81,7 +87,7 @@ export function Data({ data, handleData, disableDelete, path }: IProps) {
               <DropdownOption
                 key={item}
                 onClick={() => handleDropdown(item as keyof IType)}
-                selected={!data.referenceId && data.type === item}
+                selected={!data.reference?.id && data.type === item}
               >
                 {item}
               </DropdownOption>
@@ -96,7 +102,7 @@ export function Data({ data, handleData, disableDelete, path }: IProps) {
               <DropdownOption
                 key={statement.id}
                 onClick={() => selectVariable(statement)}
-                selected={statement.id === data.referenceId}
+                selected={statement.id === data.reference?.id}
               >
                 {statement.variable}
               </DropdownOption>
@@ -111,7 +117,7 @@ export function Data({ data, handleData, disableDelete, path }: IProps) {
               <DropdownOption
                 key={operation.id}
                 onClick={() => {}}
-                selected={operation.id === data.referenceId}
+                selected={operation.id === data.reference?.id}
               >
                 {operation.name}
               </DropdownOption>

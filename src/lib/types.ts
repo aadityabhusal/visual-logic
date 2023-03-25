@@ -12,8 +12,14 @@ export interface IData<T extends keyof IType = keyof IType> {
   type: T;
   value: IType[T];
   isGeneric?: boolean;
-  name?: string;
-  referenceId?: string;
+  reference?: IReference;
+}
+
+export interface IReference {
+  id: string;
+  name: string;
+  type: "operation" | "statement";
+  parameter?: IStatement[];
 }
 
 export interface IMethod {

@@ -36,12 +36,13 @@ export function updateStatementReference(
   currentStatement: IStatement,
   previousStatements: IStatement[]
 ): IStatement {
+  const currentReference = currentStatement.data.reference;
   const reference = previousStatements.find(
-    (statement) => statement.id === currentStatement.data.referenceId
+    (statement) => statement.id === currentReference?.id
   );
 
   let isReferenceRemoved =
-    currentStatement.data.referenceId && (!reference || !reference?.variable);
+    currentReference?.id && (!reference || !reference?.variable);
 
   let isTypeChanged =
     reference && currentStatement.data.type !== reference.result.type;
@@ -56,7 +57,10 @@ export function updateStatementReference(
     ...currentStatement,
     data: {
       ...currentStatement.data,
-      name: reference?.variable,
+      reference:
+        reference?.variable && currentReference
+          ? { ...currentReference, name: reference.variable }
+          : undefined,
       value: reference?.result.value ?? currentStatement.data.value,
       ...((isReferenceRemoved || isTypeChanged) && newData),
     },

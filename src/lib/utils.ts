@@ -14,8 +14,7 @@ export function createData<T extends keyof IType>(
     type,
     value,
     isGeneric,
-    referenceId: undefined,
-    name: undefined,
+    reference: undefined,
   };
 }
 
