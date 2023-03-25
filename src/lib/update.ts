@@ -75,34 +75,28 @@ export function updateStatementReference(
   };
 }
 
-export function updateOperationStatements(
-  operation: IOperation,
+export function updateStatements(
+  statements: IStatement[],
   changedStatement: IStatement,
   changedStatementIndex: number,
   removeStatement?: boolean
 ) {
-  let statements = operation.statements.reduce(
-    (previousStatements, currentStatement, index) => {
-      if (index < changedStatementIndex)
-        return [...previousStatements, currentStatement];
+  return statements.reduce((previousStatements, currentStatement, index) => {
+    if (index < changedStatementIndex)
+      return [...previousStatements, currentStatement];
 
-      if (currentStatement.id === changedStatement.id) {
-        if (removeStatement) return previousStatements;
-        else return [...previousStatements, changedStatement];
-      }
+    if (currentStatement.id === changedStatement.id) {
+      if (removeStatement) return previousStatements;
+      else return [...previousStatements, changedStatement];
+    }
 
-      return [
-        ...previousStatements,
-        updateStatementMethods(
-          updateStatementReference(currentStatement, previousStatements)
-        ),
-      ];
-    },
-    [] as IStatement[]
-  );
-
-  let result = getOperationResult({ ...operation, statements });
-  return { ...operation, statements, result } as IOperation;
+    return [
+      ...previousStatements,
+      updateStatementMethods(
+        updateStatementReference(currentStatement, previousStatements)
+      ),
+    ];
+  }, [] as IStatement[]);
 }
 
 export function updateOperations(

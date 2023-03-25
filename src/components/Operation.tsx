@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { useStore } from "../lib/store";
 import { theme } from "../lib/theme";
 import { IOperation } from "../lib/types";
-import { updateOperationStatements } from "../lib/update";
+import { getOperationResult, updateStatements } from "../lib/update";
 import { createStatement } from "../lib/utils";
 import { Input } from "./Input/Input";
 import { Statement } from "./Statement";
@@ -39,10 +39,22 @@ export function Operation({
     let statements = [...operation.statements];
     if (remove) statements.splice(index, 1);
     else statements[index] = statement;
-    let result = { ...operation, statements } as IOperation;
-    handleOperation(
-      updateOperationStatements(result, statement, index, remove)
+
+    let updatedStatements = updateStatements(
+      statements,
+      statement,
+      index,
+      remove
     );
+
+    handleOperation({
+      ...operation,
+      statements: updatedStatements,
+      result: getOperationResult({
+        ...operation,
+        statements: updatedStatements,
+      }),
+    });
   }
 
   return (
