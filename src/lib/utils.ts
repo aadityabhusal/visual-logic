@@ -25,7 +25,7 @@ export function createOperation(): IOperation {
     entityType: "operation",
     handler: undefined,
     name: "func_" + id.slice(-4),
-    parameter: [],
+    parameters: [],
     result: createData("string", ""),
     statements: [],
   };

@@ -8,9 +8,10 @@ export interface IInput {
   handleData: (data: IData) => void;
   noQuotes?: boolean;
   color?: string;
+  disabled?: boolean;
 }
 
-export function Input({ data, handleData, noQuotes, color }: IInput) {
+export function Input({ data, handleData, noQuotes, color, disabled }: IInput) {
   const [textWidth, setTextWidth] = useState(0);
   const inputData = {
     quote: !noQuotes && data.type === "string",
@@ -30,6 +31,7 @@ export function Input({ data, handleData, noQuotes, color }: IInput) {
         placeholder={inputData.placeholder}
         textWidth={textWidth}
         color={color}
+        disabled={disabled}
         onChange={(e) =>
           handleData({
             ...data,

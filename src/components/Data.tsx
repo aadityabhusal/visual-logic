@@ -15,9 +15,16 @@ interface IProps {
   handleData: (data: IData, remove?: boolean) => void;
   disableDelete?: boolean;
   path: string[];
+  editVariable?: boolean;
 }
 
-export function Data({ data, handleData, disableDelete, path }: IProps) {
+export function Data({
+  data,
+  handleData,
+  disableDelete,
+  path,
+  editVariable,
+}: IProps) {
   const operations = useStore((state) => state.operations);
   const operationIndex = operations.findIndex((item) => item.id === path[0]);
   const statements = operations[operationIndex]?.statements || [];
@@ -70,9 +77,26 @@ export function Data({ data, handleData, disableDelete, path }: IProps) {
         head={
           data.reference?.name ? (
             <>
-              <span style={{ color: theme.color.variable }}>
-                {data.reference?.name}
-              </span>
+              <Input
+                data={{
+                  id: "",
+                  type: "string",
+                  value: data.reference?.name,
+                  entityType: "data",
+                }}
+                handleData={(item) =>
+                  handleData({
+                    ...data,
+                    reference: data.reference && {
+                      ...data.reference,
+                      name: (item.value as string) || "",
+                    },
+                  })
+                }
+                disabled={!editVariable}
+                color={theme.color.variable}
+                noQuotes
+              />
               <span>{data.reference.type === "operation" && "()"}</span>
             </>
           ) : (

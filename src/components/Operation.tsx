@@ -1,10 +1,13 @@
 import { Plus } from "@styled-icons/fa-solid";
+import { Fragment } from "react";
 import styled from "styled-components";
+import { TypeMapper } from "../lib/data";
 import { useStore } from "../lib/store";
 import { theme } from "../lib/theme";
-import { IOperation } from "../lib/types";
+import { IData, IOperation } from "../lib/types";
 import { getOperationResult, updateStatements } from "../lib/update";
-import { createStatement } from "../lib/utils";
+import { createData, createStatement } from "../lib/utils";
+import { Data } from "./Data";
 import { Input } from "./Input/Input";
 import { Statement } from "./Statement";
 
@@ -57,6 +60,46 @@ export function Operation({
     });
   }
 
+  function addParameter() {
+    let parameterData = createData("string", "", true);
+    let parameter = {
+      ...parameterData,
+      reference: {
+        id: parameterData.id,
+        name: `p_${parameterData.id.slice(-3)}`,
+        type: "statement",
+      },
+    } as IData;
+    handleOperation({
+      ...operation,
+      parameters: [...operation.parameters, parameter],
+    });
+  }
+
+  function handleParameter(parameter: IData, remove?: boolean) {
+    let nameExists = !operation.parameters.find(
+      (item) => item.reference?.name === parameter.reference?.name
+    );
+    let parameterName = nameExists && parameter.reference?.name;
+
+    handleOperation({
+      ...operation,
+      parameters: operation.parameters
+        .filter((item) => (remove ? item.id !== parameter.id : true))
+        .map((item) => ({
+          ...item,
+          ...(item.id === parameter.id && {
+            type: parameter.type,
+            value: TypeMapper[parameter.type].defaultValue,
+            reference: item.reference && {
+              ...item.reference,
+              name: parameterName || item.reference?.name,
+            },
+          }),
+        })),
+    });
+  }
+
   return (
     <OperationWrapper>
       <OperationHead>
@@ -74,6 +117,19 @@ export function Operation({
           noQuotes
         />
         <span>{"("}</span>
+        {operation.parameters.map((parameter, i, paramList) => (
+          <Fragment key={i}>
+            <Data
+              key={i}
+              data={parameter}
+              handleData={handleParameter}
+              path={[operation.id]}
+              editVariable={true}
+            />
+            {i + 1 < paramList.length && <span>,</span>}
+          </Fragment>
+        ))}
+        <Plus size={10} style={{ cursor: "pointer" }} onClick={addParameter} />
         <span>{") {"}</span>
       </OperationHead>
       <OperationBody>

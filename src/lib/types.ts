@@ -35,7 +35,7 @@ export interface IOperation {
   id: string;
   entityType: "operation";
   name: string;
-  parameter: IData[];
+  parameters: IData[];
   statements: IStatement[];
   result: IData;
   handler?: (...args: IData[]) => IData;
