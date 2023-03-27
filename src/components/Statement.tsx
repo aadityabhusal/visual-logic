@@ -12,15 +12,17 @@ import { Method } from "./Method";
 export function Statement({
   statement,
   handleStatement,
+  path,
   disableName,
   disableDelete,
-  path,
+  disableMethods,
 }: {
   statement: IStatement;
   handleStatement: (statement: IStatement, remove?: boolean) => void;
+  path: string[];
   disableName?: boolean;
   disableDelete?: boolean;
-  path: string[];
+  disableMethods?: boolean;
 }) {
   const hasName = statement.name !== undefined;
   const context = useStore((state) => state.operations);
@@ -106,9 +108,11 @@ export function Statement({
           />
         );
       })}
-      <Plus size={10} onClick={addMethod}>
-        +
-      </Plus>
+      {!disableMethods && (
+        <Plus size={10} onClick={addMethod}>
+          +
+        </Plus>
+      )}
     </StatementWrapper>
   );
 }
