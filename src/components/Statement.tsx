@@ -12,17 +12,17 @@ import { Method } from "./Method";
 export function Statement({
   statement,
   handleStatement,
-  disableVariable,
+  disableName,
   disableDelete,
   path,
 }: {
   statement: IStatement;
   handleStatement: (statement: IStatement, remove?: boolean) => void;
-  disableVariable?: boolean;
+  disableName?: boolean;
   disableDelete?: boolean;
   path: string[];
 }) {
-  const hasVariable = statement.variable !== undefined;
+  const hasName = statement.name !== undefined;
   const context = useStore((state) => state.operations);
   const statements =
     context.find((operation) => operation.id === path[0])?.statements || [];
@@ -58,22 +58,20 @@ export function Statement({
 
   return (
     <StatementWrapper>
-      {!disableVariable ? (
-        <StatementVariable>
-          {hasVariable ? (
+      {!disableName ? (
+        <StatementName>
+          {hasName ? (
             <Input
               data={{
                 id: "",
                 type: "string",
-                value: statement.variable || "",
+                value: statement.name || "",
                 entityType: "data",
               }}
               handleData={(data) => {
-                let variable = (data.value as string) || statement.variable;
-                const exists = statements.find(
-                  (item) => item.variable === variable
-                );
-                if (!exists) handleStatement({ ...statement, variable });
+                let name = (data.value as string) || statement.name;
+                const exists = statements.find((item) => item.name === name);
+                if (!exists) handleStatement({ ...statement, name });
               }}
               color={theme.color.variable}
               noQuotes
@@ -84,13 +82,11 @@ export function Statement({
             onClick={() =>
               handleStatement({
                 ...statement,
-                variable: hasVariable
-                  ? undefined
-                  : `var_${statement.id.slice(-3)}`,
+                name: hasName ? undefined : `var_${statement.id.slice(-3)}`,
               })
             }
           />
-        </StatementVariable>
+        </StatementName>
       ) : null}
       <Data
         data={statement.data}
@@ -127,7 +123,7 @@ const StatementWrapper = styled.div`
   }
 `;
 
-const StatementVariable = styled.div`
+const StatementName = styled.div`
   display: flex;
   align-items: center;
   gap: 0.25rem;

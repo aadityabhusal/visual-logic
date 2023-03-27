@@ -43,22 +43,12 @@ export function updateStatementReference(
   previousOperations?: IOperation[]
 ): IStatement {
   const currentReference = currentStatement.data.reference;
-  const findReference = (item: IStatement | IOperation) =>
-    item.id === currentReference?.id;
-
-  const reference =
-    currentReference?.type === "statement"
-      ? previousStatements.find(findReference)
-      : previousOperations?.find(findReference);
-
-  let referenceName =
-    reference?.entityType === "statement"
-      ? reference?.variable
-      : reference?.name;
+  const reference = [...(previousOperations || []), ...previousStatements].find(
+    (item) => item.id === currentReference?.id
+  );
 
   let isReferenceRemoved =
-    currentReference?.id && (!reference || !referenceName);
-
+    currentReference?.id && (!reference || !reference.name);
   let isTypeChanged =
     reference && currentStatement.data.type !== reference.result.type;
 
@@ -73,8 +63,8 @@ export function updateStatementReference(
     data: {
       ...currentStatement.data,
       reference:
-        referenceName && currentReference
-          ? { ...currentReference, name: referenceName }
+        reference?.name && currentReference
+          ? { ...currentReference, name: reference?.name }
           : undefined,
       value: reference?.result.value ?? currentStatement.data.value,
       ...((isReferenceRemoved || isTypeChanged) && newData),

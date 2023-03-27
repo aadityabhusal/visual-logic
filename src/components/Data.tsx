@@ -45,10 +45,10 @@ export function Data({
       ...data,
       type: statement.result.type,
       value: statement.result.value,
-      reference: statement.variable
+      reference: statement.name
         ? {
             id: statement.id,
-            name: statement.variable,
+            name: statement.name,
             type: "statement",
           }
         : undefined,
@@ -135,7 +135,7 @@ export function Data({
           })}
           <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
           {statements.map((statement, i) => {
-            if (i >= statementIndex || !statement.variable) return;
+            if (i >= statementIndex || !statement.name) return;
             let statementData = statement.result;
             if (!data.isGeneric && statementData.type !== data.type) return;
             return (
@@ -144,7 +144,7 @@ export function Data({
                 onClick={() => selectStatement(statement)}
                 selected={statement.id === data.reference?.id}
               >
-                {statement.variable}
+                {statement.name}
               </DropdownOption>
             );
           })}

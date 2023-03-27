@@ -42,9 +42,9 @@ export function ParseStatement({
 }
 
 export function ParseVariable({ statement }: { statement: IStatement }) {
-  return !statement.variable ? null : (
+  return !statement.name ? null : (
     <div style={{ display: "flex", gap: "0.5rem" }}>
-      <Reserved>let</Reserved> <Variable>{statement.variable}</Variable>
+      <Reserved>let</Reserved> <Variable>{statement.name}</Variable>
       <span style={{ marginRight: "0.25rem" }}>=</span>
     </div>
   );

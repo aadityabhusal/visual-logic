@@ -55,7 +55,7 @@ export function Method({ data, method, handleMethod, path }: IProps) {
                   statement={item}
                   handleStatement={(val) => val && handleParameter(val, i)}
                   disableDelete={true}
-                  disableVariable={true}
+                  disableName={true}
                   path={path}
                 />
                 {i < arr.length - 1 ? <span>{", "}</span> : null}

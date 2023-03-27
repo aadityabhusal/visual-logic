@@ -31,6 +31,15 @@ export interface IMethod {
   result: ReturnType<IMethod["handler"]>;
 }
 
+export interface IStatement {
+  id: string;
+  entityType: "statement";
+  data: IData;
+  methods: IMethod[];
+  result: IData;
+  name?: string;
+}
+
 export interface IOperation {
   id: string;
   entityType: "operation";
@@ -51,13 +60,4 @@ export interface IStore {
     index: number,
     remove?: boolean
   ) => void;
-}
-
-export interface IStatement {
-  id: string;
-  entityType: "statement";
-  data: IData;
-  methods: IMethod[];
-  result: IData;
-  variable?: string;
 }
