@@ -26,8 +26,11 @@ export function Statement({
 }) {
   const hasName = statement.name !== undefined;
   const context = useStore((state) => state.operations);
-  const statements =
-    context.find((operation) => operation.id === path[0])?.statements || [];
+  const operation = context.find((operation) => operation.id === path[0]);
+  const statements = [
+    ...(operation?.parameters || []),
+    ...(operation?.statements || []),
+  ];
 
   function addMethod() {
     let method = createMethod({ data: getLastEntity(statement) });

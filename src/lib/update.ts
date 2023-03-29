@@ -83,24 +83,23 @@ export function updateStatementReference(
 export function updateStatements({
   statements,
   changedStatement,
-  changedStatementIndex,
   removeStatement,
   previousOperations,
 }: {
   statements: IStatement[];
   changedStatement?: IStatement;
-  changedStatementIndex?: number;
   removeStatement?: boolean;
   previousOperations?: IOperation[];
 }) {
-  return statements.reduce((previousStatements, currentStatement, index) => {
-    if (changedStatementIndex && index < changedStatementIndex)
-      return [...previousStatements, currentStatement];
-
-    if (changedStatement && currentStatement.id === changedStatement.id) {
+  let currentIndexFound = false;
+  return statements.reduce((previousStatements, currentStatement) => {
+    if (currentStatement.id === changedStatement?.id) {
+      currentIndexFound = true;
       if (removeStatement) return previousStatements;
       else return [...previousStatements, changedStatement];
     }
+
+    if (!currentIndexFound) return [...previousStatements, currentStatement];
 
     return [
       ...previousStatements,

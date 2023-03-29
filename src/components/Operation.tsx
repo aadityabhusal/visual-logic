@@ -32,25 +32,25 @@ export function Operation({
     handleOperation({ ...operation, statements });
   }
 
-  function handleStatement(
-    index: number,
-    statement: IOperation["statements"][number],
-    remove?: boolean
-  ) {
-    let statements = [...operation.statements];
-    if (remove) statements.splice(index, 1);
-    else statements[index] = statement;
-
+  function handleStatement({
+    statement,
+    remove,
+    parameterLength = operation.parameters.length,
+  }: {
+    statement: IStatement;
+    remove?: boolean;
+    parameterLength?: number;
+  }) {
     let updatedStatements = updateStatements({
-      statements,
+      statements: [...operation.parameters, ...operation.statements],
       changedStatement: statement,
-      changedStatementIndex: index,
       removeStatement: remove,
     });
 
     handleOperation({
       ...operation,
-      statements: updatedStatements,
+      parameters: updatedStatements.slice(0, parameterLength),
+      statements: updatedStatements.slice(parameterLength),
       result: getOperationResult({
         ...operation,
         statements: updatedStatements,
@@ -67,30 +67,6 @@ export function Operation({
     handleOperation({
       ...operation,
       parameters: [...operation.parameters, parameter],
-    });
-  }
-
-  function handleParameter(parameter: IStatement, remove?: boolean) {
-    let nameExists = !operation.parameters.find(
-      (item) => item.name === parameter.name
-    );
-    let parameterName = nameExists && parameter.name;
-
-    handleOperation({
-      ...operation,
-      parameters: operation.parameters
-        .filter((item) => (remove ? item.id !== parameter.id : true))
-        .map((item) => ({
-          ...item,
-          ...(item.id === parameter.id && {
-            name: parameterName || item.name,
-            data: {
-              ...item.data,
-              type: parameter.data.type,
-              value: parameter.data.value,
-            },
-          }),
-        })),
     });
   }
 
@@ -116,7 +92,13 @@ export function Operation({
             <Statement
               key={i}
               statement={parameter}
-              handleStatement={handleParameter}
+              handleStatement={(statement, remove) =>
+                handleStatement({
+                  statement,
+                  remove,
+                  parameterLength: paramList.length + (remove ? -1 : 0),
+                })
+              }
               path={[operation.id]}
               disableMethods={true}
             />
@@ -132,7 +114,7 @@ export function Operation({
             key={statement.id}
             statement={statement}
             handleStatement={(statement, remove) =>
-              handleStatement(i, statement, remove)
+              handleStatement({ statement, remove })
             }
             path={[operation.id]}
           />
