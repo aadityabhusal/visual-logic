@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import styled from "styled-components";
 import { TypeMapper } from "../lib/data";
 import { IData, IOperation, IStatement, IType } from "../lib/types";
@@ -8,7 +9,8 @@ import { ObjectInput } from "./Input/ObjectInput";
 import { BooleanInput } from "./Input/BooleanInput";
 import { theme } from "../lib/theme";
 import { useStore } from "../lib/store";
-import { getOperationResult } from "../lib/update";
+import { getOperationResult, updateStatements } from "../lib/update";
+import { Statement } from "./Statement";
 
 interface IProps {
   data: IData;
@@ -55,17 +57,49 @@ export function Data({
     });
   }
 
-  function selectOperation(operation: IOperation) {
+  function updateParameters(operation: IOperation, parameter?: IStatement) {
+    let statements = updateStatements({
+      statements: [...operation.parameters, ...operation.statements],
+      changedStatement: parameter,
+    });
+    let result = getOperationResult({ ...operation, statements });
+
     handleData({
       ...data,
-      type: operation.result.type,
-      value: operation.result.value,
+      type: result.type,
+      value: result.value,
       reference: {
         id: operation.id,
         name: operation.name,
         type: "operation",
+        parameters: statements.slice(0, operation.parameters.length),
       },
     });
+  }
+
+  function handleParameters(parameter: IStatement) {
+    let operation = operations.find((item) => item.id === data.reference?.id);
+    if (!operation) return;
+    updateParameters(
+      { ...operation, parameters: data.reference?.parameters || [] },
+      parameter
+    );
+  }
+
+  function selectOperation(operation: IOperation) {
+    let parameters = operation.parameters.map((item) => ({
+      ...item,
+      data: {
+        ...item.data,
+        value: TypeMapper[item.data.type].defaultValue,
+      },
+      result: {
+        ...item.result,
+        value: TypeMapper[item.result.type].defaultValue,
+      },
+    }));
+
+    updateParameters({ ...operation, parameters }, parameters[0]);
   }
 
   return (
@@ -97,7 +131,20 @@ export function Data({
                 color={theme.color.variable}
                 noQuotes
               />
-              <span>{data.reference.type === "operation" && "()"}</span>
+              {data.reference?.type === "operation" && "("}
+              {data.reference.parameters?.map((item, i, paramList) => (
+                <Fragment key={item.id}>
+                  <Statement
+                    statement={item}
+                    handleStatement={(parameter) => handleParameters(parameter)}
+                    path={path}
+                    disableName={true}
+                    disableDelete={true}
+                  />
+                  {i + 1 < paramList.length && <span>,</span>}
+                </Fragment>
+              ))}
+              {data.reference?.type === "operation" && ")"}
             </>
           ) : (
             <>
@@ -134,6 +181,15 @@ export function Data({
             );
           })}
           <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
+          {operations[operationIndex]?.parameters.map((parameter) => (
+            <DropdownOption
+              key={parameter.id}
+              onClick={() => selectStatement(parameter)}
+              selected={parameter.id === data.reference?.id}
+            >
+              {parameter.name}
+            </DropdownOption>
+          ))}
           {statements.map((statement, i) => {
             if (i >= statementIndex || !statement.name) return;
             let statementData = statement.result;
