@@ -117,16 +117,18 @@ export function updateStatements({
 export function updateOperations(
   operations: IOperation[],
   changedOperation: IOperation,
-  changedIndex: number,
   removeOperation?: boolean
 ) {
-  return operations.reduce((prevOperations, currentOperation, index) => {
-    if (index < changedIndex) return [...prevOperations, currentOperation];
-
+  let currentIndexFound = false;
+  return operations.reduce((prevOperations, currentOperation) => {
     if (currentOperation.id === changedOperation.id) {
+      currentIndexFound = true;
       if (removeOperation) return prevOperations;
       else return [...prevOperations, changedOperation];
     }
+
+    if (!currentIndexFound) return [...prevOperations, currentOperation];
+
     let updatedStatements = updateStatements({
       statements: currentOperation.statements,
       previousOperations: prevOperations,

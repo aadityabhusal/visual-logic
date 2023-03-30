@@ -52,12 +52,8 @@ export interface IOperation {
 
 export interface IStore {
   operations: IOperation[];
-  currentIndex: number;
-  setCurrentIndex: (index: number) => void;
+  currentId: string;
+  setCurrentId: (id: string) => void;
   addOperation: () => void;
-  setOperation: (
-    operation: IOperation,
-    index: number,
-    remove?: boolean
-  ) => void;
+  setOperation: (operation: IOperation, remove?: boolean) => void;
 }

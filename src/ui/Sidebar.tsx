@@ -4,32 +4,27 @@ import { useStore } from "../lib/store";
 import { theme } from "../lib/theme";
 
 export function Sidebar({ setToggleCode }: { setToggleCode: () => void }) {
-  const {
-    operations,
-    addOperation,
-    setOperation,
-    currentIndex,
-    setCurrentIndex,
-  } = useStore((state) => state);
+  const { operations, addOperation, setOperation, currentId, setCurrentId } =
+    useStore((state) => state);
 
   return (
     <SidebarWrapper>
       <SidebarHead>Operations</SidebarHead>
       <SidebarContainer>
         <OperationList>
-          {operations.map((value, index) => (
+          {operations.map((item, index) => (
             <OperationListItem
-              key={value.id}
-              onClick={() => setCurrentIndex(index)}
-              selected={index === currentIndex}
+              key={item.id}
+              onClick={() => setCurrentId(item.id)}
+              selected={item.id === currentId}
             >
-              <span>{value.name}</span>
+              <span>{item.name}</span>
               <X
                 title="Delete operation"
                 size={8}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setOperation(value, index, true);
+                  setOperation(item, true);
                 }}
               />
             </OperationListItem>

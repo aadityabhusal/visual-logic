@@ -5,18 +5,13 @@ import { createOperation } from "./utils";
 
 export const useStore = create<IStore>((set) => ({
   operations: [createOperation()],
-  currentIndex: -1,
-  setCurrentIndex: (index) => set((state) => ({ currentIndex: index })),
+  currentId: "",
+  setCurrentId: (currentId) => set(() => ({ currentId })),
   addOperation: () =>
     set((state) => ({ operations: [...state.operations, createOperation()] })),
-  setOperation: (operation, index, remove) =>
+  setOperation: (operation, remove) =>
     set((state) => {
-      const operations = updateOperations(
-        state.operations,
-        operation,
-        index,
-        remove
-      );
+      const operations = updateOperations(state.operations, operation, remove);
       return { operations };
     }),
 }));
