@@ -43,9 +43,16 @@ export function updateStatementReference(
   previousOperations?: IOperation[]
 ): IStatement {
   const currentReference = currentStatement.data.reference;
-  const reference = [...(previousOperations || []), ...previousStatements].find(
+  let reference = [...(previousOperations || []), ...previousStatements].find(
     (item) => item.id === currentReference?.id
   );
+
+  if (currentReference?.parameters && reference?.entityType === "operation") {
+    let statements = updateStatements({
+      statements: [...currentReference.parameters, ...reference.statements],
+    });
+    reference.result = getOperationResult({ ...reference, statements });
+  }
 
   let isReferenceRemoved =
     currentReference?.id && (!reference || !reference.name);
@@ -99,7 +106,8 @@ export function updateStatements({
       else return [...previousStatements, changedStatement];
     }
 
-    if (!currentIndexFound) return [...previousStatements, currentStatement];
+    if (changedStatement && !currentIndexFound)
+      return [...previousStatements, currentStatement];
 
     return [
       ...previousStatements,
@@ -130,15 +138,19 @@ export function updateOperations(
     if (!currentIndexFound) return [...prevOperations, currentOperation];
 
     let updatedStatements = updateStatements({
-      statements: currentOperation.statements,
+      statements: [
+        ...currentOperation.parameters,
+        ...currentOperation.statements,
+      ],
       previousOperations: prevOperations,
     });
-
+    const parameterLength = currentOperation.parameters.length;
     return [
       ...prevOperations,
       {
         ...currentOperation,
-        statements: updatedStatements,
+        parameters: updatedStatements.slice(0, parameterLength),
+        statements: updatedStatements.slice(parameterLength),
         result: getOperationResult({
           ...currentOperation,
           statements: updatedStatements,

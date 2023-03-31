@@ -45,6 +45,7 @@ export function Operation({
       statements: [...operation.parameters, ...operation.statements],
       changedStatement: statement,
       removeStatement: remove,
+      previousOperations: operations,
     });
 
     handleOperation({
