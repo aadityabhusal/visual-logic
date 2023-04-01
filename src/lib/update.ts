@@ -48,10 +48,21 @@ export function updateStatementReference(
   );
 
   if (currentReference?.parameters && reference?.entityType === "operation") {
+    let updatedParameters = reference.parameters.map(
+      (refParam) =>
+        currentReference.parameters?.find((item) => item.id === refParam.id) ||
+        refParam
+    );
+
     let statements = updateStatements({
-      statements: [...currentReference.parameters, ...reference.statements],
+      statements: [...updatedParameters, ...reference.statements],
     });
-    reference.result = getOperationResult({ ...reference, statements });
+
+    reference = {
+      ...reference,
+      parameters: updatedParameters,
+      result: getOperationResult({ ...reference, statements }),
+    };
   }
 
   let isReferenceRemoved =
@@ -71,7 +82,14 @@ export function updateStatementReference(
       ...currentStatement.data,
       reference:
         reference?.name && currentReference
-          ? { ...currentReference, name: reference?.name }
+          ? {
+              ...currentReference,
+              parameters:
+                reference.entityType === "operation"
+                  ? reference.parameters
+                  : currentReference.parameters,
+              name: reference?.name,
+            }
           : undefined,
       value: reference?.result.value ?? currentStatement.data.value,
       ...((isReferenceRemoved || isTypeChanged) && newData),

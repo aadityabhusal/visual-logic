@@ -91,6 +91,7 @@ export function Data({
       ...item,
       data: {
         ...item.data,
+        isGeneric: false,
         value: TypeMapper[item.data.type].defaultValue,
       },
       result: {
