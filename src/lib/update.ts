@@ -48,14 +48,22 @@ export function updateStatementReference(
   );
 
   if (currentReference?.parameters && reference?.entityType === "operation") {
-    let updatedParameters = reference.parameters.map(
-      (refParam) =>
-        currentReference.parameters?.find((item) => item.id === refParam.id) ||
-        refParam
-    );
+    let updatedParameters = reference.parameters.map((parameter) => {
+      let argument = currentReference.parameters?.find(
+        (item) => item.id === parameter.id
+      );
+
+      if (argument) {
+        return updateStatementMethods(
+          updateStatementReference(argument, previousStatements)
+        );
+      }
+      return parameter;
+    });
 
     let statements = updateStatements({
       statements: [...updatedParameters, ...reference.statements],
+      changedStatement: updatedParameters[0],
     });
 
     reference = {
