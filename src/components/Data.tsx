@@ -58,10 +58,20 @@ export function Data({
   }
 
   function updateParameters(operation: IOperation, parameter?: IStatement) {
+    const parentStatements = [
+      ...operations[operationIndex].parameters,
+      ...operations[operationIndex].statements,
+    ];
+
     let statements = updateStatements({
-      statements: [...operation.parameters, ...operation.statements],
+      statements: [
+        ...parentStatements,
+        ...operation.parameters,
+        ...operation.statements,
+      ],
       changedStatement: parameter,
     });
+
     let result = getOperationResult({ ...operation, statements });
 
     handleData({
@@ -72,7 +82,9 @@ export function Data({
         id: operation.id,
         name: operation.name,
         type: "operation",
-        parameters: statements.slice(0, operation.parameters.length),
+        parameters: statements
+          .slice(parentStatements.length)
+          .slice(0, operation.parameters.length),
       },
     });
   }

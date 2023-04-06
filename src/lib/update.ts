@@ -62,7 +62,11 @@ export function updateStatementReference(
     });
 
     let statements = updateStatements({
-      statements: [...updatedParameters, ...reference.statements],
+      statements: [
+        ...previousStatements,
+        ...updatedParameters,
+        ...reference.statements,
+      ],
       changedStatement: updatedParameters[0],
     });
 
