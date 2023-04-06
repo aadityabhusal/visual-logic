@@ -70,6 +70,7 @@ export function Data({
         ...operation.statements,
       ],
       changedStatement: parameter,
+      previousOperations: operations,
     });
 
     let result = getOperationResult({ ...operation, statements });

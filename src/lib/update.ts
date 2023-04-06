@@ -71,6 +71,7 @@ export function updateStatementReference(
         ...reference.statements,
       ],
       changedStatement: updatedParameters[0],
+      previousOperations,
     });
 
     reference = {
