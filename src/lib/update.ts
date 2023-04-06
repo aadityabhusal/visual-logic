@@ -53,12 +53,15 @@ export function updateStatementReference(
         (item) => item.id === parameter.id
       );
 
-      if (argument) {
-        return updateStatementMethods(
-          updateStatementReference(argument, previousStatements)
-        );
-      }
-      return parameter;
+      if (!argument) return parameter;
+
+      return updateStatementMethods(
+        updateStatementReference(
+          argument,
+          previousStatements,
+          previousOperations
+        )
+      );
     });
 
     let statements = updateStatements({

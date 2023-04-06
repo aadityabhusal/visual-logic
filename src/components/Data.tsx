@@ -194,15 +194,18 @@ export function Data({
             );
           })}
           <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
-          {operations[operationIndex]?.parameters.map((parameter) => (
-            <DropdownOption
-              key={parameter.id}
-              onClick={() => selectStatement(parameter)}
-              selected={parameter.id === data.reference?.id}
-            >
-              {parameter.name}
-            </DropdownOption>
-          ))}
+          {operations[operationIndex]?.parameters.map((parameter) => {
+            if (!data.isGeneric && parameter.result.type !== data.type) return;
+            return (
+              <DropdownOption
+                key={parameter.id}
+                onClick={() => selectStatement(parameter)}
+                selected={parameter.id === data.reference?.id}
+              >
+                {parameter.name}
+              </DropdownOption>
+            );
+          })}
           {statements.map((statement, i) => {
             if (i >= statementIndex || !statement.name) return;
             let statementData = statement.result;
