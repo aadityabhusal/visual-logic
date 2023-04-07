@@ -1,4 +1,4 @@
-import { X } from "@styled-icons/fa-solid";
+import { Plus, X } from "@styled-icons/fa-solid";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
@@ -11,6 +11,7 @@ interface IProps {
   children?: ReactNode;
   result: { data: IData };
   handleDelete?: () => void;
+  addMethod?: () => void;
 }
 
 export function Dropdown({
@@ -19,6 +20,7 @@ export function Dropdown({
   result,
   index,
   handleDelete,
+  addMethod,
 }: IProps) {
   const [display, setDisplay] = useState(false);
   const [content, setContent] = useState(false);
@@ -53,6 +55,15 @@ export function Dropdown({
       {display ? (
         <DropdownHead onClick={() => setContent((c) => !c)}>
           <DropdownReturnType>{result.data.type}</DropdownReturnType>
+          {addMethod && (
+            <Plus
+              size={9}
+              onClick={(e) => {
+                e.stopPropagation();
+                addMethod();
+              }}
+            />
+          )}
           {handleDelete && (
             <X
               size={9}

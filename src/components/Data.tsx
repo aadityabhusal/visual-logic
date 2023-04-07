@@ -18,6 +18,7 @@ interface IProps {
   disableDelete?: boolean;
   path: string[];
   editVariable?: boolean;
+  addMethod?: () => void;
 }
 
 export function Data({
@@ -26,6 +27,7 @@ export function Data({
   disableDelete,
   path,
   editVariable,
+  addMethod,
 }: IProps) {
   const operations = useStore((state) => state.operations);
   const operationIndex = operations.findIndex((item) => item.id === path[0]);
@@ -122,6 +124,7 @@ export function Data({
         result={{ data }}
         index={statements.length - statementIndex}
         handleDelete={!disableDelete ? () => handleData(data, true) : undefined}
+        addMethod={addMethod}
         head={
           data.reference?.name ? (
             <>

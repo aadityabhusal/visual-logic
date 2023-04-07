@@ -98,6 +98,11 @@ export function Statement({
         handleData={(data, remove) => handleData(data, remove)}
         path={[...path, statement.id]}
         disableDelete={disableDelete}
+        addMethod={
+          !disableMethods && statement.methods.length === 0
+            ? addMethod
+            : undefined
+        }
       />
       {statement.methods.map((method, i, methods) => {
         let data = i === 0 ? statement.data : methods[i - 1].result;
@@ -108,14 +113,14 @@ export function Statement({
             method={method}
             handleMethod={(meth, remove) => handleMethod(meth, i, remove)}
             path={[...path, statement.id]}
+            addMethod={
+              !disableMethods && i + 1 === methods.length
+                ? addMethod
+                : undefined
+            }
           />
         );
       })}
-      {!disableMethods && (
-        <Plus size={10} onClick={addMethod}>
-          +
-        </Plus>
-      )}
     </StatementWrapper>
   );
 }

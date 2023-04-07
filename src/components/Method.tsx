@@ -12,9 +12,16 @@ interface IProps {
   method: IMethod;
   handleMethod: (method: IMethod, remove?: boolean) => void;
   path: string[];
+  addMethod?: () => void;
 }
 
-export function Method({ data, method, handleMethod, path }: IProps) {
+export function Method({
+  data,
+  method,
+  handleMethod,
+  path,
+  addMethod,
+}: IProps) {
   const context = useStore((state) => state.operations);
   const statements =
     context.find((operation) => operation.id === path[0])?.statements || [];
@@ -42,6 +49,7 @@ export function Method({ data, method, handleMethod, path }: IProps) {
         result={{ data: method.result }}
         index={statements.length - statementIndex}
         handleDelete={() => handleMethod(method, true)}
+        addMethod={addMethod}
         head={
           <>
             {"."}
