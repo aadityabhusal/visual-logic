@@ -1,8 +1,9 @@
 import { Fragment } from "react";
 import styled from "styled-components";
 import { theme } from "../../lib/theme";
-import { IData } from "../../lib/types";
+import { IData, IReference } from "../../lib/types";
 import { Comma } from "./styles";
+import { ParseStatement } from "./ParseStatement";
 
 export function ParseData({
   data,
@@ -12,11 +13,7 @@ export function ParseData({
   showData?: boolean;
 }) {
   if (!showData && data.reference?.name) {
-    return (
-      <Data type={data.type} variable={data.reference?.name}>
-        {data.reference?.name}
-      </Data>
-    );
+    return <ParseReference reference={data.reference} />;
   }
   if (Array.isArray(data.value)) {
     return <ParseArray data={data as IData<"array">} />;
@@ -25,9 +22,9 @@ export function ParseData({
     return <ParseObject data={data as IData<"object">} />;
   }
   return (
-    <Data type={data.type}>
+    <div style={{ color: theme.color[data.type] }}>
       {typeof data.value === "string" ? `"${data.value}"` : `${data.value}`}
-    </Data>
+    </div>
   );
 }
 
@@ -71,13 +68,23 @@ function ParseArray({ data }: { data: IData<"array"> }) {
   );
 }
 
-const Data = styled.div<{
-  type: keyof typeof theme["color"];
-  variable?: string;
-}>`
-  color: ${({ type, variable }) =>
-    theme.color[variable ? "variable" : type] || "white"};
-`;
+function ParseReference({ reference }: { reference: IReference }) {
+  return reference.type === "operation" ? (
+    <>
+      <Variable>{reference.name}</Variable>
+      {reference?.type === "operation" && "("}
+      {reference.parameters?.map((item, i, paramList) => (
+        <Fragment key={item.id}>
+          <ParseStatement statement={item} />
+          {i + 1 < paramList.length && <span>,</span>}
+        </Fragment>
+      ))}
+      {reference?.type === "operation" && ")"}
+    </>
+  ) : (
+    <div style={{ color: theme.color.variable }}>{reference?.name}</div>
+  );
+}
 
 const Brackets = styled.span`
   color: ${theme.color.method};
