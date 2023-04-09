@@ -127,6 +127,13 @@ export const stringMethods: IMethodList[] = [
       return createData("string", data.value.toUpperCase());
     },
   },
+  {
+    name: "toLowerCase",
+    parameters: [],
+    handler: (data: IData<"string">) => {
+      return createData("string", data.value.toLowerCase());
+    },
+  },
 ];
 
 export const numberMethods: IMethodList[] = [
@@ -156,6 +163,13 @@ export const numberMethods: IMethodList[] = [
     parameters: [{ type: "number" }],
     handler: (data: IData<"number">, p1: IData<"number">) => {
       return createData("number", data.value / p1.value);
+    },
+  },
+  {
+    name: "power",
+    parameters: [{ type: "number" }],
+    handler: (data: IData<"number">, p1: IData<"number">) => {
+      return createData("number", Math.pow(data.value, p1.value));
     },
   },
   {

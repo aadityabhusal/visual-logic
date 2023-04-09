@@ -6,12 +6,12 @@ import { Comma } from "./styles";
 
 export function ParseData({
   data,
-  showVariable,
+  showData,
 }: {
   data: IData;
-  showVariable?: boolean;
+  showData?: boolean;
 }) {
-  if (showVariable && data.reference?.name) {
+  if (!showData && data.reference?.name) {
     return (
       <Data type={data.type} variable={data.reference?.name}>
         {data.reference?.name}
@@ -19,14 +19,10 @@ export function ParseData({
     );
   }
   if (Array.isArray(data.value)) {
-    return (
-      <ParseArray data={data as IData<"array">} showVariable={showVariable} />
-    );
+    return <ParseArray data={data as IData<"array">} />;
   }
   if (data.value instanceof Map) {
-    return (
-      <ParseObject data={data as IData<"object">} showVariable={showVariable} />
-    );
+    return <ParseObject data={data as IData<"object">} />;
   }
   return (
     <Data type={data.type}>
@@ -35,13 +31,7 @@ export function ParseData({
   );
 }
 
-function ParseObject({
-  data,
-  showVariable,
-}: {
-  data: IData<"object">;
-  showVariable?: boolean;
-}) {
+function ParseObject({ data }: { data: IData<"object"> }) {
   let val = Array.from(data.value);
   return (
     <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
@@ -52,7 +42,7 @@ function ParseObject({
           {val.reference?.name ? (
             <Variable>{val.reference?.name}</Variable>
           ) : (
-            <ParseData data={val} showVariable={showVariable} />
+            <ParseData data={val} />
           )}
           {i + 1 < arr.length && <Comma>,</Comma>}
         </Fragment>
@@ -62,13 +52,7 @@ function ParseObject({
   );
 }
 
-function ParseArray({
-  data,
-  showVariable,
-}: {
-  data: IData<"array">;
-  showVariable?: boolean;
-}) {
+function ParseArray({ data }: { data: IData<"array"> }) {
   return (
     <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
       <Brackets>{"["}</Brackets>
@@ -77,7 +61,7 @@ function ParseArray({
           {item.reference?.name ? (
             <Variable>{item.reference?.name}</Variable>
           ) : (
-            <ParseData data={item} showVariable={showVariable} />
+            <ParseData data={item} />
           )}
           {i + 1 < arr.length && <Comma>,</Comma>}
         </Fragment>

@@ -79,7 +79,7 @@ export function Dropdown({
         <DropdownContainer>{children}</DropdownContainer>
       ) : display ? (
         <DropdownContainer>
-          <ParseData data={result.data} />
+          <ParseData data={result.data} showData={true} />
         </DropdownContainer>
       ) : null}
     </DropdownWrapper>

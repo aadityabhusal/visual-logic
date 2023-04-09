@@ -32,7 +32,7 @@ function App() {
         </OperationContainer>
         {toggleCode && currentOperation ? (
           <OperationContainer>
-            <ParseOperation operation={currentOperation} showVariable={true} />
+            <ParseOperation operation={currentOperation} />
           </OperationContainer>
         ) : null}
         <Sidebar setToggleCode={() => setToggleCode((prev) => !prev)} />
