@@ -242,4 +242,5 @@ export const methodsList: Record<keyof IType, IMethodList[]> = {
   boolean: booleanMethods.concat(comparisonMethods),
   array: arrayMethods.concat(comparisonMethods),
   object: objectMethods.concat(comparisonMethods),
+  operation: [],
 };

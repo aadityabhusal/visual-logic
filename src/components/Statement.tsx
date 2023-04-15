@@ -87,7 +87,7 @@ export function Statement({
             onClick={() =>
               handleStatement({
                 ...statement,
-                name: hasName ? undefined : `var_${statement.id.slice(-3)}`,
+                name: hasName ? undefined : `v_${statement.id.slice(-3)}`,
               })
             }
           />

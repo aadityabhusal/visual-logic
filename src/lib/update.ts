@@ -3,7 +3,12 @@ import { IOperation, IMethod, IStatement } from "./types";
 import { createData } from "./utils";
 
 export function getLastEntity(statement: IStatement) {
-  if (!statement.methods.length) return statement.data;
+  if (!statement.methods.length) {
+    if (statement.data.type === "operation") {
+      return (statement.data.value as IOperation).result;
+    }
+    return statement.data;
+  }
   return statement.methods[statement.methods.length - 1].result;
 }
 

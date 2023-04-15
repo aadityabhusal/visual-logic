@@ -4,6 +4,7 @@ export type IType = {
   boolean: boolean;
   array: IData[];
   object: Map<string, IData>;
+  operation: IOperation;
 };
 
 export interface IData<T extends keyof IType = keyof IType> {

@@ -1,9 +1,10 @@
 import { Fragment } from "react";
 import styled from "styled-components";
 import { theme } from "../../lib/theme";
-import { IData, IReference } from "../../lib/types";
+import { IData, IOperation, IReference } from "../../lib/types";
 import { Comma } from "./styles";
 import { ParseStatement } from "./ParseStatement";
+import { ParseOperation } from "./ParseOperation";
 
 export function ParseData({
   data,
@@ -14,6 +15,9 @@ export function ParseData({
 }) {
   if (!showData && data.reference?.name) {
     return <ParseReference reference={data.reference} />;
+  }
+  if (data.type === "operation") {
+    return <ParseOperation operation={data.value as IOperation} />;
   }
   if (Array.isArray(data.value)) {
     return <ParseArray data={data as IData<"array">} />;

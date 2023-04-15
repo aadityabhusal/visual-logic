@@ -11,6 +11,7 @@ import { theme } from "../lib/theme";
 import { useStore } from "../lib/store";
 import { getOperationResult, updateStatements } from "../lib/update";
 import { Statement } from "./Statement";
+import { Operation } from "./Operation";
 
 interface IProps {
   data: IData;
@@ -53,7 +54,11 @@ export function Data({
         ? {
             id: statement.id,
             name: statement.name,
-            type: "statement",
+            type:
+              (statement.data.value as IOperation)?.entityType === "operation"
+                ? "operation"
+                : "statement",
+            parameters: (statement.data.value as IOperation)?.parameters,
           }
         : undefined,
     });
@@ -124,7 +129,7 @@ export function Data({
         result={{ data }}
         index={statements.length - statementIndex}
         handleDelete={!disableDelete ? () => handleData(data, true) : undefined}
-        addMethod={addMethod}
+        addMethod={data.type !== "operation" ? addMethod : undefined}
         head={
           data.reference?.name ? (
             <>
@@ -171,6 +176,13 @@ export function Data({
                 <ObjectInput data={data} handleData={handleData} path={path} />
               ) : typeof data.value === "boolean" ? (
                 <BooleanInput data={data} handleData={handleData} />
+              ) : data.type === "operation" ? (
+                <Operation
+                  operation={data.value as IOperation}
+                  handleOperation={(operation) =>
+                    handleData({ ...data, value: operation }, false)
+                  }
+                />
               ) : (
                 <Input
                   data={data}

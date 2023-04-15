@@ -1,4 +1,5 @@
 import { IType } from "./types";
+import { createOperation } from "./utils";
 
 export const TypeMapper: {
   [T in keyof IType]: { defaultValue: IType[T] };
@@ -17,5 +18,8 @@ export const TypeMapper: {
   },
   object: {
     defaultValue: new Map(),
+  },
+  operation: {
+    defaultValue: createOperation(""),
   },
 };
