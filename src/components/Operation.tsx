@@ -107,22 +107,32 @@ export function Operation({
           </Fragment>
         ))}
         <Plus size={10} style={{ cursor: "pointer" }} onClick={addParameter} />
-        <span>{") {"}</span>
+        <span>{")"}</span>
       </OperationHead>
       <OperationBody>
-        {operation.statements.map((statement, i) => (
-          <Statement
-            key={statement.id}
-            statement={statement}
-            handleStatement={(statement, remove) =>
-              handleStatement({ statement, remove })
-            }
-            path={[operation.id]}
-          />
+        {operation.statements.map((statement, i, statements) => (
+          <div
+            key={i}
+            style={{ display: "flex", alignItems: "center", gap: 4 }}
+          >
+            <Statement
+              key={statement.id}
+              statement={statement}
+              handleStatement={(statement, remove) =>
+                handleStatement({ statement, remove })
+              }
+              path={[operation.id]}
+            />
+            {i + 1 === statements.length && (
+              <Plus
+                size={10}
+                style={{ cursor: "pointer" }}
+                onClick={addStatement}
+              />
+            )}
+          </div>
         ))}
-        <Plus size={10} style={{ cursor: "pointer" }} onClick={addStatement} />
       </OperationBody>
-      <div>{"}"}</div>
     </OperationWrapper>
   );
 }
@@ -138,5 +148,5 @@ const OperationHead = styled.div`
 `;
 
 const OperationBody = styled.div`
-  padding-left: 1rem;
+  padding-left: 0.5rem;
 `;

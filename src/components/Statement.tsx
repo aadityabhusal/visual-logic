@@ -90,6 +90,7 @@ export function Statement({
                 name: hasName ? undefined : `v_${statement.id.slice(-3)}`,
               })
             }
+            style={{ paddingTop: "0.25rem" }}
           />
         </StatementName>
       ) : null}
@@ -127,7 +128,7 @@ export function Statement({
 
 const StatementWrapper = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.25rem;
   & svg {
     cursor: pointer;
