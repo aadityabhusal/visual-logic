@@ -5,13 +5,12 @@ import { DropdownOption, DropdownOptions } from "./Dropdown";
 import { Dropdown } from "./Dropdown";
 import { createMethod, getFilteredMethods } from "../lib/utils";
 import { theme } from "../lib/theme";
-import { useStore } from "../lib/store";
 
 interface IProps {
   data: IData;
   method: IMethod;
   handleMethod: (method: IMethod, remove?: boolean) => void;
-  path: string[];
+  prevStatements: IStatement[];
   addMethod?: () => void;
 }
 
@@ -19,14 +18,9 @@ export function Method({
   data,
   method,
   handleMethod,
-  path,
+  prevStatements,
   addMethod,
 }: IProps) {
-  const context = useStore((state) => state.operations);
-  const statements =
-    context.find((operation) => operation.id === path[0])?.statements || [];
-  const statementIndex = statements.findIndex((item) => item.id === path[1]);
-
   function handleDropdown(name: string) {
     if (method.name === name) return;
     handleMethod({ ...createMethod({ data, name }) });
@@ -47,7 +41,6 @@ export function Method({
     <MethodWrapper>
       <Dropdown
         result={{ data: method.result }}
-        index={statements.length - statementIndex}
         handleDelete={() => handleMethod(method, true)}
         addMethod={addMethod}
         head={
@@ -64,7 +57,7 @@ export function Method({
                   handleStatement={(val) => val && handleParameter(val, i)}
                   disableDelete={true}
                   disableName={true}
-                  path={path}
+                  prevStatements={prevStatements}
                 />
                 {i < arr.length - 1 ? <span>{", "}</span> : null}
               </span>

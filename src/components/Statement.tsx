@@ -1,6 +1,5 @@
-import { Equals, Plus } from "@styled-icons/fa-solid";
+import { Equals } from "@styled-icons/fa-solid";
 import styled from "styled-components";
-import { useStore } from "../lib/store";
 import { theme } from "../lib/theme";
 import { IData, IMethod, IStatement } from "../lib/types";
 import { updateStatementMethods, getLastEntity } from "../lib/update";
@@ -12,25 +11,19 @@ import { Method } from "./Method";
 export function Statement({
   statement,
   handleStatement,
-  path,
+  prevStatements,
   disableName,
   disableDelete,
   disableMethods,
 }: {
   statement: IStatement;
   handleStatement: (statement: IStatement, remove?: boolean) => void;
-  path: string[];
+  prevStatements: IStatement[];
   disableName?: boolean;
   disableDelete?: boolean;
   disableMethods?: boolean;
 }) {
   const hasName = statement.name !== undefined;
-  const context = useStore((state) => state.operations);
-  const operation = context.find((operation) => operation.id === path[0]);
-  const statements = [
-    ...(operation?.parameters || []),
-    ...(operation?.statements || []),
-  ];
 
   function addMethod() {
     let method = createMethod({ data: getLastEntity(statement) });
@@ -75,7 +68,9 @@ export function Statement({
               }}
               handleData={(data) => {
                 let name = (data.value as string) || statement.name;
-                const exists = statements.find((item) => item.name === name);
+                const exists = prevStatements.find(
+                  (item) => item.name === name
+                );
                 if (!exists) handleStatement({ ...statement, name });
               }}
               color={theme.color.variable}
@@ -97,7 +92,7 @@ export function Statement({
       <Data
         data={statement.data}
         handleData={(data, remove) => handleData(data, remove)}
-        path={[...path, statement.id]}
+        prevStatements={prevStatements}
         disableDelete={disableDelete}
         addMethod={
           !disableMethods && statement.methods.length === 0
@@ -113,7 +108,7 @@ export function Statement({
             data={data}
             method={method}
             handleMethod={(meth, remove) => handleMethod(meth, i, remove)}
-            path={[...path, statement.id]}
+            prevStatements={prevStatements}
             addMethod={
               !disableMethods && i + 1 === methods.length
                 ? addMethod

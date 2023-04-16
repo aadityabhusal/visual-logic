@@ -6,7 +6,6 @@ import { IData } from "../lib/types";
 import { ParseData } from "./Parse/ParseData";
 
 interface IProps {
-  index?: number;
   head?: ReactNode;
   children?: ReactNode;
   result: { data: IData };
@@ -18,7 +17,6 @@ export function Dropdown({
   head,
   children,
   result,
-  index,
   handleDelete,
   addMethod,
 }: IProps) {
@@ -49,7 +47,7 @@ export function Dropdown({
         e.stopPropagation();
         !content && setDisplay(false);
       }}
-      style={{ zIndex: index }}
+      style={{ zIndex: content ? 999 : display ? 1000 : 1 }}
     >
       <div style={{ display: "flex", alignItems: "center" }}>{head}</div>
       {display ? (
@@ -88,6 +86,7 @@ export function Dropdown({
 
 const DropdownWrapper = styled.div<{ border: boolean }>`
   position: relative;
+  background-color: ${theme.background.editor};
   border: 1px solid
     ${({ border }) => (border ? theme.color.border : "transparent")};
 `;

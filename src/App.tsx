@@ -25,6 +25,7 @@ function App() {
             <Operation
               operation={currentOperation}
               handleOperation={(operation) => setOperation(operation)}
+              prevStatements={[]}
             />
           ) : (
             <div>Select an operation</div>

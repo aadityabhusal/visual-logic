@@ -18,7 +18,7 @@ export function ParseOperation({ operation }: { operation: IOperation }) {
       </div>
       <div style={{ paddingLeft: "1rem" }}>
         {operation.statements.map((statement, i, statements) => (
-          <div style={{ display: "flex" }}>
+          <div style={{ display: "flex" }} key={i}>
             {i + 1 === statements.length ? (
               <Reserved style={{ marginRight: 8 }}>return</Reserved>
             ) : (
