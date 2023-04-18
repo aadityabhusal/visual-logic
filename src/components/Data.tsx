@@ -122,7 +122,6 @@ export function Data({
     <DataWrapper>
       <Dropdown
         result={{ data }}
-        index={statements.length - statementIndex}
         handleDelete={!disableDelete ? () => handleData(data, true) : undefined}
         addMethod={addMethod}
         head={
