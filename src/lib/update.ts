@@ -47,14 +47,19 @@ export function updateStatementReference(
   previousStatements: IStatement[],
   previousOperations?: IOperation[]
 ): IStatement {
-  const currentReference = currentStatement.data.reference;
+  let currentReference = currentStatement.data.reference;
   let reference = [...(previousOperations || []), ...previousStatements].find(
     (item) => item.id === currentReference?.id
   );
 
-  if (currentReference?.parameters && reference?.entityType === "operation") {
-    let updatedParameters = reference.parameters.map((parameter) => {
-      let argument = currentReference.parameters?.find(
+  let refOperation =
+    reference?.entityType === "operation"
+      ? reference
+      : (reference?.data.value as IOperation);
+
+  if (currentReference?.parameters && refOperation) {
+    let updatedParameters = refOperation.parameters.map((parameter) => {
+      let argument = currentReference?.parameters?.find(
         (item) => item.id === parameter.id
       );
 
@@ -73,16 +78,16 @@ export function updateStatementReference(
       statements: [
         ...previousStatements,
         ...updatedParameters,
-        ...reference.statements,
+        ...refOperation.statements,
       ],
       changedStatement: updatedParameters[0],
       previousOperations,
     });
 
     reference = {
-      ...reference,
+      ...(reference as IOperation),
       parameters: updatedParameters,
-      result: getOperationResult({ ...reference, statements }),
+      result: getOperationResult({ ...refOperation, statements }),
     };
   }
 
@@ -105,10 +110,7 @@ export function updateStatementReference(
         reference?.name && currentReference
           ? {
               ...currentReference,
-              parameters:
-                reference.entityType === "operation"
-                  ? reference.parameters
-                  : currentReference.parameters,
+              parameters: (reference as IOperation).parameters,
               name: reference?.name,
             }
           : undefined,

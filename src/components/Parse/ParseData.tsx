@@ -4,7 +4,6 @@ import { theme } from "../../lib/theme";
 import { IData, IOperation, IReference } from "../../lib/types";
 import { Comma } from "./styles";
 import { ParseStatement } from "./ParseStatement";
-import { ParseOperation } from "./ParseOperation";
 
 export function ParseData({
   data,
@@ -17,7 +16,7 @@ export function ParseData({
     return <ParseReference reference={data.reference} />;
   }
   if (data.type === "operation") {
-    return <ParseOperation operation={data.value as IOperation} />;
+    return <ParseData data={(data.value as IOperation).result} showData />;
   }
   if (Array.isArray(data.value)) {
     return <ParseArray data={data as IData<"array">} />;
@@ -73,17 +72,17 @@ function ParseArray({ data }: { data: IData<"array"> }) {
 }
 
 function ParseReference({ reference }: { reference: IReference }) {
-  return reference.type === "operation" ? (
+  return reference.parameters ? (
     <>
       <Variable>{reference.name}</Variable>
-      {reference?.type === "operation" && "("}
+      {"("}
       {reference.parameters?.map((item, i, paramList) => (
         <Fragment key={item.id}>
           <ParseStatement statement={item} />
           {i + 1 < paramList.length && <span>,</span>}
         </Fragment>
       ))}
-      {reference?.type === "operation" && ")"}
+      {")"}
     </>
   ) : (
     <div style={{ color: theme.color.variable }}>{reference?.name}</div>

@@ -1,7 +1,7 @@
 import { Equals } from "@styled-icons/fa-solid";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
-import { IData, IMethod, IStatement } from "../lib/types";
+import { IData, IMethod, IOperation, IStatement } from "../lib/types";
 import { updateStatementMethods, getLastEntity } from "../lib/update";
 import { createMethod } from "../lib/utils";
 import { Data } from "./Data";
@@ -12,6 +12,7 @@ export function Statement({
   statement,
   handleStatement,
   prevStatements,
+  prevOperations,
   disableName,
   disableDelete,
   disableMethods,
@@ -19,6 +20,7 @@ export function Statement({
   statement: IStatement;
   handleStatement: (statement: IStatement, remove?: boolean) => void;
   prevStatements: IStatement[];
+  prevOperations: IOperation[];
   disableName?: boolean;
   disableDelete?: boolean;
   disableMethods?: boolean;
@@ -93,6 +95,7 @@ export function Statement({
         data={statement.data}
         handleData={(data, remove) => handleData(data, remove)}
         prevStatements={prevStatements}
+        prevOperations={prevOperations}
         disableDelete={disableDelete}
         addMethod={
           !disableMethods && statement.methods.length === 0
@@ -109,6 +112,7 @@ export function Statement({
             method={method}
             handleMethod={(meth, remove) => handleMethod(meth, i, remove)}
             prevStatements={prevStatements}
+            prevOperations={prevOperations}
             addMethod={
               !disableMethods && i + 1 === methods.length
                 ? addMethod

@@ -8,7 +8,6 @@ import { Input } from "./Input/Input";
 import { ObjectInput } from "./Input/ObjectInput";
 import { BooleanInput } from "./Input/BooleanInput";
 import { theme } from "../lib/theme";
-import { useStore } from "../lib/store";
 import { getOperationResult, updateStatements } from "../lib/update";
 import { Statement } from "./Statement";
 import { Operation } from "./Operation";
@@ -18,6 +17,7 @@ interface IProps {
   handleData: (data: IData, remove?: boolean) => void;
   disableDelete?: boolean;
   prevStatements: IStatement[];
+  prevOperations: IOperation[];
   editVariable?: boolean;
   addMethod?: () => void;
 }
@@ -27,11 +27,10 @@ export function Data({
   handleData,
   disableDelete,
   prevStatements,
+  prevOperations,
   editVariable,
   addMethod,
 }: IProps) {
-  const operations = useStore((state) => state.operations);
-
   function handleDropdown(type: keyof IType) {
     (data.reference?.id || type !== data.type) &&
       handleData({
@@ -51,10 +50,7 @@ export function Data({
         ? {
             id: statement.id,
             name: statement.name,
-            type:
-              (statement.data.value as IOperation)?.entityType === "operation"
-                ? "operation"
-                : "statement",
+            type: "statement",
             parameters: (statement.data.value as IOperation)?.parameters,
           }
         : undefined,
@@ -69,7 +65,7 @@ export function Data({
         ...operation.statements,
       ],
       changedStatement: parameter,
-      previousOperations: operations,
+      previousOperations: prevOperations,
     });
 
     let result = getOperationResult({ ...operation, statements });
@@ -90,13 +86,45 @@ export function Data({
   }
 
   function handleParameters(parameter: IStatement) {
-    // Not just operations but also all internal operations should be passed similar to statements
-    let operation = operations.find((item) => item.id === data.reference?.id);
-    if (!operation) return;
-    updateParameters(
-      { ...operation, parameters: data.reference?.parameters || [] },
-      parameter
-    );
+    if (data.reference?.type === "statement") {
+      let refStatement = prevStatements.find(
+        (item) => item.id === data.reference?.id
+      );
+      let refOperation = refStatement?.data.value as IOperation;
+      let statements = updateStatements({
+        statements: [
+          ...prevStatements,
+          ...refOperation.parameters,
+          ...refOperation.statements,
+        ],
+        changedStatement: parameter,
+        previousOperations: prevOperations,
+      });
+
+      let result = getOperationResult({ ...refOperation, statements });
+
+      handleData({
+        ...data,
+        type: result.type,
+        value: result.value,
+        reference: {
+          ...data.reference,
+          parameters: statements
+            .slice(prevStatements.length)
+            .slice(0, refOperation.parameters.length),
+        },
+      });
+    } else {
+      let operation = prevOperations.find(
+        (item) => item.id === data.reference?.id
+      );
+
+      if (!operation) return;
+      updateParameters(
+        { ...operation, parameters: data.reference?.parameters || [] },
+        parameter
+      );
+    }
   }
 
   function selectOperation(operation: IOperation) {
@@ -145,20 +173,21 @@ export function Data({
                 color={theme.color.variable}
                 noQuotes
               />
-              {data.reference?.type === "operation" && "("}
+              {data.reference?.parameters && "("}
               {data.reference.parameters?.map((item, i, paramList) => (
                 <Fragment key={item.id}>
                   <Statement
                     statement={item}
                     handleStatement={(parameter) => handleParameters(parameter)}
                     prevStatements={prevStatements}
+                    prevOperations={prevOperations}
                     disableName={true}
                     disableDelete={true}
                   />
                   {i + 1 < paramList.length && <span>,</span>}
                 </Fragment>
               ))}
-              {data.reference?.type === "operation" && ")"}
+              {data.reference?.parameters && ")"}
             </>
           ) : (
             <>
@@ -167,12 +196,14 @@ export function Data({
                   data={data}
                   handleData={handleData}
                   prevStatements={prevStatements}
+                  prevOperations={prevOperations}
                 />
               ) : data.value instanceof Map ? (
                 <ObjectInput
                   data={data}
                   handleData={handleData}
                   prevStatements={prevStatements}
+                  prevOperations={prevOperations}
                 />
               ) : typeof data.value === "boolean" ? (
                 <BooleanInput data={data} handleData={handleData} />
@@ -183,6 +214,7 @@ export function Data({
                     handleData({ ...data, value: operation }, false)
                   }
                   prevStatements={prevStatements}
+                  prevOperations={[...prevOperations, data.value as IOperation]}
                 />
               ) : (
                 <Input
@@ -224,8 +256,7 @@ export function Data({
             );
           })}
           <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
-          {operations.map((operation, i) => {
-            if (i >= 0) return;
+          {prevOperations.map((operation) => {
             let operationResult = getOperationResult(operation);
             if (!data.isGeneric && operationResult.type !== data.type) return;
             return (

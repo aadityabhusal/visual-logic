@@ -1,7 +1,6 @@
 import { Plus } from "@styled-icons/fa-solid";
 import { Fragment } from "react";
 import styled from "styled-components";
-import { useStore } from "../lib/store";
 import { theme } from "../lib/theme";
 import { IOperation, IStatement } from "../lib/types";
 import { getOperationResult, updateStatements } from "../lib/update";
@@ -13,18 +12,18 @@ export function Operation({
   operation,
   handleOperation,
   prevStatements,
+  prevOperations,
 }: {
   operation: IOperation;
   handleOperation(operation: IOperation): void;
   prevStatements: IStatement[];
+  prevOperations: IOperation[];
 }) {
-  const operations = useStore((state) => state.operations);
-
   function handleOperationProps(
     key: keyof IOperation,
     value: IOperation[typeof key]
   ) {
-    if (key === "name" && operations.find((item) => item.name === value))
+    if (key === "name" && prevOperations.find((item) => item.name === value))
       return;
     handleOperation({ ...operation, [key]: value });
   }
@@ -47,7 +46,7 @@ export function Operation({
       statements: [...operation.parameters, ...operation.statements],
       changedStatement: statement,
       removeStatement: remove,
-      previousOperations: operations,
+      previousOperations: prevOperations,
     });
 
     handleOperation({
@@ -103,6 +102,7 @@ export function Operation({
                 })
               }
               prevStatements={[]}
+              prevOperations={[]}
               disableMethods={true}
             />
             {i + 1 < paramList.length && <span>,</span>}
@@ -128,6 +128,7 @@ export function Operation({
                 ...operation.parameters,
                 ...operation.statements.slice(0, i),
               ]}
+              prevOperations={prevOperations}
             />
           </div>
         ))}

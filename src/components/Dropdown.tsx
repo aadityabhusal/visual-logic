@@ -47,7 +47,7 @@ export function Dropdown({
         e.stopPropagation();
         !content && setDisplay(false);
       }}
-      style={{ zIndex: content ? 999 : display ? 1000 : 1 }}
+      style={{ zIndex: content ? 999 : display ? 1000 : "initial" }}
     >
       <div style={{ display: "flex", alignItems: "center" }}>{head}</div>
       {display ? (
