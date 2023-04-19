@@ -2,15 +2,18 @@ import { TypeMapper } from "./data";
 import { IOperation, IMethod, IStatement } from "./types";
 import { createData } from "./utils";
 
-export function getLastEntity(statement: IStatement) {
-  if (!statement.methods.length) return statement.data;
-  return statement.methods[statement.methods.length - 1].result;
+export function getLastEntity(statement: IStatement, index?: number) {
+  if (!index) {
+    if (statement.data.entityType === "operation") return statement.data.result;
+    return statement.data;
+  }
+  return statement.methods[index - 1].result;
 }
 
 export function getOperationResult(operation: IOperation) {
   let lastStatement = operation.statements.slice(-1)[0];
   return lastStatement
-    ? getLastEntity(lastStatement)
+    ? getLastEntity(lastStatement, lastStatement.methods.length)
     : {
         ...operation.result,
         value: TypeMapper[operation.result.type].defaultValue,
@@ -20,8 +23,10 @@ export function getOperationResult(operation: IOperation) {
 export function updateStatementMethods(statement: IStatement) {
   let updatedMethods = statement.methods.reduce(
     (previousMethods, currentMethod, index) => {
-      let data =
-        index === 0 ? statement.data : previousMethods[index - 1].result;
+      let data = getLastEntity(
+        { ...statement, methods: previousMethods },
+        index
+      );
       let parameters = currentMethod.parameters.map((item) => item.result);
       let { id: newId, ...result } = currentMethod.handler(data, ...parameters);
       let rest = { id: currentMethod.result.id, isGeneric: data.isGeneric };
@@ -34,7 +39,7 @@ export function updateStatementMethods(statement: IStatement) {
     [] as IMethod[]
   );
   let result = { ...statement, methods: updatedMethods };
-  return { ...result, result: getLastEntity(result) };
+  return { ...result, result: getLastEntity(result, result.methods.length) };
 }
 
 export function updateStatementReference(
@@ -42,72 +47,32 @@ export function updateStatementReference(
   previousStatements: IStatement[],
   previousOperations?: IOperation[]
 ): IStatement {
-  const currentReference = currentStatement.data.reference;
+  const currentReference = getLastEntity(currentStatement).reference;
+  const currentStatementData = getLastEntity(currentStatement);
   let reference = [...(previousOperations || []), ...previousStatements].find(
     (item) => item.id === currentReference?.id
   );
 
-  if (currentReference?.parameters && reference?.entityType === "operation") {
-    let updatedParameters = reference.parameters.map((parameter) => {
-      let argument = currentReference.parameters?.find(
-        (item) => item.id === parameter.id
-      );
-
-      if (!argument) return parameter;
-
-      return updateStatementMethods(
-        updateStatementReference(
-          argument,
-          previousStatements,
-          previousOperations
-        )
-      );
-    });
-
-    let statements = updateStatements({
-      statements: [
-        ...previousStatements,
-        ...updatedParameters,
-        ...reference.statements,
-      ],
-      changedStatement: updatedParameters[0],
-      previousOperations,
-    });
-
-    reference = {
-      ...reference,
-      parameters: updatedParameters,
-      result: getOperationResult({ ...reference, statements }),
-    };
-  }
-
   let isReferenceRemoved =
     currentReference?.id && (!reference || !reference.name);
   let isTypeChanged =
-    reference && currentStatement.data.type !== reference.result.type;
+    reference && currentStatementData.type !== reference.result.type;
 
   let { id: newId, ...newData } = createData(
-    currentStatement.data.type,
-    TypeMapper[currentStatement.data.type].defaultValue,
-    currentStatement.data.isGeneric
+    currentStatementData.type,
+    TypeMapper[currentStatementData.type].defaultValue,
+    currentStatementData.isGeneric
   );
 
   return {
     ...currentStatement,
     data: {
-      ...currentStatement.data,
+      ...currentStatementData,
       reference:
         reference?.name && currentReference
-          ? {
-              ...currentReference,
-              parameters:
-                reference.entityType === "operation"
-                  ? reference.parameters
-                  : currentReference.parameters,
-              name: reference?.name,
-            }
+          ? { ...currentReference, name: reference?.name }
           : undefined,
-      value: reference?.result.value ?? currentStatement.data.value,
+      value: reference?.result.value ?? currentStatementData.value,
       ...((isReferenceRemoved || isTypeChanged) && newData),
     },
     methods: currentStatement.methods.map((method) => ({

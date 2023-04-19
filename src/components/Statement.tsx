@@ -1,4 +1,4 @@
-import { Equals, Plus } from "@styled-icons/fa-solid";
+import { Equals } from "@styled-icons/fa-solid";
 import styled from "styled-components";
 import { useStore } from "../lib/store";
 import { theme } from "../lib/theme";
@@ -8,6 +8,7 @@ import { createMethod } from "../lib/utils";
 import { Data } from "./Data";
 import { Input } from "./Input/Input";
 import { Method } from "./Method";
+import { Operation } from "./Operation";
 
 export function Statement({
   statement,
@@ -33,7 +34,9 @@ export function Statement({
   ];
 
   function addMethod() {
-    let method = createMethod({ data: getLastEntity(statement) });
+    let method = createMethod({
+      data: getLastEntity(statement, statement.methods.length),
+    });
     let methods = [...statement.methods, method];
     handleStatement(updateStatementMethods({ ...statement, methods }));
   }
@@ -42,7 +45,8 @@ export function Statement({
     if (remove) handleStatement(statement, remove);
     else {
       let methods = [...statement.methods];
-      if (statement.data.type !== data.type) methods = [];
+      let statementData = getLastEntity(statement);
+      if (statementData.type !== data.type) methods = [];
       handleStatement(updateStatementMethods({ ...statement, data, methods }));
     }
   }
@@ -50,7 +54,7 @@ export function Statement({
   function handleMethod(method: IMethod, index: number, remove?: boolean) {
     let methods = [...statement.methods];
     if (remove) {
-      let data = index === 0 ? statement.data : methods[index - 1].result;
+      let data = getLastEntity(statement, index);
       if (method.result.type !== data.type) methods.splice(index);
       else methods.splice(index, 1);
     } else {
@@ -84,28 +88,41 @@ export function Statement({
           ) : null}
           <Equals
             size={10}
+            style={{ paddingTop: "0.25rem" }}
             onClick={() =>
               handleStatement({
                 ...statement,
-                name: hasName ? undefined : `var_${statement.id.slice(-3)}`,
+                name: hasName ? undefined : `v_${statement.id.slice(-3)}`,
               })
             }
           />
         </StatementName>
       ) : null}
-      <Data
-        data={statement.data}
-        handleData={(data, remove) => handleData(data, remove)}
-        path={[...path, statement.id]}
-        disableDelete={disableDelete}
-        addMethod={
-          !disableMethods && statement.methods.length === 0
-            ? addMethod
-            : undefined
-        }
-      />
+      {statement.data.entityType === "data" ? (
+        <Data
+          data={statement.data}
+          handleData={(data, remove) => handleData(data, remove)}
+          selectOperation={(operation) =>
+            handleStatement({ ...statement, data: operation })
+          }
+          path={[...path, statement.id]}
+          disableDelete={disableDelete}
+          addMethod={
+            !disableMethods && statement.methods.length === 0
+              ? addMethod
+              : undefined
+          }
+        />
+      ) : (
+        <Operation
+          operation={statement.data}
+          handleOperation={(operation) =>
+            handleStatement({ ...statement, data: operation })
+          }
+        />
+      )}
       {statement.methods.map((method, i, methods) => {
-        let data = i === 0 ? statement.data : methods[i - 1].result;
+        let data = getLastEntity(statement, i);
         return (
           <Method
             key={method.id}
@@ -127,7 +144,7 @@ export function Statement({
 
 const StatementWrapper = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.25rem;
   & svg {
     cursor: pointer;

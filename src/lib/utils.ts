@@ -18,13 +18,13 @@ export function createData<T extends keyof IType>(
   };
 }
 
-export function createOperation(): IOperation {
+export function createOperation(name?: string): IOperation {
   let id = nanoid();
   return {
     id,
     entityType: "operation",
     handler: undefined,
-    name: "func_" + id.slice(-4),
+    name: name ?? "f_" + id.slice(-4),
     parameters: [],
     result: createData("string", ""),
     statements: [],

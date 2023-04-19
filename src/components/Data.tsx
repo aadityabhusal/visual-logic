@@ -1,4 +1,3 @@
-import { Fragment } from "react";
 import styled from "styled-components";
 import { TypeMapper } from "../lib/data";
 import { IData, IOperation, IStatement, IType } from "../lib/types";
@@ -9,12 +8,12 @@ import { ObjectInput } from "./Input/ObjectInput";
 import { BooleanInput } from "./Input/BooleanInput";
 import { theme } from "../lib/theme";
 import { useStore } from "../lib/store";
-import { getOperationResult, updateStatements } from "../lib/update";
-import { Statement } from "./Statement";
+import { createOperation } from "../lib/utils";
 
 interface IProps {
   data: IData;
   handleData: (data: IData, remove?: boolean) => void;
+  selectOperation: (operation: IOperation, remove?: boolean) => void;
   disableDelete?: boolean;
   path: string[];
   editVariable?: boolean;
@@ -24,6 +23,7 @@ interface IProps {
 export function Data({
   data,
   handleData,
+  selectOperation,
   disableDelete,
   path,
   editVariable,
@@ -50,72 +50,9 @@ export function Data({
       type: statement.result.type,
       value: statement.result.value,
       reference: statement.name
-        ? {
-            id: statement.id,
-            name: statement.name,
-            type: "statement",
-          }
+        ? { id: statement.id, name: statement.name }
         : undefined,
     });
-  }
-
-  function updateParameters(operation: IOperation, parameter?: IStatement) {
-    const parentStatements = [
-      ...operations[operationIndex].parameters,
-      ...operations[operationIndex].statements,
-    ];
-
-    let statements = updateStatements({
-      statements: [
-        ...parentStatements,
-        ...operation.parameters,
-        ...operation.statements,
-      ],
-      changedStatement: parameter,
-      previousOperations: operations,
-    });
-
-    let result = getOperationResult({ ...operation, statements });
-
-    handleData({
-      ...data,
-      type: result.type,
-      value: result.value,
-      reference: {
-        id: operation.id,
-        name: operation.name,
-        type: "operation",
-        parameters: statements
-          .slice(parentStatements.length)
-          .slice(0, operation.parameters.length),
-      },
-    });
-  }
-
-  function handleParameters(parameter: IStatement) {
-    let operation = operations.find((item) => item.id === data.reference?.id);
-    if (!operation) return;
-    updateParameters(
-      { ...operation, parameters: data.reference?.parameters || [] },
-      parameter
-    );
-  }
-
-  function selectOperation(operation: IOperation) {
-    let parameters = operation.parameters.map((item) => ({
-      ...item,
-      data: {
-        ...item.data,
-        isGeneric: false,
-        value: TypeMapper[item.data.type].defaultValue,
-      },
-      result: {
-        ...item.result,
-        value: TypeMapper[item.result.type].defaultValue,
-      },
-    }));
-
-    updateParameters({ ...operation, parameters }, parameters[0]);
   }
 
   return (
@@ -147,20 +84,6 @@ export function Data({
                 color={theme.color.variable}
                 noQuotes
               />
-              {data.reference?.type === "operation" && "("}
-              {data.reference.parameters?.map((item, i, paramList) => (
-                <Fragment key={item.id}>
-                  <Statement
-                    statement={item}
-                    handleStatement={(parameter) => handleParameters(parameter)}
-                    path={path}
-                    disableName={true}
-                    disableDelete={true}
-                  />
-                  {i + 1 < paramList.length && <span>,</span>}
-                </Fragment>
-              ))}
-              {data.reference?.type === "operation" && ")"}
             </>
           ) : (
             <>
@@ -196,6 +119,13 @@ export function Data({
               </DropdownOption>
             );
           })}
+          {data.isGeneric && (
+            <DropdownOption
+              onClick={() => selectOperation(createOperation(""))}
+            >
+              operation
+            </DropdownOption>
+          )}
           <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
           {operations[operationIndex]?.parameters.map((parameter) => {
             if (!data.isGeneric && parameter.result.type !== data.type) return;
@@ -220,21 +150,6 @@ export function Data({
                 selected={statement.id === data.reference?.id}
               >
                 {statement.name}
-              </DropdownOption>
-            );
-          })}
-          <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
-          {operations.map((operation, i) => {
-            if (i >= operationIndex) return;
-            let operationResult = getOperationResult(operation);
-            if (!data.isGeneric && operationResult.type !== data.type) return;
-            return (
-              <DropdownOption
-                key={operation.id}
-                onClick={() => selectOperation(operation)}
-                selected={operation.id === data.reference?.id}
-              >
-                {operation.name}
               </DropdownOption>
             );
           })}
