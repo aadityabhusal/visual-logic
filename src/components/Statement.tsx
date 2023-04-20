@@ -17,6 +17,7 @@ export function Statement({
   disableName,
   disableDelete,
   disableMethods,
+  prevStatements,
 }: {
   statement: IStatement;
   handleStatement: (statement: IStatement, remove?: boolean) => void;
@@ -24,14 +25,9 @@ export function Statement({
   disableName?: boolean;
   disableDelete?: boolean;
   disableMethods?: boolean;
+  prevStatements: IStatement[];
 }) {
   const hasName = statement.name !== undefined;
-  const context = useStore((state) => state.operations);
-  const operation = context.find((operation) => operation.id === path[0]);
-  const statements = [
-    ...(operation?.parameters || []),
-    ...(operation?.statements || []),
-  ];
 
   function addMethod() {
     let method = createMethod({
@@ -79,7 +75,9 @@ export function Statement({
               }}
               handleData={(data) => {
                 let name = (data.value as string) || statement.name;
-                const exists = statements.find((item) => item.name === name);
+                const exists = prevStatements.find(
+                  (item) => item.name === name
+                );
                 if (!exists) handleStatement({ ...statement, name });
               }}
               color={theme.color.variable}
@@ -112,6 +110,7 @@ export function Statement({
               ? addMethod
               : undefined
           }
+          prevStatements={prevStatements}
         />
       ) : (
         <Operation
@@ -119,6 +118,7 @@ export function Statement({
           handleOperation={(operation) =>
             handleStatement({ ...statement, data: operation })
           }
+          prevStatements={prevStatements}
         />
       )}
       {statement.methods.map((method, i, methods) => {
@@ -130,6 +130,7 @@ export function Statement({
             method={method}
             handleMethod={(meth, remove) => handleMethod(meth, i, remove)}
             path={[...path, statement.id]}
+            prevStatements={prevStatements}
             addMethod={
               !disableMethods && i + 1 === methods.length
                 ? addMethod

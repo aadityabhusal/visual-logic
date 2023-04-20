@@ -7,7 +7,6 @@ import { Input } from "./Input/Input";
 import { ObjectInput } from "./Input/ObjectInput";
 import { BooleanInput } from "./Input/BooleanInput";
 import { theme } from "../lib/theme";
-import { useStore } from "../lib/store";
 import { createOperation } from "../lib/utils";
 
 interface IProps {
@@ -16,7 +15,7 @@ interface IProps {
   selectOperation: (operation: IOperation, remove?: boolean) => void;
   disableDelete?: boolean;
   path: string[];
-  editVariable?: boolean;
+  prevStatements: IStatement[];
   addMethod?: () => void;
 }
 
@@ -26,14 +25,9 @@ export function Data({
   selectOperation,
   disableDelete,
   path,
-  editVariable,
   addMethod,
+  prevStatements,
 }: IProps) {
-  const operations = useStore((state) => state.operations);
-  const operationIndex = operations.findIndex((item) => item.id === path[0]);
-  const statements = operations[operationIndex]?.statements || [];
-  const statementIndex = statements.findIndex((item) => item.id === path[1]);
-
   function handleDropdown(type: keyof IType) {
     (data.reference?.id || type !== data.type) &&
       handleData({
@@ -49,6 +43,16 @@ export function Data({
       ...data,
       type: statement.result.type,
       value: statement.result.value,
+      reference: statement.name
+        ? { id: statement.id, name: statement.name }
+        : undefined,
+    });
+  }
+
+  function selectOperations(statement: IStatement) {
+    let operation = statement.data as IOperation;
+    selectOperation({
+      ...operation,
       reference: statement.name
         ? { id: statement.id, name: statement.name }
         : undefined,
@@ -71,16 +75,8 @@ export function Data({
                   value: data.reference?.name,
                   entityType: "data",
                 }}
-                handleData={(item) =>
-                  handleData({
-                    ...data,
-                    reference: data.reference && {
-                      ...data.reference,
-                      name: (item.value as string) || "",
-                    },
-                  })
-                }
-                disabled={!editVariable}
+                handleData={() => {}}
+                disabled={true}
                 color={theme.color.variable}
                 noQuotes
               />
@@ -88,9 +84,21 @@ export function Data({
           ) : (
             <>
               {data.type === "array" ? (
-                <ArrayInput data={data} handleData={handleData} path={path} />
+                <ArrayInput
+                  data={data}
+                  handleData={handleData}
+                  path={path}
+                  prevStatements={prevStatements}
+                  selectOperation={selectOperation}
+                />
               ) : data.value instanceof Map ? (
-                <ObjectInput data={data} handleData={handleData} path={path} />
+                <ObjectInput
+                  data={data}
+                  handleData={handleData}
+                  path={path}
+                  prevStatements={prevStatements}
+                  selectOperation={selectOperation}
+                />
               ) : typeof data.value === "boolean" ? (
                 <BooleanInput data={data} handleData={handleData} />
               ) : (
@@ -127,26 +135,16 @@ export function Data({
             </DropdownOption>
           )}
           <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
-          {operations[operationIndex]?.parameters.map((parameter) => {
-            if (!data.isGeneric && parameter.result.type !== data.type) return;
-            return (
-              <DropdownOption
-                key={parameter.id}
-                onClick={() => selectStatement(parameter)}
-                selected={parameter.id === data.reference?.id}
-              >
-                {parameter.name}
-              </DropdownOption>
-            );
-          })}
-          {statements.map((statement, i) => {
-            if (i >= statementIndex || !statement.name) return;
-            let statementData = statement.result;
-            if (!data.isGeneric && statementData.type !== data.type) return;
+          {prevStatements.map((statement) => {
+            if (!data.isGeneric && statement.result.type !== data.type) return;
             return (
               <DropdownOption
                 key={statement.id}
-                onClick={() => selectStatement(statement)}
+                onClick={() =>
+                  statement.data.entityType === "operation"
+                    ? selectOperations(statement)
+                    : selectStatement(statement)
+                }
                 selected={statement.id === data.reference?.id}
               >
                 {statement.name}

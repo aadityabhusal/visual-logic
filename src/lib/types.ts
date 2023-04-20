@@ -44,6 +44,10 @@ export interface IOperation {
   statements: IStatement[];
   result: IData;
   handler?: (...args: IData[]) => IData;
+  reference?: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface IStore {

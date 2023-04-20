@@ -12,6 +12,7 @@ interface IProps {
   handleMethod: (method: IMethod, remove?: boolean) => void;
   path: string[];
   addMethod?: () => void;
+  prevStatements: IStatement[];
 }
 
 export function Method({
@@ -20,6 +21,7 @@ export function Method({
   handleMethod,
   path,
   addMethod,
+  prevStatements,
 }: IProps) {
   function handleDropdown(name: string) {
     if (method.name === name) return;
@@ -58,6 +60,7 @@ export function Method({
                   disableDelete={true}
                   disableName={true}
                   path={path}
+                  prevStatements={prevStatements}
                 />
                 {i < arr.length - 1 ? <span>{", "}</span> : null}
               </span>

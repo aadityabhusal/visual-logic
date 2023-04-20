@@ -12,9 +12,11 @@ import { Statement } from "./Statement";
 export function Operation({
   operation,
   handleOperation,
+  prevStatements,
 }: {
   operation: IOperation;
   handleOperation(operation: IOperation): void;
+  prevStatements: IStatement[];
 }) {
   const operations = useStore((state) => state.operations);
 
@@ -71,7 +73,9 @@ export function Operation({
     });
   }
 
-  return (
+  return operation.reference ? (
+    <>{operation.reference.name}</>
+  ) : (
     <OperationWrapper>
       <OperationHead>
         <Input
@@ -102,6 +106,7 @@ export function Operation({
               }
               path={[operation.id]}
               disableMethods={true}
+              prevStatements={[]}
             />
             {i + 1 < paramList.length && <span>,</span>}
           </Fragment>
@@ -118,6 +123,11 @@ export function Operation({
               handleStatement({ statement, remove })
             }
             path={[operation.id]}
+            prevStatements={[
+              ...prevStatements,
+              ...operation.parameters,
+              ...operation.statements.slice(0, i),
+            ]}
           />
         ))}
         <Plus size={10} style={{ cursor: "pointer" }} onClick={addStatement} />
