@@ -1,6 +1,5 @@
 import { Equals } from "@styled-icons/fa-solid";
 import styled from "styled-components";
-import { useStore } from "../lib/store";
 import { theme } from "../lib/theme";
 import { IData, IMethod, IStatement } from "../lib/types";
 import { updateStatementMethods, getLastEntity } from "../lib/update";
@@ -9,6 +8,7 @@ import { Data } from "./Data";
 import { Input } from "./Input/Input";
 import { Method } from "./Method";
 import { Operation } from "./Operation";
+import { DropdownList } from "./DropdownList";
 
 export function Statement({
   statement,
@@ -100,18 +100,22 @@ export function Statement({
         <Data
           data={statement.data}
           handleData={(data, remove) => handleData(data, remove)}
-          selectOperation={(operation) =>
-            handleStatement({ ...statement, data: operation })
-          }
-          path={[...path, statement.id]}
           disableDelete={disableDelete}
           addMethod={
             !disableMethods && statement.methods.length === 0
               ? addMethod
               : undefined
           }
-          prevStatements={prevStatements}
-        />
+        >
+          <DropdownList
+            data={statement.data}
+            handleData={(data, remove) => handleData(data, remove)}
+            prevStatements={prevStatements}
+            selectOperation={(operation) =>
+              handleStatement({ ...statement, data: operation })
+            }
+          />
+        </Data>
       ) : (
         <Operation
           operation={statement.data}

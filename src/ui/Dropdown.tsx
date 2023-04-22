@@ -3,7 +3,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
 import { IData } from "../lib/types";
-import { ParseData } from "./Parse/ParseData";
+import { ParseData } from "../components/Parse/ParseData";
 
 interface IProps {
   head?: ReactNode;

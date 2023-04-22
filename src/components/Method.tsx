@@ -1,8 +1,8 @@
 import styled from "styled-components";
 import { IData, IMethod, IStatement } from "../lib/types";
 import { Statement } from "./Statement";
-import { DropdownOption, DropdownOptions } from "./Dropdown";
-import { Dropdown } from "./Dropdown";
+import { DropdownOption, DropdownOptions } from "../ui/Dropdown";
+import { Dropdown } from "../ui/Dropdown";
 import { createMethod, getFilteredMethods } from "../lib/utils";
 import { theme } from "../lib/theme";
 
