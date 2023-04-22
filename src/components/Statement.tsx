@@ -4,11 +4,12 @@ import { theme } from "../lib/theme";
 import { IData, IMethod, IStatement } from "../lib/types";
 import { updateStatementMethods, getLastEntity } from "../lib/update";
 import { createMethod } from "../lib/utils";
-import { Data } from "./Data";
+import { Data, DataWrapper } from "./Data";
 import { Input } from "./Input/Input";
 import { Method } from "./Method";
 import { Operation } from "./Operation";
 import { DropdownList } from "./DropdownList";
+import { Dropdown } from "../ui/Dropdown";
 
 export function Statement({
   statement,
@@ -37,12 +38,12 @@ export function Statement({
     handleStatement(updateStatementMethods({ ...statement, methods }));
   }
 
-  function handleData(data: IData, remove?: boolean) {
+  function handleData(data: IStatement["data"], remove?: boolean) {
     if (remove) handleStatement(statement, remove);
     else {
       let methods = [...statement.methods];
       let statementData = getLastEntity(statement);
-      if (statementData.type !== data.type) methods = [];
+      if (statementData.type !== (data as IData).type) methods = [];
       handleStatement(updateStatementMethods({ ...statement, data, methods }));
     }
   }
@@ -96,15 +97,49 @@ export function Statement({
           />
         </StatementName>
       ) : null}
-      {statement.data.entityType === "data" ? (
-        <Data
-          data={statement.data}
-          handleData={(data, remove) => handleData(data, remove)}
-          disableDelete={disableDelete}
+      <DataWrapper>
+        <Dropdown
+          result={{ data: statement.data }}
+          handleDelete={
+            !disableDelete ? () => handleData(statement.data, true) : undefined
+          }
           addMethod={
-            !disableMethods && statement.methods.length === 0
+            !disableMethods &&
+            statement.methods.length === 0 &&
+            statement.data.entityType !== "operation"
               ? addMethod
               : undefined
+          }
+          head={
+            statement.data.reference?.name ? (
+              <>
+                <Input
+                  data={{
+                    id: "",
+                    type: "string",
+                    value: statement.data.reference?.name,
+                    entityType: "data",
+                  }}
+                  handleData={() => {}}
+                  disabled={true}
+                  color={theme.color.variable}
+                  noQuotes
+                />
+              </>
+            ) : statement.data.entityType === "data" ? (
+              <Data
+                data={statement.data}
+                handleData={(data, remove) => handleData(data, remove)}
+              />
+            ) : (
+              <Operation
+                operation={statement.data}
+                handleOperation={(operation) =>
+                  handleStatement({ ...statement, data: operation })
+                }
+                prevStatements={prevStatements}
+              />
+            )
           }
         >
           <DropdownList
@@ -115,16 +150,8 @@ export function Statement({
               handleStatement({ ...statement, data: operation })
             }
           />
-        </Data>
-      ) : (
-        <Operation
-          operation={statement.data}
-          handleOperation={(operation) =>
-            handleStatement({ ...statement, data: operation })
-          }
-          prevStatements={prevStatements}
-        />
-      )}
+        </Dropdown>
+      </DataWrapper>
       {statement.methods.map((method, i, methods) => {
         let data = getLastEntity(statement, i);
         return (
