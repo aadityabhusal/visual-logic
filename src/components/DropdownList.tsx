@@ -18,12 +18,11 @@ export function DropdownList({
   let isGeneric = data.entityType === "operation" || data.isGeneric;
 
   function handleDropdown(type: keyof IType) {
-    (data.reference?.id || type !== (data as IData).type) &&
+    data.entityType === "data" &&
+      (data.reference?.id || type !== data.type) &&
       handleData({
+        ...data,
         type,
-        id: data.id,
-        isGeneric: true,
-        entityType: "data",
         value: TypeMapper[type].defaultValue,
         reference: undefined,
       });

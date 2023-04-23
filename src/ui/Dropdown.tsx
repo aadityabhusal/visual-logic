@@ -2,14 +2,13 @@ import { Plus, X } from "@styled-icons/fa-solid";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
-import { IStatement } from "../lib/types";
+import { IData } from "../lib/types";
 import { ParseData } from "../components/Parse/ParseData";
-import { ParseOperation } from "../components/Parse/ParseOperation";
 
 interface IProps {
   head?: ReactNode;
   children?: ReactNode;
-  result: { data: IStatement["data"] };
+  result: { data: IData };
   handleDelete?: () => void;
   addMethod?: () => void;
 }
@@ -53,11 +52,7 @@ export function Dropdown({
       <div style={{ display: "flex", alignItems: "center" }}>{head}</div>
       {display ? (
         <DropdownHead onClick={() => setContent((c) => !c)}>
-          <DropdownReturnType>
-            {result.data.entityType === "data"
-              ? result.data.type
-              : result.data.entityType}
-          </DropdownReturnType>
+          <DropdownReturnType>{result.data.type}</DropdownReturnType>
           {addMethod && (
             <Plus
               size={9}
@@ -82,11 +77,7 @@ export function Dropdown({
         <DropdownContainer>{children}</DropdownContainer>
       ) : display ? (
         <DropdownContainer>
-          {result.data.entityType === "data" ? (
-            <ParseData data={result.data} showData={true} />
-          ) : (
-            <ParseOperation operation={result.data} />
-          )}
+          <ParseData data={result.data} showData={true} />
         </DropdownContainer>
       ) : null}
     </DropdownWrapper>
