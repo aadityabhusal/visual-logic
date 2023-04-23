@@ -1,7 +1,7 @@
 import { Equals } from "@styled-icons/fa-solid";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
-import { IData, IMethod, IStatement } from "../lib/types";
+import { IData, IMethod, IOperation, IStatement } from "../lib/types";
 import { updateStatementMethods, getLastEntity } from "../lib/update";
 import { createMethod } from "../lib/utils";
 import { Data } from "./Data";
@@ -47,6 +47,11 @@ export function Statement({
     }
   }
 
+  function handelOperation(operation: IOperation, remove?: boolean) {
+    if (remove) handleStatement(statement, remove);
+    else handleStatement({ ...statement, data: operation });
+  }
+
   function handleMethod(method: IMethod, index: number, remove?: boolean) {
     let methods = [...statement.methods];
     if (remove) {
@@ -60,6 +65,17 @@ export function Statement({
     }
     handleStatement(updateStatementMethods({ ...statement, methods }));
   }
+
+  const dropdownList = (
+    <DropdownList
+      data={statement.data}
+      handleData={(data, remove) => handleData(data, remove)}
+      prevStatements={prevStatements}
+      selectOperation={(operation) =>
+        handleStatement({ ...statement, data: operation })
+      }
+    />
+  );
 
   return (
     <StatementWrapper>
@@ -106,23 +122,15 @@ export function Statement({
               ? addMethod
               : undefined
           }
-        >
-          <DropdownList
-            data={statement.data}
-            handleData={(data, remove) => handleData(data, remove)}
-            prevStatements={prevStatements}
-            selectOperation={(operation) =>
-              handleStatement({ ...statement, data: operation })
-            }
-          />
-        </Data>
+          children={dropdownList}
+        />
       ) : (
         <Operation
           operation={statement.data}
-          handleOperation={(operation) =>
-            handleStatement({ ...statement, data: operation })
-          }
+          handleOperation={handelOperation}
           prevStatements={prevStatements}
+          disableDelete={disableDelete}
+          children={dropdownList}
         />
       )}
       {statement.methods.map((method, i, methods) => {
