@@ -61,7 +61,7 @@ export function Operation({
       statements: updatedStatements.slice(parameterLength),
       result: getOperationResult({
         ...operation,
-        statements: updatedStatements,
+        statements: updatedStatements.slice(parameterLength),
       }),
     });
   }
@@ -80,13 +80,32 @@ export function Operation({
 
   return (
     <Dropdown
-      result={{ type: "operation" }}
+      result={{ data: operation.result }}
       handleDelete={
         !disableDelete ? () => handleOperation(operation, true) : undefined
       }
       head={
         operation.reference?.name ? (
-          <>{operation.reference?.name}</>
+          <div style={{ display: "flex", gap: 4 }}>
+            {operation.reference?.name + "("}
+            {operation.parameters.map((parameter, i, paramList) => (
+              <Fragment key={i}>
+                <Statement
+                  key={i}
+                  statement={parameter}
+                  handleStatement={(statement) =>
+                    handleStatement({ statement })
+                  }
+                  prevStatements={prevStatements}
+                  disableMethods={true}
+                  disableName={true}
+                  disableDelete={true}
+                />
+                {i + 1 < paramList.length && <span>,</span>}
+              </Fragment>
+            ))}
+            {")"}
+          </div>
         ) : (
           <OperationWrapper>
             <OperationHead>
@@ -116,7 +135,6 @@ export function Operation({
                         parameterLength: paramList.length + (remove ? -1 : 0),
                       })
                     }
-                    path={[operation.id]}
                     disableMethods={true}
                     prevStatements={[]}
                   />
@@ -138,7 +156,6 @@ export function Operation({
                   handleStatement={(statement, remove) =>
                     handleStatement({ statement, remove })
                   }
-                  path={[operation.id]}
                   prevStatements={[
                     ...prevStatements,
                     ...operation.parameters,

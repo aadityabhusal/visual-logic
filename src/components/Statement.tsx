@@ -13,7 +13,6 @@ import { DropdownList } from "./DropdownList";
 export function Statement({
   statement,
   handleStatement,
-  path,
   disableName,
   disableDelete,
   disableMethods,
@@ -21,7 +20,6 @@ export function Statement({
 }: {
   statement: IStatement;
   handleStatement: (statement: IStatement, remove?: boolean) => void;
-  path: string[];
   disableName?: boolean;
   disableDelete?: boolean;
   disableMethods?: boolean;
@@ -141,7 +139,6 @@ export function Statement({
             data={data}
             method={method}
             handleMethod={(meth, remove) => handleMethod(meth, i, remove)}
-            path={[...path, statement.id]}
             prevStatements={prevStatements}
             addMethod={
               !disableMethods && i + 1 === methods.length

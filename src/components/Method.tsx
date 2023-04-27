@@ -10,7 +10,6 @@ interface IProps {
   data: IData;
   method: IMethod;
   handleMethod: (method: IMethod, remove?: boolean) => void;
-  path: string[];
   addMethod?: () => void;
   prevStatements: IStatement[];
 }
@@ -19,7 +18,6 @@ export function Method({
   data,
   method,
   handleMethod,
-  path,
   addMethod,
   prevStatements,
 }: IProps) {
@@ -59,7 +57,6 @@ export function Method({
                   handleStatement={(val) => val && handleParameter(val, i)}
                   disableDelete={true}
                   disableName={true}
-                  path={path}
                   prevStatements={prevStatements}
                 />
                 {i < arr.length - 1 ? <span>{", "}</span> : null}

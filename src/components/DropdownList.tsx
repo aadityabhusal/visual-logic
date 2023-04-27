@@ -43,11 +43,29 @@ export function DropdownList({
 
   function selectOperations(statement: IStatement) {
     let operation = statement.data as IOperation;
+    const parameters = operation.parameters.map((param) => ({
+      ...param,
+      data: {
+        ...param.data,
+        isGeneric: false,
+        value: TypeMapper[(data as IData).type].defaultValue,
+      },
+      result: {
+        ...param.result,
+        value: TypeMapper[param.result.type].defaultValue,
+      },
+    }));
+
     selectOperation({
       ...operation,
+      parameters,
       reference: statement.name
         ? { id: statement.id, name: statement.name }
         : undefined,
+      result: {
+        ...operation.result,
+        value: TypeMapper[operation.result.type].defaultValue,
+      },
     });
   }
 
