@@ -1,6 +1,6 @@
 import { TypeMapper } from "./data";
-import { IOperation, IMethod, IStatement } from "./types";
-import { createData } from "./utils";
+import { IOperation, IMethod, IStatement, IData } from "./types";
+import { createData, createOperation } from "./utils";
 
 export function getLastEntity(statement: IStatement, index?: number) {
   if (!index) {
@@ -42,39 +42,92 @@ export function updateStatementMethods(statement: IStatement) {
   return { ...result, result: getLastEntity(result, result.methods.length) };
 }
 
+function getReferenceData(data: IData, reference?: IStatement): IData {
+  const currentReference = data.reference;
+  const isTypeChanged = reference && data.type !== reference.result.type;
+  const isReferenceRemoved =
+    currentReference?.id && (!reference || !reference.name);
+
+  const { id: newId, ...newData } = createData(
+    data.type,
+    TypeMapper[data.type].defaultValue,
+    data.isGeneric
+  );
+
+  return {
+    ...data,
+    reference:
+      reference?.name && currentReference
+        ? { ...currentReference, name: reference?.name }
+        : undefined,
+    value: reference?.result.value ?? data.value,
+    ...((isReferenceRemoved || isTypeChanged) && newData),
+  };
+}
+
+function getReferenceOperation(
+  operation: IOperation,
+  previousStatements: IStatement[],
+  reference?: IStatement
+): IOperation {
+  const currentReference = operation.reference;
+  let isReferenceRemoved =
+    currentReference?.id && (!reference || !reference.name);
+  const { id: newId, ...newOperation } = createOperation("");
+
+  if (reference?.data.entityType === "operation") {
+    let updatedParameters = reference.data.parameters.map(
+      (parameter) =>
+        operation.parameters?.find((item) => item.id === parameter.id) ||
+        parameter
+    );
+
+    let statements = updateStatements({
+      statements: [
+        ...previousStatements,
+        ...updatedParameters,
+        ...reference.data.statements,
+      ],
+      changedStatement: updatedParameters[0],
+    });
+    operation = {
+      ...operation,
+      result: getOperationResult({ ...reference.data, statements }),
+      parameters: updatedParameters,
+    };
+  }
+
+  return {
+    ...operation,
+    statements: (reference?.data as IOperation)?.statements || [],
+    reference:
+      reference?.name && currentReference
+        ? { ...currentReference, name: reference?.name }
+        : undefined,
+    ...(isReferenceRemoved && newOperation),
+  };
+}
+
 export function updateStatementReference(
   currentStatement: IStatement,
   previousStatements: IStatement[],
   previousOperations?: IOperation[]
 ): IStatement {
-  const currentReference = getLastEntity(currentStatement).reference;
-  const currentStatementData = getLastEntity(currentStatement);
-  let reference = [...(previousOperations || []), ...previousStatements].find(
+  const currentReference = currentStatement.data.reference;
+  let reference = [...previousStatements].find(
     (item) => item.id === currentReference?.id
-  );
-
-  let isReferenceRemoved =
-    currentReference?.id && (!reference || !reference.name);
-  let isTypeChanged =
-    reference && currentStatementData.type !== reference.result.type;
-
-  let { id: newId, ...newData } = createData(
-    currentStatementData.type,
-    TypeMapper[currentStatementData.type].defaultValue,
-    currentStatementData.isGeneric
   );
 
   return {
     ...currentStatement,
-    data: {
-      ...currentStatementData,
-      reference:
-        reference?.name && currentReference
-          ? { ...currentReference, name: reference?.name }
-          : undefined,
-      value: reference?.result.value ?? currentStatementData.value,
-      ...((isReferenceRemoved || isTypeChanged) && newData),
-    },
+    data:
+      currentStatement.data.entityType === "data"
+        ? getReferenceData(currentStatement.data, reference)
+        : getReferenceOperation(
+            currentStatement.data,
+            previousStatements,
+            reference
+          ),
     methods: currentStatement.methods.map((method) => ({
       ...method,
       parameters: method.parameters.map((param) =>
