@@ -71,6 +71,7 @@ function getReferenceData(data: IData, reference?: IStatement): IData {
 export function getReferenceOperation(
   operation: IOperation,
   previousStatements: IStatement[],
+  previousOperations?: IOperation[],
   reference?: IStatement
 ): IOperation {
   const currentReference = operation.reference;
@@ -95,17 +96,17 @@ export function getReferenceOperation(
     );
     if (!argument) return parameter;
     return updateStatementMethods(
-      updateStatementReference(argument, previousStatements)
+      updateStatementReference(argument, previousStatements, previousOperations)
     );
   });
 
   let updatedStatements = statementList.map((argument) =>
     updateStatementMethods(
-      updateStatementReference(argument, [
-        ...previousStatements,
-        ...operation.parameters,
-        ...operation.statements,
-      ])
+      updateStatementReference(
+        argument,
+        [...previousStatements, ...updatedParameters, ...operation.statements],
+        previousOperations
+      )
     )
   );
 
@@ -128,9 +129,23 @@ export function updateStatementReference(
   previousOperations?: IOperation[]
 ): IStatement {
   const currentReference = currentStatement.data.reference;
-  let reference = [...previousStatements].find(
+  let reference = previousStatements.find(
     (item) => item.id === currentReference?.id
   );
+
+  // Should this be done in this way?
+  let operationRef = previousOperations?.find(
+    (item) => item.id === currentReference?.id
+  );
+  if (operationRef) {
+    reference = {
+      id: operationRef.id,
+      name: operationRef.name,
+      entityType: "statement",
+      data: operationRef,
+      result: operationRef.result,
+    } as IStatement;
+  }
 
   return {
     ...currentStatement,
@@ -140,6 +155,7 @@ export function updateStatementReference(
         : getReferenceOperation(
             currentStatement.data,
             previousStatements,
+            previousOperations,
             reference
           ),
     methods: currentStatement.methods.map((method) => ({

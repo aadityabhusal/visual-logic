@@ -1,7 +1,6 @@
 import { Plus } from "@styled-icons/fa-solid";
 import { Fragment, ReactNode } from "react";
 import styled from "styled-components";
-import { useStore } from "../lib/store";
 import { theme } from "../lib/theme";
 import { IOperation, IStatement } from "../lib/types";
 import { getOperationResult, updateStatements } from "../lib/update";
@@ -14,22 +13,22 @@ export function Operation({
   operation,
   handleOperation,
   prevStatements,
+  prevOperations,
   disableDelete,
   children,
 }: {
   operation: IOperation;
   handleOperation(operation: IOperation, remove?: boolean): void;
   prevStatements: IStatement[];
+  prevOperations: IOperation[];
   disableDelete?: boolean;
   children?: ReactNode;
 }) {
-  const operations = useStore((state) => state.operations);
-
   function handleOperationProps(
     key: keyof IOperation,
     value: IOperation[typeof key]
   ) {
-    if (key === "name" && operations.find((item) => item.name === value))
+    if (key === "name" && prevOperations.find((item) => item.name === value))
       return;
     handleOperation({ ...operation, [key]: value });
   }
@@ -56,7 +55,7 @@ export function Operation({
       ],
       changedStatement: statement,
       removeStatement: remove,
-      previousOperations: operations,
+      previousOperations: prevOperations,
     });
 
     let prevLength = prevStatements.length + parameterLength;
@@ -102,6 +101,7 @@ export function Operation({
                     handleStatement({ statement })
                   }
                   prevStatements={prevStatements}
+                  prevOperations={prevOperations}
                   disableMethods={true}
                   disableName={true}
                   disableDelete={true}
@@ -142,6 +142,7 @@ export function Operation({
                     }
                     disableMethods={true}
                     prevStatements={[]}
+                    prevOperations={[]}
                   />
                   {i + 1 < paramList.length && <span>,</span>}
                 </Fragment>
@@ -166,6 +167,7 @@ export function Operation({
                     ...operation.parameters,
                     ...operation.statements.slice(0, i),
                   ]}
+                  prevOperations={prevOperations}
                 />
               ))}
               <Plus

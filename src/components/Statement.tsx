@@ -17,6 +17,7 @@ export function Statement({
   disableDelete,
   disableMethods,
   prevStatements,
+  prevOperations,
 }: {
   statement: IStatement;
   handleStatement: (statement: IStatement, remove?: boolean) => void;
@@ -24,6 +25,7 @@ export function Statement({
   disableDelete?: boolean;
   disableMethods?: boolean;
   prevStatements: IStatement[];
+  prevOperations: IOperation[];
 }) {
   const hasName = statement.name !== undefined;
 
@@ -69,6 +71,7 @@ export function Statement({
       data={statement.data}
       handleData={(data, remove) => handleData(data, remove)}
       prevStatements={prevStatements}
+      prevOperations={prevOperations}
       selectOperation={(operation) =>
         handleStatement({ ...statement, data: operation })
       }
@@ -127,6 +130,7 @@ export function Statement({
           operation={statement.data}
           handleOperation={handelOperation}
           prevStatements={prevStatements}
+          prevOperations={prevOperations}
           disableDelete={disableDelete}
           children={dropdownList}
         />
@@ -140,6 +144,7 @@ export function Statement({
             method={method}
             handleMethod={(meth, remove) => handleMethod(meth, i, remove)}
             prevStatements={prevStatements}
+            prevOperations={prevOperations}
             addMethod={
               !disableMethods && i + 1 === methods.length
                 ? addMethod

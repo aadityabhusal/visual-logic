@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { IData, IMethod, IStatement } from "../lib/types";
+import { IData, IMethod, IOperation, IStatement } from "../lib/types";
 import { Statement } from "./Statement";
 import { DropdownOption, DropdownOptions } from "../ui/Dropdown";
 import { Dropdown } from "../ui/Dropdown";
@@ -12,6 +12,7 @@ interface IProps {
   handleMethod: (method: IMethod, remove?: boolean) => void;
   addMethod?: () => void;
   prevStatements: IStatement[];
+  prevOperations: IOperation[];
 }
 
 export function Method({
@@ -20,6 +21,7 @@ export function Method({
   handleMethod,
   addMethod,
   prevStatements,
+  prevOperations,
 }: IProps) {
   function handleDropdown(name: string) {
     if (method.name === name) return;
@@ -58,6 +60,7 @@ export function Method({
                   disableDelete={true}
                   disableName={true}
                   prevStatements={prevStatements}
+                  prevOperations={prevOperations}
                 />
                 {i < arr.length - 1 ? <span>{", "}</span> : null}
               </span>

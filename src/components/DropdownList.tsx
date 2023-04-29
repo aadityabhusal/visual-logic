@@ -11,11 +11,13 @@ export function DropdownList({
   handleData,
   selectOperation,
   prevStatements,
+  prevOperations,
 }: {
   data: IStatement["data"];
   handleData: (data: IData, remove?: boolean) => void;
   selectOperation: (operation: IOperation, remove?: boolean) => void;
   prevStatements: IStatement[];
+  prevOperations: IOperation[];
 }) {
   let isGeneric = data.entityType === "operation" || data.isGeneric;
 
@@ -24,7 +26,7 @@ export function DropdownList({
       handleData({
         type,
         id: data.id,
-        isGeneric: true,
+        isGeneric,
         entityType: "data",
         value: TypeMapper[type].defaultValue,
         reference: undefined,
@@ -43,8 +45,10 @@ export function DropdownList({
     });
   }
 
-  function selectOperations(statement: IStatement) {
-    let operation = statement.data as IOperation;
+  function selectOperations(
+    operation: IOperation,
+    reference: IStatement | IOperation
+  ) {
     let defaultValue = (data: IData) => TypeMapper[data.type].defaultValue;
 
     const parameters = operation.parameters.map((param) => ({
@@ -59,14 +63,15 @@ export function DropdownList({
 
     let statements = updateStatements({
       statements: [...prevStatements, ...parameters, ...operation.statements],
+      previousOperations: prevOperations,
     });
 
     selectOperation({
       ...operation,
       id: data.id,
       parameters,
-      reference: statement.name
-        ? { id: statement.id, name: statement.name }
+      reference: reference.name
+        ? { id: reference.id, name: reference.name }
         : undefined,
       result: getOperationResult({ ...operation, statements }),
     });
@@ -100,12 +105,25 @@ export function DropdownList({
             key={statement.id}
             onClick={() =>
               statement.data.entityType === "operation"
-                ? selectOperations(statement)
+                ? selectOperations(statement.data, statement)
                 : selectStatement(statement)
             }
             selected={statement.id === data.reference?.id}
           >
             {statement.name}
+          </DropdownOption>
+        );
+      })}
+      {prevOperations.map((operation) => {
+        let operationResult = getOperationResult(operation);
+        if (!isGeneric && operationResult.type !== (data as IData).type) return;
+        return (
+          <DropdownOption
+            key={operation.id}
+            onClick={() => selectOperations(operation, operation)}
+            selected={operation.id === data.reference?.id}
+          >
+            {operation.name}
           </DropdownOption>
         );
       })}

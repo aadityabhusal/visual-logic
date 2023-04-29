@@ -32,13 +32,16 @@ export function createOperation(name?: string): IOperation {
   };
 }
 
-export function createStatement(data?: IData, methods?: IMethod[]): IStatement {
+export function createStatement(
+  data?: IStatement["data"],
+  methods?: IMethod[]
+): IStatement {
   let newData = data || createData("string", "", true);
   return {
     id: nanoid(),
     entityType: "statement",
     data: newData,
-    result: newData,
+    result: newData.entityType === "data" ? newData : newData.result,
     methods: methods || [],
   };
 }
