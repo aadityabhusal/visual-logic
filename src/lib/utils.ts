@@ -28,6 +28,7 @@ export function createOperation(name?: string): IOperation {
     parameters: [],
     result: createData("string", ""),
     statements: [],
+    reference: undefined,
   };
 }
 

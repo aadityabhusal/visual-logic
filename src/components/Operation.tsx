@@ -49,19 +49,24 @@ export function Operation({
     parameterLength?: number;
   }) {
     let updatedStatements = updateStatements({
-      statements: [...operation.parameters, ...operation.statements],
+      statements: [
+        ...prevStatements,
+        ...operation.parameters,
+        ...operation.statements,
+      ],
       changedStatement: statement,
       removeStatement: remove,
       previousOperations: operations,
     });
 
+    let prevLength = prevStatements.length + parameterLength;
     handleOperation({
       ...operation,
-      parameters: updatedStatements.slice(0, parameterLength),
-      statements: updatedStatements.slice(parameterLength),
+      parameters: updatedStatements.slice(prevStatements.length, prevLength),
+      statements: updatedStatements.slice(prevLength),
       result: getOperationResult({
         ...operation,
-        statements: updatedStatements.slice(parameterLength),
+        statements: updatedStatements.slice(prevLength),
       }),
     });
   }

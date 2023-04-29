@@ -3,6 +3,8 @@ import { createOperation } from "../lib/utils";
 import { DropdownOption, DropdownOptions } from "../ui/Dropdown";
 import { TypeMapper } from "../lib/data";
 import { theme } from "../lib/theme";
+import { getOperationResult } from "../lib/update";
+import { updateStatements } from "../lib/update";
 
 export function DropdownList({
   data,
@@ -43,29 +45,30 @@ export function DropdownList({
 
   function selectOperations(statement: IStatement) {
     let operation = statement.data as IOperation;
+    let defaultValue = (data: IData) => TypeMapper[data.type].defaultValue;
+
     const parameters = operation.parameters.map((param) => ({
       ...param,
       data: {
         ...param.data,
         isGeneric: false,
-        value: TypeMapper[(data as IData).type].defaultValue,
+        value: defaultValue(data as IData),
       },
-      result: {
-        ...param.result,
-        value: TypeMapper[param.result.type].defaultValue,
-      },
+      result: { ...param.result, value: defaultValue(param.result) },
     }));
+
+    let statements = updateStatements({
+      statements: [...prevStatements, ...parameters, ...operation.statements],
+    });
 
     selectOperation({
       ...operation,
+      id: data.id,
       parameters,
       reference: statement.name
         ? { id: statement.id, name: statement.name }
         : undefined,
-      result: {
-        ...operation.result,
-        value: TypeMapper[operation.result.type].defaultValue,
-      },
+      result: getOperationResult({ ...operation, statements }),
     });
   }
 

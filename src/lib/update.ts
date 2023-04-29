@@ -46,7 +46,10 @@ function getReferenceData(data: IData, reference?: IStatement): IData {
   const currentReference = data.reference;
   const isTypeChanged = reference && data.type !== reference.result.type;
   const isReferenceRemoved =
-    currentReference?.id && (!reference || !reference.name);
+    currentReference?.id &&
+    (!reference ||
+      !reference.name ||
+      reference.data.entityType !== data.entityType);
 
   const { id: newId, ...newData } = createData(
     data.type,
@@ -65,41 +68,52 @@ function getReferenceData(data: IData, reference?: IStatement): IData {
   };
 }
 
-function getReferenceOperation(
+export function getReferenceOperation(
   operation: IOperation,
   previousStatements: IStatement[],
   reference?: IStatement
 ): IOperation {
   const currentReference = operation.reference;
   let isReferenceRemoved =
-    currentReference?.id && (!reference || !reference.name);
+    currentReference?.id &&
+    (!reference ||
+      !reference.name ||
+      reference.data.entityType !== operation.entityType);
+
   const { id: newId, ...newOperation } = createOperation("");
 
+  let parameterList = operation.parameters;
+  let statementList = operation.statements;
   if (reference?.data.entityType === "operation") {
-    let updatedParameters = reference.data.parameters.map(
-      (parameter) =>
-        operation.parameters?.find((item) => item.id === parameter.id) ||
-        parameter
-    );
-
-    let statements = updateStatements({
-      statements: [
-        ...previousStatements,
-        ...updatedParameters,
-        ...reference.data.statements,
-      ],
-      changedStatement: updatedParameters[0],
-    });
-    operation = {
-      ...operation,
-      result: getOperationResult({ ...reference.data, statements }),
-      parameters: updatedParameters,
-    };
+    parameterList = reference?.data.parameters;
+    statementList = reference?.data.statements;
   }
+
+  let updatedParameters = parameterList.map((parameter) => {
+    let argument = operation.parameters?.find(
+      (item) => item.id === parameter.id
+    );
+    if (!argument) return parameter;
+    return updateStatementMethods(
+      updateStatementReference(argument, previousStatements)
+    );
+  });
+
+  let updatedStatements = statementList.map((argument) =>
+    updateStatementMethods(
+      updateStatementReference(argument, [
+        ...previousStatements,
+        ...operation.parameters,
+        ...operation.statements,
+      ])
+    )
+  );
 
   return {
     ...operation,
-    statements: (reference?.data as IOperation)?.statements || [],
+    parameters: updatedParameters,
+    statements: updatedStatements,
+    result: getOperationResult({ ...operation, statements: updatedStatements }),
     reference:
       reference?.name && currentReference
         ? { ...currentReference, name: reference?.name }
@@ -205,7 +219,7 @@ export function updateOperations(
         statements: updatedStatements.slice(parameterLength),
         result: getOperationResult({
           ...currentOperation,
-          statements: updatedStatements,
+          statements: updatedStatements.slice(parameterLength),
         }),
       },
     ];
