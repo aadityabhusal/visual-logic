@@ -63,10 +63,6 @@ export function Operation({
       ...operation,
       parameters: updatedStatements.slice(prevStatements.length, prevLength),
       statements: updatedStatements.slice(prevLength),
-      result: getOperationResult({
-        ...operation,
-        statements: updatedStatements.slice(prevLength),
-      }),
     });
   }
 
@@ -84,7 +80,7 @@ export function Operation({
 
   return (
     <Dropdown
-      result={{ data: operation.result }}
+      result={{ data: getOperationResult(operation) }}
       handleDelete={
         !disableDelete ? () => handleOperation(operation, true) : undefined
       }

@@ -4,20 +4,18 @@ import { createData, createOperation } from "./utils";
 
 export function getLastEntity(statement: IStatement, index?: number) {
   if (!index) {
-    if (statement.data.entityType === "operation") return statement.data.result;
+    if (statement.data.entityType === "operation")
+      return getOperationResult(statement.data);
     return statement.data;
   }
   return statement.methods[index - 1].result;
 }
 
-export function getOperationResult(operation: IOperation) {
+export function getOperationResult(operation: IOperation): IData {
   let lastStatement = operation.statements.slice(-1)[0];
   return lastStatement
     ? getLastEntity(lastStatement, lastStatement.methods.length)
-    : {
-        ...operation.result,
-        value: TypeMapper[operation.result.type].defaultValue,
-      };
+    : createData("string", TypeMapper["string"].defaultValue);
 }
 
 export function updateStatementMethods(statement: IStatement) {
@@ -114,7 +112,6 @@ export function getReferenceOperation(
     ...operation,
     parameters: updatedParameters,
     statements: updatedStatements,
-    result: getOperationResult({ ...operation, statements: updatedStatements }),
     reference:
       reference?.name && currentReference
         ? { ...currentReference, name: reference?.name }
@@ -143,7 +140,7 @@ export function updateStatementReference(
       name: operationRef.name,
       entityType: "statement",
       data: operationRef,
-      result: operationRef.result,
+      result: getOperationResult(operationRef),
     } as IStatement;
   }
 

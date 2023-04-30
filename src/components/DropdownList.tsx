@@ -70,10 +70,10 @@ export function DropdownList({
       ...operation,
       id: data.id,
       parameters,
+      statements,
       reference: reference.name
         ? { id: reference.id, name: reference.name }
         : undefined,
-      result: getOperationResult({ ...operation, statements }),
     });
   }
 

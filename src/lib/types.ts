@@ -42,7 +42,6 @@ export interface IOperation {
   name: string;
   parameters: IStatement[];
   statements: IStatement[];
-  result: IData;
   handler?: (...args: IData[]) => IData;
   reference?: {
     id: string;
