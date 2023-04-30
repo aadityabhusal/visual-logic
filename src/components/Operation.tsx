@@ -1,4 +1,4 @@
-import { Plus } from "@styled-icons/fa-solid";
+import { AngleLeft, AngleRight, Plus } from "@styled-icons/fa-solid";
 import { Fragment, ReactNode } from "react";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
@@ -90,27 +90,53 @@ export function Operation({
       }
       head={
         operation.reference?.name ? (
-          <div style={{ display: "flex", gap: 4 }}>
-            {operation.reference?.name + "("}
-            {operation.parameters.map((parameter, i, paramList) => (
-              <Fragment key={i}>
-                <Statement
-                  key={i}
-                  statement={parameter}
-                  handleStatement={(statement) =>
-                    handleStatement({ statement })
+          <>
+            {operation.reference?.name}
+            {!operation.reference.call ? (
+              <AngleRight
+                size={12}
+                onClick={() =>
+                  operation.reference &&
+                  handleOperation({
+                    ...operation,
+                    reference: { ...operation.reference, call: true },
+                  })
+                }
+              />
+            ) : (
+              <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                {"("}
+                {operation.parameters.map((parameter, i, paramList) => (
+                  <Fragment key={i}>
+                    <Statement
+                      key={i}
+                      statement={parameter}
+                      handleStatement={(statement) =>
+                        handleStatement({ statement })
+                      }
+                      prevStatements={prevStatements}
+                      prevOperations={prevOperations}
+                      disableMethods={true}
+                      disableName={true}
+                      disableDelete={true}
+                    />
+                    {i + 1 < paramList.length && <span>,</span>}
+                  </Fragment>
+                ))}
+                {")"}
+                <AngleLeft
+                  size={12}
+                  onClick={() =>
+                    operation.reference &&
+                    handleOperation({
+                      ...operation,
+                      reference: { ...operation.reference, call: false },
+                    })
                   }
-                  prevStatements={prevStatements}
-                  prevOperations={prevOperations}
-                  disableMethods={true}
-                  disableName={true}
-                  disableDelete={true}
                 />
-                {i + 1 < paramList.length && <span>,</span>}
-              </Fragment>
-            ))}
-            {")"}
-          </div>
+              </div>
+            )}
+          </>
         ) : (
           <OperationWrapper>
             <OperationHead>
