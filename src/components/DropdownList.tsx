@@ -3,7 +3,7 @@ import { createOperation } from "../lib/utils";
 import { DropdownOption, DropdownOptions } from "../ui/Dropdown";
 import { TypeMapper } from "../lib/data";
 import { theme } from "../lib/theme";
-import { getOperationResult } from "../lib/update";
+import { getStatementResult, getOperationResult } from "../lib/update";
 import { updateStatements } from "../lib/update";
 
 export function DropdownList({
@@ -35,10 +35,11 @@ export function DropdownList({
 
   function selectStatement(statement: IStatement) {
     if (data.entityType === "operation") return;
+    let result = getStatementResult(statement);
     handleData({
       ...data,
-      type: statement.result.type,
-      value: statement.result.value,
+      type: result.type,
+      value: result.value,
       reference: statement.name
         ? { id: statement.id, name: statement.name }
         : undefined,
@@ -49,16 +50,13 @@ export function DropdownList({
     operation: IOperation,
     reference: IStatement | IOperation
   ) {
-    let defaultValue = (data: IData) => TypeMapper[data.type].defaultValue;
-
     const parameters = operation.parameters.map((param) => ({
       ...param,
       data: {
         ...param.data,
         isGeneric: false,
-        value: defaultValue(data as IData),
+        value: TypeMapper[(data as IData).type].defaultValue,
       },
-      result: { ...param.result, value: defaultValue(param.result) },
     }));
 
     let statements = updateStatements({
@@ -98,7 +96,10 @@ export function DropdownList({
       )}
       <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
       {prevStatements.map((statement) => {
-        if (!isGeneric && statement.result.type !== (data as IData).type)
+        if (
+          !isGeneric &&
+          getStatementResult(statement).type !== (data as IData).type
+        )
           return;
         return (
           <DropdownOption

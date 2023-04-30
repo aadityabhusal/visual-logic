@@ -2,30 +2,34 @@ import { TypeMapper } from "./data";
 import { IOperation, IMethod, IStatement, IData } from "./types";
 import { createData, createOperation } from "./utils";
 
-export function getLastEntity(statement: IStatement, index?: number) {
-  if (!index) {
-    if (statement.data.entityType === "operation")
-      return getOperationResult(statement.data);
-    return statement.data;
-  }
-  return statement.methods[index - 1].result;
+export function getStatementResult(
+  statement: IStatement,
+  index?: number
+): IData {
+  let data = statement.data;
+  if (index) return statement.methods[index - 1]?.result;
+  let lastStatement = statement.methods[statement.methods.length - 1];
+  if (lastStatement) return lastStatement.result;
+  return data.entityType === "operation" ? getOperationResult(data) : data;
 }
 
 export function getOperationResult(operation: IOperation): IData {
   let lastStatement = operation.statements.slice(-1)[0];
   return lastStatement
-    ? getLastEntity(lastStatement, lastStatement.methods.length)
+    ? getStatementResult(lastStatement)
     : createData("string", TypeMapper["string"].defaultValue);
 }
 
-export function updateStatementMethods(statement: IStatement) {
+export function updateStatementMethods(statement: IStatement): IStatement {
   let updatedMethods = statement.methods.reduce(
     (previousMethods, currentMethod, index) => {
-      let data = getLastEntity(
+      let data = getStatementResult(
         { ...statement, methods: previousMethods },
         index
       );
-      let parameters = currentMethod.parameters.map((item) => item.result);
+      let parameters = currentMethod.parameters.map((item) =>
+        getStatementResult(item)
+      );
       let { id: newId, ...result } = currentMethod.handler(data, ...parameters);
       let rest = { id: currentMethod.result.id, isGeneric: data.isGeneric };
 
@@ -36,13 +40,13 @@ export function updateStatementMethods(statement: IStatement) {
     },
     [] as IMethod[]
   );
-  let result = { ...statement, methods: updatedMethods };
-  return { ...result, result: getLastEntity(result, result.methods.length) };
+  return { ...statement, methods: updatedMethods };
 }
 
 function getReferenceData(data: IData, reference?: IStatement): IData {
   const currentReference = data.reference;
-  const isTypeChanged = reference && data.type !== reference.result.type;
+  const isTypeChanged =
+    reference && data.type !== getStatementResult(reference).type;
   const isReferenceRemoved =
     currentReference?.id &&
     (!reference ||
@@ -61,7 +65,7 @@ function getReferenceData(data: IData, reference?: IStatement): IData {
       reference?.name && currentReference
         ? { ...currentReference, name: reference?.name }
         : undefined,
-    value: reference?.result.value ?? data.value,
+    value: reference ? getStatementResult(reference).value : data.value,
     ...((isReferenceRemoved || isTypeChanged) && newData),
   };
 }
@@ -102,7 +106,7 @@ export function getReferenceOperation(
     updateStatementMethods(
       updateStatementReference(
         argument,
-        [...previousStatements, ...updatedParameters, ...operation.statements],
+        [...previousStatements, ...updatedParameters, ...statementList],
         previousOperations
       )
     )
@@ -140,7 +144,6 @@ export function updateStatementReference(
       name: operationRef.name,
       entityType: "statement",
       data: operationRef,
-      result: getOperationResult(operationRef),
     } as IStatement;
   }
 
@@ -176,7 +179,7 @@ export function updateStatements({
   changedStatement?: IStatement;
   removeStatement?: boolean;
   previousOperations?: IOperation[];
-}) {
+}): IStatement[] {
   let currentIndexFound = false;
   return statements.reduce((previousStatements, currentStatement) => {
     if (currentStatement.id === changedStatement?.id) {
@@ -205,7 +208,7 @@ export function updateOperations(
   operations: IOperation[],
   changedOperation: IOperation,
   removeOperation?: boolean
-) {
+): IOperation[] {
   let currentIndexFound = false;
   return operations.reduce((prevOperations, currentOperation) => {
     if (currentOperation.id === changedOperation.id) {
@@ -230,10 +233,6 @@ export function updateOperations(
         ...currentOperation,
         parameters: updatedStatements.slice(0, parameterLength),
         statements: updatedStatements.slice(parameterLength),
-        result: getOperationResult({
-          ...currentOperation,
-          statements: updatedStatements.slice(parameterLength),
-        }),
       },
     ];
   }, [] as IOperation[]);

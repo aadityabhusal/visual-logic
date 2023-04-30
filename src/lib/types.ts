@@ -32,7 +32,6 @@ export interface IStatement {
   entityType: "statement";
   data: IData | IOperation;
   methods: IMethod[];
-  result: IData;
   name?: string;
 }
 

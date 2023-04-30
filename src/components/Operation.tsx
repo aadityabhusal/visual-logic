@@ -80,7 +80,11 @@ export function Operation({
 
   return (
     <Dropdown
-      result={{ data: getOperationResult(operation) }}
+      result={{
+        ...(operation?.reference?.call
+          ? { data: getOperationResult(operation) }
+          : { type: "operation" }),
+      }}
       handleDelete={
         !disableDelete ? () => handleOperation(operation, true) : undefined
       }
@@ -112,7 +116,6 @@ export function Operation({
                       }
                       prevStatements={prevStatements}
                       prevOperations={prevOperations}
-                      disableMethods={true}
                       disableName={true}
                       disableDelete={true}
                     />

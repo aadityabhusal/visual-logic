@@ -2,7 +2,6 @@ import { nanoid } from "nanoid";
 import { TypeMapper } from "./data";
 import { methodsList } from "./methods";
 import { IData, IOperation, IMethod, IStatement, IType } from "./types";
-import { getOperationResult } from "./update";
 
 export function createData<T extends keyof IType>(
   type: T,
@@ -41,8 +40,6 @@ export function createStatement(
     id: nanoid(),
     entityType: "statement",
     data: newData,
-    result:
-      newData.entityType === "data" ? newData : getOperationResult(newData),
     methods: methods || [],
   };
 }

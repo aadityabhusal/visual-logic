@@ -2,7 +2,7 @@ import { Equals } from "@styled-icons/fa-solid";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
 import { IData, IMethod, IOperation, IStatement } from "../lib/types";
-import { updateStatementMethods, getLastEntity } from "../lib/update";
+import { updateStatementMethods, getStatementResult } from "../lib/update";
 import { createMethod } from "../lib/utils";
 import { Data } from "./Data";
 import { Input } from "./Input/Input";
@@ -31,7 +31,7 @@ export function Statement({
 
   function addMethod() {
     let method = createMethod({
-      data: getLastEntity(statement, statement.methods.length),
+      data: getStatementResult(statement),
     });
     let methods = [...statement.methods, method];
     handleStatement(updateStatementMethods({ ...statement, methods }));
@@ -41,7 +41,7 @@ export function Statement({
     if (remove) handleStatement(statement, remove);
     else {
       let methods = [...statement.methods];
-      let statementData = getLastEntity(statement);
+      let statementData = statement.data as IData;
       if (statementData.type !== data.type) methods = [];
       handleStatement(updateStatementMethods({ ...statement, data, methods }));
     }
@@ -55,7 +55,7 @@ export function Statement({
   function handleMethod(method: IMethod, index: number, remove?: boolean) {
     let methods = [...statement.methods];
     if (remove) {
-      let data = getLastEntity(statement, index);
+      let data = getStatementResult(statement, index);
       if (method.result.type !== data.type) methods.splice(index);
       else methods.splice(index, 1);
     } else {
@@ -136,7 +136,7 @@ export function Statement({
         />
       )}
       {statement.methods.map((method, i, methods) => {
-        let data = getLastEntity(statement, i);
+        let data = getStatementResult(statement, i);
         return (
           <Method
             key={method.id}
