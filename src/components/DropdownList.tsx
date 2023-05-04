@@ -36,14 +36,34 @@ export function DropdownList({
   function selectStatement(statement: IStatement) {
     if (data.entityType === "operation") return;
     let result = getStatementResult(statement);
-    handleData({
-      ...data,
-      type: result.type,
-      value: result.value,
-      reference: statement.name
-        ? { id: statement.id, name: statement.name }
-        : undefined,
-    });
+    if (result.entityType === "operation") {
+      let operationResult = getOperationResult(result);
+      if (operationResult.entityType === "operation") {
+        selectOperations(operationResult, {
+          ...operationResult,
+          id: statement.id,
+          name: statement.name || "",
+        });
+      } else {
+        handleData({
+          ...data,
+          type: operationResult.type,
+          value: operationResult.value,
+          reference: statement.name
+            ? { id: statement.id, name: statement.name }
+            : undefined,
+        });
+      }
+    } else {
+      handleData({
+        ...data,
+        type: result.type,
+        value: result.value,
+        reference: statement.name
+          ? { id: statement.id, name: statement.name }
+          : undefined,
+      });
+    }
   }
 
   function selectOperations(
@@ -68,7 +88,7 @@ export function DropdownList({
       ...operation,
       id: data.id,
       parameters,
-      statements,
+      statements: statements.slice(prevStatements.length + parameters.length),
       reference: reference.name
         ? { id: reference.id, name: reference.name }
         : undefined,
@@ -96,17 +116,21 @@ export function DropdownList({
       )}
       <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
       {prevStatements.map((statement) => {
-        if (
-          !isGeneric &&
-          getStatementResult(statement).type !== (data as IData).type
-        )
-          return;
+        let result = getStatementResult(statement);
+        let check =
+          result.entityType === "operation"
+            ? result.entityType !== data.entityType
+            : result.type !== (data as IData).type;
+
+        if (!isGeneric && check) return;
         return (
           <DropdownOption
             key={statement.id}
             onClick={() =>
               statement.data.entityType === "operation"
-                ? selectOperations(statement.data, statement)
+                ? statement.data.reference?.call
+                  ? selectStatement(statement)
+                  : selectOperations(statement.data, statement)
                 : selectStatement(statement)
             }
             selected={statement.id === data.reference?.id}
@@ -116,8 +140,12 @@ export function DropdownList({
         );
       })}
       {prevOperations.map((operation) => {
-        let operationResult = getOperationResult(operation);
-        if (!isGeneric && operationResult.type !== (data as IData).type) return;
+        let result = getOperationResult(operation);
+        let check =
+          result.entityType === "operation"
+            ? result.entityType !== data.entityType
+            : result.type !== (data as IData).type;
+        if (!isGeneric && check) return;
         return (
           <DropdownOption
             key={operation.id}

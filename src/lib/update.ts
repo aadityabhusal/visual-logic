@@ -5,15 +5,15 @@ import { createData, createOperation } from "./utils";
 export function getStatementResult(
   statement: IStatement,
   index?: number
-): IData {
+): IData | IOperation {
   let data = statement.data;
   if (index) return statement.methods[index - 1]?.result;
   let lastStatement = statement.methods[statement.methods.length - 1];
   if (lastStatement) return lastStatement.result;
-  return data.entityType === "operation" ? getOperationResult(data) : data;
+  return data;
 }
 
-export function getOperationResult(operation: IOperation): IData {
+export function getOperationResult(operation: IOperation) {
   let lastStatement = operation.statements.slice(-1)[0];
   return lastStatement
     ? getStatementResult(lastStatement)
@@ -43,15 +43,23 @@ export function updateStatementMethods(statement: IStatement): IStatement {
   return { ...statement, methods: updatedMethods };
 }
 
-function getReferenceData(data: IData, reference?: IStatement): IData {
+function getReferenceData(
+  data: IData,
+  reference?: IStatement
+): IData | IOperation {
   const currentReference = data.reference;
+  const referenceResult = reference && getStatementResult(reference);
   const isTypeChanged =
-    reference && data.type !== getStatementResult(reference).type;
+    reference &&
+    referenceResult?.entityType === "data" &&
+    data.type !== referenceResult.type;
+
   const isReferenceRemoved =
     currentReference?.id &&
     (!reference ||
       !reference.name ||
-      reference.data.entityType !== data.entityType);
+      (reference.data.entityType !== "data" &&
+        !reference?.data.reference?.call));
 
   const { id: newId, ...newData } = createData(
     data.type,
@@ -59,13 +67,26 @@ function getReferenceData(data: IData, reference?: IStatement): IData {
     data.isGeneric
   );
 
+  let res =
+    referenceResult?.entityType === "operation"
+      ? ({
+          entityType: "operation",
+          parameters: referenceResult.parameters,
+          statements: referenceResult.statements,
+          name: referenceResult.name,
+        } as IOperation)
+      : ({
+          entityType: "data",
+          value: reference ? referenceResult?.value : data.value,
+        } as IData);
+
   return {
     ...data,
     reference:
       reference?.name && currentReference
         ? { ...currentReference, name: reference?.name }
         : undefined,
-    value: reference ? getStatementResult(reference).value : data.value,
+    ...res,
     ...((isReferenceRemoved || isTypeChanged) && newData),
   };
 }

@@ -77,12 +77,12 @@ export function Operation({
       parameters: [...operation.parameters, parameter],
     });
   }
-
+  const result = getOperationResult(operation);
   return (
     <Dropdown
       result={{
-        ...(operation?.reference?.call
-          ? { data: getOperationResult(operation) }
+        ...(operation?.reference?.call && result.entityType === "data"
+          ? { data: result }
           : { type: "operation" }),
       }}
       handleDelete={
