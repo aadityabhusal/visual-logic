@@ -117,9 +117,13 @@ export function DropdownList({
       <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
       {prevStatements.map((statement) => {
         let result = getStatementResult(statement);
+        let operationResult =
+          result.entityType === "operation" && getOperationResult(result);
         let check =
           result.entityType === "operation"
-            ? result.entityType !== data.entityType
+            ? operationResult && operationResult.entityType === "data"
+              ? operationResult.type !== (data as IData).type
+              : result.entityType !== data.entityType
             : result.type !== (data as IData).type;
 
         if (!isGeneric && check) return;

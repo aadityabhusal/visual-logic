@@ -43,23 +43,24 @@ export function updateStatementMethods(statement: IStatement): IStatement {
   return { ...statement, methods: updatedMethods };
 }
 
-function getReferenceData(
-  data: IData,
-  reference?: IStatement
-): IData | IOperation {
+function getReferenceData(data: IData, reference?: IStatement): IData {
   const currentReference = data.reference;
-  const referenceResult = reference && getStatementResult(reference);
+  let referenceResult = reference && getStatementResult(reference);
+
+  referenceResult =
+    referenceResult?.entityType === "operation"
+      ? getOperationResult(referenceResult)
+      : referenceResult;
+
   const isTypeChanged =
     reference &&
-    referenceResult?.entityType === "data" &&
-    data.type !== referenceResult.type;
-
+    (referenceResult?.entityType !== "data" ||
+      data.type !== referenceResult?.type);
   const isReferenceRemoved =
     currentReference?.id &&
     (!reference ||
       !reference.name ||
-      (reference.data.entityType !== "data" &&
-        !reference?.data.reference?.call));
+      reference.data.entityType !== data.entityType);
 
   const { id: newId, ...newData } = createData(
     data.type,
@@ -67,26 +68,16 @@ function getReferenceData(
     data.isGeneric
   );
 
-  let res =
-    referenceResult?.entityType === "operation"
-      ? ({
-          entityType: "operation",
-          parameters: referenceResult.parameters,
-          statements: referenceResult.statements,
-          name: referenceResult.name,
-        } as IOperation)
-      : ({
-          entityType: "data",
-          value: reference ? referenceResult?.value : data.value,
-        } as IData);
-
   return {
     ...data,
     reference:
       reference?.name && currentReference
         ? { ...currentReference, name: reference?.name }
         : undefined,
-    ...res,
+    value:
+      referenceResult?.entityType === "data"
+        ? referenceResult?.value
+        : data.value,
     ...((isReferenceRemoved || isTypeChanged) && newData),
   };
 }
@@ -166,6 +157,13 @@ export function updateStatementReference(
       entityType: "statement",
       data: operationRef,
     } as IStatement;
+  }
+
+  if (
+    reference?.data.entityType === "operation" &&
+    reference.data.reference?.call
+  ) {
+    reference = { ...reference, data: getOperationResult(reference.data) };
   }
 
   return {
