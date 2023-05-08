@@ -1,6 +1,6 @@
 import { TypeMapper } from "./data";
 import { IOperation, IMethod, IStatement, IData } from "./types";
-import { createData, createOperation } from "./utils";
+import { createData, createOperation, createStatement } from "./utils";
 
 export function getStatementResult(
   statement: IStatement,
@@ -10,7 +10,9 @@ export function getStatementResult(
   if (index) return statement.methods[index - 1]?.result;
   let lastStatement = statement.methods[statement.methods.length - 1];
   if (lastStatement) return lastStatement.result;
-  return data;
+  return data.entityType === "operation" && data.reference?.call
+    ? getOperationResult(data)
+    : data;
 }
 
 export function getOperationResult(operation: IOperation) {
@@ -47,20 +49,13 @@ function getReferenceData(data: IData, reference?: IStatement): IData {
   const currentReference = data.reference;
   let referenceResult = reference && getStatementResult(reference);
 
-  referenceResult =
-    referenceResult?.entityType === "operation"
-      ? getOperationResult(referenceResult)
-      : referenceResult;
-
   const isTypeChanged =
     reference &&
     (referenceResult?.entityType !== "data" ||
       data.type !== referenceResult?.type);
   const isReferenceRemoved =
     currentReference?.id &&
-    (!reference ||
-      !reference.name ||
-      reference.data.entityType !== data.entityType);
+    (!reference || !reference.name || referenceResult?.entityType !== "data");
 
   const { id: newId, ...newData } = createData(
     data.type,
@@ -89,19 +84,20 @@ export function getReferenceOperation(
   reference?: IStatement
 ): IOperation {
   const currentReference = operation.reference;
+  let referenceResult = reference && getStatementResult(reference);
   let isReferenceRemoved =
     currentReference?.id &&
     (!reference ||
       !reference.name ||
-      reference.data.entityType !== operation.entityType);
+      referenceResult?.entityType !== "operation");
 
   const { id: newId, ...newOperation } = createOperation("");
 
   let parameterList = operation.parameters;
   let statementList = operation.statements;
-  if (reference?.data.entityType === "operation") {
-    parameterList = reference?.data.parameters;
-    statementList = reference?.data.statements;
+  if (referenceResult?.entityType === "operation") {
+    parameterList = referenceResult?.parameters;
+    statementList = referenceResult?.statements;
   }
 
   let updatedParameters = parameterList.map((parameter) => {
@@ -142,29 +138,12 @@ export function updateStatementReference(
   previousOperations?: IOperation[]
 ): IStatement {
   const currentReference = currentStatement.data.reference;
-  let reference = previousStatements.find(
-    (item) => item.id === currentReference?.id
-  );
-
-  // Should this be done in this way?
-  let operationRef = previousOperations?.find(
-    (item) => item.id === currentReference?.id
-  );
-  if (operationRef) {
-    reference = {
-      id: operationRef.id,
-      name: operationRef.name,
-      entityType: "statement",
-      data: operationRef,
-    } as IStatement;
-  }
-
-  if (
-    reference?.data.entityType === "operation" &&
-    reference.data.reference?.call
-  ) {
-    reference = { ...reference, data: getOperationResult(reference.data) };
-  }
+  let reference = [
+    ...previousStatements,
+    ...(previousOperations?.map((item) =>
+      createStatement({ id: item.id, name: item.name, data: item })
+    ) || []),
+  ].find((item) => item.id === currentReference?.id);
 
   return {
     ...currentStatement,

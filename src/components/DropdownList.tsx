@@ -37,23 +37,11 @@ export function DropdownList({
     if (data.entityType === "operation") return;
     let result = getStatementResult(statement);
     if (result.entityType === "operation") {
-      let operationResult = getOperationResult(result);
-      if (operationResult.entityType === "operation") {
-        selectOperations(operationResult, {
-          ...operationResult,
-          id: statement.id,
-          name: statement.name || "",
-        });
-      } else {
-        handleData({
-          ...data,
-          type: operationResult.type,
-          value: operationResult.value,
-          reference: statement.name
-            ? { id: statement.id, name: statement.name }
-            : undefined,
-        });
-      }
+      selectOperations(result, {
+        ...result,
+        id: statement.id,
+        name: statement.name || "",
+      });
     } else {
       handleData({
         ...data,
@@ -117,13 +105,9 @@ export function DropdownList({
       <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
       {prevStatements.map((statement) => {
         let result = getStatementResult(statement);
-        let operationResult =
-          result.entityType === "operation" && getOperationResult(result);
         let check =
           result.entityType === "operation"
-            ? operationResult && operationResult.entityType === "data"
-              ? operationResult.type !== (data as IData).type
-              : result.entityType !== data.entityType
+            ? result.entityType !== data.entityType
             : result.type !== (data as IData).type;
 
         if (!isGeneric && check) return;
@@ -131,10 +115,8 @@ export function DropdownList({
           <DropdownOption
             key={statement.id}
             onClick={() =>
-              statement.data.entityType === "operation"
-                ? statement.data.reference?.call
-                  ? selectStatement(statement)
-                  : selectOperations(statement.data, statement)
+              result.entityType === "operation"
+                ? selectOperations(result, statement)
                 : selectStatement(statement)
             }
             selected={statement.id === data.reference?.id}

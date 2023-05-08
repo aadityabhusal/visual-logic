@@ -31,16 +31,19 @@ export function createOperation(name?: string): IOperation {
   };
 }
 
-export function createStatement(
-  data?: IStatement["data"],
-  methods?: IMethod[]
-): IStatement {
-  let newData = data || createData("string", "", true);
+export function createStatement(props?: {
+  id?: string;
+  name?: string;
+  data?: IStatement["data"];
+  methods?: IMethod[];
+}): IStatement {
+  let newData = props?.data || createData("string", "", true);
   return {
-    id: nanoid(),
+    id: props?.id || nanoid(),
+    name: props?.name,
     entityType: "statement",
     data: newData,
-    methods: methods || [],
+    methods: props?.methods || [],
   };
 }
 
