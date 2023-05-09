@@ -1,25 +1,28 @@
 import styled from "styled-components";
-import { IData, IMethod, IStatement } from "../lib/types";
+import { IData, IMethod, IOperation, IStatement } from "../lib/types";
 import { Statement } from "./Statement";
-import { DropdownOption, DropdownOptions } from "./Dropdown";
-import { Dropdown } from "./Dropdown";
+import { DropdownOption, DropdownOptions } from "../ui/Dropdown";
+import { Dropdown } from "../ui/Dropdown";
 import { createMethod, getFilteredMethods } from "../lib/utils";
 import { theme } from "../lib/theme";
+import { getStatementResult } from "../lib/update";
 
 interface IProps {
   data: IData;
   method: IMethod;
   handleMethod: (method: IMethod, remove?: boolean) => void;
-  path: string[];
   addMethod?: () => void;
+  prevStatements: IStatement[];
+  prevOperations: IOperation[];
 }
 
 export function Method({
   data,
   method,
   handleMethod,
-  path,
   addMethod,
+  prevStatements,
+  prevOperations,
 }: IProps) {
   function handleDropdown(name: string) {
     if (method.name === name) return;
@@ -29,7 +32,10 @@ export function Method({
   function handleParameter(item: IStatement, index: number) {
     let parameters = [...method.parameters];
     parameters[index] = item;
-    let result = method.handler(data, ...parameters.map((item) => item.result));
+    let result = method.handler(
+      data,
+      ...parameters.map((item) => getStatementResult(item))
+    );
     handleMethod({
       ...method,
       parameters,
@@ -40,7 +46,11 @@ export function Method({
   return (
     <MethodWrapper>
       <Dropdown
-        result={{ data: method.result }}
+        result={{
+          ...(method.result.entityType === "data"
+            ? { data: method.result }
+            : { type: "operation" }),
+        }}
         handleDelete={() => handleMethod(method, true)}
         addMethod={addMethod}
         head={
@@ -57,7 +67,8 @@ export function Method({
                   handleStatement={(val) => val && handleParameter(val, i)}
                   disableDelete={true}
                   disableName={true}
-                  path={path}
+                  prevStatements={prevStatements}
+                  prevOperations={prevOperations}
                 />
                 {i < arr.length - 1 ? <span>{", "}</span> : null}
               </span>

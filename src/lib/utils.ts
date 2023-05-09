@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import { TypeMapper } from "./data";
 import { methodsList } from "./methods";
 import { IData, IOperation, IMethod, IStatement, IType } from "./types";
+import { getOperationResult } from "./update";
 
 export function createData<T extends keyof IType>(
   type: T,
@@ -18,28 +19,46 @@ export function createData<T extends keyof IType>(
   };
 }
 
-export function createOperation(): IOperation {
+export function createOperation(name?: string): IOperation {
   let id = nanoid();
   return {
     id,
     entityType: "operation",
     handler: undefined,
-    name: "func_" + id.slice(-4),
+    name: name ?? "f_" + id.slice(-4),
     parameters: [],
-    result: createData("string", ""),
     statements: [],
+    reference: undefined,
   };
 }
 
-export function createStatement(data?: IData, methods?: IMethod[]): IStatement {
-  let newData = data || createData("string", "", true);
+export function createStatement(props?: {
+  id?: string;
+  name?: string;
+  data?: IStatement["data"];
+  methods?: IMethod[];
+}): IStatement {
+  let newData = props?.data || createData("string", "", true);
   return {
-    id: nanoid(),
+    id: props?.id || nanoid(),
+    name: props?.name,
     entityType: "statement",
     data: newData,
-    result: newData,
-    methods: methods || [],
+    methods: props?.methods || [],
   };
+}
+
+export function isSameType(
+  first: IStatement["data"],
+  second: IStatement["data"]
+): boolean {
+  if (first.entityType === "operation") {
+    return isSameType(getOperationResult(first), second);
+  } else if (second.entityType === "operation") {
+    return isSameType(first, getOperationResult(second));
+  } else {
+    return first.type === second.type;
+  }
 }
 
 export function getFilteredMethods(data: IData) {
@@ -47,8 +66,9 @@ export function getFilteredMethods(data: IData) {
     let parameters = item.parameters.map((p) =>
       createData(p.type, TypeMapper[p.type].defaultValue, p.isGeneric)
     );
-    let resultType = item.handler(data, ...parameters).type; // Optimize here
-    return data.isGeneric || data.type === resultType;
+    return (
+      data.isGeneric || isSameType(data, item.handler(data, ...parameters))
+    );
   });
 }
 
@@ -65,7 +85,7 @@ export function createMethod({ data, name }: { data: IData; name?: string }) {
     id: nanoid(),
     entityType: "method",
     name: newMethod.name,
-    parameters: parameters.map((item) => createStatement(item)),
+    parameters: parameters.map((item) => createStatement({ data: item })),
     handler: newMethod.handler,
     result: { ...result, isGeneric: data.isGeneric },
   } as IMethod;

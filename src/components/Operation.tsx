@@ -1,28 +1,34 @@
-import { Plus } from "@styled-icons/fa-solid";
-import { Fragment } from "react";
+import { AngleLeft, AngleRight, Plus } from "@styled-icons/fa-solid";
+import { Fragment, ReactNode } from "react";
 import styled from "styled-components";
-import { useStore } from "../lib/store";
 import { theme } from "../lib/theme";
 import { IOperation, IStatement } from "../lib/types";
 import { getOperationResult, updateStatements } from "../lib/update";
 import { createStatement } from "../lib/utils";
 import { Input } from "./Input/Input";
 import { Statement } from "./Statement";
+import { Dropdown } from "../ui/Dropdown";
 
 export function Operation({
   operation,
   handleOperation,
+  prevStatements,
+  prevOperations,
+  disableDelete,
+  children,
 }: {
   operation: IOperation;
-  handleOperation(operation: IOperation): void;
+  handleOperation(operation: IOperation, remove?: boolean): void;
+  prevStatements: IStatement[];
+  prevOperations: IOperation[];
+  disableDelete?: boolean;
+  children?: ReactNode;
 }) {
-  const operations = useStore((state) => state.operations);
-
   function handleOperationProps(
     key: keyof IOperation,
     value: IOperation[typeof key]
   ) {
-    if (key === "name" && operations.find((item) => item.name === value))
+    if (key === "name" && prevOperations.find((item) => item.name === value))
       return;
     handleOperation({ ...operation, [key]: value });
   }
@@ -42,20 +48,21 @@ export function Operation({
     parameterLength?: number;
   }) {
     let updatedStatements = updateStatements({
-      statements: [...operation.parameters, ...operation.statements],
+      statements: [
+        ...prevStatements,
+        ...operation.parameters,
+        ...operation.statements,
+      ],
       changedStatement: statement,
       removeStatement: remove,
-      previousOperations: operations,
+      previousOperations: prevOperations,
     });
 
+    let prevLength = prevStatements.length + parameterLength;
     handleOperation({
       ...operation,
-      parameters: updatedStatements.slice(0, parameterLength),
-      statements: updatedStatements.slice(parameterLength),
-      result: getOperationResult({
-        ...operation,
-        statements: updatedStatements,
-      }),
+      parameters: updatedStatements.slice(prevStatements.length, prevLength),
+      statements: updatedStatements.slice(prevLength),
     });
   }
 
@@ -70,60 +77,148 @@ export function Operation({
       parameters: [...operation.parameters, parameter],
     });
   }
-
+  const result = getOperationResult(operation);
   return (
-    <OperationWrapper>
-      <OperationHead>
-        <Input
-          data={{
-            id: "",
-            type: "string",
-            value: operation.name,
-            entityType: "data",
-          }}
-          handleData={(data) =>
-            handleOperationProps("name", data.value as string)
-          }
-          color={theme.color.variable}
-          noQuotes
-        />
-        <span>{"("}</span>
-        {operation.parameters.map((parameter, i, paramList) => (
-          <Fragment key={i}>
-            <Statement
-              key={i}
-              statement={parameter}
-              handleStatement={(statement, remove) =>
-                handleStatement({
-                  statement,
-                  remove,
-                  parameterLength: paramList.length + (remove ? -1 : 0),
-                })
-              }
-              path={[operation.id]}
-              disableMethods={true}
+    <Dropdown
+      result={{
+        ...(operation?.reference?.call && result.entityType === "data"
+          ? { data: result }
+          : { type: "operation" }),
+      }}
+      handleDelete={
+        !disableDelete ? () => handleOperation(operation, true) : undefined
+      }
+      head={
+        operation.reference?.name ? (
+          <>
+            <Input
+              data={{
+                id: "",
+                type: "string",
+                value: operation.reference?.name,
+                entityType: "data",
+              }}
+              handleData={() => {}}
+              disabled={true}
+              color={theme.color.variable}
+              noQuotes
             />
-            {i + 1 < paramList.length && <span>,</span>}
-          </Fragment>
-        ))}
-        <Plus size={10} style={{ cursor: "pointer" }} onClick={addParameter} />
-        <span>{") {"}</span>
-      </OperationHead>
-      <OperationBody>
-        {operation.statements.map((statement, i) => (
-          <Statement
-            key={statement.id}
-            statement={statement}
-            handleStatement={(statement, remove) =>
-              handleStatement({ statement, remove })
-            }
-            path={[operation.id]}
-          />
-        ))}
-        <Plus size={10} style={{ cursor: "pointer" }} onClick={addStatement} />
-      </OperationBody>
-      <div>{"}"}</div>
-    </OperationWrapper>
+            {!operation.reference.call ? (
+              <AngleRight
+                size={12}
+                onClick={() =>
+                  operation.reference &&
+                  handleOperation({
+                    ...operation,
+                    reference: { ...operation.reference, call: true },
+                  })
+                }
+              />
+            ) : (
+              <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                {"("}
+                {operation.parameters.map((parameter, i, paramList) => (
+                  <Fragment key={i}>
+                    <Statement
+                      key={i}
+                      statement={parameter}
+                      handleStatement={(statement) =>
+                        handleStatement({ statement })
+                      }
+                      prevStatements={prevStatements}
+                      prevOperations={prevOperations}
+                      disableName={true}
+                      disableDelete={true}
+                    />
+                    {i + 1 < paramList.length && <span>,</span>}
+                  </Fragment>
+                ))}
+                {")"}
+                <AngleLeft
+                  size={12}
+                  onClick={() =>
+                    operation.reference &&
+                    handleOperation({
+                      ...operation,
+                      reference: { ...operation.reference, call: false },
+                    })
+                  }
+                />
+              </div>
+            )}
+          </>
+        ) : (
+          <OperationWrapper>
+            <OperationHead>
+              <Input
+                data={{
+                  id: "",
+                  type: "string",
+                  value: operation.name,
+                  entityType: "data",
+                }}
+                handleData={(data) =>
+                  handleOperationProps("name", data.value as string)
+                }
+                color={theme.color.variable}
+                noQuotes
+              />
+              <span>{"("}</span>
+              {operation.parameters.map((parameter, i, paramList) => (
+                <Fragment key={i}>
+                  <Statement
+                    key={i}
+                    statement={parameter}
+                    handleStatement={(statement, remove) =>
+                      handleStatement({
+                        statement,
+                        remove,
+                        parameterLength: paramList.length + (remove ? -1 : 0),
+                      })
+                    }
+                    disableMethods={true}
+                    prevStatements={[]}
+                    prevOperations={[]}
+                  />
+                  {i + 1 < paramList.length && <span>,</span>}
+                </Fragment>
+              ))}
+              <Plus
+                size={10}
+                style={{ cursor: "pointer" }}
+                onClick={addParameter}
+              />
+              <span>{") {"}</span>
+            </OperationHead>
+            <OperationBody>
+              {operation.statements.map((statement, i) => (
+                <Statement
+                  key={statement.id}
+                  statement={statement}
+                  handleStatement={(statement, remove) =>
+                    handleStatement({ statement, remove })
+                  }
+                  prevStatements={[
+                    ...prevStatements,
+                    ...operation.parameters,
+                    ...operation.statements.slice(0, i),
+                  ]}
+                  prevOperations={prevOperations}
+                />
+              ))}
+              <Plus
+                size={10}
+                style={{ cursor: "pointer" }}
+                onClick={addStatement}
+              />
+            </OperationBody>
+            <div>{"}"}</div>
+          </OperationWrapper>
+        )
+      }
+    >
+      {children}
+    </Dropdown>
   );
 }
 

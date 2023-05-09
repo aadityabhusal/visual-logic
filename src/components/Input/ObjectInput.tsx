@@ -9,9 +9,8 @@ import { Input } from "./Input";
 export interface IObjectInput {
   data: IData;
   handleData: (data: IData) => void;
-  path: string[];
 }
-export function ObjectInput({ data, handleData, path }: IObjectInput) {
+export function ObjectInput({ data, handleData }: IObjectInput) {
   function addToObject() {
     if (data.value instanceof Map && !data.value.has("")) {
       let newMap = new Map(data.value);
@@ -83,7 +82,6 @@ export function ObjectInput({ data, handleData, path }: IObjectInput) {
                   handleData={(val, remove) =>
                     handleUpdate(arr, i, val, remove)
                   }
-                  path={path}
                 />
                 {i < arr.length - 1 ? <span>{", "}</span> : null}
               </div>

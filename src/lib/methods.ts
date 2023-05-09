@@ -1,10 +1,10 @@
-import { IData, IType } from "./types";
+import { IData, IStatement, IType } from "./types";
 import { createData } from "./utils";
 
 type IMethodList = {
   name: string;
   parameters: { type: keyof IType; isGeneric?: boolean }[];
-  handler(...args: IData[]): IData;
+  handler(...args: IStatement["data"][]): IStatement["data"];
 };
 
 export const comparisonMethods: IMethodList[] = [

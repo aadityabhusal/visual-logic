@@ -8,10 +8,9 @@ import { theme } from "../../lib/theme";
 export interface IArrayInput {
   data: IData;
   handleData: (data: IData) => void;
-  path: string[];
 }
 
-export function ArrayInput({ data, handleData, path }: IArrayInput) {
+export function ArrayInput({ data, handleData }: IArrayInput) {
   function addToArray() {
     Array.isArray(data.value) &&
       handleData({
@@ -46,7 +45,6 @@ export function ArrayInput({ data, handleData, path }: IArrayInput) {
                 <Data
                   data={item}
                   handleData={(val, remove) => handleUpdate(val, i, remove)}
-                  path={path}
                 />
                 {i < arr.length - 1 ? (
                   <span style={{ marginRight: "4px" }}>{", "}</span>

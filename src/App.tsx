@@ -13,7 +13,10 @@ function App() {
     state.setOperation,
     state.currentId,
   ]);
-  const currentOperation = operations.find((item) => item.id === currentId);
+  const currentOperationIndex = operations.findIndex(
+    (item) => item.id === currentId
+  );
+  const currentOperation = operations[currentOperationIndex];
   const [toggleCode, setToggleCode] = useState(false);
 
   return (
@@ -25,6 +28,8 @@ function App() {
             <Operation
               operation={currentOperation}
               handleOperation={(operation) => setOperation(operation)}
+              prevStatements={[]}
+              prevOperations={operations.slice(0, currentOperationIndex + 1)}
             />
           ) : (
             <div>Select an operation</div>

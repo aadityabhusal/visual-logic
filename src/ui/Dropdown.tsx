@@ -3,12 +3,12 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
 import { IData } from "../lib/types";
-import { ParseData } from "./Parse/ParseData";
+import { ParseData } from "../components/Parse/ParseData";
 
 interface IProps {
   head?: ReactNode;
   children?: ReactNode;
-  result: { data: IData };
+  result: { data?: IData; type?: string };
   handleDelete?: () => void;
   addMethod?: () => void;
 }
@@ -41,18 +41,20 @@ export function Dropdown({
       border={display}
       onMouseOver={(e) => {
         e.stopPropagation();
-        setDisplay(true);
+        children && setDisplay(true);
       }}
       onMouseOut={(e) => {
         e.stopPropagation();
-        !content && setDisplay(false);
+        children && !content && setDisplay(false);
       }}
       style={{ zIndex: content ? 999 : display ? 1000 : "initial" }}
     >
       <div style={{ display: "flex", alignItems: "center" }}>{head}</div>
       {display ? (
         <DropdownHead onClick={() => setContent((c) => !c)}>
-          <DropdownReturnType>{result.data.type}</DropdownReturnType>
+          <DropdownReturnType>
+            {result.type || result.data?.type}
+          </DropdownReturnType>
           {addMethod && (
             <Plus
               size={9}
@@ -75,7 +77,7 @@ export function Dropdown({
       ) : null}
       {content ? (
         <DropdownContainer>{children}</DropdownContainer>
-      ) : display ? (
+      ) : display && result.data ? (
         <DropdownContainer>
           <ParseData data={result.data} showData={true} />
         </DropdownContainer>
