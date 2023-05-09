@@ -91,7 +91,18 @@ export function Operation({
       head={
         operation.reference?.name ? (
           <>
-            {operation.reference?.name}
+            <Input
+              data={{
+                id: "",
+                type: "string",
+                value: operation.reference?.name,
+                entityType: "data",
+              }}
+              handleData={() => {}}
+              disabled={true}
+              color={theme.color.variable}
+              noQuotes
+            />
             {!operation.reference.call ? (
               <AngleRight
                 size={12}

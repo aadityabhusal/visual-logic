@@ -4,7 +4,23 @@ import { ParseStatement } from "./ParseStatement";
 import { Comma, Reserved, Variable } from "./styles";
 
 export function ParseOperation({ operation }: { operation: IOperation }) {
-  return (
+  return operation.reference ? (
+    <>
+      <Variable>{operation.reference.name}</Variable>
+      {operation.reference.call && (
+        <>
+          {"("}
+          {operation.parameters?.map((item, i, paramList) => (
+            <Fragment key={item.id}>
+              <ParseStatement statement={item} />
+              {i + 1 < paramList.length && <span>,</span>}
+            </Fragment>
+          ))}
+          {")"}
+        </>
+      )}
+    </>
+  ) : (
     <div>
       <div style={{ display: "flex", gap: "0.5rem" }}>
         <Reserved>function</Reserved> {operation.name} {`(`}
@@ -18,14 +34,14 @@ export function ParseOperation({ operation }: { operation: IOperation }) {
       </div>
       <div style={{ paddingLeft: "1rem" }}>
         {operation.statements.map((statement, i, statements) => (
-          <div style={{ display: "flex" }}>
+          <div key={i} style={{ display: "flex" }}>
             {i + 1 === statements.length ? (
               <Reserved style={{ marginRight: 8 }}>return</Reserved>
             ) : (
               <ParseVariable name={statement.name} />
             )}
             <ParseStatement key={i} statement={statement} />
-            <span>;</span>
+            <span style={{ alignSelf: "flex-end" }}>;</span>
           </div>
         ))}
       </div>

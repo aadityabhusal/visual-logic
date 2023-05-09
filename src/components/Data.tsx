@@ -31,38 +31,30 @@ export function Data({
         addMethod={addMethod}
         head={
           data.reference?.name ? (
-            <>
-              <Input
-                data={{
-                  id: "",
-                  type: "string",
-                  value: data.reference?.name,
-                  entityType: "data",
-                }}
-                handleData={() => {}}
-                disabled={true}
-                color={theme.color.variable}
-                noQuotes
-              />
-            </>
+            <Input
+              data={{
+                id: "",
+                type: "string",
+                value: data.reference?.name,
+                entityType: "data",
+              }}
+              handleData={() => {}}
+              disabled={true}
+              color={theme.color.variable}
+              noQuotes
+            />
+          ) : data.type === "array" ? (
+            <ArrayInput data={data} handleData={handleData} />
+          ) : data.value instanceof Map ? (
+            <ObjectInput data={data} handleData={handleData} />
+          ) : typeof data.value === "boolean" ? (
+            <BooleanInput data={data} handleData={handleData} />
           ) : (
-            <>
-              {data.type === "array" ? (
-                <ArrayInput data={data} handleData={handleData} />
-              ) : data.value instanceof Map ? (
-                <ObjectInput data={data} handleData={handleData} />
-              ) : typeof data.value === "boolean" ? (
-                <BooleanInput data={data} handleData={handleData} />
-              ) : (
-                <Input
-                  data={data}
-                  handleData={handleData}
-                  color={
-                    theme.color[data.type === "number" ? "number" : "string"]
-                  }
-                />
-              )}
-            </>
+            <Input
+              data={data}
+              handleData={handleData}
+              color={theme.color[data.type === "number" ? "number" : "string"]}
+            />
           )
         }
       >

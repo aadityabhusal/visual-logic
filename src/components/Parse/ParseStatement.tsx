@@ -2,11 +2,16 @@ import { Fragment } from "react";
 import { IStatement } from "../../lib/types";
 import { ParseData } from "./ParseData";
 import { Comma, Method } from "./styles";
+import { ParseOperation } from "./ParseOperation";
 
 export function ParseStatement({ statement }: { statement: IStatement }) {
   return (
     <div style={{ display: "flex" }}>
-      <ParseData data={statement.data} />
+      {statement.data.entityType === "data" ? (
+        <ParseData data={statement.data} />
+      ) : (
+        <ParseOperation operation={statement.data} />
+      )}
       <div style={{ display: "flex" }}>
         {statement.methods.map((method, i) => (
           <Fragment key={i}>
