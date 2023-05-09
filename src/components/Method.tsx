@@ -46,7 +46,11 @@ export function Method({
   return (
     <MethodWrapper>
       <Dropdown
-        result={{ data: method.result }}
+        result={{
+          ...(method.result.entityType === "data"
+            ? { data: method.result }
+            : { type: "operation" }),
+        }}
         handleDelete={() => handleMethod(method, true)}
         addMethod={addMethod}
         head={

@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import { TypeMapper } from "./data";
 import { methodsList } from "./methods";
 import { IData, IOperation, IMethod, IStatement, IType } from "./types";
+import { getOperationResult } from "./update";
 
 export function createData<T extends keyof IType>(
   type: T,
@@ -47,13 +48,27 @@ export function createStatement(props?: {
   };
 }
 
+export function isSameType(
+  first: IStatement["data"],
+  second: IStatement["data"]
+): boolean {
+  if (first.entityType === "operation") {
+    return isSameType(getOperationResult(first), second);
+  } else if (second.entityType === "operation") {
+    return isSameType(first, getOperationResult(second));
+  } else {
+    return first.type === second.type;
+  }
+}
+
 export function getFilteredMethods(data: IData) {
   return methodsList[data.type].filter((item) => {
     let parameters = item.parameters.map((p) =>
       createData(p.type, TypeMapper[p.type].defaultValue, p.isGeneric)
     );
-    let resultType = item.handler(data, ...parameters).type; // Optimize here
-    return data.isGeneric || data.type === resultType;
+    return (
+      data.isGeneric || isSameType(data, item.handler(data, ...parameters))
+    );
   });
 }
 
@@ -70,7 +85,7 @@ export function createMethod({ data, name }: { data: IData; name?: string }) {
     id: nanoid(),
     entityType: "method",
     name: newMethod.name,
-    parameters: parameters.map((item) => createStatement(item)),
+    parameters: parameters.map((item) => createStatement({ data: item })),
     handler: newMethod.handler,
     result: { ...result, isGeneric: data.isGeneric },
   } as IMethod;

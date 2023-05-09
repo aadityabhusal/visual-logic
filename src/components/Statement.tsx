@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { theme } from "../lib/theme";
 import { IData, IMethod, IOperation, IStatement } from "../lib/types";
 import { updateStatementMethods, getStatementResult } from "../lib/update";
-import { createMethod } from "../lib/utils";
+import { isSameType, createMethod } from "../lib/utils";
 import { Data } from "./Data";
 import { Input } from "./Input/Input";
 import { Method } from "./Method";
@@ -30,9 +30,9 @@ export function Statement({
   const hasName = statement.name !== undefined;
 
   function addMethod() {
-    let method = createMethod({
-      data: getStatementResult(statement),
-    });
+    let data = getStatementResult(statement);
+    if (data.entityType !== "data") return;
+    let method = createMethod({ data });
     let methods = [...statement.methods, method];
     handleStatement(updateStatementMethods({ ...statement, methods }));
   }
@@ -56,10 +56,10 @@ export function Statement({
     let methods = [...statement.methods];
     if (remove) {
       let data = getStatementResult(statement, index);
-      if (method.result.type !== data.type) methods.splice(index);
+      if (!isSameType(method.result, data)) methods.splice(index);
       else methods.splice(index, 1);
     } else {
-      if (method.result.type !== methods[index].result.type)
+      if (!isSameType(method.result, methods[index].result))
         methods.splice(index + 1);
       methods[index] = method;
     }
@@ -137,6 +137,7 @@ export function Statement({
       )}
       {statement.methods.map((method, i, methods) => {
         let data = getStatementResult(statement, i);
+        if (data.entityType !== "data") return;
         return (
           <Method
             key={method.id}

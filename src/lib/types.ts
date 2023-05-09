@@ -23,7 +23,7 @@ export interface IMethod {
   name: string;
   entityType: "method";
   parameters: IStatement[];
-  handler(...args: IData[]): IData;
+  handler(...args: IStatement["data"][]): IStatement["data"];
   result: ReturnType<IMethod["handler"]>;
 }
 
@@ -42,6 +42,7 @@ export interface IOperation {
   parameters: IStatement[];
   statements: IStatement[];
   handler?: (...args: IData[]) => IData;
+  isGeneric?: boolean;
   reference?: {
     id: string;
     name: string;
