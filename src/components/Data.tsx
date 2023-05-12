@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { IData } from "../lib/types";
+import { IData, IOperation, IStatement } from "../lib/types";
 import { Dropdown } from "../ui/Dropdown";
 import { ArrayInput } from "./Input/ArrayInput";
 import { Input } from "./Input/Input";
@@ -14,6 +14,8 @@ interface IProps {
   disableDelete?: boolean;
   addMethod?: () => void;
   children?: ReactNode;
+  prevStatements: IStatement[];
+  prevOperations: IOperation[];
 }
 
 export function Data({
@@ -22,6 +24,8 @@ export function Data({
   disableDelete,
   addMethod,
   children,
+  prevStatements,
+  prevOperations,
 }: IProps) {
   return (
     <DataWrapper>
@@ -47,13 +51,15 @@ export function Data({
             <ArrayInput
               data={data}
               handleData={handleData}
-              children={children}
+              prevStatements={prevStatements}
+              prevOperations={prevOperations}
             />
           ) : data.value instanceof Map ? (
             <ObjectInput
               data={data}
               handleData={handleData}
-              children={children}
+              prevStatements={prevStatements}
+              prevOperations={prevOperations}
             />
           ) : typeof data.value === "boolean" ? (
             <BooleanInput data={data} handleData={handleData} />

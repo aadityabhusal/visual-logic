@@ -1,6 +1,6 @@
 import { TypeMapper } from "../../lib/data";
 import styled from "styled-components";
-import { IData, IStatement } from "../../lib/types";
+import { IData, IOperation, IStatement } from "../../lib/types";
 import { createData, createStatement } from "../../lib/utils";
 import { theme } from "../../lib/theme";
 import { Statement } from "../Statement";
@@ -8,9 +8,16 @@ import { Statement } from "../Statement";
 export interface IArrayInput {
   data: IData;
   handleData: (data: IData) => void;
+  prevStatements: IStatement[];
+  prevOperations: IOperation[];
 }
 
-export function ArrayInput({ data, handleData }: IArrayInput) {
+export function ArrayInput({
+  data,
+  handleData,
+  prevStatements,
+  prevOperations,
+}: IArrayInput) {
   function addToArray() {
     Array.isArray(data.value) &&
       handleData({
@@ -49,8 +56,8 @@ export function ArrayInput({ data, handleData }: IArrayInput) {
                   handleStatement={(val, remove) =>
                     handleUpdate(val, i, remove)
                   }
-                  prevOperations={[]}
-                  prevStatements={[]}
+                  prevOperations={prevOperations}
+                  prevStatements={prevStatements}
                   disableName={true}
                 />
                 {i < arr.length - 1 ? (

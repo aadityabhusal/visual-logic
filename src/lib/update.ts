@@ -4,12 +4,13 @@ import { createData, createOperation, createStatement } from "./utils";
 
 export function getStatementResult(
   statement: IStatement,
-  index?: number
+  index?: number,
+  prevEntity?: boolean
 ): IData | IOperation {
   let data = statement.data;
   if (index) return statement.methods[index - 1]?.result;
   let lastStatement = statement.methods[statement.methods.length - 1];
-  if (lastStatement) return lastStatement.result;
+  if (!prevEntity && lastStatement) return lastStatement.result;
   return data.entityType === "operation" && data.reference?.call
     ? getOperationResult(data)
     : data;

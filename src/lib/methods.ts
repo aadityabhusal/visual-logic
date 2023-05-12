@@ -1,5 +1,6 @@
 import { IData, IStatement, IType } from "./types";
-import { createData, createStatement } from "./utils";
+import { getStatementResult } from "./update";
+import { createData, createStatement, isSameType } from "./utils";
 
 type IMethodList = {
   name: string;
@@ -224,7 +225,15 @@ export const arrayMethods: IMethodList[] = [
     name: "toString",
     parameters: [],
     handler: (data: IData<"array">) => {
-      return createData("string", data.value.toString());
+      return createData(
+        "string",
+        data.value
+          .map((item) => {
+            let result = getStatementResult(item);
+            result.entityType === "data" ? result.value : "";
+          })
+          .toString()
+      );
     },
   },
 ];

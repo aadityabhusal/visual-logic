@@ -3,7 +3,7 @@ export type IType = {
   number: number;
   boolean: boolean;
   array: IStatement[];
-  object: Map<string, IData>;
+  object: Map<string, IStatement>;
 };
 
 export interface IData<T extends keyof IType = keyof IType> {

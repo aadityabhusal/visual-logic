@@ -124,6 +124,8 @@ export function Statement({
               : undefined
           }
           children={dropdownList}
+          prevStatements={prevStatements}
+          prevOperations={prevOperations}
         />
       ) : (
         <Operation
@@ -136,7 +138,7 @@ export function Statement({
         />
       )}
       {statement.methods.map((method, i, methods) => {
-        let data = getStatementResult(statement, i);
+        let data = getStatementResult(statement, i, true);
         if (data.entityType !== "data") return;
         return (
           <Method

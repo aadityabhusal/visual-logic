@@ -1,20 +1,29 @@
 import styled from "styled-components";
 import { TypeMapper } from "../../lib/data";
 import { theme } from "../../lib/theme";
-import { IData } from "../../lib/types";
-import { createData } from "../../lib/utils";
-import { Data } from "../Data";
+import { IData, IOperation, IStatement } from "../../lib/types";
+import { createData, createStatement } from "../../lib/utils";
 import { Input } from "./Input";
+import { Statement } from "../Statement";
 
 export interface IObjectInput {
   data: IData;
   handleData: (data: IData) => void;
+  prevStatements: IStatement[];
+  prevOperations: IOperation[];
 }
-export function ObjectInput({ data, handleData }: IObjectInput) {
+export function ObjectInput({
+  data,
+  handleData,
+  prevStatements,
+  prevOperations,
+}: IObjectInput) {
   function addToObject() {
     if (data.value instanceof Map && !data.value.has("")) {
       let newMap = new Map(data.value);
-      let newData = createData("string", TypeMapper.string.defaultValue, true);
+      let newData = createStatement(
+        createData("string", TypeMapper.string.defaultValue, true)
+      );
       newMap.set("", newData);
       handleData({
         ...data,
@@ -25,9 +34,9 @@ export function ObjectInput({ data, handleData }: IObjectInput) {
   }
 
   function handleUpdate(
-    dataArray: [string, IData][],
+    dataArray: [string, IStatement][],
     index: number,
-    result: IData,
+    result: IStatement,
     remove?: boolean
   ) {
     if (remove) dataArray.splice(index, 1);
@@ -40,7 +49,7 @@ export function ObjectInput({ data, handleData }: IObjectInput) {
   }
 
   function handleKeyUpdate(
-    dataArray: [string, IData][],
+    dataArray: [string, IStatement][],
     index: number,
     result: IData
   ) {
@@ -77,11 +86,14 @@ export function ObjectInput({ data, handleData }: IObjectInput) {
                   noQuotes
                 />
                 <span>:</span>
-                <Data
-                  data={value}
-                  handleData={(val, remove) =>
+                <Statement
+                  statement={value}
+                  handleStatement={(val, remove) =>
                     handleUpdate(arr, i, val, remove)
                   }
+                  prevOperations={prevOperations}
+                  prevStatements={prevStatements}
+                  disableName={true}
                 />
                 {i < arr.length - 1 ? <span>{", "}</span> : null}
               </div>

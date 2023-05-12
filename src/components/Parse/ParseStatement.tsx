@@ -3,12 +3,27 @@ import { IStatement } from "../../lib/types";
 import { ParseData } from "./ParseData";
 import { Comma, Method } from "./styles";
 import { ParseOperation } from "./ParseOperation";
+import { getStatementResult } from "../../lib/update";
 
-export function ParseStatement({ statement }: { statement: IStatement }) {
+export function ParseStatement({
+  statement,
+  showData,
+}: {
+  statement: IStatement;
+  showData?: boolean;
+}) {
+  if (showData) {
+    let result = getStatementResult(statement);
+    return result.entityType === "data" ? (
+      <ParseData data={result} showData={showData} />
+    ) : (
+      <ParseOperation operation={result} />
+    );
+  }
   return (
     <div style={{ display: "flex" }}>
       {statement.data.entityType === "data" ? (
-        <ParseData data={statement.data} />
+        <ParseData data={statement.data} showData={showData} />
       ) : (
         <ParseOperation operation={statement.data} />
       )}
