@@ -1,5 +1,5 @@
 import { IData, IStatement, IType } from "./types";
-import { createData } from "./utils";
+import { createData, createStatement } from "./utils";
 
 type IMethodList = {
   name: string;
@@ -73,9 +73,10 @@ export const stringMethods: IMethodList[] = [
     name: "capitalize",
     parameters: [],
     handler: (data: IData<"string">) => {
-      let mapper = (word: string) =>
-        word.length ? word[0].toUpperCase() + word.slice(1) : "";
-      return createData("string", data.value.split(" ").map(mapper).join(" "));
+      return createData(
+        "string",
+        (data.value[0]?.toUpperCase() || "") + (data.value?.slice(1) || "")
+      );
     },
   },
   {
@@ -109,7 +110,9 @@ export const stringMethods: IMethodList[] = [
     handler: (data: IData<"string">, p1: IData<"string">) => {
       return createData(
         "array",
-        data.value.split(p1.value).map((item) => createData("string", item))
+        data.value
+          .split(p1.value)
+          .map((item) => createStatement({ data: createData("string", item) }))
       );
     },
   },

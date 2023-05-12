@@ -44,9 +44,17 @@ export function Data({
               noQuotes
             />
           ) : data.type === "array" ? (
-            <ArrayInput data={data} handleData={handleData} />
+            <ArrayInput
+              data={data}
+              handleData={handleData}
+              children={children}
+            />
           ) : data.value instanceof Map ? (
-            <ObjectInput data={data} handleData={handleData} />
+            <ObjectInput
+              data={data}
+              handleData={handleData}
+              children={children}
+            />
           ) : typeof data.value === "boolean" ? (
             <BooleanInput data={data} handleData={handleData} />
           ) : (

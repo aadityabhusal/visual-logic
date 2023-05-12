@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { theme } from "../../lib/theme";
 import { IData } from "../../lib/types";
 import { Comma } from "./styles";
+import { ParseStatement } from "./ParseStatement";
 
 export function ParseData({
   data,
@@ -54,10 +55,10 @@ function ParseArray({ data }: { data: IData<"array"> }) {
       <Brackets>{"["}</Brackets>
       {data.value.map((item, i, arr) => (
         <Fragment key={i}>
-          {item.reference?.name ? (
-            <Variable>{item.reference?.name}</Variable>
+          {item.data.reference?.name ? (
+            <Variable>{item.data.reference?.name}</Variable>
           ) : (
-            <ParseData data={item} />
+            <ParseStatement statement={item} />
           )}
           {i + 1 < arr.length && <Comma>,</Comma>}
         </Fragment>

@@ -2,7 +2,7 @@ export type IType = {
   string: string;
   number: number;
   boolean: boolean;
-  array: IData[];
+  array: IStatement[];
   object: Map<string, IData>;
 };
 

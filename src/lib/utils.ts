@@ -90,14 +90,3 @@ export function createMethod({ data, name }: { data: IData; name?: string }) {
     result: { ...result, isGeneric: data.isGeneric },
   } as IMethod;
 }
-
-export function parseData(data: IData): string {
-  if (Array.isArray(data.value)) {
-    return "[" + data.value.map((item) => parseData(item)) + "]";
-  } else if (data.value instanceof Map) {
-    let val = Array.from(data.value);
-    return `{ ${val.map(([key, val]) => ` "${key}": ${parseData(val)}`)} }`;
-  } else {
-    return typeof data.value === "string" ? `"${data.value}"` : `${data.value}`;
-  }
-}

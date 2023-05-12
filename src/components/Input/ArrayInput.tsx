@@ -1,9 +1,9 @@
 import { TypeMapper } from "../../lib/data";
 import styled from "styled-components";
-import { IData } from "../../lib/types";
-import { Data } from "../Data";
-import { createData } from "../../lib/utils";
+import { IData, IStatement } from "../../lib/types";
+import { createData, createStatement } from "../../lib/utils";
 import { theme } from "../../lib/theme";
+import { Statement } from "../Statement";
 
 export interface IArrayInput {
   data: IData;
@@ -18,12 +18,14 @@ export function ArrayInput({ data, handleData }: IArrayInput) {
         type: "array",
         value: [
           ...data.value,
-          createData("string", TypeMapper.string.defaultValue, true),
+          createStatement({
+            data: createData("string", TypeMapper.string.defaultValue, true),
+          }),
         ],
       });
   }
 
-  function handleUpdate(result: IData, index: number, remove?: boolean) {
+  function handleUpdate(result: IStatement, index: number, remove?: boolean) {
     if (Array.isArray(data.value)) {
       let resList = [...data.value];
       if (remove) resList.splice(index, 1);
@@ -42,9 +44,14 @@ export function ArrayInput({ data, handleData }: IArrayInput) {
         ? data.value.map((item, i, arr) => {
             return (
               <div key={i} style={{ display: "flex", alignItems: "center" }}>
-                <Data
-                  data={item}
-                  handleData={(val, remove) => handleUpdate(val, i, remove)}
+                <Statement
+                  statement={item}
+                  handleStatement={(val, remove) =>
+                    handleUpdate(val, i, remove)
+                  }
+                  prevOperations={[]}
+                  prevStatements={[]}
+                  disableName={true}
                 />
                 {i < arr.length - 1 ? (
                   <span style={{ marginRight: "4px" }}>{", "}</span>
