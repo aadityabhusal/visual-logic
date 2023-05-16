@@ -34,3 +34,9 @@ Creating programming logic visually in a functional way.
   - There will be a collection of readonly `global` values created at the start
   - User can use those values inside any operation e.g. `global.theme.color`
   - Global values will be available similar to a Namespace
+
+
+## Setup and Development
+
+### Typechecking
+Since, the project uses Vite as build tool which [doesn't perform](https://vitejs.dev/guide/features.html#transpile-only) type checking during development. We can use `tsc --noEmit --watch` in a separate terminal to check of types errors throughout the project.
