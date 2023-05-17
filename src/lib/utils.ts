@@ -28,6 +28,7 @@ export function createOperation(name?: string): IOperation {
     name: name ?? "f_" + id.slice(-4),
     parameters: [],
     statements: [],
+    closure: [],
     reference: undefined,
   };
 }
@@ -59,6 +60,17 @@ export function isSameType(
   } else {
     return first.type === second.type;
   }
+}
+
+export function getClosureList(reference: IStatement | IOperation) {
+  const referenceData =
+    reference.entityType === "statement" ? reference.data : reference;
+
+  return referenceData.entityType === "operation"
+    ? referenceData.reference?.call
+      ? referenceData.parameters.concat(referenceData.closure)
+      : referenceData.closure
+    : null;
 }
 
 export function getFilteredMethods(data: IData) {

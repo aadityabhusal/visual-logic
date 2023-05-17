@@ -40,6 +40,7 @@ export interface IOperation {
   entityType: "operation";
   name: string;
   parameters: IStatement[];
+  closure: IStatement[];
   statements: IStatement[];
   handler?: (...args: IData[]) => IData;
   isGeneric?: boolean;

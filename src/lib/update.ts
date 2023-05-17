@@ -1,6 +1,11 @@
 import { TypeMapper } from "./data";
 import { IOperation, IMethod, IStatement, IData } from "./types";
-import { createData, createOperation, createStatement } from "./utils";
+import {
+  createData,
+  createOperation,
+  createStatement,
+  getClosureList,
+} from "./utils";
 
 export function getStatementResult(
   statement: IStatement,
@@ -96,9 +101,11 @@ export function getReferenceOperation(
 
   let parameterList = operation.parameters;
   let statementList = operation.statements;
-  if (referenceResult?.entityType === "operation") {
+  let closure = operation.closure;
+  if (reference && referenceResult?.entityType === "operation") {
     parameterList = referenceResult?.parameters;
     statementList = referenceResult?.statements;
+    closure = getClosureList(reference) || closure;
   }
 
   let updatedParameters = parameterList.map((parameter) => {
@@ -115,7 +122,12 @@ export function getReferenceOperation(
     updateStatementMethods(
       updateStatementReference(
         argument,
-        [...previousStatements, ...updatedParameters, ...statementList],
+        [
+          ...previousStatements,
+          ...closure,
+          ...updatedParameters,
+          ...statementList,
+        ],
         previousOperations
       )
     )
@@ -123,6 +135,7 @@ export function getReferenceOperation(
 
   return {
     ...operation,
+    closure,
     parameters: updatedParameters,
     statements: updatedStatements,
     reference:

@@ -1,5 +1,5 @@
 import { IData, IOperation, IStatement, IType } from "../lib/types";
-import { createOperation } from "../lib/utils";
+import { createOperation, getClosureList } from "../lib/utils";
 import { DropdownOption, DropdownOptions } from "../ui/Dropdown";
 import { TypeMapper } from "../lib/data";
 import { theme } from "../lib/theme";
@@ -66,9 +66,14 @@ export function DropdownList({
         value: TypeMapper[(data as IData).type].defaultValue,
       },
     }));
-
-    let statements = updateStatements({
-      statements: [...prevStatements, ...parameters, ...operation.statements],
+    const closure = getClosureList(reference) || [];
+    const statements = updateStatements({
+      statements: [
+        ...prevStatements,
+        ...closure,
+        ...parameters,
+        ...operation.statements,
+      ],
       previousOperations: prevOperations,
     });
 
@@ -76,7 +81,10 @@ export function DropdownList({
       ...operation,
       id: data.id,
       parameters,
-      statements: statements.slice(prevStatements.length + parameters.length),
+      closure,
+      statements: statements.slice(
+        prevStatements.length + closure.length + parameters.length
+      ),
       reference: reference.name
         ? { id: reference.id, name: reference.name }
         : undefined,
