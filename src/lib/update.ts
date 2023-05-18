@@ -5,6 +5,7 @@ import {
   createOperation,
   createStatement,
   getClosureList,
+  isSameType,
 } from "./utils";
 
 export function getStatementResult(
@@ -112,10 +113,16 @@ export function getReferenceOperation(
     let argument = operation.parameters?.find(
       (item) => item.id === parameter.id
     );
-    if (!argument) return parameter;
-    return updateStatementMethods(
-      updateStatementReference(argument, previousStatements, previousOperations)
-    );
+    if (argument && isSameType(parameter.data, getStatementResult(argument))) {
+      return updateStatementMethods(
+        updateStatementReference(
+          argument,
+          previousStatements,
+          previousOperations
+        )
+      );
+    }
+    return { ...parameter, data: { ...parameter.data, isGeneric: false } };
   });
 
   let updatedStatements = statementList.map((argument) =>
