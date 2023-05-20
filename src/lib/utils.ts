@@ -19,10 +19,14 @@ export function createData<T extends keyof IType>(
   };
 }
 
-export function createOperation(name?: string): IOperation {
+export function createOperation(
+  name?: string,
+  isGeneric?: boolean
+): IOperation {
   let id = nanoid();
   return {
     id,
+    isGeneric,
     entityType: "operation",
     handler: undefined,
     name: name ?? "f_" + id.slice(-4),
@@ -67,7 +71,7 @@ export function getClosureList(reference: IStatement | IOperation) {
     reference.entityType === "statement" ? reference.data : reference;
 
   return referenceData.entityType === "operation"
-    ? referenceData.reference?.call
+    ? referenceData.reference?.isCalled
       ? referenceData.parameters.concat(referenceData.closure)
       : referenceData.closure
     : null;

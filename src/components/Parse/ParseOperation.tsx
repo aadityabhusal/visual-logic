@@ -7,7 +7,7 @@ export function ParseOperation({ operation }: { operation: IOperation }) {
   return operation.reference ? (
     <>
       <Variable>{operation.reference.name}</Variable>
-      {operation.reference.call && (
+      {operation.reference.isCalled && (
         <>
           {"("}
           {operation.parameters?.map((item, i, paramList) => (

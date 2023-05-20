@@ -47,7 +47,7 @@ export interface IOperation {
   reference?: {
     id: string;
     name: string;
-    call?: boolean;
+    isCalled?: boolean;
   };
 }
 

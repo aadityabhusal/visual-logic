@@ -17,7 +17,7 @@ export function getStatementResult(
   if (index) return statement.methods[index - 1]?.result;
   let lastStatement = statement.methods[statement.methods.length - 1];
   if (!prevEntity && lastStatement) return lastStatement.result;
-  return data.entityType === "operation" && data.reference?.call
+  return data.entityType === "operation" && data.reference?.isCalled
     ? getOperationResult(data)
     : data;
 }
@@ -98,7 +98,7 @@ export function getReferenceOperation(
       !reference.name ||
       referenceResult?.entityType !== "operation");
 
-  const { id: newId, ...newOperation } = createOperation("");
+  const { id, ...newOperation } = createOperation("", operation.isGeneric);
 
   let parameterList = operation.parameters;
   let statementList = operation.statements;
