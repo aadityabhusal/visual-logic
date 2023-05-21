@@ -4,6 +4,7 @@ import {
   getClosureList,
   getStatementResult,
   getOperationResult,
+  isSameType,
 } from "../lib/utils";
 import { DropdownOption, DropdownOptions } from "../ui/Dropdown";
 import { TypeMapper } from "../lib/data";
@@ -60,14 +61,21 @@ export function DropdownList({
     operation: IOperation,
     reference: IStatement | IOperation
   ) {
-    const parameters = operation.parameters.map((param) => ({
-      ...param,
-      data: {
-        ...param.data,
-        isGeneric: false,
-        value: TypeMapper[(param.data as IData).type].defaultValue,
-      },
-    }));
+    function getParameters(parameters: IOperation["parameters"]) {
+      return parameters.map((param) => {
+        let paramData: IStatement["data"] = { ...param.data, isGeneric: false };
+        if (paramData.entityType === "data") {
+          paramData.value = TypeMapper[paramData.type].defaultValue;
+        } else {
+          paramData.parameters = getParameters(paramData.parameters);
+          paramData.closure = [];
+          paramData.statements = [];
+        }
+        return { ...param, data: { ...paramData, isGeneric: false } };
+      });
+    }
+
+    const parameters = getParameters(operation.parameters);
     const closure = getClosureList(reference) || [];
     const statements = updateStatements({
       statements: [
@@ -117,12 +125,7 @@ export function DropdownList({
       <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
       {prevStatements.map((statement) => {
         let result = getStatementResult(statement);
-        let check =
-          result.entityType === "operation"
-            ? result.entityType !== data.entityType
-            : result.type !== (data as IData).type;
-
-        if (!data.isGeneric && check) return;
+        if (!data.isGeneric && !isSameType(result, data)) return;
         return (
           <DropdownOption
             key={statement.id}
@@ -139,11 +142,7 @@ export function DropdownList({
       })}
       {prevOperations.map((operation) => {
         let result = getOperationResult(operation);
-        let check =
-          result.entityType === "operation"
-            ? result.entityType !== data.entityType
-            : result.type !== (data as IData).type;
-        if (!data.isGeneric && check) return;
+        if (!data.isGeneric && !isSameType(result, data)) return;
         return (
           <DropdownOption
             key={operation.id}

@@ -55,9 +55,16 @@ export function isSameType(
   first: IStatement["data"],
   second: IStatement["data"]
 ): boolean {
-  if (first.entityType === "operation") {
+  if (first.entityType === "operation" && second.entityType === "operation") {
+    if (first.parameters.length !== second.parameters.length) return false;
+    return first.parameters.every((firstParam, index) =>
+      isSameType(firstParam.data, second.parameters[index].data)
+    );
+  } else if (first.entityType === "operation") {
+    if (!first.reference?.isCalled) return false;
     return isSameType(getOperationResult(first), second);
   } else if (second.entityType === "operation") {
+    if (!second.reference?.isCalled) return false;
     return isSameType(first, getOperationResult(second));
   } else {
     return first.type === second.type;

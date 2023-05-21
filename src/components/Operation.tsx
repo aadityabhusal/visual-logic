@@ -159,9 +159,14 @@ export function Operation({
                     value: operation.name,
                     entityType: "data",
                   }}
-                  handleData={(data) =>
-                    handleOperationProps("name", data.value as string)
-                  }
+                  handleData={(data) => {
+                    let name = (data.value as string) || operation.name;
+                    const exists = prevOperations.find(
+                      (item) => item.name === name
+                    );
+                    if (!exists)
+                      handleOperationProps("name", data.value as string);
+                  }}
                   color={theme.color.variable}
                   noQuotes
                 />
