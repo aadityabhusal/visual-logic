@@ -6,6 +6,7 @@ import { useStore } from "./lib/store";
 import { theme } from "./lib/theme";
 import { Header } from "./ui/Header";
 import { Sidebar } from "./ui/Sidebar";
+import { updateOperations } from "./lib/update";
 
 function App() {
   const [operations, setOperation, currentId] = useStore((state) => [
@@ -27,7 +28,9 @@ function App() {
           {currentOperation ? (
             <Operation
               operation={currentOperation}
-              handleOperation={(operation) => setOperation(operation)}
+              handleOperation={(operation) =>
+                setOperation(updateOperations(operations, operation))
+              }
               prevStatements={[]}
               prevOperations={operations.slice(0, currentOperationIndex + 1)}
             />

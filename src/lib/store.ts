@@ -1,19 +1,13 @@
 import create from "zustand";
 import { IStore } from "./types";
-import { updateOperations } from "./update";
-import { createOperation } from "./utils";
 
 export const useStore = create<IStore>((set) => ({
-  operations: [createOperation(undefined, true)],
+  operations: [],
   currentId: "",
   setCurrentId: (currentId) => set(() => ({ currentId })),
-  addOperation: () =>
+  addOperation: (operation) =>
     set((state) => ({
-      operations: [...state.operations, createOperation(undefined, true)],
+      operations: [...state.operations, operation],
     })),
-  setOperation: (operation, remove) =>
-    set((state) => {
-      const operations = updateOperations(state.operations, operation, remove);
-      return { operations };
-    }),
+  setOperation: (operations) => set(() => ({ operations })),
 }));
