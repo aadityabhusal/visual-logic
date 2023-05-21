@@ -1,8 +1,6 @@
 import { nanoid } from "nanoid";
 import { TypeMapper } from "./data";
-import { methodsList } from "./methods";
 import { IData, IOperation, IMethod, IStatement, IType } from "./types";
-import { getOperationResult } from "./update";
 
 export function createData<T extends keyof IType>(
   type: T,
@@ -77,32 +75,23 @@ export function getClosureList(reference: IStatement | IOperation) {
     : null;
 }
 
-export function getFilteredMethods(data: IData) {
-  return methodsList[data.type].filter((item) => {
-    let parameters = item.parameters.map((p) =>
-      createData(p.type, TypeMapper[p.type].defaultValue, p.isGeneric)
-    );
-    return (
-      data.isGeneric || isSameType(data, item.handler(data, ...parameters))
-    );
-  });
+export function getOperationResult(operation: IOperation) {
+  let lastStatement = operation.statements.slice(-1)[0];
+  return lastStatement
+    ? getStatementResult(lastStatement)
+    : createData("string", TypeMapper["string"].defaultValue);
 }
 
-export function createMethod({ data, name }: { data: IData; name?: string }) {
-  let methods = getFilteredMethods(data);
-  let methodByName = methods.find((method) => method.name === name);
-  let newMethod = methodByName || methods[0];
-
-  let parameters = newMethod.parameters.map((item) =>
-    createData(item.type, TypeMapper[item.type].defaultValue, item.isGeneric)
-  );
-  let result = newMethod.handler(data, ...parameters);
-  return {
-    id: nanoid(),
-    entityType: "method",
-    name: newMethod.name,
-    parameters: parameters.map((item) => createStatement({ data: item })),
-    handler: newMethod.handler,
-    result: { ...result, isGeneric: data.isGeneric },
-  } as IMethod;
+export function getStatementResult(
+  statement: IStatement,
+  index?: number,
+  prevEntity?: boolean
+): IData | IOperation {
+  let data = statement.data;
+  if (index) return statement.methods[index - 1]?.result;
+  let lastStatement = statement.methods[statement.methods.length - 1];
+  if (!prevEntity && lastStatement) return lastStatement.result;
+  return data.entityType === "operation" && data.reference?.isCalled
+    ? getOperationResult(data)
+    : data;
 }

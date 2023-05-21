@@ -1,9 +1,13 @@
 import { IData, IOperation, IStatement, IType } from "../lib/types";
-import { createOperation, getClosureList } from "../lib/utils";
+import {
+  createOperation,
+  getClosureList,
+  getStatementResult,
+  getOperationResult,
+} from "../lib/utils";
 import { DropdownOption, DropdownOptions } from "../ui/Dropdown";
 import { TypeMapper } from "../lib/data";
 import { theme } from "../lib/theme";
-import { getStatementResult, getOperationResult } from "../lib/update";
 import { updateStatements } from "../lib/update";
 
 export function DropdownList({

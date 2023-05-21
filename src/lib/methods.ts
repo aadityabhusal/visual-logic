@@ -1,6 +1,12 @@
-import { IData, IStatement, IType } from "./types";
-import { getStatementResult } from "./update";
-import { createData, createStatement, isSameType } from "./utils";
+import { nanoid } from "nanoid";
+import { TypeMapper } from "./data";
+import { IData, IMethod, IStatement, IType } from "./types";
+import {
+  createData,
+  createStatement,
+  getStatementResult,
+  isSameType,
+} from "./utils";
 
 type IMethodList = {
   name: string;
@@ -255,3 +261,33 @@ export const methodsList: Record<keyof IType, IMethodList[]> = {
   array: arrayMethods.concat(comparisonMethods),
   object: objectMethods.concat(comparisonMethods),
 };
+
+export function getFilteredMethods(data: IData) {
+  return methodsList[data.type].filter((item) => {
+    let parameters = item.parameters.map((p) =>
+      createData(p.type, TypeMapper[p.type].defaultValue, p.isGeneric)
+    );
+    return (
+      data.isGeneric || isSameType(data, item.handler(data, ...parameters))
+    );
+  });
+}
+
+export function createMethod({ data, name }: { data: IData; name?: string }) {
+  let methods = getFilteredMethods(data);
+  let methodByName = methods.find((method) => method.name === name);
+  let newMethod = methodByName || methods[0];
+
+  let parameters = newMethod.parameters.map((item) =>
+    createData(item.type, TypeMapper[item.type].defaultValue, item.isGeneric)
+  );
+  let result = newMethod.handler(data, ...parameters);
+  return {
+    id: nanoid(),
+    entityType: "method",
+    name: newMethod.name,
+    parameters: parameters.map((item) => createStatement({ data: item })),
+    handler: newMethod.handler,
+    result: { ...result, isGeneric: data.isGeneric },
+  } as IMethod;
+}

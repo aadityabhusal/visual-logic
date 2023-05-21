@@ -5,29 +5,9 @@ import {
   createOperation,
   createStatement,
   getClosureList,
+  getStatementResult,
   isSameType,
 } from "./utils";
-
-export function getStatementResult(
-  statement: IStatement,
-  index?: number,
-  prevEntity?: boolean
-): IData | IOperation {
-  let data = statement.data;
-  if (index) return statement.methods[index - 1]?.result;
-  let lastStatement = statement.methods[statement.methods.length - 1];
-  if (!prevEntity && lastStatement) return lastStatement.result;
-  return data.entityType === "operation" && data.reference?.isCalled
-    ? getOperationResult(data)
-    : data;
-}
-
-export function getOperationResult(operation: IOperation) {
-  let lastStatement = operation.statements.slice(-1)[0];
-  return lastStatement
-    ? getStatementResult(lastStatement)
-    : createData("string", TypeMapper["string"].defaultValue);
-}
 
 export function updateStatementMethods(statement: IStatement): IStatement {
   let updatedMethods = statement.methods.reduce(

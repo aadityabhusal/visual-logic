@@ -3,7 +3,7 @@ import { IStatement } from "../../lib/types";
 import { ParseData } from "./ParseData";
 import { Comma, Method } from "./styles";
 import { ParseOperation } from "./ParseOperation";
-import { getStatementResult } from "../../lib/update";
+import { getStatementResult } from "../../lib/utils";
 
 export function ParseStatement({
   statement,
