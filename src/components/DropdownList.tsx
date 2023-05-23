@@ -5,6 +5,7 @@ import {
   getStatementResult,
   getOperationResult,
   isSameType,
+  resetParameters,
 } from "../lib/utils";
 import { DropdownOption, DropdownOptions } from "../ui/Dropdown";
 import { TypeMapper } from "../lib/data";
@@ -61,21 +62,7 @@ export function DropdownList({
     operation: IOperation,
     reference: IStatement | IOperation
   ) {
-    function getParameters(parameters: IOperation["parameters"]) {
-      return parameters.map((param) => {
-        let paramData: IStatement["data"] = { ...param.data, isGeneric: false };
-        if (paramData.entityType === "data") {
-          paramData.value = TypeMapper[paramData.type].defaultValue;
-        } else {
-          paramData.parameters = getParameters(paramData.parameters);
-          paramData.closure = [];
-          paramData.statements = [];
-        }
-        return { ...param, data: { ...paramData, isGeneric: false } };
-      });
-    }
-
-    const parameters = getParameters(operation.parameters);
+    const parameters = resetParameters(operation.parameters, false);
     const closure = getClosureList(reference) || [];
     const statements = updateStatements({
       statements: [
@@ -89,6 +76,7 @@ export function DropdownList({
 
     selectOperation({
       ...operation,
+      isGeneric: data.isGeneric,
       id: data.id,
       parameters,
       closure,

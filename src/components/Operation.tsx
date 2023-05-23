@@ -133,20 +133,22 @@ export function Operation({
                 {")"}
               </OperationHead>
             )}
-            <AngleIcon
-              size={12}
-              style={{ marginTop: 2.5 }}
-              onClick={() =>
-                operation.reference &&
-                handleOperation({
-                  ...operation,
-                  reference: {
-                    ...operation.reference,
-                    isCalled: !operation.reference.isCalled,
-                  },
-                })
-              }
-            />
+            {!disableDelete && (
+              <AngleIcon
+                size={12}
+                style={{ marginTop: 2.5 }}
+                onClick={() =>
+                  operation.reference &&
+                  handleOperation({
+                    ...operation,
+                    reference: {
+                      ...operation.reference,
+                      isCalled: !operation.reference.isCalled,
+                    },
+                  })
+                }
+              />
+            )}
           </OperationHead>
         ) : (
           <OperationWrapper>
@@ -185,17 +187,20 @@ export function Operation({
                       })
                     }
                     disableMethods={true}
+                    disableDelete={disableDelete}
                     prevStatements={[]}
                     prevOperations={[]}
                   />
                   {i + 1 < paramList.length && <span>,</span>}
                 </Fragment>
               ))}
-              <Plus
-                size={10}
-                style={{ cursor: "pointer", marginTop: 3 }}
-                onClick={addParameter}
-              />
+              {!disableDelete && (
+                <Plus
+                  size={10}
+                  style={{ cursor: "pointer", marginTop: 3 }}
+                  onClick={addParameter}
+                />
+              )}
               <span>{") {"}</span>
             </OperationHead>
             <OperationBody>

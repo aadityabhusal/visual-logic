@@ -2,11 +2,11 @@ import { TypeMapper } from "./data";
 import { IOperation, IMethod, IStatement, IData } from "./types";
 import {
   createData,
-  createOperation,
   createStatement,
   getClosureList,
   getStatementResult,
   isSameType,
+  resetParameters,
 } from "./utils";
 
 export function updateStatementMethods(statement: IStatement): IStatement {
@@ -77,8 +77,7 @@ export function getReferenceOperation(
     (!reference ||
       !reference.name ||
       referenceResult?.entityType !== "operation");
-
-  const { id, ...newOperation } = createOperation("", operation.isGeneric);
+  let isTypeChanged = reference ? !isSameType(operation, reference.data) : true;
 
   let parameterList = operation.parameters;
   let statementList = operation.statements;
@@ -123,13 +122,17 @@ export function getReferenceOperation(
   return {
     ...operation,
     closure,
-    parameters: updatedParameters,
+    parameters: isTypeChanged
+      ? resetParameters(operation.parameters, operation.isGeneric)
+      : updatedParameters,
     statements: updatedStatements,
     reference:
-      reference?.name && currentReference
+      reference?.name &&
+      currentReference &&
+      !isTypeChanged &&
+      !isReferenceRemoved
         ? { ...currentReference, name: reference?.name }
         : undefined,
-    ...(isReferenceRemoved && newOperation),
   };
 }
 
