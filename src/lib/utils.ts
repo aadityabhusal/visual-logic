@@ -1,8 +1,6 @@
 import { nanoid } from "nanoid";
 import { TypeMapper } from "./data";
-import { methodsList } from "./methods";
 import { IData, IOperation, IMethod, IStatement, IType } from "./types";
-import { getOperationResult } from "./update";
 
 export function createData<T extends keyof IType>(
   type: T,
@@ -19,10 +17,14 @@ export function createData<T extends keyof IType>(
   };
 }
 
-export function createOperation(name?: string): IOperation {
+export function createOperation(
+  name?: string,
+  isGeneric?: boolean
+): IOperation {
   let id = nanoid();
   return {
     id,
+    isGeneric,
     entityType: "operation",
     handler: undefined,
     name: name ?? "f_" + id.slice(-4),
@@ -53,9 +55,16 @@ export function isSameType(
   first: IStatement["data"],
   second: IStatement["data"]
 ): boolean {
-  if (first.entityType === "operation") {
+  if (first.entityType === "operation" && second.entityType === "operation") {
+    if (first.parameters.length !== second.parameters.length) return false;
+    return first.parameters.every((firstParam, index) =>
+      isSameType(firstParam.data, second.parameters[index].data)
+    );
+  } else if (first.entityType === "operation") {
+    if (!first.reference?.isCalled) return false;
     return isSameType(getOperationResult(first), second);
   } else if (second.entityType === "operation") {
+    if (!second.reference?.isCalled) return false;
     return isSameType(first, getOperationResult(second));
   } else {
     return first.type === second.type;
@@ -67,38 +76,54 @@ export function getClosureList(reference: IStatement | IOperation) {
     reference.entityType === "statement" ? reference.data : reference;
 
   return referenceData.entityType === "operation"
-    ? referenceData.reference?.call
+    ? referenceData.reference?.isCalled
       ? referenceData.parameters.concat(referenceData.closure)
       : referenceData.closure
     : null;
 }
 
-export function getFilteredMethods(data: IData) {
-  return methodsList[data.type].filter((item) => {
-    let parameters = item.parameters.map((p) =>
-      createData(p.type, TypeMapper[p.type].defaultValue, p.isGeneric)
-    );
-    return (
-      data.isGeneric || isSameType(data, item.handler(data, ...parameters))
-    );
-  });
+export function getOperationResult(operation: IOperation) {
+  let lastStatement = operation.statements.slice(-1)[0];
+  return lastStatement
+    ? getStatementResult(lastStatement)
+    : createData("string", TypeMapper["string"].defaultValue);
 }
 
-export function createMethod({ data, name }: { data: IData; name?: string }) {
-  let methods = getFilteredMethods(data);
-  let methodByName = methods.find((method) => method.name === name);
-  let newMethod = methodByName || methods[0];
+export function getStatementResult(
+  statement: IStatement,
+  index?: number,
+  prevEntity?: boolean
+): IData | IOperation {
+  let data = statement.data;
+  if (index) return statement.methods[index - 1]?.result;
+  let lastStatement = statement.methods[statement.methods.length - 1];
+  if (!prevEntity && lastStatement) return lastStatement.result;
+  return data.entityType === "operation" && data.reference?.isCalled
+    ? getOperationResult(data)
+    : data;
+}
 
-  let parameters = newMethod.parameters.map((item) =>
-    createData(item.type, TypeMapper[item.type].defaultValue, item.isGeneric)
-  );
-  let result = newMethod.handler(data, ...parameters);
-  return {
-    id: nanoid(),
-    entityType: "method",
-    name: newMethod.name,
-    parameters: parameters.map((item) => createStatement({ data: item })),
-    handler: newMethod.handler,
-    result: { ...result, isGeneric: data.isGeneric },
-  } as IMethod;
+export function resetParameters(
+  parameters: IOperation["parameters"],
+  argumentList?: IOperation["parameters"]
+): IStatement[] {
+  return parameters.map((param) => {
+    let argData = argumentList?.find((item) => item.id === param.id)?.data;
+    let paramData = { ...param.data, isGeneric: argData?.isGeneric };
+    if (paramData.entityType === "data") {
+      let argValue = argData?.entityType === "data" ? argData.value : undefined;
+      paramData = {
+        ...paramData,
+        value: argValue || TypeMapper[paramData.type].defaultValue,
+      };
+    } else {
+      let argParams =
+        argData?.entityType === "operation" ? argData.parameters : undefined;
+      paramData = {
+        ...paramData,
+        parameters: resetParameters(paramData.parameters, argParams),
+      };
+    }
+    return { ...param, data: paramData };
+  });
 }

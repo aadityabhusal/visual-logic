@@ -2,31 +2,12 @@ import { TypeMapper } from "./data";
 import { IOperation, IMethod, IStatement, IData } from "./types";
 import {
   createData,
-  createOperation,
   createStatement,
   getClosureList,
+  getStatementResult,
+  isSameType,
+  resetParameters,
 } from "./utils";
-
-export function getStatementResult(
-  statement: IStatement,
-  index?: number,
-  prevEntity?: boolean
-): IData | IOperation {
-  let data = statement.data;
-  if (index) return statement.methods[index - 1]?.result;
-  let lastStatement = statement.methods[statement.methods.length - 1];
-  if (!prevEntity && lastStatement) return lastStatement.result;
-  return data.entityType === "operation" && data.reference?.call
-    ? getOperationResult(data)
-    : data;
-}
-
-export function getOperationResult(operation: IOperation) {
-  let lastStatement = operation.statements.slice(-1)[0];
-  return lastStatement
-    ? getStatementResult(lastStatement)
-    : createData("string", TypeMapper["string"].defaultValue);
-}
 
 export function updateStatementMethods(statement: IStatement): IStatement {
   let updatedMethods = statement.methods.reduce(
@@ -96,8 +77,7 @@ export function getReferenceOperation(
     (!reference ||
       !reference.name ||
       referenceResult?.entityType !== "operation");
-
-  const { id: newId, ...newOperation } = createOperation("");
+  let isTypeChanged = reference ? !isSameType(operation, reference.data) : true;
 
   let parameterList = operation.parameters;
   let statementList = operation.statements;
@@ -112,10 +92,34 @@ export function getReferenceOperation(
     let argument = operation.parameters?.find(
       (item) => item.id === parameter.id
     );
-    if (!argument) return parameter;
-    return updateStatementMethods(
-      updateStatementReference(argument, previousStatements, previousOperations)
-    );
+    if (argument) {
+      if (!isSameType(parameter.data, getStatementResult(argument))) {
+        if (argument.data.entityType === "operation") {
+          let params =
+            parameter.data.entityType === "operation"
+              ? parameter.data.parameters
+              : argument.data.parameters;
+          argument = {
+            ...argument,
+            data: {
+              ...argument.data,
+              parameters: resetParameters(params, argument.data.parameters),
+            },
+          };
+        } else {
+          argument = { ...argument, data: parameter.data };
+        }
+      }
+
+      return updateStatementMethods(
+        updateStatementReference(
+          argument,
+          previousStatements,
+          previousOperations
+        )
+      );
+    }
+    return { ...parameter, data: { ...parameter.data, isGeneric: false } };
   });
 
   let updatedStatements = statementList.map((argument) =>
@@ -136,13 +140,14 @@ export function getReferenceOperation(
   return {
     ...operation,
     closure,
-    parameters: updatedParameters,
+    parameters: isTypeChanged
+      ? resetParameters(updatedParameters, operation.parameters)
+      : updatedParameters,
     statements: updatedStatements,
     reference:
-      reference?.name && currentReference
+      reference?.name && currentReference && !isReferenceRemoved
         ? { ...currentReference, name: reference?.name }
         : undefined,
-    ...(isReferenceRemoved && newOperation),
   };
 }
 

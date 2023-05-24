@@ -3,8 +3,8 @@ import { Fragment, ReactNode } from "react";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
 import { IOperation, IStatement } from "../lib/types";
-import { getOperationResult, updateStatements } from "../lib/update";
-import { createStatement } from "../lib/utils";
+import { updateStatements } from "../lib/update";
+import { getOperationResult, createStatement } from "../lib/utils";
 import { Input } from "./Input/Input";
 import { Statement } from "./Statement";
 import { Dropdown } from "../ui/Dropdown";
@@ -82,11 +82,14 @@ export function Operation({
       parameters: [...operation.parameters, parameter],
     });
   }
+
   const result = getOperationResult(operation);
+  const AngleIcon = operation.reference?.isCalled ? AngleLeft : AngleRight;
+
   return (
     <Dropdown
       result={{
-        ...(operation?.reference?.call && result.entityType === "data"
+        ...(operation?.reference?.isCalled && result.entityType === "data"
           ? { data: result }
           : { type: "operation" }),
       }}
@@ -95,7 +98,7 @@ export function Operation({
       }
       head={
         operation.reference?.name ? (
-          <>
+          <OperationHead>
             <Input
               data={{
                 id: "",
@@ -108,19 +111,8 @@ export function Operation({
               color={theme.color.variable}
               noQuotes
             />
-            {!operation.reference.call ? (
-              <AngleRight
-                size={12}
-                onClick={() =>
-                  operation.reference &&
-                  handleOperation({
-                    ...operation,
-                    reference: { ...operation.reference, call: true },
-                  })
-                }
-              />
-            ) : (
-              <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+            {operation.reference.isCalled && (
+              <OperationHead>
                 {"("}
                 {operation.parameters.map((parameter, i, paramList) => (
                   <Fragment key={i}>
@@ -139,35 +131,48 @@ export function Operation({
                   </Fragment>
                 ))}
                 {")"}
-                <AngleLeft
-                  size={12}
-                  onClick={() =>
-                    operation.reference &&
-                    handleOperation({
-                      ...operation,
-                      reference: { ...operation.reference, call: false },
-                    })
-                  }
-                />
-              </div>
+              </OperationHead>
             )}
-          </>
+            {!disableDelete && (
+              <AngleIcon
+                size={12}
+                style={{ marginTop: 2.5 }}
+                onClick={() =>
+                  operation.reference &&
+                  handleOperation({
+                    ...operation,
+                    reference: {
+                      ...operation.reference,
+                      isCalled: !operation.reference.isCalled,
+                    },
+                  })
+                }
+              />
+            )}
+          </OperationHead>
         ) : (
           <OperationWrapper>
             <OperationHead>
-              <Input
-                data={{
-                  id: "",
-                  type: "string",
-                  value: operation.name,
-                  entityType: "data",
-                }}
-                handleData={(data) =>
-                  handleOperationProps("name", data.value as string)
-                }
-                color={theme.color.variable}
-                noQuotes
-              />
+              {operation.name && (
+                <Input
+                  data={{
+                    id: "",
+                    type: "string",
+                    value: operation.name,
+                    entityType: "data",
+                  }}
+                  handleData={(data) => {
+                    let name = (data.value as string) || operation.name;
+                    const exists = prevOperations.find(
+                      (item) => item.name === name
+                    );
+                    if (!exists)
+                      handleOperationProps("name", data.value as string);
+                  }}
+                  color={theme.color.variable}
+                  noQuotes
+                />
+              )}
               <span>{"("}</span>
               {operation.parameters.map((parameter, i, paramList) => (
                 <Fragment key={i}>
@@ -182,17 +187,20 @@ export function Operation({
                       })
                     }
                     disableMethods={true}
+                    disableDelete={disableDelete}
                     prevStatements={[]}
                     prevOperations={[]}
                   />
                   {i + 1 < paramList.length && <span>,</span>}
                 </Fragment>
               ))}
-              <Plus
-                size={10}
-                style={{ cursor: "pointer" }}
-                onClick={addParameter}
-              />
+              {!disableDelete && (
+                <Plus
+                  size={10}
+                  style={{ cursor: "pointer", marginTop: 3 }}
+                  onClick={addParameter}
+                />
+              )}
               <span>{") {"}</span>
             </OperationHead>
             <OperationBody>
@@ -233,7 +241,7 @@ const OperationWrapper = styled.div`
 
 const OperationHead = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.25rem;
 `;
 

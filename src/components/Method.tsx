@@ -3,9 +3,9 @@ import { IData, IMethod, IOperation, IStatement } from "../lib/types";
 import { Statement } from "./Statement";
 import { DropdownOption, DropdownOptions } from "../ui/Dropdown";
 import { Dropdown } from "../ui/Dropdown";
-import { createMethod, getFilteredMethods } from "../lib/utils";
+import { createMethod, getFilteredMethods } from "../lib/methods";
+import { getStatementResult } from "../lib/utils";
 import { theme } from "../lib/theme";
-import { getStatementResult } from "../lib/update";
 
 interface IProps {
   data: IData;

@@ -76,7 +76,9 @@ export function Dropdown({
         </DropdownHead>
       ) : null}
       {content ? (
-        <DropdownContainer>{children}</DropdownContainer>
+        <DropdownContainer onClick={() => setContent(false)}>
+          {children}
+        </DropdownContainer>
       ) : display && result.data ? (
         <DropdownContainer>
           <ParseData data={result.data} showData={true} />

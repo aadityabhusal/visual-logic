@@ -1,9 +1,15 @@
 import { IData, IOperation, IStatement, IType } from "../lib/types";
-import { createOperation, getClosureList } from "../lib/utils";
+import {
+  createOperation,
+  getClosureList,
+  getStatementResult,
+  getOperationResult,
+  isSameType,
+  resetParameters,
+} from "../lib/utils";
 import { DropdownOption, DropdownOptions } from "../ui/Dropdown";
 import { TypeMapper } from "../lib/data";
 import { theme } from "../lib/theme";
-import { getStatementResult, getOperationResult } from "../lib/update";
 import { updateStatements } from "../lib/update";
 
 export function DropdownList({
@@ -19,14 +25,12 @@ export function DropdownList({
   prevStatements: IStatement[];
   prevOperations: IOperation[];
 }) {
-  let isGeneric = data.entityType === "operation" || data.isGeneric;
-
   function handleDropdown(type: keyof IType) {
     (data.reference?.id || type !== (data as IData).type) &&
       handleData({
         type,
         id: data.id,
-        isGeneric,
+        isGeneric: data.isGeneric,
         entityType: "data",
         value: TypeMapper[type].defaultValue,
         reference: undefined,
@@ -58,14 +62,7 @@ export function DropdownList({
     operation: IOperation,
     reference: IStatement | IOperation
   ) {
-    const parameters = operation.parameters.map((param) => ({
-      ...param,
-      data: {
-        ...param.data,
-        isGeneric: false,
-        value: TypeMapper[(data as IData).type].defaultValue,
-      },
-    }));
+    const parameters = resetParameters(operation.parameters);
     const closure = getClosureList(reference) || [];
     const statements = updateStatements({
       statements: [
@@ -79,6 +76,7 @@ export function DropdownList({
 
     selectOperation({
       ...operation,
+      isGeneric: data.isGeneric,
       id: data.id,
       parameters,
       closure,
@@ -94,7 +92,7 @@ export function DropdownList({
   return (
     <DropdownOptions>
       {Object.keys(TypeMapper).map((type) => {
-        if (!isGeneric && type !== (data as IData).type) return;
+        if (!data.isGeneric && type !== (data as IData).type) return;
         return (
           <DropdownOption
             key={type}
@@ -105,20 +103,17 @@ export function DropdownList({
           </DropdownOption>
         );
       })}
-      {isGeneric && (
-        <DropdownOption onClick={() => selectOperation(createOperation(""))}>
+      {data.isGeneric && (
+        <DropdownOption
+          onClick={() => selectOperation(createOperation("", data.isGeneric))}
+        >
           operation
         </DropdownOption>
       )}
       <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
       {prevStatements.map((statement) => {
         let result = getStatementResult(statement);
-        let check =
-          result.entityType === "operation"
-            ? result.entityType !== data.entityType
-            : result.type !== (data as IData).type;
-
-        if (!isGeneric && check) return;
+        if (!data.isGeneric && !isSameType(result, data)) return;
         return (
           <DropdownOption
             key={statement.id}
@@ -135,11 +130,7 @@ export function DropdownList({
       })}
       {prevOperations.map((operation) => {
         let result = getOperationResult(operation);
-        let check =
-          result.entityType === "operation"
-            ? result.entityType !== data.entityType
-            : result.type !== (data as IData).type;
-        if (!isGeneric && check) return;
+        if (!data.isGeneric && !isSameType(result, data)) return;
         return (
           <DropdownOption
             key={operation.id}

@@ -2,6 +2,8 @@ import { Code, Plus, X } from "@styled-icons/fa-solid";
 import styled from "styled-components";
 import { useStore } from "../lib/store";
 import { theme } from "../lib/theme";
+import { updateOperations } from "../lib/update";
+import { createOperation } from "../lib/utils";
 
 export function Sidebar({ setToggleCode }: { setToggleCode: () => void }) {
   const { operations, addOperation, setOperation, currentId, setCurrentId } =
@@ -24,7 +26,7 @@ export function Sidebar({ setToggleCode }: { setToggleCode: () => void }) {
                 size={8}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setOperation(item, true);
+                  setOperation(updateOperations(operations, item, true));
                 }}
               />
             </OperationListItem>
@@ -35,7 +37,10 @@ export function Sidebar({ setToggleCode }: { setToggleCode: () => void }) {
         <Button title="View Code" onClick={setToggleCode}>
           <Code size={12} /> <span>Code</span>
         </Button>
-        <Button title="Add a new operation" onClick={addOperation}>
+        <Button
+          title="Add a new operation"
+          onClick={() => addOperation(createOperation(undefined, true))}
+        >
           <Plus size={12} /> <span>Operation</span>
         </Button>
       </SidebarFooter>
