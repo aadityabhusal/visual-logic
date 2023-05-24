@@ -105,23 +105,25 @@ export function getStatementResult(
 
 export function resetParameters(
   parameters: IOperation["parameters"],
-  isGeneric?: boolean
-) {
+  argumentList?: IOperation["parameters"]
+): IStatement[] {
   return parameters.map((param) => {
-    let paramData: IStatement["data"] = { ...param.data };
+    let argData = argumentList?.find((item) => item.id === param.id)?.data;
+    let paramData = { ...param.data, isGeneric: argData?.isGeneric };
     if (paramData.entityType === "data") {
-      paramData.value = TypeMapper[paramData.type].defaultValue;
+      let argValue = argData?.entityType === "data" ? argData.value : undefined;
+      paramData = {
+        ...paramData,
+        value: argValue || TypeMapper[paramData.type].defaultValue,
+      };
     } else {
-      paramData.parameters = resetParameters(
-        paramData.parameters,
-        isGeneric ?? paramData.isGeneric
-      );
-      paramData.closure = [];
-      paramData.statements = [];
+      let argParams =
+        argData?.entityType === "operation" ? argData.parameters : undefined;
+      paramData = {
+        ...paramData,
+        parameters: resetParameters(paramData.parameters, argParams),
+      };
     }
-    return {
-      ...param,
-      data: { ...paramData, isGeneric: isGeneric ?? paramData.isGeneric },
-    };
+    return { ...param, data: paramData };
   });
 }

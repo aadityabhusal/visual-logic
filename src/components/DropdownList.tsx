@@ -62,7 +62,7 @@ export function DropdownList({
     operation: IOperation,
     reference: IStatement | IOperation
   ) {
-    const parameters = resetParameters(operation.parameters, false);
+    const parameters = resetParameters(operation.parameters);
     const closure = getClosureList(reference) || [];
     const statements = updateStatements({
       statements: [

@@ -92,7 +92,25 @@ export function getReferenceOperation(
     let argument = operation.parameters?.find(
       (item) => item.id === parameter.id
     );
-    if (argument && isSameType(parameter.data, getStatementResult(argument))) {
+    if (argument) {
+      if (!isSameType(parameter.data, getStatementResult(argument))) {
+        if (argument.data.entityType === "operation") {
+          let params =
+            parameter.data.entityType === "operation"
+              ? parameter.data.parameters
+              : argument.data.parameters;
+          argument = {
+            ...argument,
+            data: {
+              ...argument.data,
+              parameters: resetParameters(params, argument.data.parameters),
+            },
+          };
+        } else {
+          argument = { ...argument, data: parameter.data };
+        }
+      }
+
       return updateStatementMethods(
         updateStatementReference(
           argument,
@@ -123,14 +141,11 @@ export function getReferenceOperation(
     ...operation,
     closure,
     parameters: isTypeChanged
-      ? resetParameters(operation.parameters, operation.isGeneric)
+      ? resetParameters(updatedParameters, operation.parameters)
       : updatedParameters,
     statements: updatedStatements,
     reference:
-      reference?.name &&
-      currentReference &&
-      !isTypeChanged &&
-      !isReferenceRemoved
+      reference?.name && currentReference && !isReferenceRemoved
         ? { ...currentReference, name: reference?.name }
         : undefined,
   };
