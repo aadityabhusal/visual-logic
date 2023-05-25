@@ -39,7 +39,9 @@ export function Sidebar({ setToggleCode }: { setToggleCode: () => void }) {
         </Button>
         <Button
           title="Add a new operation"
-          onClick={() => addOperation(createOperation(undefined, true))}
+          onClick={() =>
+            addOperation(createOperation({ name: undefined, isGeneric: true }))
+          }
         >
           <Plus size={12} /> <span>Operation</span>
         </Button>

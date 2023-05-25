@@ -1,4 +1,3 @@
-import { TypeMapper } from "../../lib/data";
 import styled from "styled-components";
 import { IData, IOperation, IStatement } from "../../lib/types";
 import { createData, createStatement } from "../../lib/utils";
@@ -26,7 +25,7 @@ export function ArrayInput({
         value: [
           ...data.value,
           createStatement({
-            data: createData("string", TypeMapper.string.defaultValue, true),
+            data: createData({ type: "string", isGeneric: true }),
           }),
         ],
       });

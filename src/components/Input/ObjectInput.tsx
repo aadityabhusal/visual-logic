@@ -1,5 +1,4 @@
 import styled from "styled-components";
-import { TypeMapper } from "../../lib/data";
 import { theme } from "../../lib/theme";
 import { IData, IOperation, IStatement } from "../../lib/types";
 import { createData, createStatement } from "../../lib/utils";
@@ -22,7 +21,7 @@ export function ObjectInput({
     if (data.value instanceof Map && !data.value.has("")) {
       let newMap = new Map(data.value);
       let newData = createStatement(
-        createData("string", TypeMapper.string.defaultValue, true)
+        createData({ type: "string", isGeneric: true })
       );
       newMap.set("", newData);
       handleData({

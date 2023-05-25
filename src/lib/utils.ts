@@ -2,33 +2,38 @@ import { nanoid } from "nanoid";
 import { TypeMapper } from "./data";
 import { IData, IOperation, IMethod, IStatement, IType } from "./types";
 
-export function createData<T extends keyof IType>(
-  type: T,
-  value: IType[T],
-  isGeneric?: boolean
-): IData<T> {
+export function createData<T extends keyof IType>({
+  type,
+  value,
+  isGeneric,
+}: {
+  type: T;
+  value?: IType[T];
+  isGeneric?: boolean;
+}): IData<T> {
   return {
     id: nanoid(),
     entityType: "data",
     type,
-    value,
+    value: value || TypeMapper[type].defaultValue,
     isGeneric,
     reference: undefined,
   };
 }
 
-export function createOperation(
-  name?: string,
-  isGeneric?: boolean
-): IOperation {
+export function createOperation(props?: {
+  name?: string;
+  parameters?: IStatement[];
+  isGeneric?: boolean;
+}): IOperation {
   let id = nanoid();
   return {
     id,
-    isGeneric,
+    isGeneric: props?.isGeneric,
     entityType: "operation",
     handler: undefined,
-    name: name ?? "f_" + id.slice(-4),
-    parameters: [],
+    name: props?.name ?? "f_" + id.slice(-4),
+    parameters: props?.parameters || [],
     statements: [],
     closure: [],
     reference: undefined,
@@ -41,7 +46,7 @@ export function createStatement(props?: {
   data?: IStatement["data"];
   methods?: IMethod[];
 }): IStatement {
-  let newData = props?.data || createData("string", "", true);
+  let newData = props?.data || createData({ type: "string", isGeneric: true });
   return {
     id: props?.id || nanoid(),
     name: props?.name,
@@ -86,7 +91,7 @@ export function getOperationResult(operation: IOperation) {
   let lastStatement = operation.statements.slice(-1)[0];
   return lastStatement
     ? getStatementResult(lastStatement)
-    : createData("string", TypeMapper["string"].defaultValue);
+    : createData({ type: "string" });
 }
 
 export function getStatementResult(

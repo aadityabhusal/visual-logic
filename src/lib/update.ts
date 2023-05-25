@@ -1,4 +1,3 @@
-import { TypeMapper } from "./data";
 import { IOperation, IMethod, IStatement, IData } from "./types";
 import {
   createData,
@@ -44,11 +43,10 @@ function getReferenceData(data: IData, reference?: IStatement): IData {
     currentReference?.id &&
     (!reference || !reference.name || referenceResult?.entityType !== "data");
 
-  const { id: newId, ...newData } = createData(
-    data.type,
-    TypeMapper[data.type].defaultValue,
-    data.isGeneric
-  );
+  const { id: newId, ...newData } = createData({
+    type: data.type,
+    isGeneric: data.isGeneric,
+  });
 
   return {
     ...data,
