@@ -72,7 +72,9 @@ export function Operation({
   }
 
   function addParameter() {
-    let newStatement = createStatement();
+    let newStatement = createStatement({
+      metadata: { disableMethods: true, disableNameToggle: true },
+    });
     let parameter = {
       ...newStatement,
       name: `p_${newStatement.id.slice(-3)}`,
@@ -124,8 +126,6 @@ export function Operation({
                       }
                       prevStatements={prevStatements}
                       prevOperations={prevOperations}
-                      disableName={true}
-                      disableDelete={true}
                     />
                     {i + 1 < paramList.length && <span>,</span>}
                   </Fragment>
@@ -186,8 +186,6 @@ export function Operation({
                         parameterLength: paramList.length + (remove ? -1 : 0),
                       })
                     }
-                    disableMethods={true}
-                    disableDelete={disableDelete}
                     prevStatements={[]}
                     prevOperations={[]}
                   />

@@ -33,6 +33,12 @@ export interface IStatement {
   data: IData | IOperation;
   methods: IMethod[];
   name?: string;
+  metadata: {
+    disableName?: boolean;
+    disableNameToggle?: boolean;
+    disableDelete?: boolean;
+    disableMethods?: boolean;
+  };
 }
 
 export interface IOperation {

@@ -303,7 +303,12 @@ export function createMethod({ data, name }: { data: IData; name?: string }) {
     id: nanoid(),
     entityType: "method",
     name: newMethod.name,
-    parameters: parameters.map((item) => createStatement({ data: item })),
+    parameters: parameters.map((item) =>
+      createStatement({
+        data: item,
+        metadata: { disableName: true, disableDelete: true },
+      })
+    ),
     handler: newMethod.handler,
     result: { ...result, isGeneric: data.isGeneric },
   } as IMethod;

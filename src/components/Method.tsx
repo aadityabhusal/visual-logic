@@ -65,8 +65,6 @@ export function Method({
                 <Statement
                   statement={item}
                   handleStatement={(val) => val && handleParameter(val, i)}
-                  disableDelete={true}
-                  disableName={true}
                   prevStatements={prevStatements}
                   prevOperations={prevOperations}
                 />

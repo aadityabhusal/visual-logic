@@ -45,6 +45,7 @@ export function createStatement(props?: {
   name?: string;
   data?: IStatement["data"];
   methods?: IMethod[];
+  metadata?: IStatement["metadata"];
 }): IStatement {
   let newData = props?.data || createData({ type: "string", isGeneric: true });
   return {
@@ -53,6 +54,7 @@ export function createStatement(props?: {
     entityType: "statement",
     data: newData,
     methods: props?.methods || [],
+    metadata: props?.metadata || {},
   };
 }
 
@@ -110,7 +112,8 @@ export function getStatementResult(
 
 export function resetParameters(
   parameters: IOperation["parameters"],
-  argumentList?: IOperation["parameters"]
+  argumentList?: IOperation["parameters"],
+  disableName?: boolean
 ): IStatement[] {
   return parameters.map((param) => {
     let argData = argumentList?.find((item) => item.id === param.id)?.data;
@@ -126,9 +129,18 @@ export function resetParameters(
         argData?.entityType === "operation" ? argData.parameters : undefined;
       paramData = {
         ...paramData,
-        parameters: resetParameters(paramData.parameters, argParams),
+        parameters: resetParameters(paramData.parameters, argParams, false),
       };
     }
-    return { ...param, data: paramData };
+    return {
+      ...param,
+      data: paramData,
+      metadata: {
+        disableName: disableName ?? true,
+        disableNameToggle: true,
+        disableDelete: true,
+        disableMethods: false,
+      },
+    };
   });
 }

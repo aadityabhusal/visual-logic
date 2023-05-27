@@ -14,17 +14,11 @@ import { DropdownList } from "./DropdownList";
 export function Statement({
   statement,
   handleStatement,
-  disableName,
-  disableDelete,
-  disableMethods,
   prevStatements,
   prevOperations,
 }: {
   statement: IStatement;
   handleStatement: (statement: IStatement, remove?: boolean) => void;
-  disableName?: boolean;
-  disableDelete?: boolean;
-  disableMethods?: boolean;
   prevStatements: IStatement[];
   prevOperations: IOperation[];
 }) {
@@ -81,7 +75,7 @@ export function Statement({
 
   return (
     <StatementWrapper>
-      {!disableName ? (
+      {!statement.metadata.disableName ? (
         <StatementName>
           {hasName ? (
             <Input
@@ -106,6 +100,7 @@ export function Statement({
             size={10}
             style={{ paddingTop: "0.25rem" }}
             onClick={() =>
+              !statement.metadata.disableNameToggle &&
               handleStatement({
                 ...statement,
                 name: hasName ? undefined : `v_${statement.id.slice(-3)}`,
@@ -118,9 +113,9 @@ export function Statement({
         <Data
           data={statement.data}
           handleData={(data, remove) => handleData(data, remove)}
-          disableDelete={disableDelete}
+          disableDelete={statement.metadata.disableDelete}
           addMethod={
-            !disableMethods && statement.methods.length === 0
+            !statement.metadata.disableMethods && statement.methods.length === 0
               ? addMethod
               : undefined
           }
@@ -134,7 +129,7 @@ export function Statement({
           handleOperation={handelOperation}
           prevStatements={prevStatements}
           prevOperations={prevOperations}
-          disableDelete={disableDelete}
+          disableDelete={statement.metadata.disableDelete}
           children={dropdownList}
         />
       )}
@@ -150,7 +145,7 @@ export function Statement({
             prevStatements={prevStatements}
             prevOperations={prevOperations}
             addMethod={
-              !disableMethods && i + 1 === methods.length
+              !statement.metadata.disableMethods && i + 1 === methods.length
                 ? addMethod
                 : undefined
             }

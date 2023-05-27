@@ -26,6 +26,7 @@ export function ArrayInput({
           ...data.value,
           createStatement({
             data: createData({ type: "string", isGeneric: true }),
+            metadata: { disableName: true },
           }),
         ],
       });
@@ -57,7 +58,6 @@ export function ArrayInput({
                   }
                   prevOperations={prevOperations}
                   prevStatements={prevStatements}
-                  disableName={true}
                 />
                 {i < arr.length - 1 ? (
                   <span style={{ marginRight: "4px" }}>{", "}</span>
