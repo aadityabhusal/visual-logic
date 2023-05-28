@@ -25,8 +25,8 @@ export function ArrayInput({
         value: [
           ...data.value,
           createStatement({
-            data: createData({ type: "string", isGeneric: true }),
-            metadata: { disableName: true },
+            data: createData({ type: "string" }),
+            metadata: { disableName: true, isGeneric: true },
           }),
         ],
       });

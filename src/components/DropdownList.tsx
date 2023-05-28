@@ -18,19 +18,20 @@ export function DropdownList({
   selectOperation,
   prevStatements,
   prevOperations,
+  isGeneric,
 }: {
   data: IStatement["data"];
   handleData: (data: IData, remove?: boolean) => void;
   selectOperation: (operation: IOperation, remove?: boolean) => void;
   prevStatements: IStatement[];
   prevOperations: IOperation[];
+  isGeneric?: boolean;
 }) {
   function handleDropdown(type: keyof IType) {
     (data.reference?.id || type !== (data as IData).type) &&
       handleData({
         type,
         id: data.id,
-        isGeneric: data.isGeneric,
         entityType: "data",
         value: TypeMapper[type].defaultValue,
         reference: undefined,
@@ -76,7 +77,6 @@ export function DropdownList({
 
     selectOperation({
       ...operation,
-      isGeneric: data.isGeneric,
       id: data.id,
       parameters,
       closure,
@@ -92,7 +92,7 @@ export function DropdownList({
   return (
     <DropdownOptions>
       {Object.keys(TypeMapper).map((type) => {
-        if (!data.isGeneric && type !== (data as IData).type) return;
+        if (!isGeneric && type !== (data as IData).type) return;
         return (
           <DropdownOption
             key={type}
@@ -103,13 +103,10 @@ export function DropdownList({
           </DropdownOption>
         );
       })}
-      {data.isGeneric && (
+      {isGeneric && (
         <DropdownOption
-          onClick={() =>
-            selectOperation(
-              createOperation({ name: "", isGeneric: data.isGeneric })
-            )
-          }
+          onClick={() => selectOperation(createOperation({ name: "" }))}
+          selected={!data.reference?.id && data.entityType === "operation"}
         >
           operation
         </DropdownOption>
@@ -117,7 +114,7 @@ export function DropdownList({
       <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
       {prevStatements.map((statement) => {
         let result = getStatementResult(statement);
-        if (!data.isGeneric && !isSameType(result, data)) return;
+        if (!isGeneric && !isSameType(result, data)) return;
         return (
           <DropdownOption
             key={statement.id}
@@ -134,7 +131,7 @@ export function DropdownList({
       })}
       {prevOperations.map((operation) => {
         let result = getOperationResult(operation);
-        if (!data.isGeneric && !isSameType(result, data)) return;
+        if (!isGeneric && !isSameType(result, data)) return;
         return (
           <DropdownOption
             key={operation.id}

@@ -34,7 +34,10 @@ export function Operation({
   }
 
   function addStatement() {
-    let statements = [...operation.statements, createStatement()];
+    let statements = [
+      ...operation.statements,
+      createStatement({ metadata: { isGeneric: true } }),
+    ];
     handleOperation({ ...operation, statements });
   }
 
@@ -73,7 +76,11 @@ export function Operation({
 
   function addParameter() {
     let newStatement = createStatement({
-      metadata: { disableMethods: true, disableNameToggle: true },
+      metadata: {
+        disableMethods: true,
+        disableNameToggle: true,
+        isGeneric: true,
+      },
     });
     let parameter = {
       ...newStatement,

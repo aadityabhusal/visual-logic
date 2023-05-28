@@ -5,18 +5,15 @@ import { IData, IOperation, IMethod, IStatement, IType } from "./types";
 export function createData<T extends keyof IType>({
   type,
   value,
-  isGeneric,
 }: {
   type: T;
   value?: IType[T];
-  isGeneric?: boolean;
 }): IData<T> {
   return {
     id: nanoid(),
     entityType: "data",
     type,
     value: value || TypeMapper[type].defaultValue,
-    isGeneric,
     reference: undefined,
   };
 }
@@ -24,12 +21,10 @@ export function createData<T extends keyof IType>({
 export function createOperation(props?: {
   name?: string;
   parameters?: IStatement[];
-  isGeneric?: boolean;
 }): IOperation {
   let id = nanoid();
   return {
     id,
-    isGeneric: props?.isGeneric,
     entityType: "operation",
     handler: undefined,
     name: props?.name ?? "f_" + id.slice(-4),
@@ -47,7 +42,7 @@ export function createStatement(props?: {
   methods?: IMethod[];
   metadata?: IStatement["metadata"];
 }): IStatement {
-  let newData = props?.data || createData({ type: "string", isGeneric: true });
+  let newData = props?.data || createData({ type: "string" });
   return {
     id: props?.id || nanoid(),
     name: props?.name,
@@ -116,17 +111,18 @@ export function resetParameters(
   disableName?: boolean
 ): IStatement[] {
   return parameters.map((param) => {
-    let argData = argumentList?.find((item) => item.id === param.id)?.data;
-    let paramData = { ...param.data, isGeneric: argData?.isGeneric };
+    let arg = argumentList?.find((item) => item.id === param.id);
+    let paramData = { ...param.data };
     if (paramData.entityType === "data") {
-      let argValue = argData?.entityType === "data" ? argData.value : undefined;
+      let argValue =
+        arg?.data.entityType === "data" ? arg.data.value : undefined;
       paramData = {
         ...paramData,
         value: argValue || TypeMapper[paramData.type].defaultValue,
       };
     } else {
       let argParams =
-        argData?.entityType === "operation" ? argData.parameters : undefined;
+        arg?.data.entityType === "operation" ? arg.data.parameters : undefined;
       paramData = {
         ...paramData,
         parameters: resetParameters(paramData.parameters, argParams, false),
@@ -140,6 +136,7 @@ export function resetParameters(
         disableNameToggle: true,
         disableDelete: true,
         disableMethods: false,
+        isGeneric: arg?.metadata.isGeneric,
       },
     };
   });

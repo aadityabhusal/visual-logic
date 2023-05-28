@@ -19,7 +19,7 @@ export function updateStatementMethods(statement: IStatement): IStatement {
         getStatementResult(item)
       );
       let { id: newId, ...result } = currentMethod.handler(data, ...parameters);
-      let rest = { id: currentMethod.result.id, isGeneric: data.isGeneric };
+      let rest = { id: currentMethod.result.id };
 
       return [
         ...previousMethods,
@@ -43,10 +43,7 @@ function getReferenceData(data: IData, reference?: IStatement): IData {
     currentReference?.id &&
     (!reference || !reference.name || referenceResult?.entityType !== "data");
 
-  const { id: newId, ...newData } = createData({
-    type: data.type,
-    isGeneric: data.isGeneric,
-  });
+  const { id: newId, ...newData } = createData({ type: data.type });
 
   return {
     ...data,
@@ -117,7 +114,7 @@ export function getReferenceOperation(
         )
       );
     }
-    return { ...parameter, data: { ...parameter.data, isGeneric: false } };
+    return { ...parameter, data: { ...parameter.data } };
   });
 
   let updatedStatements = statementList.map((argument) =>

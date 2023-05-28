@@ -27,7 +27,10 @@ export function Statement({
   function addMethod() {
     let data = getStatementResult(statement);
     if (data.entityType !== "data") return;
-    let method = createMethod({ data });
+    let method = createMethod({
+      data,
+      isGeneric: statement.metadata.isGeneric,
+    });
     let methods = [...statement.methods, method];
     handleStatement(updateStatementMethods({ ...statement, methods }));
   }
@@ -70,6 +73,7 @@ export function Statement({
       selectOperation={(operation) =>
         handleStatement({ ...statement, data: operation })
       }
+      isGeneric={statement.metadata.isGeneric}
     />
   );
 
@@ -140,6 +144,7 @@ export function Statement({
           <Method
             key={method.id}
             data={data}
+            isGeneric={statement.metadata.isGeneric}
             method={method}
             handleMethod={(meth, remove) => handleMethod(meth, i, remove)}
             prevStatements={prevStatements}

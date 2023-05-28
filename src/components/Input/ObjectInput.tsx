@@ -21,8 +21,8 @@ export function ObjectInput({
     if (data.value instanceof Map && !data.value.has("")) {
       let newMap = new Map(data.value);
       let newData = createStatement({
-        data: createData({ type: "string", isGeneric: true }),
-        metadata: { disableName: true },
+        data: createData({ type: "string" }),
+        metadata: { disableName: true, isGeneric: true },
       });
       newMap.set("", newData);
       handleData({

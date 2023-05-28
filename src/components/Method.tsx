@@ -10,6 +10,7 @@ import { theme } from "../lib/theme";
 interface IProps {
   data: IData;
   method: IMethod;
+  isGeneric?: boolean;
   handleMethod: (method: IMethod, remove?: boolean) => void;
   addMethod?: () => void;
   prevStatements: IStatement[];
@@ -19,6 +20,7 @@ interface IProps {
 export function Method({
   data,
   method,
+  isGeneric,
   handleMethod,
   addMethod,
   prevStatements,
@@ -39,7 +41,7 @@ export function Method({
     handleMethod({
       ...method,
       parameters,
-      result: { ...result, id: method.result.id, isGeneric: data.isGeneric },
+      result: { ...result, id: method.result.id },
     });
   }
 
@@ -76,7 +78,7 @@ export function Method({
         }
       >
         <DropdownOptions>
-          {getFilteredMethods(data).map((item) => (
+          {getFilteredMethods(data, isGeneric).map((item) => (
             <DropdownOption
               key={item.name}
               onClick={() => handleDropdown(item.name)}

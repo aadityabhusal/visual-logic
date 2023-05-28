@@ -279,37 +279,43 @@ export const methodsList: Record<keyof IType, IMethodList[]> = {
   object: objectMethods.concat(comparisonMethods),
 };
 
-export function getFilteredMethods(data: IData) {
+export function getFilteredMethods(data: IData, isGeneric?: boolean) {
   return methodsList[data.type].filter((item) => {
-    let parameters = item.parameters.map((p) =>
-      createData({ type: p.type, isGeneric: p.isGeneric })
-    );
-    return (
-      data.isGeneric || isSameType(data, item.handler(data, ...parameters))
-    );
+    let parameters = item.parameters.map((p) => createData({ type: p.type }));
+    return isGeneric || isSameType(data, item.handler(data, ...parameters));
   });
 }
 
-export function createMethod({ data, name }: { data: IData; name?: string }) {
-  let methods = getFilteredMethods(data);
+export function createMethod({
+  data,
+  name,
+  isGeneric,
+}: {
+  data: IData;
+  name?: string;
+  isGeneric?: boolean;
+}) {
+  let methods = getFilteredMethods(data, isGeneric);
   let methodByName = methods.find((method) => method.name === name);
   let newMethod = methodByName || methods[0];
 
   let parameters = newMethod.parameters.map((item) =>
-    createData({ type: item.type, isGeneric: item.isGeneric })
+    createStatement({
+      data: createData({ type: item.type }),
+      metadata: {
+        disableName: true,
+        disableDelete: true,
+        isGeneric: item.isGeneric,
+      },
+    })
   );
-  let result = newMethod.handler(data, ...parameters);
+  let result = newMethod.handler(data, ...parameters.map((item) => item.data));
   return {
     id: nanoid(),
     entityType: "method",
     name: newMethod.name,
-    parameters: parameters.map((item) =>
-      createStatement({
-        data: item,
-        metadata: { disableName: true, disableDelete: true },
-      })
-    ),
+    parameters,
     handler: newMethod.handler,
-    result: { ...result, isGeneric: data.isGeneric },
+    result: { ...result },
   } as IMethod;
 }

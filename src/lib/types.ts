@@ -11,7 +11,6 @@ export interface IData<T extends keyof IType = keyof IType> {
   entityType: "data";
   type: T;
   value: IType[T];
-  isGeneric?: boolean;
   reference?: {
     id: string;
     name: string;
@@ -38,6 +37,7 @@ export interface IStatement {
     disableNameToggle?: boolean;
     disableDelete?: boolean;
     disableMethods?: boolean;
+    isGeneric?: boolean;
   };
 }
 
@@ -49,7 +49,6 @@ export interface IOperation {
   closure: IStatement[];
   statements: IStatement[];
   handler?: (...args: IData[]) => IData;
-  isGeneric?: boolean;
   reference?: {
     id: string;
     name: string;
