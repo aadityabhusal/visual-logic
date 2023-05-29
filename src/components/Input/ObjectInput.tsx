@@ -20,9 +20,9 @@ export function ObjectInput({
   function addToObject() {
     if (data.value instanceof Map && !data.value.has("")) {
       let newMap = new Map(data.value);
-      let newData = createStatement(
-        createData({ type: "string", isGeneric: true })
-      );
+      let newData = createStatement({
+        data: createData({ type: "string", isGeneric: true }),
+      });
       newMap.set("", newData);
       handleData({
         ...data,

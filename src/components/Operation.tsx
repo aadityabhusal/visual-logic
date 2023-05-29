@@ -188,6 +188,7 @@ export function Operation({
                     }
                     disableMethods={true}
                     disableDelete={disableDelete}
+                    disableNameToggle={true}
                     prevStatements={[]}
                     prevOperations={[]}
                   />

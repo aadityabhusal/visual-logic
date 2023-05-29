@@ -15,6 +15,7 @@ export function Statement({
   statement,
   handleStatement,
   disableName,
+  disableNameToggle,
   disableDelete,
   disableMethods,
   prevStatements,
@@ -23,6 +24,7 @@ export function Statement({
   statement: IStatement;
   handleStatement: (statement: IStatement, remove?: boolean) => void;
   disableName?: boolean;
+  disableNameToggle?: boolean;
   disableDelete?: boolean;
   disableMethods?: boolean;
   prevStatements: IStatement[];
@@ -106,6 +108,7 @@ export function Statement({
             size={10}
             style={{ paddingTop: "0.25rem" }}
             onClick={() =>
+              !disableNameToggle &&
               handleStatement({
                 ...statement,
                 name: hasName ? undefined : `v_${statement.id.slice(-3)}`,
