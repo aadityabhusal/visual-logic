@@ -65,13 +65,13 @@ export function DropdownList({
     const parameters = resetParameters(operation.parameters);
     const closure = getClosureList(reference) || [];
     const statements = updateStatements({
-      statements: [
+      statements: operation.statements,
+      previous: [
+        ...prevOperations,
         ...prevStatements,
         ...closure,
         ...parameters,
-        ...operation.statements,
       ],
-      previousOperations: prevOperations,
     });
 
     selectOperation({
@@ -80,9 +80,7 @@ export function DropdownList({
       id: data.id,
       parameters,
       closure,
-      statements: statements.slice(
-        prevStatements.length + closure.length + parameters.length
-      ),
+      statements,
       reference: reference.name
         ? { id: reference.id, name: reference.name }
         : undefined,

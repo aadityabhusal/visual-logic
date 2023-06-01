@@ -33,8 +33,7 @@ export function updateStatementMethods(statement: IStatement): IStatement {
 
 function getReferenceData(
   data: IData,
-  previousStatements: IStatement[],
-  previousOperations?: IOperation[],
+  previous: IStatement[],
   reference?: IStatement
 ): IData {
   const currentReference = data.reference;
@@ -63,26 +62,12 @@ function getReferenceData(
       referenceResult?.entityType === "data"
         ? referenceResult?.value
         : Array.isArray(data.value)
-        ? data.value.map((item) =>
-            updateStatementMethods(
-              updateStatementReference(
-                item,
-                previousStatements,
-                previousOperations
-              )
-            )
-          )
+        ? updateStatements({ statements: data.value, previous })
         : data.value instanceof Map
         ? new Map(
             [...data.value.entries()].map(([name, value]) => [
               name,
-              updateStatementMethods(
-                updateStatementReference(
-                  value,
-                  previousStatements,
-                  previousOperations
-                )
-              ),
+              updateStatements({ statements: [value], previous })[0],
             ])
           )
         : data.value,
@@ -92,8 +77,7 @@ function getReferenceData(
 
 export function getReferenceOperation(
   operation: IOperation,
-  previousStatements: IStatement[],
-  previousOperations?: IOperation[],
+  previous: IStatement[],
   reference?: IStatement
 ): IOperation {
   const currentReference = operation.reference;
@@ -136,32 +120,15 @@ export function getReferenceOperation(
           argument = { ...argument, data: parameter.data };
         }
       }
-
-      return updateStatementMethods(
-        updateStatementReference(
-          argument,
-          previousStatements,
-          previousOperations
-        )
-      );
+      return updateStatements({ statements: [argument], previous })[0];
     }
     return { ...parameter, data: { ...parameter.data, isGeneric: false } };
   });
 
-  let updatedStatements = statementList.map((argument) =>
-    updateStatementMethods(
-      updateStatementReference(
-        argument,
-        [
-          ...previousStatements,
-          ...closure,
-          ...updatedParameters,
-          ...statementList,
-        ],
-        previousOperations
-      )
-    )
-  );
+  let updatedStatements = updateStatements({
+    statements: statementList,
+    previous: [...previous, ...closure, ...updatedParameters],
+  });
 
   return {
     ...operation,
@@ -179,40 +146,23 @@ export function getReferenceOperation(
 
 export function updateStatementReference(
   currentStatement: IStatement,
-  previousStatements: IStatement[],
-  previousOperations?: IOperation[]
+  previous: IStatement[]
 ): IStatement {
   const currentReference = currentStatement.data.reference;
-  let reference = [
-    ...previousStatements,
-    ...(previousOperations?.map((item) =>
-      createStatement({ id: item.id, name: item.name, data: item })
-    ) || []),
-  ].find((item) => item.id === currentReference?.id);
+  let reference = previous.find((item) => item.id === currentReference?.id);
 
   return {
     ...currentStatement,
     data:
       currentStatement.data.entityType === "data"
-        ? getReferenceData(
-            currentStatement.data,
-            previousStatements,
-            previousOperations,
-            reference
-          )
-        : getReferenceOperation(
-            currentStatement.data,
-            previousStatements,
-            previousOperations,
-            reference
-          ),
+        ? getReferenceData(currentStatement.data, previous, reference)
+        : getReferenceOperation(currentStatement.data, previous, reference),
     methods: currentStatement.methods.map((method) => ({
       ...method,
-      parameters: method.parameters.map((param) =>
-        updateStatementMethods(
-          updateStatementReference(param, previousStatements)
-        )
-      ),
+      parameters: updateStatements({
+        statements: method.parameters,
+        previous,
+      }),
     })),
   };
 }
@@ -221,32 +171,36 @@ export function updateStatements({
   statements,
   changedStatement,
   removeStatement,
-  previousOperations,
+  previous = [],
 }: {
   statements: IStatement[];
   changedStatement?: IStatement;
   removeStatement?: boolean;
-  previousOperations?: IOperation[];
+  previous?: (IStatement | IOperation)[];
 }): IStatement[] {
+  let previousStatements = previous.map((item) =>
+    item.entityType === "operation"
+      ? createStatement({ id: item.id, name: item.name, data: item })
+      : item
+  );
   let currentIndexFound = false;
-  return statements.reduce((previousStatements, currentStatement) => {
+  return statements.reduce((prevStatements, currentStatement) => {
     if (currentStatement.id === changedStatement?.id) {
       currentIndexFound = true;
-      if (removeStatement) return previousStatements;
-      else return [...previousStatements, changedStatement];
+      if (removeStatement) return prevStatements;
+      else return [...prevStatements, changedStatement];
     }
 
     if (changedStatement && !currentIndexFound)
-      return [...previousStatements, currentStatement];
+      return [...prevStatements, currentStatement];
 
     return [
-      ...previousStatements,
+      ...prevStatements,
       updateStatementMethods(
-        updateStatementReference(
-          currentStatement,
-          previousStatements,
-          previousOperations
-        )
+        updateStatementReference(currentStatement, [
+          ...previousStatements,
+          ...prevStatements,
+        ])
       ),
     ];
   }, [] as IStatement[]);
@@ -272,7 +226,7 @@ export function updateOperations(
         ...currentOperation.parameters,
         ...currentOperation.statements,
       ],
-      previousOperations: prevOperations,
+      previous: prevOperations,
     });
     const parameterLength = currentOperation.parameters.length;
     return [
