@@ -31,7 +31,12 @@ export function updateStatementMethods(statement: IStatement): IStatement {
   return { ...statement, methods: updatedMethods };
 }
 
-function getReferenceData(data: IData, reference?: IStatement): IData {
+function getReferenceData(
+  data: IData,
+  previousStatements: IStatement[],
+  previousOperations?: IOperation[],
+  reference?: IStatement
+): IData {
   const currentReference = data.reference;
   let referenceResult = reference && getStatementResult(reference);
 
@@ -57,6 +62,29 @@ function getReferenceData(data: IData, reference?: IStatement): IData {
     value:
       referenceResult?.entityType === "data"
         ? referenceResult?.value
+        : Array.isArray(data.value)
+        ? data.value.map((item) =>
+            updateStatementMethods(
+              updateStatementReference(
+                item,
+                previousStatements,
+                previousOperations
+              )
+            )
+          )
+        : data.value instanceof Map
+        ? new Map(
+            [...data.value.entries()].map(([name, value]) => [
+              name,
+              updateStatementMethods(
+                updateStatementReference(
+                  value,
+                  previousStatements,
+                  previousOperations
+                )
+              ),
+            ])
+          )
         : data.value,
     ...((isReferenceRemoved || isTypeChanged) && newData),
   };
@@ -166,7 +194,12 @@ export function updateStatementReference(
     ...currentStatement,
     data:
       currentStatement.data.entityType === "data"
-        ? getReferenceData(currentStatement.data, reference)
+        ? getReferenceData(
+            currentStatement.data,
+            previousStatements,
+            previousOperations,
+            reference
+          )
         : getReferenceOperation(
             currentStatement.data,
             previousStatements,

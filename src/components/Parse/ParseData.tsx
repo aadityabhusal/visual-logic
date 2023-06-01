@@ -42,11 +42,7 @@ function ParseObject({
       {val.map(([key, val], i, arr) => (
         <Fragment key={i}>
           <span style={{ marginRight: "4px" }}>{key}:</span>
-          {val.data.reference?.name ? (
-            <Variable>{val.data.reference?.name}</Variable>
-          ) : (
-            <ParseStatement statement={val} showData={showData} />
-          )}
+          <ParseStatement statement={val} showData={showData} />
           {i + 1 < arr.length && <Comma>,</Comma>}
         </Fragment>
       ))}
@@ -67,11 +63,7 @@ function ParseArray({
       <Brackets>{"["}</Brackets>
       {data.value.map((item, i, arr) => (
         <Fragment key={i}>
-          {item.data.reference?.name ? (
-            <Variable>{item.data.reference?.name}</Variable>
-          ) : (
-            <ParseStatement statement={item} showData={showData} />
-          )}
+          <ParseStatement statement={item} showData={showData} />
           {i + 1 < arr.length && <Comma>,</Comma>}
         </Fragment>
       ))}
