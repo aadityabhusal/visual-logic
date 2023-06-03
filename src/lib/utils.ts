@@ -47,9 +47,10 @@ export function createStatement(props?: {
   methods?: IMethod[];
 }): IStatement {
   let newData = props?.data || createData({ type: "string", isGeneric: true });
+  let newId = props?.id || nanoid();
   return {
-    id: props?.id || nanoid(),
-    name: props?.name,
+    id: newId,
+    name: props?.name !== undefined ? `v_${newId.slice(-3)}` : undefined,
     entityType: "statement",
     data: newData,
     methods: props?.methods || [],
@@ -131,4 +132,12 @@ export function resetParameters(
     }
     return { ...param, data: paramData };
   });
+}
+
+export function getPreviousStatements(previous: (IStatement | IOperation)[]) {
+  return previous.map((item) =>
+    item.entityType === "operation"
+      ? createStatement({ id: item.id, name: item.name, data: item })
+      : item
+  );
 }

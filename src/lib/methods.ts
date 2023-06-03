@@ -1,15 +1,22 @@
 import { nanoid } from "nanoid";
-import { IData, IMethod, IStatement, IType } from "./types";
+import { IData, IMethod, IOperation, IStatement, IType } from "./types";
 import {
   createData,
+  createOperation,
   createStatement,
+  getOperationResult,
   getStatementResult,
   isSameType,
 } from "./utils";
+import { updateStatements } from "./update";
 
 type IMethodList = {
   name: string;
-  parameters: { type: keyof IType; isGeneric?: boolean }[];
+  parameters: {
+    type: keyof IType | "operation";
+    parameters?: IMethodList["parameters"];
+    isGeneric?: boolean;
+  }[];
   handler(...args: IStatement["data"][]): IStatement["data"];
 };
 
@@ -259,6 +266,61 @@ export const arrayMethods: IMethodList[] = [
       });
     },
   },
+  {
+    name: "map",
+    parameters: [
+      {
+        type: "operation",
+        parameters: [{ type: "string" }, { type: "number" }, { type: "array" }],
+      },
+    ],
+    handler: (data: IData<"array">, operation: IOperation) => {
+      let value = mapArrayParameters(data, operation);
+      return createData({
+        type: "array",
+        value: value.map((item) => createStatement(item)),
+      });
+    },
+  },
+  {
+    name: "filter",
+    parameters: [
+      {
+        type: "operation",
+        parameters: [{ type: "string" }, { type: "number" }, { type: "array" }],
+      },
+    ],
+    handler: (data: IData<"array">, operation: IOperation) => {
+      let value = mapArrayParameters(data, operation);
+      return createData({
+        type: "array",
+        value: data.value.filter((_, i) => {
+          let val = value[i];
+          return val.entityType === "data" ? val.value : true;
+        }),
+      });
+    },
+  },
+  {
+    name: "find",
+    parameters: [
+      {
+        type: "operation",
+        parameters: [{ type: "string" }, { type: "number" }, { type: "array" }],
+      },
+    ],
+    handler: (data: IData<"array">, operation: IOperation) => {
+      let value = mapArrayParameters(data, operation);
+      let foundData = data.value.find((_, i) => {
+        let val = value[i];
+        return val.entityType === "data" ? val.value : true;
+      })?.data as IData;
+      return createData({
+        type: foundData?.type || "string",
+        value: foundData?.value || "",
+      });
+    },
+  },
 ];
 
 export const objectMethods: IMethodList[] = [
@@ -279,11 +341,41 @@ export const methodsList: Record<keyof IType, IMethodList[]> = {
   object: objectMethods.concat(comparisonMethods),
 };
 
+function mapArrayParameters(data: IData<"array">, operation: IOperation) {
+  return data.value.map((item, index, itemList) => {
+    let itemResult = (getStatementResult(item) as IData).value;
+    let paramsList = [itemResult, index, itemList];
+    let newParams = operation.parameters.map((param, i) => ({
+      ...param,
+      data: { ...param.data, value: paramsList[i] },
+    }));
+    let updatedStatements = updateStatements({
+      statements: [...newParams, ...operation.statements],
+      previous: operation.closure,
+    });
+    return getOperationResult({
+      ...operation,
+      parameters: updatedStatements.slice(0, operation.parameters.length),
+      statements: updatedStatements.slice(operation.parameters.length),
+    });
+  });
+}
+
+function getParams(item: IMethodList["parameters"][0]): IStatement["data"] {
+  return item.type === "operation"
+    ? createOperation({
+        parameters: item.parameters?.map((item) =>
+          createStatement({ data: getParams(item), name: "" })
+        ),
+        isGeneric: item.isGeneric,
+        name: "",
+      })
+    : createData({ type: item.type, isGeneric: item.isGeneric });
+}
+
 export function getFilteredMethods(data: IData) {
   return methodsList[data.type].filter((item) => {
-    let parameters = item.parameters.map((p) =>
-      createData({ type: p.type, isGeneric: p.isGeneric })
-    );
+    let parameters = item.parameters.map((p) => getParams(p));
     return (
       data.isGeneric || isSameType(data, item.handler(data, ...parameters))
     );
@@ -295,9 +387,7 @@ export function createMethod({ data, name }: { data: IData; name?: string }) {
   let methodByName = methods.find((method) => method.name === name);
   let newMethod = methodByName || methods[0];
 
-  let parameters = newMethod.parameters.map((item) =>
-    createData({ type: item.type, isGeneric: item.isGeneric })
-  );
+  let parameters = newMethod.parameters.map((item) => getParams(item));
   let result = newMethod.handler(data, ...parameters);
   return {
     id: nanoid(),

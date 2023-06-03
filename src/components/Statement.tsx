@@ -3,7 +3,11 @@ import styled from "styled-components";
 import { theme } from "../lib/theme";
 import { IData, IMethod, IOperation, IStatement } from "../lib/types";
 import { updateStatementMethods } from "../lib/update";
-import { isSameType, getStatementResult } from "../lib/utils";
+import {
+  isSameType,
+  getStatementResult,
+  getPreviousStatements,
+} from "../lib/utils";
 import { createMethod } from "../lib/methods";
 import { Data } from "./Data";
 import { Input } from "./Input/Input";
@@ -37,7 +41,12 @@ export function Statement({
     if (data.entityType !== "data") return;
     let method = createMethod({ data });
     let methods = [...statement.methods, method];
-    handleStatement(updateStatementMethods({ ...statement, methods }));
+    handleStatement(
+      updateStatementMethods(
+        { ...statement, methods },
+        getPreviousStatements([...prevStatements, ...prevOperations])
+      )
+    );
   }
 
   function handleData(data: IData, remove?: boolean) {
@@ -46,7 +55,12 @@ export function Statement({
       let methods = [...statement.methods];
       let statementData = statement.data as IData;
       if (statementData.type !== data.type) methods = [];
-      handleStatement(updateStatementMethods({ ...statement, data, methods }));
+      handleStatement(
+        updateStatementMethods(
+          { ...statement, data, methods },
+          getPreviousStatements([...prevStatements, ...prevOperations])
+        )
+      );
     }
   }
 
@@ -66,7 +80,12 @@ export function Statement({
         methods.splice(index + 1);
       methods[index] = method;
     }
-    handleStatement(updateStatementMethods({ ...statement, methods }));
+    handleStatement(
+      updateStatementMethods(
+        { ...statement, methods },
+        getPreviousStatements([...prevStatements, ...prevOperations])
+      )
+    );
   }
 
   const dropdownList = (

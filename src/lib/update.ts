@@ -1,23 +1,32 @@
 import { IOperation, IMethod, IStatement, IData } from "./types";
 import {
   createData,
-  createStatement,
   getClosureList,
+  getPreviousStatements,
   getStatementResult,
   isSameType,
   resetParameters,
 } from "./utils";
 
-export function updateStatementMethods(statement: IStatement): IStatement {
+export function updateStatementMethods(
+  statement: IStatement,
+  previous: IStatement[] = []
+): IStatement {
   let updatedMethods = statement.methods.reduce(
     (previousMethods, currentMethod, index) => {
       let data = getStatementResult(
         { ...statement, methods: previousMethods },
         index
       );
-      let parameters = currentMethod.parameters.map((item) =>
-        getStatementResult(item)
-      );
+      let parameters = currentMethod.parameters.map((item) => {
+        let closure = item.data.entityType === "operation" && {
+          closure: [...item.data.closure, ...previous],
+        };
+        return getStatementResult({
+          ...item,
+          data: { ...item.data, ...closure },
+        });
+      });
       let { id: newId, ...result } = currentMethod.handler(data, ...parameters);
       let rest = { id: currentMethod.result.id, isGeneric: data.isGeneric };
 
@@ -178,11 +187,6 @@ export function updateStatements({
   removeStatement?: boolean;
   previous?: (IStatement | IOperation)[];
 }): IStatement[] {
-  let previousStatements = previous.map((item) =>
-    item.entityType === "operation"
-      ? createStatement({ id: item.id, name: item.name, data: item })
-      : item
-  );
   let currentIndexFound = false;
   return statements.reduce((prevStatements, currentStatement) => {
     if (currentStatement.id === changedStatement?.id) {
@@ -194,13 +198,12 @@ export function updateStatements({
     if (changedStatement && !currentIndexFound)
       return [...prevStatements, currentStatement];
 
+    let previousList = [...getPreviousStatements(previous), ...prevStatements];
     return [
       ...prevStatements,
       updateStatementMethods(
-        updateStatementReference(currentStatement, [
-          ...previousStatements,
-          ...prevStatements,
-        ])
+        updateStatementReference(currentStatement, previousList),
+        previousList
       ),
     ];
   }, [] as IStatement[]);

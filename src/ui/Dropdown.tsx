@@ -49,7 +49,7 @@ export function Dropdown({
       }}
       style={{ zIndex: content ? 999 : display ? 1000 : "initial" }}
     >
-      <div style={{ display: "flex", alignItems: "center" }}>{head}</div>
+      <div style={{ display: "flex", alignItems: "flex-start" }}>{head}</div>
       {display ? (
         <DropdownHead onClick={() => setContent((c) => !c)}>
           <DropdownReturnType>
