@@ -132,3 +132,11 @@ export function resetParameters(
     return { ...param, data: paramData };
   });
 }
+
+export function getPreviousStatements(previous: (IStatement | IOperation)[]) {
+  return previous.map((item) =>
+    item.entityType === "operation"
+      ? createStatement({ id: item.id, name: item.name, data: item })
+      : item
+  );
+}
