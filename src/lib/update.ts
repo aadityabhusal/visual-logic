@@ -168,10 +168,7 @@ export function updateStatementReference(
         : getReferenceOperation(currentStatement.data, previous, reference),
     methods: currentStatement.methods.map((method) => ({
       ...method,
-      parameters: updateStatements({
-        statements: method.parameters,
-        previous,
-      }),
+      parameters: updateStatements({ statements: method.parameters, previous }),
     })),
   };
 }

@@ -32,7 +32,7 @@ function App() {
                 setOperation(updateOperations(operations, operation))
               }
               prevStatements={[]}
-              prevOperations={operations.slice(0, currentOperationIndex + 1)}
+              prevOperations={operations.slice(0, currentOperationIndex)}
             />
           ) : (
             <div>Select an operation</div>

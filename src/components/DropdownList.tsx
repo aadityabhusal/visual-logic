@@ -3,7 +3,7 @@ import {
   createOperation,
   getClosureList,
   getStatementResult,
-  getOperationResult,
+  createStatement,
   isSameType,
   resetParameters,
 } from "../lib/utils";
@@ -131,7 +131,7 @@ export function DropdownList({
         );
       })}
       {prevOperations.map((operation) => {
-        let result = getOperationResult(operation);
+        let result = getStatementResult(createStatement({ data: operation }));
         if (!data.isGeneric && !isSameType(result, data)) return;
         return (
           <DropdownOption

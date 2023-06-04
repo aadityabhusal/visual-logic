@@ -204,6 +204,25 @@ export const numberMethods: IMethodList[] = [
     },
   },
   {
+    name: "range",
+    parameters: [{ type: "number" }],
+    handler: (data: IData<"number">, p1: IData<"number">) => {
+      let rev = data.value > p1.value;
+      let [start, end] = rev ? [p1.value, data.value] : [data.value, p1.value];
+      return createData({
+        type: "array",
+        value: Array.from(Array(end - start).keys()).map((value) =>
+          createStatement({
+            data: createData({
+              type: "number",
+              value: rev ? end - value : start + value,
+            }),
+          })
+        ),
+      });
+    },
+  },
+  {
     name: "toString",
     parameters: [],
     handler: (data: IData<"number">) => {
