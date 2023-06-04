@@ -38,7 +38,7 @@ export interface IStatement {
 export interface IOperation {
   id: string;
   entityType: "operation";
-  name: string;
+  name?: string;
   parameters: IStatement[];
   closure: IStatement[];
   statements: IStatement[];

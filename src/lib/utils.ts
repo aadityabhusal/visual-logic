@@ -32,7 +32,7 @@ export function createOperation(props?: {
     isGeneric: props?.isGeneric,
     entityType: "operation",
     handler: undefined,
-    name: props?.name ?? "f_" + id.slice(-4),
+    name: props?.name !== undefined ? `f_${id.slice(-3)}` : undefined,
     parameters: props?.parameters || [],
     statements: [],
     closure: [],

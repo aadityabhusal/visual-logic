@@ -387,7 +387,6 @@ function getParams(item: IMethodList["parameters"][0]): IStatement["data"] {
           createStatement({ data: getParams(item), name: "" })
         ),
         isGeneric: item.isGeneric,
-        name: "",
       })
     : createData({ type: item.type, isGeneric: item.isGeneric });
 }

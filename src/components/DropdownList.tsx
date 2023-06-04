@@ -104,9 +104,7 @@ export function DropdownList({
       {data.isGeneric && (
         <DropdownOption
           onClick={() =>
-            selectOperation(
-              createOperation({ name: "", isGeneric: data.isGeneric })
-            )
+            selectOperation(createOperation({ isGeneric: data.isGeneric }))
           }
         >
           operation

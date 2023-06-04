@@ -24,6 +24,7 @@ export function Operation({
   disableDelete?: boolean;
   children?: ReactNode;
 }) {
+  const hasName = operation.name !== undefined;
   function handleOperationProps(
     key: keyof IOperation,
     value: IOperation[typeof key]
@@ -143,12 +144,12 @@ export function Operation({
         ) : (
           <OperationWrapper>
             <OperationHead>
-              {operation.name && (
+              {hasName && (
                 <Input
                   data={{
                     id: "",
                     type: "string",
-                    value: operation.name,
+                    value: operation.name || "",
                     entityType: "data",
                   }}
                   handleData={(data) => {
@@ -156,8 +157,7 @@ export function Operation({
                     const exists = prevOperations.find(
                       (item) => item.name === name
                     );
-                    if (!exists)
-                      handleOperationProps("name", data.value as string);
+                    if (!exists) handleOperationProps("name", name);
                   }}
                   color={theme.color.variable}
                   noQuotes
