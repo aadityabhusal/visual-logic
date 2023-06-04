@@ -278,7 +278,7 @@ export const arrayMethods: IMethodList[] = [
       let value = mapArrayParameters(data, operation);
       return createData({
         type: "array",
-        value: value.map((item) => createStatement(item)),
+        value: value.map((data) => createStatement({ data })),
       });
     },
   },

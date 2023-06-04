@@ -1,9 +1,12 @@
 import { Equals } from "@styled-icons/fa-solid";
 import { theme } from "../../src/lib/theme";
 import { IData, IStatement } from "../../src/lib/types";
-import { createData } from "../../src/lib/utils";
+import { createData, createStatement } from "../../src/lib/utils";
 import { Input } from "../../src/components/Input/Input";
 import { Statement } from "../../src/components/Statement";
+import { ParseStatement } from "../../src/components/Parse/ParseStatement";
+import { ParseVariable } from "../../src/components/Parse/ParseOperation";
+import { createMethod } from "../../src/lib/methods";
 
 export interface ICondition {
   id: string;
@@ -96,7 +99,6 @@ export function Condition({
   );
 }
 
-/* 
 export function createCondition(): ICondition {
   let data = createData("string", "");
   const method = createMethod({ data, name: "==" });
@@ -111,4 +113,18 @@ export function createCondition(): ICondition {
     result: first.result,
   };
 }
-*/
+
+export function ParseCondition({ condition }: { condition: ICondition }) {
+  return (
+    <div style={{ display: "flex", gap: "5px" }}>
+      <ParseVariable
+        statement={{ ...condition.condition, variable: condition.variable }}
+      />
+      <ParseStatement statement={condition.condition} />
+      <span>{"?"}</span>
+      <ParseStatement statement={condition.true} />
+      <span>{":"}</span>
+      <ParseStatement statement={condition.false} />
+    </div>
+  );
+}
