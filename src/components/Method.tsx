@@ -1,4 +1,3 @@
-import styled from "styled-components";
 import { IData, IMethod, IOperation, IStatement } from "../lib/types";
 import { Statement } from "./Statement";
 import { DropdownOption, DropdownOptions } from "../ui/Dropdown";
@@ -6,6 +5,7 @@ import { Dropdown } from "../ui/Dropdown";
 import { createMethod, getFilteredMethods } from "../lib/methods";
 import { getStatementResult } from "../lib/utils";
 import { theme } from "../lib/theme";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 interface IProps {
   data: IData;
@@ -44,7 +44,7 @@ export function Method({
   }
 
   return (
-    <MethodWrapper>
+    <ErrorBoundary>
       <Dropdown
         result={{
           ...(method.result.entityType === "data"
@@ -89,12 +89,6 @@ export function Method({
           ))}
         </DropdownOptions>
       </Dropdown>
-    </MethodWrapper>
+    </ErrorBoundary>
   );
 }
-
-const MethodWrapper = styled.div`
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-`;

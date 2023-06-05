@@ -290,7 +290,11 @@ export const arrayMethods: IMethodList[] = [
     parameters: [
       {
         type: "operation",
-        parameters: [{ type: "string" }, { type: "number" }, { type: "array" }],
+        parameters: [
+          { type: "string", isGeneric: true },
+          { type: "number" },
+          { type: "array" },
+        ],
       },
     ],
     handler: (data: IData<"array">, operation: IOperation) => {
@@ -306,7 +310,11 @@ export const arrayMethods: IMethodList[] = [
     parameters: [
       {
         type: "operation",
-        parameters: [{ type: "string" }, { type: "number" }, { type: "array" }],
+        parameters: [
+          { type: "string", isGeneric: true },
+          { type: "number" },
+          { type: "array" },
+        ],
       },
     ],
     handler: (data: IData<"array">, operation: IOperation) => {
@@ -325,7 +333,11 @@ export const arrayMethods: IMethodList[] = [
     parameters: [
       {
         type: "operation",
-        parameters: [{ type: "string" }, { type: "number" }, { type: "array" }],
+        parameters: [
+          { type: "string", isGeneric: true },
+          { type: "number" },
+          { type: "array" },
+        ],
       },
     ],
     handler: (data: IData<"array">, operation: IOperation) => {

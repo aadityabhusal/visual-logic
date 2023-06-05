@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { theme } from "../lib/theme";
 import { IData } from "../lib/types";
 import { ParseData } from "../components/Parse/ParseData";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 
 interface IProps {
   head?: ReactNode;
@@ -81,7 +82,9 @@ export function Dropdown({
         </DropdownContainer>
       ) : display && result.data ? (
         <DropdownContainer>
-          <ParseData data={result.data} showData={true} />
+          <ErrorBoundary displayError={true}>
+            <ParseData data={result.data} showData={true} />
+          </ErrorBoundary>
         </DropdownContainer>
       ) : null}
     </DropdownWrapper>
