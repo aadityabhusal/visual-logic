@@ -1,4 +1,3 @@
-import styled from "styled-components";
 import { IData } from "../../lib/types";
 
 export interface IBooleanInput {
@@ -7,22 +6,15 @@ export interface IBooleanInput {
 }
 export function BooleanInput({ data, handleData }: IBooleanInput) {
   return (
-    <BooleanContainer>
-      <input
-        type="checkbox"
-        checked={data.value as boolean}
-        onChange={(e) =>
-          handleData({
-            ...data,
-            value: e.target.checked,
-          })
-        }
-      />
-    </BooleanContainer>
+    <input
+      type="checkbox"
+      checked={data.value as boolean}
+      onChange={(e) =>
+        handleData({
+          ...data,
+          value: e.target.checked,
+        })
+      }
+    />
   );
 }
-
-const BooleanContainer = styled.div`
-  display: flex;
-  align-items: center;
-`;

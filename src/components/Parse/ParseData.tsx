@@ -2,7 +2,6 @@ import { Fragment } from "react";
 import styled from "styled-components";
 import { theme } from "../../lib/theme";
 import { IData } from "../../lib/types";
-import { Comma } from "./styles";
 import { ParseStatement } from "./ParseStatement";
 
 export function ParseData({
@@ -37,17 +36,17 @@ function ParseObject({
 }) {
   let val = Array.from(data.value);
   return (
-    <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+    <DataWrapper>
       <Brackets>{"{"}</Brackets>
       {val.map(([key, val], i, arr) => (
         <Fragment key={i}>
-          <span style={{ marginRight: "4px" }}>{key}:</span>
+          <div>{key}:</div>
           <ParseStatement statement={val} showData={showData} />
-          {i + 1 < arr.length && <Comma>,</Comma>}
+          {i + 1 < arr.length && <span>{","}</span>}
         </Fragment>
       ))}
       <Brackets>{"}"}</Brackets>
-    </div>
+    </DataWrapper>
   );
 }
 
@@ -59,16 +58,16 @@ function ParseArray({
   showData?: boolean;
 }) {
   return (
-    <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+    <DataWrapper>
       <Brackets>{"["}</Brackets>
       {data.value.map((item, i, arr) => (
         <Fragment key={i}>
           <ParseStatement statement={item} showData={showData} />
-          {i + 1 < arr.length && <Comma>,</Comma>}
+          {i + 1 < arr.length && <span>{","}</span>}
         </Fragment>
       ))}
       <Brackets>{"]"}</Brackets>
-    </div>
+    </DataWrapper>
   );
 }
 
@@ -78,4 +77,13 @@ const Brackets = styled.span`
 
 const Variable = styled.span`
   color: ${theme.color.variable};
+`;
+
+const DataWrapper = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  & > span {
+    color: ${theme.color.method};
+  }
 `;

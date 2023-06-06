@@ -1,4 +1,3 @@
-import styled from "styled-components";
 import { IData, IOperation, IStatement } from "../lib/types";
 import { Dropdown } from "../ui/Dropdown";
 import { ArrayInput } from "./Input/ArrayInput";
@@ -28,60 +27,50 @@ export function Data({
   prevOperations,
 }: IProps) {
   return (
-    <DataWrapper>
-      <Dropdown
-        result={{ data }}
-        handleDelete={!disableDelete ? () => handleData(data, true) : undefined}
-        addMethod={addMethod}
-        head={
-          data.reference?.name ? (
-            <Input
-              data={{
-                id: "",
-                type: "string",
-                value: data.reference?.name,
-                entityType: "data",
-              }}
-              handleData={() => {}}
-              disabled={true}
-              color={theme.color.variable}
-              noQuotes
-            />
-          ) : data.type === "array" ? (
-            <ArrayInput
-              data={data}
-              handleData={handleData}
-              prevStatements={prevStatements}
-              prevOperations={prevOperations}
-            />
-          ) : data.value instanceof Map ? (
-            <ObjectInput
-              data={data}
-              handleData={handleData}
-              prevStatements={prevStatements}
-              prevOperations={prevOperations}
-            />
-          ) : typeof data.value === "boolean" ? (
-            <BooleanInput data={data} handleData={handleData} />
-          ) : (
-            <Input
-              data={data}
-              handleData={handleData}
-              color={theme.color[data.type === "number" ? "number" : "string"]}
-            />
-          )
-        }
-      >
-        {children}
-      </Dropdown>
-    </DataWrapper>
+    <Dropdown
+      result={{ data }}
+      handleDelete={!disableDelete ? () => handleData(data, true) : undefined}
+      addMethod={addMethod}
+      head={
+        data.reference?.name ? (
+          <Input
+            data={{
+              id: "",
+              type: "string",
+              value: data.reference?.name,
+              entityType: "data",
+            }}
+            handleData={() => {}}
+            disabled={true}
+            color={theme.color.variable}
+            noQuotes
+          />
+        ) : data.type === "array" ? (
+          <ArrayInput
+            data={data}
+            handleData={handleData}
+            prevStatements={prevStatements}
+            prevOperations={prevOperations}
+          />
+        ) : data.value instanceof Map ? (
+          <ObjectInput
+            data={data}
+            handleData={handleData}
+            prevStatements={prevStatements}
+            prevOperations={prevOperations}
+          />
+        ) : typeof data.value === "boolean" ? (
+          <BooleanInput data={data} handleData={handleData} />
+        ) : (
+          <Input
+            data={data}
+            handleData={handleData}
+            color={theme.color[data.type === "number" ? "number" : "string"]}
+          />
+        )
+      }
+    >
+      {children}
+    </Dropdown>
   );
 }
-
-const DataWrapper = styled.div`
-  position: relative;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-`;

@@ -12,7 +12,3 @@ export const Variable = styled.div`
 export const Method = styled.div`
   color: ${theme.color.method};
 `;
-
-export const Comma = styled.span`
-  margin-right: 4px;
-`;

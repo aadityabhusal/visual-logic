@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import { IOperation } from "../../lib/types";
 import { ParseStatement } from "./ParseStatement";
-import { Comma, Reserved, Variable } from "./styles";
+import { Reserved, Variable } from "./styles";
 
 export function ParseOperation({ operation }: { operation: IOperation }) {
   return operation.reference ? (
@@ -27,7 +27,7 @@ export function ParseOperation({ operation }: { operation: IOperation }) {
         {operation.parameters.map((parameter, i, arr) => (
           <Fragment key={i}>
             <Variable>{parameter.name}</Variable>
-            {i + 1 < arr.length && <Comma>,</Comma>}
+            {i + 1 < arr.length && <span>{","}</span>}
           </Fragment>
         ))}
         {`) {`}

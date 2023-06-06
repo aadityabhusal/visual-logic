@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import { IStatement } from "../../lib/types";
 import { ParseData } from "./ParseData";
-import { Comma, Method } from "./styles";
+import { Method } from "./styles";
 import { ParseOperation } from "./ParseOperation";
 import { getStatementResult } from "../../lib/utils";
 
@@ -34,7 +34,7 @@ export function ParseStatement({
             {method.parameters.map((param, i, arr) => (
               <span style={{ display: "flex" }} key={i}>
                 <ParseStatement statement={param} />
-                {i + 1 < arr.length && <Comma>,</Comma>}
+                {i + 1 < arr.length && <span>{","}</span>}
               </span>
             ))}
             <span>{")"}</span>

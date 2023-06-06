@@ -104,7 +104,7 @@ export function Operation({
             />
             {operation.reference.isCalled && (
               <OperationHead>
-                {"("}
+                <span>{"("}</span>
                 {operation.parameters.map((parameter, i, paramList) => (
                   <Fragment key={i}>
                     <Statement
@@ -121,7 +121,7 @@ export function Operation({
                     {i + 1 < paramList.length && <span>,</span>}
                   </Fragment>
                 ))}
-                {")"}
+                <span>{")"}</span>
               </OperationHead>
             )}
             {!disableDelete && (
@@ -192,7 +192,8 @@ export function Operation({
                   onClick={addParameter}
                 />
               )}
-              <span>{") {"}</span>
+              <span>{")"}</span>
+              <span>{"{"}</span>
             </OperationHead>
             <OperationBody>
               {operation.statements.map((statement, i) => (
@@ -216,7 +217,7 @@ export function Operation({
                 onClick={addStatement}
               />
             </OperationBody>
-            <div>{"}"}</div>
+            <span>{"}"}</span>
           </OperationWrapper>
         )
       }

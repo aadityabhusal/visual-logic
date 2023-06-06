@@ -4,6 +4,7 @@ import { IData, IOperation, IStatement } from "../../lib/types";
 import { createData, createStatement } from "../../lib/utils";
 import { Input } from "./Input";
 import { Statement } from "../Statement";
+import { Fragment } from "react";
 
 export interface IObjectInput {
   data: IData;
@@ -68,11 +69,11 @@ export function ObjectInput({
 
   return (
     <ObjectContainer>
-      <span style={{ color: theme.color.method }}>{"{"}</span>
+      <span>{"{"}</span>
       {data.value instanceof Map
         ? Array.from(data.value).map(([key, value], i, arr) => {
             return (
-              <div key={i} style={{ display: "flex", alignItems: "center" }}>
+              <Fragment key={i}>
                 <Input
                   data={{
                     id: `${i}-${key}`,
@@ -94,20 +95,24 @@ export function ObjectInput({
                   prevStatements={prevStatements}
                   disableName={true}
                 />
-                {i < arr.length - 1 ? <span>{", "}</span> : null}
-              </div>
+                {i < arr.length - 1 ? <span>{","}</span> : null}
+              </Fragment>
             );
           })
         : null}
       <div onClick={addToObject} style={{ cursor: "pointer" }}>
         +
       </div>
-      <span style={{ color: theme.color.method }}>{"}"}</span>
+      <span>{"}"}</span>
     </ObjectContainer>
   );
 }
 
 const ObjectContainer = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  gap: 4px;
+  & > span {
+    color: ${theme.color.method};
+  }
 `;

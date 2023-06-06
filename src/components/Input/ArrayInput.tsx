@@ -3,6 +3,7 @@ import { IData, IOperation, IStatement } from "../../lib/types";
 import { createData, createStatement } from "../../lib/utils";
 import { theme } from "../../lib/theme";
 import { Statement } from "../Statement";
+import { Fragment } from "react";
 
 export interface IArrayInput {
   data: IData;
@@ -45,11 +46,11 @@ export function ArrayInput({
   }
   return (
     <ArrayContainer>
-      <span style={{ color: theme.color.method }}>{"["}</span>
+      <span>{"["}</span>
       {Array.isArray(data.value)
         ? data.value.map((item, i, arr) => {
             return (
-              <div key={i} style={{ display: "flex", alignItems: "center" }}>
+              <Fragment key={i}>
                 <Statement
                   statement={item}
                   handleStatement={(val, remove) =>
@@ -59,22 +60,24 @@ export function ArrayInput({
                   prevStatements={prevStatements}
                   disableName={true}
                 />
-                {i < arr.length - 1 ? (
-                  <span style={{ marginRight: "4px" }}>{", "}</span>
-                ) : null}
-              </div>
+                {i < arr.length - 1 ? <span>{","}</span> : null}
+              </Fragment>
             );
           })
         : null}
       <div onClick={addToArray} style={{ cursor: "pointer" }}>
         +
       </div>
-      <span style={{ color: theme.color.method }}>{"]"}</span>
+      <span>{"]"}</span>
     </ArrayContainer>
   );
 }
 
 const ArrayContainer = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  gap: 4px;
+  & > span {
+    color: ${theme.color.method};
+  }
 `;

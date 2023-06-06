@@ -44,51 +44,49 @@ export function Method({
   }
 
   return (
-    <ErrorBoundary>
-      <Dropdown
-        result={{
-          ...(method.result.entityType === "data"
-            ? { data: method.result }
-            : { type: "operation" }),
-        }}
-        handleDelete={() => handleMethod(method, true)}
-        addMethod={addMethod}
-        head={
-          <>
-            {"."}
-            <span style={{ color: theme.color.method }}>
-              {method.name || ".."}
+    <Dropdown
+      result={{
+        ...(method.result.entityType === "data"
+          ? { data: method.result }
+          : { type: "operation" }),
+      }}
+      handleDelete={() => handleMethod(method, true)}
+      addMethod={addMethod}
+      head={
+        <>
+          {"."}
+          <span style={{ color: theme.color.method }}>
+            {method.name || ".."}
+          </span>
+          <span>{"("}</span>
+          {method.parameters.map((item, i, arr) => (
+            <span key={i} style={{ display: "flex" }}>
+              <Statement
+                statement={item}
+                handleStatement={(val) => val && handleParameter(val, i)}
+                disableDelete={true}
+                disableName={true}
+                prevStatements={prevStatements}
+                prevOperations={prevOperations}
+              />
+              {i < arr.length - 1 ? <span>{", "}</span> : null}
             </span>
-            <span>{"("}</span>
-            {method.parameters.map((item, i, arr) => (
-              <span key={i} style={{ display: "flex" }}>
-                <Statement
-                  statement={item}
-                  handleStatement={(val) => val && handleParameter(val, i)}
-                  disableDelete={true}
-                  disableName={true}
-                  prevStatements={prevStatements}
-                  prevOperations={prevOperations}
-                />
-                {i < arr.length - 1 ? <span>{", "}</span> : null}
-              </span>
-            ))}
-            <span>{")"}</span>
-          </>
-        }
-      >
-        <DropdownOptions>
-          {getFilteredMethods(data).map((item) => (
-            <DropdownOption
-              key={item.name}
-              onClick={() => handleDropdown(item.name)}
-              selected={item.name === method.name}
-            >
-              {item.name}
-            </DropdownOption>
           ))}
-        </DropdownOptions>
-      </Dropdown>
-    </ErrorBoundary>
+          <span>{")"}</span>
+        </>
+      }
+    >
+      <DropdownOptions>
+        {getFilteredMethods(data).map((item) => (
+          <DropdownOption
+            key={item.name}
+            onClick={() => handleDropdown(item.name)}
+            selected={item.name === method.name}
+          >
+            {item.name}
+          </DropdownOption>
+        ))}
+      </DropdownOptions>
+    </Dropdown>
   );
 }
