@@ -1,4 +1,4 @@
-import { Equals } from "@styled-icons/fa-solid";
+import { Equals, RightLong, TurnUp } from "@styled-icons/fa-solid";
 import styled from "styled-components";
 import { theme } from "../lib/theme";
 import { IData, IMethod, IOperation, IStatement } from "../lib/types";
@@ -35,6 +35,7 @@ export function Statement({
   prevOperations: IOperation[];
 }) {
   const hasName = statement.name !== undefined;
+  const PipeArrow = statement.methods.length > 1 ? TurnUp : RightLong;
 
   function addMethod() {
     let data = getStatementResult(statement);
@@ -136,49 +137,61 @@ export function Statement({
           />
         </StatementName>
       ) : null}
-      {statement.data.entityType === "data" ? (
-        <Data
-          data={statement.data}
-          handleData={(data, remove) => handleData(data, remove)}
-          disableDelete={disableDelete}
-          addMethod={
-            !disableMethods && statement.methods.length === 0
-              ? addMethod
-              : undefined
-          }
-          children={dropdownList}
-          prevStatements={prevStatements}
-          prevOperations={prevOperations}
-        />
-      ) : (
-        <Operation
-          operation={statement.data}
-          handleOperation={handelOperation}
-          prevStatements={prevStatements}
-          prevOperations={prevOperations}
-          disableDelete={disableDelete}
-          children={dropdownList}
-        />
-      )}
-      {statement.methods.map((method, i, methods) => {
-        let data = getStatementResult(statement, i, true);
-        if (data.entityType !== "data") return;
-        return (
-          <Method
-            key={method.id}
-            data={data}
-            method={method}
-            handleMethod={(meth, remove) => handleMethod(meth, i, remove)}
-            prevStatements={prevStatements}
-            prevOperations={prevOperations}
+      <RightHandWrapper newLine={statement.methods.length > 1}>
+        {statement.data.entityType === "data" ? (
+          <Data
+            data={statement.data}
+            handleData={(data, remove) => handleData(data, remove)}
+            disableDelete={disableDelete}
             addMethod={
-              !disableMethods && i + 1 === methods.length
+              !disableMethods && statement.methods.length === 0
                 ? addMethod
                 : undefined
             }
+            children={dropdownList}
+            prevStatements={prevStatements}
+            prevOperations={prevOperations}
           />
-        );
-      })}
+        ) : (
+          <Operation
+            operation={statement.data}
+            handleOperation={handelOperation}
+            prevStatements={prevStatements}
+            prevOperations={prevOperations}
+            disableDelete={disableDelete}
+            children={dropdownList}
+          />
+        )}
+        {statement.methods.map((method, i, methods) => {
+          let data = getStatementResult(statement, i, true);
+          if (data.entityType !== "data") return;
+          return (
+            <div style={{ display: "flex" }}>
+              <PipeArrow
+                size={12}
+                color={theme.color.disabled}
+                style={{
+                  margin: `2.5px 4px 0 ${methods.length > 1 ? 4 : 0}`,
+                  transform: methods.length > 1 ? "rotate(90deg)" : "",
+                }}
+              />
+              <Method
+                key={method.id}
+                data={data}
+                method={method}
+                handleMethod={(meth, remove) => handleMethod(meth, i, remove)}
+                prevStatements={prevStatements}
+                prevOperations={prevOperations}
+                addMethod={
+                  !disableMethods && i + 1 === methods.length
+                    ? addMethod
+                    : undefined
+                }
+              />
+            </div>
+          );
+        })}
+      </RightHandWrapper>
     </StatementWrapper>
   );
 }
@@ -187,10 +200,6 @@ const StatementWrapper = styled.div`
   display: flex;
   align-items: flex-start;
   gap: 0.25rem;
-  & svg {
-    cursor: pointer;
-    flex-shrink: 0;
-  }
 `;
 
 const StatementName = styled.div`
@@ -198,4 +207,15 @@ const StatementName = styled.div`
   align-items: center;
   gap: 0.25rem;
   margin-right: 0.25rem;
+  & > svg {
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+`;
+
+const RightHandWrapper = styled.div<{ newLine?: boolean }>`
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  flex-direction: ${({ newLine }) => (newLine ? "column" : "row")};
 `;

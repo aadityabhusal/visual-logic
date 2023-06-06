@@ -5,7 +5,6 @@ import { Dropdown } from "../ui/Dropdown";
 import { createMethod, getFilteredMethods } from "../lib/methods";
 import { getStatementResult } from "../lib/utils";
 import { theme } from "../lib/theme";
-import { ErrorBoundary } from "./ErrorBoundary";
 
 interface IProps {
   data: IData;
@@ -54,7 +53,6 @@ export function Method({
       addMethod={addMethod}
       head={
         <>
-          {"."}
           <span style={{ color: theme.color.method }}>
             {method.name || ".."}
           </span>

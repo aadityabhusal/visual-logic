@@ -21,6 +21,7 @@ export const theme = {
     object: "#fafafa",
     method: "#dcdcaa",
     border: "#444444",
+    disabled: "#7f8c8d",
     error: "#c7254e",
   },
 };

@@ -22,43 +22,43 @@ type IMethodList = {
 
 export const comparisonMethods: IMethodList[] = [
   {
-    name: "==",
+    name: "eq",
     parameters: [{ type: "string", isGeneric: true }],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData({ type: "boolean", value: data.value === p1.value }),
   },
   {
-    name: "!=",
+    name: "neq",
     parameters: [{ type: "string", isGeneric: true }],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData({ type: "boolean", value: data.value !== p1.value }),
   },
   {
-    name: "<",
+    name: "lt",
     parameters: [{ type: "string", isGeneric: true }],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData({ type: "boolean", value: data.value < p1.value }),
   },
   {
-    name: "<=",
+    name: "lte",
     parameters: [{ type: "string", isGeneric: true }],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData({ type: "boolean", value: data.value <= p1.value }),
   },
   {
-    name: ">",
+    name: "gt",
     parameters: [{ type: "string", isGeneric: true }],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData({ type: "boolean", value: data.value > p1.value }),
   },
   {
-    name: ">=",
+    name: "gte",
     parameters: [{ type: "string", isGeneric: true }],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData({ type: "boolean", value: data.value >= p1.value }),
   },
   {
-    name: "&&",
+    name: "and",
     parameters: [{ type: "string", isGeneric: true }],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData({
@@ -67,7 +67,7 @@ export const comparisonMethods: IMethodList[] = [
       }),
   },
   {
-    name: "||",
+    name: "or",
     parameters: [{ type: "string", isGeneric: true }],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData({

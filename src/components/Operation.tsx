@@ -193,7 +193,6 @@ export function Operation({
                 />
               )}
               <span>{")"}</span>
-              <span>{"{"}</span>
             </OperationHead>
             <OperationBody>
               {operation.statements.map((statement, i) => (
@@ -217,7 +216,6 @@ export function Operation({
                 onClick={addStatement}
               />
             </OperationBody>
-            <span>{"}"}</span>
           </OperationWrapper>
         )
       }
