@@ -4,7 +4,7 @@ import { useStore } from "../lib/store";
 import { updateOperations } from "../lib/update";
 import { createOperation } from "../lib/utils";
 
-export function Sidebar({ setToggleCode }: { setToggleCode: () => void }) {
+export function Sidebar({ toggleCode }: { toggleCode: () => void }) {
   const { operations, addOperation, setOperation, currentId, setCurrentId } =
     useStore((state) => state);
 
@@ -33,7 +33,7 @@ export function Sidebar({ setToggleCode }: { setToggleCode: () => void }) {
         </OperationList>
       </SidebarContainer>
       <SidebarFooter>
-        <Button title="View Code" onClick={setToggleCode}>
+        <Button title="View Code" onClick={toggleCode}>
           <Code size={12} /> <span>Code</span>
         </Button>
         <Button

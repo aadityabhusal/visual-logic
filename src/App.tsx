@@ -18,12 +18,13 @@ function App() {
     (item) => item.id === currentId
   );
   const currentOperation = operations[currentOperationIndex];
-  const [toggleCode, setToggleCode] = useState(false);
+  const [codeDisplay, setCodeDisplay] = useState(false);
+  const [sidebarDisplay, setSidebarDisplay] = useState(true);
 
   return (
     <ThemeProvider theme={theme}>
       <AppWrapper>
-        <Header />
+        <Header toggleSidebar={() => setSidebarDisplay((prev) => !prev)} />
         <AppContainer>
           <OperationContainer>
             {currentOperation ? (
@@ -39,12 +40,14 @@ function App() {
               <div>Select an operation</div>
             )}
           </OperationContainer>
-          {toggleCode && currentOperation ? (
+          {codeDisplay && currentOperation ? (
             <OperationContainer>
               <ParseOperation operation={currentOperation} />
             </OperationContainer>
           ) : null}
-          <Sidebar setToggleCode={() => setToggleCode((prev) => !prev)} />
+          {sidebarDisplay && (
+            <Sidebar toggleCode={() => setCodeDisplay((prev) => !prev)} />
+          )}
         </AppContainer>
       </AppWrapper>
     </ThemeProvider>

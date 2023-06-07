@@ -1,4 +1,4 @@
-import { Plus, X } from "@styled-icons/fa-solid";
+import { ChevronDown, Plus, X } from "@styled-icons/fa-solid";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { IData } from "../lib/types";
@@ -52,9 +52,7 @@ export function Dropdown({
       <div style={{ display: "flex", alignItems: "flex-start" }}>{head}</div>
       {display ? (
         <DropdownHead onClick={() => setContent((c) => !c)}>
-          <DropdownReturnType>
-            {result.type || result.data?.type}
-          </DropdownReturnType>
+          <ChevronDown size={9} style={{ marginRight: "auto" }} />
           {addMethod && (
             <Plus
               size={9}
@@ -99,7 +97,7 @@ const DropdownWrapper = styled.div<{ border: boolean }>`
 
 const DropdownContainer = styled.div`
   position: absolute;
-  top: calc(100% + 12px);
+  top: calc(100% + 10px);
   left: -1px;
   min-width: 100%;
   border: 1px solid ${({ theme }) => theme.color.border};
@@ -113,13 +111,6 @@ const DropdownContainer = styled.div`
   &::-webkit-scrollbar-thumb {
     background: ${({ theme }) => theme.background.dropdown.scrollbar};
   }
-`;
-
-const DropdownReturnType = styled.span`
-  font-size: 0.7rem;
-  margin-right: auto;
-  padding-right: 0.5rem;
-  color: ${({ theme }) => theme.color.type};
 `;
 
 const DropdownHead = styled.div`
