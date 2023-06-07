@@ -12,6 +12,7 @@ import { Dropdown } from "../ui/Dropdown";
 export function Operation({
   operation,
   handleOperation,
+  addMethod,
   prevStatements,
   prevOperations,
   disableDelete,
@@ -19,6 +20,7 @@ export function Operation({
 }: {
   operation: IOperation;
   handleOperation(operation: IOperation, remove?: boolean): void;
+  addMethod?: () => void;
   prevStatements: IStatement[];
   prevOperations: IOperation[];
   disableDelete?: boolean;
@@ -87,6 +89,7 @@ export function Operation({
       handleDelete={
         !disableDelete ? () => handleOperation(operation, true) : undefined
       }
+      addMethod={addMethod}
       head={
         operation.reference?.name ? (
           <OperationHead>

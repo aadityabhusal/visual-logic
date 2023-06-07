@@ -15,13 +15,13 @@ import { updateStatements } from "../lib/update";
 export function DropdownList({
   data,
   handleData,
-  selectOperation,
+  handelOperation,
   prevStatements,
   prevOperations,
 }: {
   data: IStatement["data"];
   handleData: (data: IData, remove?: boolean) => void;
-  selectOperation: (operation: IOperation, remove?: boolean) => void;
+  handelOperation: (operation: IOperation, remove?: boolean) => void;
   prevStatements: IStatement[];
   prevOperations: IOperation[];
 }) {
@@ -37,25 +37,15 @@ export function DropdownList({
       });
   }
 
-  function selectStatement(statement: IStatement) {
-    if (data.entityType === "operation") return;
-    let result = getStatementResult(statement);
-    if (result.entityType === "operation") {
-      selectOperations(result, {
-        ...result,
-        id: statement.id,
-        name: statement.name || "",
-      });
-    } else {
-      handleData({
-        ...data,
-        type: result.type,
-        value: result.value,
-        reference: statement.name
-          ? { id: statement.id, name: statement.name }
-          : undefined,
-      });
-    }
+  function selectData(dataOption: IData, reference: IStatement) {
+    handleData({
+      ...dataOption,
+      id: data.id,
+      isGeneric: data.isGeneric,
+      reference: reference.name
+        ? { id: reference.id, name: reference.name }
+        : undefined,
+    });
   }
 
   function selectOperations(
@@ -74,7 +64,7 @@ export function DropdownList({
       ],
     });
 
-    selectOperation({
+    handelOperation({
       ...operation,
       isGeneric: data.isGeneric,
       id: data.id,
@@ -104,8 +94,9 @@ export function DropdownList({
       {data.isGeneric && (
         <DropdownOption
           onClick={() =>
-            selectOperation(createOperation({ isGeneric: data.isGeneric }))
+            handelOperation(createOperation({ isGeneric: data.isGeneric }))
           }
+          selected={!data.reference?.id && data.entityType === "operation"}
         >
           operation
         </DropdownOption>
@@ -113,14 +104,15 @@ export function DropdownList({
       <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
       {prevStatements.map((statement) => {
         let result = getStatementResult(statement);
-        if (!data.isGeneric && !isSameType(result, data)) return;
+        if ((!data.isGeneric && !isSameType(result, data)) || !statement.name)
+          return;
         return (
           <DropdownOption
             key={statement.id}
             onClick={() =>
               result.entityType === "operation"
                 ? selectOperations(result, statement)
-                : selectStatement(statement)
+                : selectData(result, statement)
             }
             selected={statement.id === data.reference?.id}
           >

@@ -66,8 +66,14 @@ export function Statement({
   }
 
   function handelOperation(operation: IOperation, remove?: boolean) {
+    let methods = [...statement.methods];
     if (remove) handleStatement(statement, remove);
-    else handleStatement({ ...statement, data: operation });
+    else
+      handleStatement({
+        ...statement,
+        data: operation,
+        methods: operation.reference?.isCalled ? methods : [],
+      });
   }
 
   function handleMethod(method: IMethod, index: number, remove?: boolean) {
@@ -92,12 +98,10 @@ export function Statement({
   const dropdownList = (
     <DropdownList
       data={statement.data}
-      handleData={(data, remove) => handleData(data, remove)}
+      handleData={handleData}
       prevStatements={prevStatements}
       prevOperations={prevOperations}
-      selectOperation={(operation) =>
-        handleStatement({ ...statement, data: operation })
-      }
+      handelOperation={handelOperation}
     />
   );
 
@@ -160,6 +164,13 @@ export function Statement({
             prevOperations={prevOperations}
             disableDelete={disableDelete}
             children={dropdownList}
+            addMethod={
+              !disableMethods &&
+              statement.methods.length === 0 &&
+              statement.data.reference?.isCalled
+                ? addMethod
+                : undefined
+            }
           />
         )}
         {statement.methods.map((method, i, methods) => {
