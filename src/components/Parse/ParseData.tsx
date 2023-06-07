@@ -21,8 +21,8 @@ export function ParseData({
     return <ParseObject data={data as IData<"object">} showData={showData} />;
   }
   return (
-    <div style={{ color: theme.color[data.type] }}>
-      {typeof data.value === "string" ? `"${data.value}"` : `${data.value}`}
+    <div style={{ whiteSpace: "pre", color: theme.color[data.type] }}>
+      {data.type === "string" ? `"${data.value}"` : `${data.value}`}
     </div>
   );
 }
@@ -72,11 +72,11 @@ function ParseArray({
 }
 
 const Brackets = styled.span`
-  color: ${theme.color.method};
+  color: ${({ theme }) => theme.color.method};
 `;
 
 const Variable = styled.span`
-  color: ${theme.color.variable};
+  color: ${({ theme }) => theme.color.variable};
 `;
 
 const DataWrapper = styled.div`
@@ -84,6 +84,6 @@ const DataWrapper = styled.div`
   align-items: flex-start;
   gap: 4px;
   & > span {
-    color: ${theme.color.method};
+    color: ${({ theme }) => theme.color.method};
   }
 `;

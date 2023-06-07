@@ -1,7 +1,6 @@
 import { Plus, X } from "@styled-icons/fa-solid";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import { theme } from "../lib/theme";
 import { IData } from "../lib/types";
 import { ParseData } from "../components/Parse/ParseData";
 import { ErrorBoundary } from "../components/ErrorBoundary";
@@ -93,9 +92,9 @@ export function Dropdown({
 
 const DropdownWrapper = styled.div<{ border: boolean }>`
   position: relative;
-  background-color: ${theme.background.editor};
+  background-color: ${({ theme }) => theme.background.editor};
   border: 1px solid
-    ${({ border }) => (border ? theme.color.border : "transparent")};
+    ${({ border, theme }) => (border ? theme.color.border : "transparent")};
 `;
 
 const DropdownContainer = styled.div`
@@ -103,8 +102,8 @@ const DropdownContainer = styled.div`
   top: calc(100% + 12px);
   left: -1px;
   min-width: 100%;
-  border: 1px solid ${theme.color.border};
-  background-color: ${theme.background.dropdown.default};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  background-color: ${({ theme }) => theme.background.dropdown.default};
   max-height: 7rem;
   overflow-y: auto;
   overflow-x: hidden;
@@ -112,7 +111,7 @@ const DropdownContainer = styled.div`
     width: 4px;
   }
   &::-webkit-scrollbar-thumb {
-    background: ${theme.background.dropdown.scrollbar};
+    background: ${({ theme }) => theme.background.dropdown.scrollbar};
   }
 `;
 
@@ -120,7 +119,7 @@ const DropdownReturnType = styled.span`
   font-size: 0.7rem;
   margin-right: auto;
   padding-right: 0.5rem;
-  color: ${theme.color.type};
+  color: ${({ theme }) => theme.color.type};
 `;
 
 const DropdownHead = styled.div`
@@ -131,11 +130,11 @@ const DropdownHead = styled.div`
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  border: 1px solid ${theme.color.border};
-  background-color: ${theme.background.dropdown.default};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  background-color: ${({ theme }) => theme.background.dropdown.default};
   cursor: pointer;
   &:hover {
-    background-color: ${theme.background.dropdown.hover};
+    background-color: ${({ theme }) => theme.background.dropdown.hover};
   }
   & > div {
     display: flex;
@@ -149,16 +148,16 @@ const DropdownHead = styled.div`
 
 export const DropdownOptions = styled.div`
   cursor: pointer;
-  background-color: ${theme.background.dropdown.default};
-  color: ${theme.color.white};
+  background-color: ${({ theme }) => theme.background.dropdown.default};
+  color: ${({ theme }) => theme.color.white};
 `;
 
 export const DropdownOption = styled.div<{ selected?: boolean }>`
   font-size: 0.8rem;
   padding: 0.1rem 0.2rem;
-  background-color: ${({ selected }) =>
+  background-color: ${({ selected, theme }) =>
     selected ? theme.background.dropdown.selected : "inherit"};
   &:hover {
-    background-color: ${theme.background.dropdown.hover};
+    background-color: ${({ theme }) => theme.background.dropdown.hover};
   }
 `;

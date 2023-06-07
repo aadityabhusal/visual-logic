@@ -1,5 +1,4 @@
 import styled from "styled-components";
-import { theme } from "../lib/theme";
 
 export function Header() {
   return (
@@ -10,6 +9,6 @@ export function Header() {
 }
 
 const HeaderWrapper = styled.div`
-  border-bottom: 1px solid ${theme.color.border};
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
   padding: 0 0.5rem;
 `;

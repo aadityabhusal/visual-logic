@@ -1,7 +1,6 @@
 import { Code, Plus, X } from "@styled-icons/fa-solid";
 import styled from "styled-components";
 import { useStore } from "../lib/store";
-import { theme } from "../lib/theme";
 import { updateOperations } from "../lib/update";
 import { createOperation } from "../lib/utils";
 
@@ -63,7 +62,7 @@ const SidebarHead = styled.div`
 
 const SidebarContainer = styled.div`
   flex: 1;
-  border: 1px solid ${theme.color.border};
+  border: 1px solid ${({ theme }) => theme.color.border};
   padding: 0.2rem;
   border-width: 1px 0 1px 0;
   overflow-y: auto;
@@ -72,7 +71,7 @@ const SidebarContainer = styled.div`
     width: 4px;
   }
   &::-webkit-scrollbar-thumb {
-    background: ${theme.background.dropdown.scrollbar};
+    background: ${({ theme }) => theme.background.dropdown.scrollbar};
   }
 `;
 
@@ -88,11 +87,11 @@ const OperationListItem = styled.li<{ selected?: boolean }>`
   justify-content: space-between;
   cursor: pointer;
   padding: 0.25rem;
-  background-color: ${({ selected }) =>
+  background-color: ${({ selected, theme }) =>
     selected ? theme.background.dropdown.hover : theme.background.editor};
 
   &:hover {
-    background-color: ${theme.background.dropdown.hover};
+    background-color: ${({ theme }) => theme.background.dropdown.hover};
   }
 
   & span {
@@ -118,10 +117,10 @@ const Button = styled.button`
   align-items: center;
   gap: 0.25rem;
   cursor: pointer;
-  color: ${theme.color.white};
+  color: ${({ theme }) => theme.color.white};
   border: none;
-  background-color: ${theme.background.dropdown.selected}95;
+  background-color: ${({ theme }) => theme.background.dropdown.selected}95;
   &:hover {
-    background-color: ${theme.background.dropdown.selected};
+    background-color: ${({ theme }) => theme.background.dropdown.selected};
   }
 `;

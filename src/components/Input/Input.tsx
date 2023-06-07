@@ -1,6 +1,5 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { theme } from "../../lib/theme";
 import { IData } from "../../lib/types";
 
 export interface IInput {
@@ -18,26 +17,29 @@ export function Input({ data, handleData, noQuotes, color, disabled }: IInput) {
     type: data.type === "string" ? `text` : "number",
     placeholder: data.type === "string" ? `..` : "0",
     text: typeof data.value === "number" ? BigInt(data.value) : data.value,
-    constructor: data.type === "string" ? String : Number,
   };
   return typeof data.value === "string" || typeof data.value === "number" ? (
     <InputWrapper quote={inputData.quote}>
-      <div ref={(elem) => setTextWidth(7 + (elem?.clientWidth || 0))}>
+      <div
+        style={{ whiteSpace: "pre" }}
+        ref={(elem) => setTextWidth(elem?.clientWidth || 7)}
+      >
         {inputData.text.toString()}
       </div>
       <InputStyled
         type={inputData.type}
-        value={data.value}
+        value={data.value.toString()}
         placeholder={inputData.placeholder}
         textWidth={textWidth}
         color={color}
         disabled={disabled}
-        onChange={(e) =>
+        onChange={(e) => {
+          let value = e.target.value;
           handleData({
             ...data,
-            value: inputData.constructor(e.target.value),
-          })
-        }
+            value: data.type === "number" ? Number(value.slice(0, 16)) : value,
+          });
+        }}
         onClick={(e) => e.stopPropagation()}
       />
     </InputWrapper>
@@ -48,7 +50,7 @@ const InputWrapper = styled.div<{ quote?: boolean }>`
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 0 ${({ quote }) => (quote ? "1ch" : "0")};
+  padding: 0 ${({ quote }) => (quote ? "7px" : "0")};
 
   & > div {
     align-self: flex-start;
@@ -60,14 +62,14 @@ const InputWrapper = styled.div<{ quote?: boolean }>`
     position: absolute;
     top: 0;
     left: 0;
-    color: ${theme.color.string};
+    color: ${({ theme }) => theme.color.string};
     content: ${({ quote }) => (quote ? "open-quote" : "")};
   }
   &::after {
     position: absolute;
     top: 0;
     right: 0;
-    color: ${theme.color.string};
+    color: ${({ theme }) => theme.color.string};
     content: ${({ quote }) => (quote ? "close-quote" : "")};
   }
 `;
@@ -76,7 +78,7 @@ export const InputStyled = styled.input<{ textWidth?: number; color?: string }>`
   outline: none;
   background-color: inherit;
   border: none;
-  color: ${({ color }) => color || theme.color.white};
+  color: ${({ color, theme }) => color || theme.color.white};
   padding: 0;
   ${({ textWidth }) => `width: ${textWidth}px`};
 
@@ -87,7 +89,7 @@ export const InputStyled = styled.input<{ textWidth?: number; color?: string }>`
   }
 
   &[type="number"] {
-    color: ${theme.color.number};
-    -moz-appearance: textfield;
+    color: ${({ theme }) => theme.color.number};
+    appearance: textfield;
   }
 `;

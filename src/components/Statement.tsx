@@ -166,17 +166,16 @@ export function Statement({
           let data = getStatementResult(statement, i, true);
           if (data.entityType !== "data") return;
           return (
-            <div style={{ display: "flex" }}>
+            <div key={method.id} style={{ display: "flex" }}>
               <PipeArrow
                 size={12}
                 color={theme.color.disabled}
                 style={{
-                  margin: `2.5px 4px 0 ${methods.length > 1 ? 4 : 0}`,
+                  margin: `4 4 0 ${methods.length > 1 ? 4 : 0}`,
                   transform: methods.length > 1 ? "rotate(90deg)" : "",
                 }}
               />
               <Method
-                key={method.id}
                 data={data}
                 method={method}
                 handleMethod={(meth, remove) => handleMethod(meth, i, remove)}

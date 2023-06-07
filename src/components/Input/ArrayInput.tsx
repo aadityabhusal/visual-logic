@@ -1,7 +1,6 @@
 import styled from "styled-components";
 import { IData, IOperation, IStatement } from "../../lib/types";
 import { createData, createStatement } from "../../lib/utils";
-import { theme } from "../../lib/theme";
 import { Statement } from "../Statement";
 import { Fragment } from "react";
 
@@ -78,6 +77,6 @@ const ArrayContainer = styled.div`
   align-items: flex-start;
   gap: 4px;
   & > span {
-    color: ${theme.color.method};
+    color: ${({ theme }) => theme.color.method};
   }
 `;

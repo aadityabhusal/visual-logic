@@ -113,6 +113,6 @@ const ObjectContainer = styled.div`
   align-items: flex-start;
   gap: 4px;
   & > span {
-    color: ${theme.color.method};
+    color: ${({ theme }) => theme.color.method};
   }
 `;

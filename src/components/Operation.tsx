@@ -237,4 +237,7 @@ const OperationHead = styled.div`
 
 const OperationBody = styled.div`
   padding-left: 1rem;
+  & > div {
+    margin-bottom: 4px;
+  }
 `;

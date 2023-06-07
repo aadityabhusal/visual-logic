@@ -1,3 +1,10 @@
+import "styled-components";
+
+type Theme = typeof theme;
+declare module "styled-components" {
+  export interface DefaultTheme extends Theme {}
+}
+
 export const theme = {
   background: {
     editor: "#1e1e1e",
