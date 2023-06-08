@@ -2,7 +2,7 @@ import { IData, IMethod, IOperation, IStatement } from "../lib/types";
 import { Statement } from "./Statement";
 import { DropdownOption, DropdownOptions } from "../ui/Dropdown";
 import { Dropdown } from "../ui/Dropdown";
-import { createMethod, getFilteredMethods } from "../lib/methods";
+import { createMethod, getFilteredMethods, methodsList } from "../lib/methods";
 import { getStatementResult } from "../lib/utils";
 import { theme } from "../lib/theme";
 
@@ -31,10 +31,11 @@ export function Method({
   function handleParameter(item: IStatement, index: number) {
     let parameters = [...method.parameters];
     parameters[index] = item;
-    let result = method.handler(
-      data,
-      ...parameters.map((item) => getStatementResult(item))
-    );
+    let methodHandler = methodsList[data.type].find(
+      (item) => item.name === method.name
+    )?.handler;
+    let parametersResult = parameters.map((item) => getStatementResult(item));
+    let result = methodHandler?.(data, ...parametersResult) || method.result;
     handleMethod({
       ...method,
       parameters,

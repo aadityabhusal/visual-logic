@@ -1,3 +1,4 @@
+import { methodsList } from "./methods";
 import { IOperation, IMethod, IStatement, IData } from "./types";
 import {
   createData,
@@ -27,7 +28,12 @@ export function updateStatementMethods(
           data: { ...item.data, ...closure },
         });
       });
-      let { id: newId, ...result } = currentMethod.handler(data, ...parameters);
+      let methodHandler = methodsList[(data as IData).type].find(
+        (item) => item.name === currentMethod.name
+      )?.handler;
+
+      let { id: newId, ...result } =
+        methodHandler?.(data, ...parameters) || currentMethod.result;
       let rest = { id: currentMethod.result.id, isGeneric: data.isGeneric };
 
       return [

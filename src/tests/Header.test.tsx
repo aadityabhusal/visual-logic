@@ -4,7 +4,7 @@ import { Header } from "../ui/Header";
 
 describe("Header component", () => {
   it("renders header title", () => {
-    render(<Header />);
+    render(<Header toggleSidebar={() => {}} />);
     expect(screen.getByText(/Visual Logic/i)).toBeDefined();
   });
 });

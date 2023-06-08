@@ -1,13 +1,20 @@
 import create from "zustand";
 import { IStore } from "./types";
+import { getLocalStorage } from "./utils";
 
 export const useStore = create<IStore>((set) => ({
-  operations: [],
+  operations: getLocalStorage("operations") || [],
   currentId: "",
   setCurrentId: (currentId) => set(() => ({ currentId })),
   addOperation: (operation) =>
-    set((state) => ({
-      operations: [...state.operations, operation],
-    })),
-  setOperation: (operations) => set(() => ({ operations })),
+    set((state) => {
+      let operations = [...state.operations, operation];
+      localStorage.setItem("operations", JSON.stringify(operations));
+      return { operations };
+    }),
+  setOperation: (operations) =>
+    set(() => {
+      localStorage.setItem("operations", JSON.stringify(operations));
+      return { operations };
+    }),
 }));

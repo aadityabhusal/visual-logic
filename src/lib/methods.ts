@@ -424,7 +424,6 @@ export function createMethod({ data, name }: { data: IData; name?: string }) {
     entityType: "method",
     name: newMethod.name,
     parameters: parameters.map((item) => createStatement({ data: item })),
-    handler: newMethod.handler,
     result: { ...result, isGeneric: data.isGeneric },
   } as IMethod;
 }

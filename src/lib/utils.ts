@@ -31,7 +31,6 @@ export function createOperation(props?: {
     id,
     isGeneric: props?.isGeneric,
     entityType: "operation",
-    handler: undefined,
     name: props?.name !== undefined ? `f_${id.slice(-3)}` : undefined,
     parameters: props?.parameters || [],
     statements: [],
@@ -141,3 +140,11 @@ export function getPreviousStatements(previous: (IStatement | IOperation)[]) {
       : item
   );
 }
+
+export const getLocalStorage = (key: string) => {
+  try {
+    return JSON.parse(localStorage.getItem(key) || "");
+  } catch (error) {
+    return null;
+  }
+};
