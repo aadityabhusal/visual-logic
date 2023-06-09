@@ -28,7 +28,7 @@ export function updateStatementMethods(
           data: { ...item.data, ...closure },
         });
       });
-      let methodHandler = methodsList[(data as IData).type].find(
+      let methodHandler = methodsList[(data as IData).type]?.find(
         (item) => item.name === currentMethod.name
       )?.handler;
 

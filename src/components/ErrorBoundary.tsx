@@ -1,10 +1,13 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { theme } from "../lib/theme";
 
-export class ErrorBoundary extends React.Component<any> {
+export class ErrorBoundary extends React.Component<{
+  displayError?: boolean;
+  children?: ReactNode;
+}> {
   state = { errorMessage: "" };
 
-  static getDerivedStateFromError(error: any) {
+  static getDerivedStateFromError(error: Error) {
     return { errorMessage: error.toString() };
   }
 

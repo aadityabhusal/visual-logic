@@ -49,7 +49,9 @@ export function createStatement(props?: {
   let newId = props?.id || nanoid();
   return {
     id: newId,
-    name: props?.name !== undefined ? `v_${newId.slice(-3)}` : undefined,
+    name:
+      props?.name ||
+      (props?.name !== undefined ? `v_${newId.slice(-3)}` : undefined),
     entityType: "statement",
     data: newData,
     methods: props?.methods || [],

@@ -66,14 +66,15 @@ export function Statement({
   }
 
   function handelOperation(operation: IOperation, remove?: boolean) {
-    let methods = [...statement.methods];
+    let methods = operation.reference?.isCalled ? [...statement.methods] : [];
     if (remove) handleStatement(statement, remove);
     else
-      handleStatement({
-        ...statement,
-        data: operation,
-        methods: operation.reference?.isCalled ? methods : [],
-      });
+      handleStatement(
+        updateStatementMethods(
+          { ...statement, data: operation, methods },
+          getPreviousStatements([...prevStatements, ...prevOperations])
+        )
+      );
   }
 
   function handleMethod(method: IMethod, index: number, remove?: boolean) {
