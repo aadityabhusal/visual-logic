@@ -20,17 +20,23 @@ export function ParseStatement({
       <ParseOperation operation={result} />
     );
   }
+
+  let dataNode =
+    statement.data.entityType === "data" ? (
+      <ParseData data={statement.data} showData={showData} />
+    ) : (
+      <ParseOperation operation={statement.data} />
+    );
+
   return (
     <div style={{ display: "flex" }}>
-      {statement.data.entityType === "data" ? (
-        <ParseData data={statement.data} showData={showData} />
-      ) : (
-        <ParseOperation operation={statement.data} />
-      )}
-      <div style={{ display: "flex" }}>
-        {statement.methods.map((method, i) => (
-          <Fragment key={i}>
-            <Method>{`.${method.name}(`}</Method>
+      {statement.methods.reduce(
+        (prev, method, i) => (
+          <div key={i} style={{ display: "flex", gap: 4 }}>
+            <Method>{`V.${method.name}`}</Method>
+            <span>{"("}</span>
+            {prev}
+            {method.parameters.length ? "," : ""}
             {method.parameters.map((param, i, arr) => (
               <span style={{ display: "flex" }} key={i}>
                 <ParseStatement statement={param} />
@@ -38,9 +44,10 @@ export function ParseStatement({
               </span>
             ))}
             <span>{")"}</span>
-          </Fragment>
-        ))}
-      </div>
+          </div>
+        ),
+        dataNode
+      )}
     </div>
   );
 }

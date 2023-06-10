@@ -227,6 +227,6 @@ const StatementName = styled.div`
 const RightHandWrapper = styled.div<{ newLine?: boolean }>`
   display: flex;
   align-items: flex-start;
-  gap: 4px;
+  gap: ${({ newLine }) => (newLine ? "0px" : "4px")};
   flex-direction: ${({ newLine }) => (newLine ? "column" : "row")};
 `;
