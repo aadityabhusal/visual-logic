@@ -45,16 +45,16 @@ export function Data({
             color={theme.color.variable}
             noQuotes
           />
-        ) : data.type === "array" ? (
+        ) : Array.isArray(data.value) ? (
           <ArrayInput
-            data={data}
+            data={data as IData<"array">}
             handleData={handleData}
             prevStatements={prevStatements}
             prevOperations={prevOperations}
           />
         ) : data.value instanceof Map ? (
           <ObjectInput
-            data={data}
+            data={data as IData<"object">}
             handleData={handleData}
             prevStatements={prevStatements}
             prevOperations={prevOperations}

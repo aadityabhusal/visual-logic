@@ -4,10 +4,9 @@ import { IData, IOperation, IStatement } from "../../lib/types";
 import { createData, createStatement } from "../../lib/utils";
 import { Input } from "./Input";
 import { Statement } from "../Statement";
-import { Fragment } from "react";
 
 export interface IObjectInput {
-  data: IData;
+  data: IData<"object">;
   handleData: (data: IData) => void;
   prevStatements: IStatement[];
   prevOperations: IOperation[];
@@ -18,8 +17,10 @@ export function ObjectInput({
   prevStatements,
   prevOperations,
 }: IObjectInput) {
+  const isMultiline = data.value.size > 2;
+
   function addToObject() {
-    if (data.value instanceof Map && !data.value.has("")) {
+    if (!data.value.has("")) {
       let newMap = new Map(data.value);
       let newData = createStatement({
         data: createData({ type: "string", isGeneric: true }),
@@ -53,11 +54,7 @@ export function ObjectInput({
     index: number,
     result: IData
   ) {
-    if (
-      typeof result.value === "string" &&
-      data.value instanceof Map &&
-      !data.value.has(result.value)
-    ) {
+    if (typeof result.value === "string" && !data.value.has(result.value)) {
       dataArray[index] = [result.value, dataArray[index][1]];
       handleData({
         ...data,
@@ -68,38 +65,39 @@ export function ObjectInput({
   }
 
   return (
-    <ObjectContainer>
+    <ObjectContainer isMultiline={isMultiline}>
       <span>{"{"}</span>
-      {data.value instanceof Map
-        ? Array.from(data.value).map(([key, value], i, arr) => {
-            return (
-              <Fragment key={i}>
-                <Input
-                  data={{
-                    id: `${i}-${key}`,
-                    type: "string",
-                    value: key,
-                    entityType: "data",
-                  }}
-                  handleData={(val) => handleKeyUpdate(arr, i, val)}
-                  color={theme.color.property}
-                  noQuotes
-                />
-                <span>:</span>
-                <Statement
-                  statement={value}
-                  handleStatement={(val, remove) =>
-                    handleUpdate(arr, i, val, remove)
-                  }
-                  prevOperations={prevOperations}
-                  prevStatements={prevStatements}
-                  disableName={true}
-                />
-                {i < arr.length - 1 ? <span>{","}</span> : null}
-              </Fragment>
-            );
-          })
-        : null}
+      {Array.from(data.value).map(([key, value], i, arr) => {
+        return (
+          <div
+            key={i}
+            style={{ display: "flex", marginLeft: isMultiline ? 8 : 0 }}
+          >
+            <Input
+              data={{
+                id: `${i}-${key}`,
+                type: "string",
+                value: key,
+                entityType: "data",
+              }}
+              handleData={(val) => handleKeyUpdate(arr, i, val)}
+              color={theme.color.property}
+              noQuotes
+            />
+            <span style={{ marginRight: 4 }}>:</span>
+            <Statement
+              statement={value}
+              handleStatement={(val, remove) =>
+                handleUpdate(arr, i, val, remove)
+              }
+              prevOperations={prevOperations}
+              prevStatements={prevStatements}
+              disableName={true}
+            />
+            {i < arr.length - 1 ? <span>{","}</span> : null}
+          </div>
+        );
+      })}
       <div onClick={addToObject} style={{ cursor: "pointer" }}>
         +
       </div>
@@ -108,8 +106,9 @@ export function ObjectInput({
   );
 }
 
-const ObjectContainer = styled.div`
+const ObjectContainer = styled.div<{ isMultiline: boolean }>`
   display: flex;
+  flex-direction: ${({ isMultiline }) => (isMultiline ? "column" : "row")};
   align-items: flex-start;
   gap: 4px;
   & > span {
