@@ -56,7 +56,8 @@ function ParseObject({
       <Brackets>{"{"}</Brackets>
       {val.map(([key, val], i, arr) => (
         <Fragment key={i}>
-          <span>{key}:</span>
+          <Property>{key}</Property>
+          {": "}
           <ParseStatement statement={val} showData={showData} nest={nest} />
           {i + 1 < arr.length && ", "}
         </Fragment>
@@ -99,4 +100,8 @@ const Variable = styled.span`
 
 const DataWrapper = styled.span`
   gap: 4px;
+`;
+
+const Property = styled.span`
+  color: ${({ theme }) => theme.color.property};
 `;

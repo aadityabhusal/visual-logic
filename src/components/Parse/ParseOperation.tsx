@@ -33,7 +33,7 @@ export function ParseOperation({
   ) : (
     <>
       <span>
-        <Reserved>function</Reserved> {operation.name}
+        <Reserved>function</Reserved> <Variable>{operation.name}</Variable>
         {`(`}
         {operation.parameters.map((parameter, i, arr) => (
           <Fragment key={i}>

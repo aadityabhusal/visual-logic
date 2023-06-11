@@ -11,3 +11,7 @@ export const Variable = styled.span`
 export const Method = styled.span`
   color: ${({ theme }) => theme.color.method};
 `;
+
+export const Namespace = styled.span`
+  color: ${({ theme }) => theme.color.type};
+`;

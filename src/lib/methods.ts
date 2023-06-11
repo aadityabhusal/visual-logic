@@ -107,6 +107,16 @@ export const stringMethods: IMethodList[] = [
     },
   },
   {
+    name: "includes",
+    parameters: [{ type: "string" }],
+    handler: (data: IData<"string">, p1: IData<"string">) => {
+      return createData({
+        type: "boolean",
+        value: data.value.includes(p1.value),
+      });
+    },
+  },
+  {
     name: "length",
     parameters: [],
     handler: (data: IData<"string">) => {
@@ -243,10 +253,32 @@ export const booleanMethods: IMethodList[] = [
 
 export const arrayMethods: IMethodList[] = [
   {
+    name: "at",
+    parameters: [{ type: "number" }],
+    handler: (data: IData<"array">, p1: IData<"number">) => {
+      let item = data.value.at(p1.value);
+      if (!item) return createData({ type: "string", value: "" });
+      let value = getStatementResult(item) as IData;
+      return createData({ type: value.type, value: value.value });
+    },
+  },
+  {
     name: "concat",
     parameters: [{ type: "array" }],
     handler: (data: IData<"array">, p1: IData<"array">) => {
       return createData({ type: "array", value: [...data.value, ...p1.value] });
+    },
+  },
+  {
+    name: "includes",
+    parameters: [{ type: "string" }],
+    handler: (data: IData<"array">, p1: IData<"string">) => {
+      return createData({
+        type: "boolean",
+        value: data.value
+          .map((item) => (getStatementResult(item) as IData).value)
+          .includes(p1.value),
+      });
     },
   },
   {
@@ -356,10 +388,65 @@ export const arrayMethods: IMethodList[] = [
 
 export const objectMethods: IMethodList[] = [
   {
+    name: "get",
+    parameters: [{ type: "string" }],
+    handler(data: IData<"object">, p1: IData<"string">) {
+      let item = data.value.get(p1.value);
+      if (!item) return createData({ type: "string", value: "" });
+      let value = getStatementResult(item) as IData;
+      return createData({
+        type: value.type,
+        value: value.value,
+      });
+    },
+  },
+  {
     name: "length",
     parameters: [],
     handler: (data: IData<"object">) => {
       return createData({ type: "number", value: data.value.size });
+    },
+  },
+  {
+    name: "has",
+    parameters: [{ type: "string" }],
+    handler(data: IData<"object">, p1: IData<"string">) {
+      return createData({
+        type: "boolean",
+        value: data.value.has(p1.value),
+      });
+    },
+  },
+  {
+    name: "keys",
+    parameters: [],
+    handler(data: IData<"object">) {
+      return createData({
+        type: "array",
+        value: [...data.value.keys()].map((item) =>
+          createStatement({
+            data: createData({ type: "string", value: item }),
+          })
+        ),
+      });
+    },
+  },
+  {
+    name: "values",
+    parameters: [],
+    handler(data: IData<"object">) {
+      return createData({
+        type: "array",
+        value: [...data.value.values()].map((item) => {
+          let itemResult = getStatementResult(item) as IData;
+          return createStatement({
+            data: createData({
+              type: itemResult.type,
+              value: itemResult.value,
+            }),
+          });
+        }),
+      });
     },
   },
 ];

@@ -1,6 +1,6 @@
 import { IStatement } from "../../lib/types";
 import { ParseData } from "./ParseData";
-import { Method } from "./styles";
+import { Method, Namespace } from "./styles";
 import { ParseOperation } from "./ParseOperation";
 import { getStatementResult } from "../../lib/utils";
 
@@ -32,7 +32,9 @@ export function ParseStatement({
   return statement.methods.reduce(
     (prev, method, i) => (
       <span key={i}>
-        <Method>{`V.${method.name}`}</Method>
+        <Namespace>V</Namespace>
+        {"."}
+        <Method>{method.name}</Method>
         {"("}
         {prev}
         {method.parameters.length ? ", " : ""}

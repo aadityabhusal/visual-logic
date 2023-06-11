@@ -9,7 +9,7 @@ import { ParseOperation } from "../components/Parse/ParseOperation";
 interface IProps {
   head?: ReactNode;
   children?: ReactNode;
-  result: { data?: IData | IOperation };
+  result: { data?: IData | IOperation; type?: string };
   handleDelete?: () => void;
   addMethod?: () => void;
 }
