@@ -1,14 +1,15 @@
 import { ChevronDown, Plus, X } from "@styled-icons/fa-solid";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import { IData } from "../lib/types";
+import { IData, IOperation } from "../lib/types";
 import { ParseData } from "../components/Parse/ParseData";
 import { ErrorBoundary } from "../components/ErrorBoundary";
+import { ParseOperation } from "../components/Parse/ParseOperation";
 
 interface IProps {
   head?: ReactNode;
   children?: ReactNode;
-  result: { data?: IData; type?: string };
+  result: { data?: IData | IOperation };
   handleDelete?: () => void;
   addMethod?: () => void;
 }
@@ -80,7 +81,13 @@ export function Dropdown({
       ) : display && result.data ? (
         <DropdownContainer>
           <ErrorBoundary displayError={true}>
-            <ParseData data={result.data} showData={true} />
+            <pre>
+              {result.data.entityType === "data" ? (
+                <ParseData data={result.data} showData={true} />
+              ) : (
+                <ParseOperation operation={result.data} />
+              )}
+            </pre>
           </ErrorBoundary>
         </DropdownContainer>
       ) : null}

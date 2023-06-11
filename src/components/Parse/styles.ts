@@ -1,13 +1,13 @@
 import styled from "styled-components";
 
-export const Reserved = styled.div`
+export const Reserved = styled.span`
   color: ${({ theme }) => theme.color.reserved};
 `;
 
-export const Variable = styled.div`
+export const Variable = styled.span`
   color: ${({ theme }) => theme.color.variable};
 `;
 
-export const Method = styled.div`
+export const Method = styled.span`
   color: ${({ theme }) => theme.color.method};
 `;

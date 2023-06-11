@@ -42,7 +42,9 @@ function App() {
           </OperationContainer>
           {codeDisplay && currentOperation ? (
             <OperationContainer>
-              <ParseOperation operation={currentOperation} />
+              <pre>
+                <ParseOperation operation={currentOperation} />
+              </pre>
             </OperationContainer>
           ) : null}
           {sidebarDisplay && (

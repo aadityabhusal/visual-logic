@@ -84,7 +84,7 @@ export function Operation({
       result={{
         ...(operation?.reference?.isCalled && result.entityType === "data"
           ? { data: result }
-          : { type: "operation" }),
+          : { data: operation }),
       }}
       handleDelete={
         !disableDelete ? () => handleOperation(operation, true) : undefined

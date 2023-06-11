@@ -3,7 +3,17 @@ import { IOperation } from "../../lib/types";
 import { ParseStatement } from "./ParseStatement";
 import { Reserved, Variable } from "./styles";
 
-export function ParseOperation({ operation }: { operation: IOperation }) {
+export function ParseOperation({
+  operation,
+  nest = 0,
+}: {
+  operation: IOperation;
+  nest?: number;
+}) {
+  function getTabs(level: number) {
+    if (level <= 0) return "";
+    return [...Array(level)].map((_) => "\t").join("");
+  }
   return operation.reference ? (
     <>
       <Variable>{operation.reference.name}</Variable>
@@ -12,7 +22,7 @@ export function ParseOperation({ operation }: { operation: IOperation }) {
           {"("}
           {operation.parameters?.map((item, i, paramList) => (
             <Fragment key={item.id}>
-              <ParseStatement statement={item} />
+              <ParseStatement statement={item} nest={nest} />
               {i + 1 < paramList.length && <span>,</span>}
             </Fragment>
           ))}
@@ -21,40 +31,42 @@ export function ParseOperation({ operation }: { operation: IOperation }) {
       )}
     </>
   ) : (
-    <div>
-      <div style={{ display: "flex", gap: "0.5rem" }}>
-        <Reserved>function</Reserved> {operation.name} {`(`}
+    <>
+      <span>
+        <Reserved>function</Reserved> {operation.name}
+        {`(`}
         {operation.parameters.map((parameter, i, arr) => (
           <Fragment key={i}>
             <Variable>{parameter.name}</Variable>
             {i + 1 < arr.length && <span>{","}</span>}
           </Fragment>
         ))}
-        {`) {`}
-      </div>
-      <div style={{ paddingLeft: "1rem" }}>
+        <span>{`) {\n`}</span>
+      </span>
+      <span>
         {operation.statements.map((statement, i, statements) => (
-          <div key={i} style={{ display: "flex" }}>
+          <span key={i}>
+            {getTabs(nest + 1)}
             {i + 1 === statements.length ? (
-              <Reserved style={{ marginRight: 8 }}>return</Reserved>
+              <Reserved>return </Reserved>
             ) : (
               <ParseVariable name={statement.name} />
             )}
-            <ParseStatement key={i} statement={statement} />
-            <span style={{ alignSelf: "flex-end" }}>;</span>
-          </div>
+            <ParseStatement key={i} statement={statement} nest={nest} />
+            {";\n"}
+          </span>
         ))}
-      </div>
+      </span>
+      {getTabs(nest)}
       <span>{"}"}</span>
-    </div>
+    </>
   );
 }
 
 export function ParseVariable({ name }: { name?: string }) {
   return !name ? null : (
-    <div style={{ display: "flex", gap: "0.5rem" }}>
-      <Reserved>let</Reserved> <Variable>{name}</Variable>
-      <span style={{ marginRight: "0.25rem" }}>=</span>
-    </div>
+    <>
+      <Reserved>let</Reserved> <Variable>{name}</Variable> <span>= </span>
+    </>
   );
 }
