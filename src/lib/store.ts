@@ -1,6 +1,6 @@
 import create from "zustand";
 import { IStore } from "./types";
-import { getLocalStorage } from "./utils";
+import { getLocalStorage, setLocalStorage } from "./utils";
 
 export const useStore = create<IStore>((set) => ({
   operations: getLocalStorage("operations") || [],
@@ -9,12 +9,12 @@ export const useStore = create<IStore>((set) => ({
   addOperation: (operation) =>
     set((state) => {
       let operations = [...state.operations, operation];
-      localStorage.setItem("operations", JSON.stringify(operations));
+      setLocalStorage("operations", operations);
       return { operations };
     }),
   setOperation: (operations) =>
     set(() => {
-      localStorage.setItem("operations", JSON.stringify(operations));
+      setLocalStorage("operations", operations);
       return { operations };
     }),
 }));

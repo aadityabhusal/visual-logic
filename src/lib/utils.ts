@@ -144,9 +144,21 @@ export function getPreviousStatements(previous: (IStatement | IOperation)[]) {
 }
 
 export const getLocalStorage = (key: string) => {
+  function reviver(_: string, data: IData) {
+    return data.type === "object"
+      ? { ...data, value: new Map(data.value as []) }
+      : data;
+  }
   try {
-    return JSON.parse(localStorage.getItem(key) || "");
+    return JSON.parse(localStorage.getItem(key) || "", reviver);
   } catch (error) {
     return null;
   }
+};
+
+export const setLocalStorage = (key: string, value: any) => {
+  function replacer(_: string, value: IData["value"]) {
+    return value instanceof Map ? Array.from(value.entries()) : value;
+  }
+  localStorage.setItem(key, JSON.stringify(value, replacer));
 };
