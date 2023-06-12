@@ -42,6 +42,9 @@ function App() {
           </OperationContainer>
           {codeDisplay && currentOperation ? (
             <OperationContainer>
+              <ExportCodeNote>
+                In progress and preview only. Not to be used as valid code.
+              </ExportCodeNote>
               <pre>
                 <ParseOperation operation={currentOperation} />
               </pre>
@@ -80,6 +83,14 @@ const OperationContainer = styled.div`
   &::-webkit-scrollbar-thumb {
     background: ${({ theme }) => theme.background.dropdown.scrollbar};
   }
+`;
+
+const ExportCodeNote = styled.div`
+  font-size: 0.8rem;
+  color: ${({ theme }) => theme.color.disabled};
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
+  margin-bottom: 0.5rem;
+  font-style: italic;
 `;
 
 export default App;

@@ -2,38 +2,25 @@
 
 Creating programming logic visually in a functional way.
 
-## Learnings Requirements
-
-- Functional Programming 
-- Meta Programming
-- Logic Building Blocks (Flowchart, other diagrammatical ways)
-
-## Hierarchy
+## Entities
   
 1. **Operation**
-   - Has a series of Statements with a context
-   - Has a set of parameters
-   - Context has a collection of local, parent and global values
-   - A return value (Data or void)
+   - Has a series of statements of Statement type
+   - Has a set of parameters of Statement type
+   - Has a set of closures containing previous statements of current and parent scope
+   - Can be either of a generic type or have a fixed type based on its parameters and return type
+   - Can reference another Operation's definition and value (when called) as variable
 2. **Statement**
-   - A Data with chain of Methods (or a operation definition)
-   - Returns a Data
-   - Has a variable for referencing its returned data
+   - Has the Data or Operation as the first item
+   - Adds a chain of Methods after the first Data entity
+   - Has a name for referencing its result value
 3. **Data**
-   - A value of type: string, number, array, object, void
-   - Has the value of a referenced Data's variable as name 
+   - A value of type: string, number, boolean, array and object
+   - Can be either of a generic type or have a fixed type
+   - Can reference another Data's value as variable 
 4. **Method** 
-   - An Operation called upon a fixed Data
-
-
-## Entities
-### Operation
-- Operation could be inside a Namespace (possible entity)
-  - A namespace will have a collection of operations (e.g. Elixir)
-  - Operations cannot modify any outer variable (need to provide a way to modify)
-  - There will be a collection of readonly `global` values created at the start
-  - User can use those values inside any operation e.g. `global.theme.color`
-  - Global values will be available similar to a Namespace
+   - An Operation-like entity with parameters and a result type 
+   - Chained after a Statement's Data taking the previous entity's result as first parameter
 
 
 ## Setup and Development
