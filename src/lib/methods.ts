@@ -13,50 +13,53 @@ import { updateStatements } from "./update";
 type IMethodList = {
   name: string;
   parameters: {
-    type: keyof IType | "operation";
+    type?: keyof IType | "operation";
     parameters?: IMethodList["parameters"];
     isGeneric?: boolean;
   }[];
   handler(...args: IStatement["data"][]): IStatement["data"];
 };
 
-export const comparisonMethods: IMethodList[] = [
+const comparisonMethods: IMethodList[] = [
   {
     name: "eq",
-    parameters: [{ type: "string", isGeneric: true }],
+    parameters: [{}],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData({ type: "boolean", value: data.value === p1.value }),
   },
   {
     name: "neq",
-    parameters: [{ type: "string", isGeneric: true }],
+    parameters: [{}],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData({ type: "boolean", value: data.value !== p1.value }),
   },
   {
     name: "lt",
-    parameters: [{ type: "string", isGeneric: true }],
+    parameters: [{}],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData({ type: "boolean", value: data.value < p1.value }),
   },
   {
     name: "lte",
-    parameters: [{ type: "string", isGeneric: true }],
+    parameters: [{}],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData({ type: "boolean", value: data.value <= p1.value }),
   },
   {
     name: "gt",
-    parameters: [{ type: "string", isGeneric: true }],
+    parameters: [{}],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData({ type: "boolean", value: data.value > p1.value }),
   },
   {
     name: "gte",
-    parameters: [{ type: "string", isGeneric: true }],
+    parameters: [{}],
     handler: (data: IData, p1: IData<typeof data.type>) =>
       createData({ type: "boolean", value: data.value >= p1.value }),
   },
+];
+
+const conditionalMethods: IMethodList[] = [
   {
     name: "and",
     parameters: [{ type: "string", isGeneric: true }],
@@ -87,7 +90,7 @@ export const comparisonMethods: IMethodList[] = [
   },
 ];
 
-export const stringMethods: IMethodList[] = [
+const stringMethods: IMethodList[] = [
   {
     name: "capitalize",
     parameters: [],
@@ -174,7 +177,7 @@ export const stringMethods: IMethodList[] = [
   },
 ];
 
-export const numberMethods: IMethodList[] = [
+const numberMethods: IMethodList[] = [
   {
     name: "add",
     parameters: [{ type: "number" }],
@@ -214,6 +217,13 @@ export const numberMethods: IMethodList[] = [
     },
   },
   {
+    name: "mod",
+    parameters: [{ type: "number" }],
+    handler: (data: IData<"number">, p1: IData<"number">) => {
+      return createData({ type: "number", value: data.value % p1.value });
+    },
+  },
+  {
     name: "range",
     parameters: [{ type: "number" }],
     handler: (data: IData<"number">, p1: IData<"number">) => {
@@ -241,7 +251,7 @@ export const numberMethods: IMethodList[] = [
   },
 ];
 
-export const booleanMethods: IMethodList[] = [
+const booleanMethods: IMethodList[] = [
   {
     name: "toString",
     parameters: [],
@@ -251,7 +261,7 @@ export const booleanMethods: IMethodList[] = [
   },
 ];
 
-export const arrayMethods: IMethodList[] = [
+const arrayMethods: IMethodList[] = [
   {
     name: "at",
     parameters: [{ type: "number" }],
@@ -311,7 +321,7 @@ export const arrayMethods: IMethodList[] = [
         value: data.value
           .map((item) => {
             let result = getStatementResult(item);
-            result.entityType === "data" ? result.value : "";
+            return result.entityType === "data" ? result.value : "";
           })
           .toString(),
       });
@@ -386,7 +396,7 @@ export const arrayMethods: IMethodList[] = [
   },
 ];
 
-export const objectMethods: IMethodList[] = [
+const objectMethods: IMethodList[] = [
   {
     name: "get",
     parameters: [{ type: "string" }],
@@ -452,11 +462,11 @@ export const objectMethods: IMethodList[] = [
 ];
 
 export const methodsList: Record<keyof IType, IMethodList[]> = {
-  string: stringMethods.concat(comparisonMethods),
-  number: numberMethods.concat(comparisonMethods),
-  boolean: booleanMethods.concat(comparisonMethods),
-  array: arrayMethods.concat(comparisonMethods),
-  object: objectMethods.concat(comparisonMethods),
+  string: stringMethods.concat(comparisonMethods, conditionalMethods),
+  number: numberMethods.concat(comparisonMethods, conditionalMethods),
+  boolean: booleanMethods.concat(comparisonMethods, conditionalMethods),
+  array: arrayMethods.concat(conditionalMethods),
+  object: objectMethods.concat(conditionalMethods),
 };
 
 function mapArrayParameters(data: IData<"array">, operation: IOperation) {
@@ -479,20 +489,23 @@ function mapArrayParameters(data: IData<"array">, operation: IOperation) {
   });
 }
 
-function getParams(item: IMethodList["parameters"][0]): IStatement["data"] {
+function getParams(
+  item: IMethodList["parameters"][0],
+  data: IData
+): IStatement["data"] {
   return item.type === "operation"
     ? createOperation({
         parameters: item.parameters?.map((item) =>
-          createStatement({ data: getParams(item), name: "" })
+          createStatement({ data: getParams(item, data), name: "" })
         ),
         isGeneric: item.isGeneric,
       })
-    : createData({ type: item.type, isGeneric: item.isGeneric });
+    : createData({ type: item.type || data.type, isGeneric: item.isGeneric });
 }
 
 export function getFilteredMethods(data: IData) {
   return methodsList[data.type].filter((item) => {
-    let parameters = item.parameters.map((p) => getParams(p));
+    let parameters = item.parameters.map((p) => getParams(p, data));
     return (
       data.isGeneric || isSameType(data, item.handler(data, ...parameters))
     );
@@ -504,7 +517,7 @@ export function createMethod({ data, name }: { data: IData; name?: string }) {
   let methodByName = methods.find((method) => method.name === name);
   let newMethod = methodByName || methods[0];
 
-  let parameters = newMethod.parameters.map((item) => getParams(item));
+  let parameters = newMethod.parameters.map((item) => getParams(item, data));
   let result = newMethod.handler(data, ...parameters);
   return {
     id: nanoid(),

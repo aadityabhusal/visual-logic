@@ -53,7 +53,7 @@ export function Dropdown({
       <div style={{ display: "flex", alignItems: "flex-start" }}>{head}</div>
       {display ? (
         <DropdownHead onClick={() => setContent((c) => !c)}>
-          <ChevronDown size={9} style={{ marginRight: "auto" }} />
+          <ChevronDown size={9} />
           {addMethod && (
             <Plus
               size={9}
@@ -70,6 +70,7 @@ export function Dropdown({
                 e.stopPropagation();
                 handleDelete();
               }}
+              style={{ marginLeft: "auto" }}
             />
           )}
         </DropdownHead>
@@ -83,9 +84,15 @@ export function Dropdown({
           <ErrorBoundary displayError={true}>
             <pre>
               {result.data.entityType === "data" ? (
-                <ParseData data={result.data} showData={true} />
+                <>
+                  <DataType>{result.type || result.data?.type}</DataType>
+                  <ParseData data={result.data} showData={true} />
+                </>
               ) : (
-                <ParseOperation operation={result.data} />
+                <>
+                  <DataType>{result.type || result.data?.entityType}</DataType>
+                  <ParseOperation operation={result.data} />
+                </>
               )}
             </pre>
           </ErrorBoundary>
@@ -158,4 +165,10 @@ export const DropdownOption = styled.div<{ selected?: boolean }>`
   &:hover {
     background-color: ${({ theme }) => theme.background.dropdown.hover};
   }
+`;
+
+const DataType = styled.div`
+  font-size: 0.7rem;
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
+  color: ${({ theme }) => theme.color.type};
 `;
