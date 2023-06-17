@@ -88,19 +88,18 @@ export function Dropdown({
         </DropdownContainer>
       ) : display && result.data ? (
         <DropdownContainer>
+          <DataType>
+            {result.data.entityType === "data"
+              ? result.data?.type
+              : result.data?.entityType}
+          </DataType>
           <ErrorBoundary displayError={true}>
             <pre>
               {result.data.entityType === "data" && !preference.hideData ? (
-                <>
-                  <DataType>{result.data?.type}</DataType>
-                  <ParseData data={result.data} showData={true} />
-                </>
+                <ParseData data={result.data} showData={true} />
               ) : result.data.entityType === "operation" &&
                 !preference.hideOperation ? (
-                <>
-                  <DataType>{result.data?.entityType}</DataType>
-                  <ParseOperation operation={result.data} />
-                </>
+                <ParseOperation operation={result.data} />
               ) : null}
             </pre>
           </ErrorBoundary>

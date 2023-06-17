@@ -51,9 +51,7 @@ export function Header() {
       <Bars
         size={14}
         style={{ cursor: "pointer" }}
-        onClick={() =>
-          setPreferences({ sidebarDisplay: !preference.sidebarDisplay })
-        }
+        onClick={() => setPreferences({ hideSidebar: !preference.hideSidebar })}
       />
     </HeaderWrapper>
   );
@@ -61,7 +59,7 @@ export function Header() {
 
 const PreferenceDropdown = styled.div`
   position: absolute;
-  min-width: 125px;
+  min-width: 130px;
   top: 1.5rem;
   right: 0;
   border: 1px solid ${({ theme }) => theme.color.border};

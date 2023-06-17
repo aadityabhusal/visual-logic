@@ -25,4 +25,5 @@ export const preferenceOptions = [
   { id: "highlightOperation", label: "Highlight operations" },
   { id: "hideOperation", label: "Hide operation code" },
   { id: "hideData", label: "Hide data value" },
+  { id: "displayCode", label: "Display Code" },
 ];

@@ -4,22 +4,22 @@ import { ParseOperation } from "./components/Parse/ParseOperation";
 import { useStore } from "./lib/store";
 import { theme } from "./lib/theme";
 import { Header } from "./ui/Header";
-import { Sidebar } from "./ui/Sidebar";
+import { NoteText, Sidebar } from "./ui/Sidebar";
 import { updateOperations } from "./lib/update";
+import { useEffect } from "react";
 
 function App() {
-  const [operations, setOperation, currentId, preferences] = useStore(
-    (state) => [
-      state.operations,
-      state.setOperation,
-      state.currentId,
-      state.preferences,
-    ]
-  );
+  const { operations, setOperation, currentId, setCurrentId, preferences } =
+    useStore((state) => state);
+
   const currentOperationIndex = operations.findIndex(
     (item) => item.id === currentId
   );
   const currentOperation = operations[currentOperationIndex];
+
+  useEffect(() => {
+    if (!currentOperationIndex) setCurrentId(operations[0].id || "");
+  }, [currentOperationIndex]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -37,20 +37,20 @@ function App() {
                 prevOperations={operations.slice(0, currentOperationIndex)}
               />
             ) : (
-              <div>Select an operation</div>
+              <NoteText>Select an operation</NoteText>
             )}
           </OperationContainer>
-          {preferences.codeDisplay && currentOperation ? (
+          {preferences.displayCode && currentOperation ? (
             <OperationContainer>
-              <ExportCodeNote>
-                In progress and preview only. Not to be used as valid code.
-              </ExportCodeNote>
+              <NoteText border italic>
+                In-progress and preview-only.
+              </NoteText>
               <pre>
                 <ParseOperation operation={currentOperation} />
               </pre>
             </OperationContainer>
           ) : null}
-          {preferences.sidebarDisplay && <Sidebar />}
+          {!preferences.hideSidebar && <Sidebar />}
         </AppContainer>
       </AppWrapper>
     </ThemeProvider>
@@ -70,7 +70,7 @@ const AppContainer = styled.div`
 `;
 
 const OperationContainer = styled.div`
-  padding: 0.5rem;
+  padding: 0.25rem;
   flex: 1;
   overflow-y: auto;
   border-right: 1px solid ${({ theme }) => theme.color.border};
@@ -81,14 +81,6 @@ const OperationContainer = styled.div`
   &::-webkit-scrollbar-thumb {
     background: ${({ theme }) => theme.background.dropdown.scrollbar};
   }
-`;
-
-const ExportCodeNote = styled.div`
-  font-size: 0.8rem;
-  color: ${({ theme }) => theme.color.disabled};
-  border-bottom: 1px solid ${({ theme }) => theme.color.border};
-  margin-bottom: 0.5rem;
-  font-style: italic;
 `;
 
 export default App;

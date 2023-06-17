@@ -23,9 +23,13 @@ export const useStore = create<IStore>((set) => ({
       return { operations };
     }),
   setOperation: (operations) =>
-    set(() => {
+    set((state) => {
       setLocalStorage("operations", operations);
-      return { operations };
+      let currentId = operations.find(({ id }) => id === state.currentId)?.id;
+      return {
+        operations,
+        currentId: currentId || operations[0]?.id || "",
+      };
     }),
   preferences: getLocalStorage("preferences") || {},
   setPreferences: (preference) =>
