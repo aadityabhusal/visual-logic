@@ -1,20 +1,30 @@
 import { Bars, Gear } from "@styled-icons/fa-solid";
 import styled from "styled-components";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "../lib/store";
 import { preferenceOptions } from "../lib/data";
 
 export function Header() {
   const [displayPreference, setDisplayPreference] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
   const [preference, setPreferences] = useStore((state) => [
     state.preferences,
     state.setPreferences,
   ]);
 
+  useEffect(() => {
+    function clickHandler(e: MouseEvent) {
+      if (!Boolean(ref.current?.contains(e.target as Node)))
+        setDisplayPreference(false);
+    }
+    document.addEventListener("click", clickHandler);
+    return () => document.removeEventListener("click", clickHandler);
+  }, [displayPreference]);
+
   return (
     <HeaderWrapper>
       <h1>Visual Logic</h1>
-      <div style={{ position: "relative", marginLeft: "auto" }}>
+      <div ref={ref} style={{ position: "relative", marginLeft: "auto" }}>
         <Gear
           size={14}
           style={{ cursor: "pointer" }}
