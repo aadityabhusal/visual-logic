@@ -45,11 +45,7 @@ export function Method({
 
   return (
     <Dropdown
-      result={{
-        ...(method.result.entityType === "data"
-          ? { data: method.result }
-          : { type: "operation" }),
-      }}
+      result={{ data: method.result }}
       handleDelete={() => handleMethod(method, true)}
       addMethod={addMethod}
       head={

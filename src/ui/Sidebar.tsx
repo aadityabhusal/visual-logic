@@ -4,9 +4,16 @@ import { useStore } from "../lib/store";
 import { updateOperations } from "../lib/update";
 import { createOperation } from "../lib/utils";
 
-export function Sidebar({ toggleCode }: { toggleCode: () => void }) {
-  const { operations, addOperation, setOperation, currentId, setCurrentId } =
-    useStore((state) => state);
+export function Sidebar() {
+  const {
+    operations,
+    addOperation,
+    setOperation,
+    currentId,
+    setCurrentId,
+    preferences,
+    setPreferences,
+  } = useStore((state) => state);
 
   return (
     <SidebarWrapper>
@@ -33,7 +40,12 @@ export function Sidebar({ toggleCode }: { toggleCode: () => void }) {
         </OperationList>
       </SidebarContainer>
       <SidebarFooter>
-        <Button title="View Code" onClick={toggleCode}>
+        <Button
+          title="View Code"
+          onClick={() =>
+            setPreferences({ codeDisplay: !preferences.codeDisplay })
+          }
+        >
           <Code size={12} /> <span>Code</span>
         </Button>
         <Button

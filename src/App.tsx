@@ -1,4 +1,3 @@
-import { useState } from "react";
 import styled, { ThemeProvider } from "styled-components";
 import { Operation } from "./components/Operation";
 import { ParseOperation } from "./components/Parse/ParseOperation";
@@ -9,22 +8,23 @@ import { Sidebar } from "./ui/Sidebar";
 import { updateOperations } from "./lib/update";
 
 function App() {
-  const [operations, setOperation, currentId] = useStore((state) => [
-    state.operations,
-    state.setOperation,
-    state.currentId,
-  ]);
+  const [operations, setOperation, currentId, preferences] = useStore(
+    (state) => [
+      state.operations,
+      state.setOperation,
+      state.currentId,
+      state.preferences,
+    ]
+  );
   const currentOperationIndex = operations.findIndex(
     (item) => item.id === currentId
   );
   const currentOperation = operations[currentOperationIndex];
-  const [codeDisplay, setCodeDisplay] = useState(false);
-  const [sidebarDisplay, setSidebarDisplay] = useState(true);
 
   return (
     <ThemeProvider theme={theme}>
       <AppWrapper>
-        <Header toggleSidebar={() => setSidebarDisplay((prev) => !prev)} />
+        <Header />
         <AppContainer>
           <OperationContainer>
             {currentOperation ? (
@@ -40,7 +40,7 @@ function App() {
               <div>Select an operation</div>
             )}
           </OperationContainer>
-          {codeDisplay && currentOperation ? (
+          {preferences.codeDisplay && currentOperation ? (
             <OperationContainer>
               <ExportCodeNote>
                 In progress and preview only. Not to be used as valid code.
@@ -50,9 +50,7 @@ function App() {
               </pre>
             </OperationContainer>
           ) : null}
-          {sidebarDisplay && (
-            <Sidebar toggleCode={() => setCodeDisplay((prev) => !prev)} />
-          )}
+          {preferences.sidebarDisplay && <Sidebar />}
         </AppContainer>
       </AppWrapper>
     </ThemeProvider>

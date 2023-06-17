@@ -1,6 +1,16 @@
 import create from "zustand";
-import { IStore } from "./types";
+import { IOperation } from "./types";
 import { getLocalStorage, setLocalStorage } from "./utils";
+
+export interface IStore {
+  operations: IOperation[];
+  currentId: string;
+  setCurrentId: (id: string) => void;
+  addOperation: (operation: IOperation) => void;
+  setOperation: (operations: IOperation[]) => void;
+  preferences: { [id: string]: boolean };
+  setPreferences: (preference: IStore["preferences"]) => void;
+}
 
 export const useStore = create<IStore>((set) => ({
   operations: getLocalStorage("operations") || [],
@@ -16,5 +26,12 @@ export const useStore = create<IStore>((set) => ({
     set(() => {
       setLocalStorage("operations", operations);
       return { operations };
+    }),
+  preferences: getLocalStorage("preferences") || {},
+  setPreferences: (preference) =>
+    set((state) => {
+      let preferences = { ...state.preferences, ...preference };
+      setLocalStorage("preferences", preferences);
+      return { preferences };
     }),
 }));

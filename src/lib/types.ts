@@ -48,11 +48,3 @@ export interface IOperation {
     isCalled?: boolean;
   };
 }
-
-export interface IStore {
-  operations: IOperation[];
-  currentId: string;
-  setCurrentId: (id: string) => void;
-  addOperation: (operation: IOperation) => void;
-  setOperation: (operations: IOperation[]) => void;
-}

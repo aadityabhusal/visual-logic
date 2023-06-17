@@ -5,11 +5,12 @@ import { IData, IOperation } from "../lib/types";
 import { ParseData } from "../components/Parse/ParseData";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { ParseOperation } from "../components/Parse/ParseOperation";
+import { useStore } from "../lib/store";
 
 interface IProps {
   head?: ReactNode;
   children?: ReactNode;
-  result: { data?: IData | IOperation; type?: string };
+  result: { data?: IData | IOperation };
   handleDelete?: () => void;
   addMethod?: () => void;
 }
@@ -24,6 +25,7 @@ export function Dropdown({
   const [display, setDisplay] = useState(false);
   const [content, setContent] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const preference = useStore((state) => state.preferences);
 
   useEffect(() => {
     function clickHandler(e: MouseEvent) {
@@ -36,10 +38,15 @@ export function Dropdown({
     return () => document.removeEventListener("click", clickHandler);
   }, [display]);
 
+  const preferenceBorderDisplay =
+    (preference.highlightOperation &&
+      result.data?.entityType === "operation") ||
+    preference.highlight;
+
   return (
     <DropdownWrapper
       ref={ref}
-      border={display}
+      border={preferenceBorderDisplay || display}
       onMouseOver={(e) => {
         e.stopPropagation();
         children && setDisplay(true);
@@ -83,17 +90,18 @@ export function Dropdown({
         <DropdownContainer>
           <ErrorBoundary displayError={true}>
             <pre>
-              {result.data.entityType === "data" ? (
+              {result.data.entityType === "data" && !preference.hideData ? (
                 <>
-                  <DataType>{result.type || result.data?.type}</DataType>
+                  <DataType>{result.data?.type}</DataType>
                   <ParseData data={result.data} showData={true} />
                 </>
-              ) : (
+              ) : result.data.entityType === "operation" &&
+                !preference.hideOperation ? (
                 <>
-                  <DataType>{result.type || result.data?.entityType}</DataType>
+                  <DataType>{result.data?.entityType}</DataType>
                   <ParseOperation operation={result.data} />
                 </>
-              )}
+              ) : null}
             </pre>
           </ErrorBoundary>
         </DropdownContainer>

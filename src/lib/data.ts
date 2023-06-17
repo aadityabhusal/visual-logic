@@ -19,3 +19,10 @@ export const TypeMapper: {
     defaultValue: new Map(),
   },
 };
+
+export const preferenceOptions = [
+  { id: "highlight", label: "Highlight all" },
+  { id: "highlightOperation", label: "Highlight operations" },
+  { id: "hideOperation", label: "Hide operation code" },
+  { id: "hideData", label: "Hide data value" },
+];
