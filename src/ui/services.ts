@@ -4,11 +4,14 @@ export async function visitCount() {
     "Content-Type": "application/json",
     "X-Access-Key": import.meta.env.VITE_APP_VISIT_COUNT_KEY,
   };
+
   let data = await (await fetch(url, { headers })).json();
-  console.log(data?.record?.visits);
+  const urlParam = new URLSearchParams(window.location.search);
+  let ref = urlParam.get("ref") || "direct";
+
   await fetch(url, {
     method: "PUT",
     headers,
-    body: JSON.stringify({ visits: Number(data?.record?.visits) + 1 }),
+    body: JSON.stringify({ [ref]: Number(data?.record?.visits) + 1 }),
   });
 }
