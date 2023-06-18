@@ -1,16 +1,15 @@
 import { ChevronDown, Plus, X } from "@styled-icons/fa-solid";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import { IData, IOperation } from "../lib/types";
+import { IData, IOperation, IType } from "../lib/types";
 import { ParseData } from "../components/Parse/ParseData";
 import { ErrorBoundary } from "../components/ErrorBoundary";
-import { ParseOperation } from "../components/Parse/ParseOperation";
 import { useStore } from "../lib/store";
 
 interface IProps {
   head?: ReactNode;
   children?: ReactNode;
-  result: { data?: IData | IOperation };
+  result: { data?: IData | IOperation; type?: keyof IType };
   handleDelete?: () => void;
   addMethod?: () => void;
 }
@@ -86,23 +85,21 @@ export function Dropdown({
         <DropdownContainer onClick={() => setContent(false)}>
           {children}
         </DropdownContainer>
-      ) : display && result.data ? (
+      ) : display ? (
         <DropdownContainer>
           <DataType>
-            {result.data.entityType === "data"
-              ? result.data?.type
-              : result.data?.entityType}
+            {result.type ||
+              (result?.data?.entityType === "data"
+                ? result.data?.type
+                : result.data?.entityType)}
           </DataType>
-          <ErrorBoundary displayError={true}>
-            <pre>
-              {result.data.entityType === "data" && !preference.hideData ? (
+          {result.data?.entityType === "data" && !preference.hideData ? (
+            <ErrorBoundary displayError={true}>
+              <pre>
                 <ParseData data={result.data} showData={true} />
-              ) : result.data.entityType === "operation" &&
-                !preference.hideOperation ? (
-                <ParseOperation operation={result.data} />
-              ) : null}
-            </pre>
-          </ErrorBoundary>
+              </pre>
+            </ErrorBoundary>
+          ) : null}
         </DropdownContainer>
       ) : null}
     </DropdownWrapper>
@@ -176,6 +173,8 @@ export const DropdownOption = styled.div<{ selected?: boolean }>`
 
 const DataType = styled.div`
   font-size: 0.7rem;
-  border-bottom: 1px solid ${({ theme }) => theme.color.border};
   color: ${({ theme }) => theme.color.type};
+  & ~ pre {
+    border-top: 1px solid ${({ theme }) => theme.color.border};
+  }
 `;

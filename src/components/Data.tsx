@@ -28,7 +28,7 @@ export function Data({
 }: IProps) {
   return (
     <Dropdown
-      result={{ data }}
+      result={data.reference ? { data } : { type: data.type }}
       handleDelete={!disableDelete ? () => handleData(data, true) : undefined}
       addMethod={addMethod}
       head={
