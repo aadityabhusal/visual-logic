@@ -12,6 +12,9 @@ export async function visitCount() {
   await fetch(url, {
     method: "PUT",
     headers,
-    body: JSON.stringify({ [ref]: Number(data?.record?.[ref]) + 1 }),
+    body: JSON.stringify({
+      ...data?.record,
+      [ref]: Number(data?.record?.[ref] || 0) + 1,
+    }),
   });
 }
