@@ -7,6 +7,7 @@ import { Header } from "./ui/Header";
 import { NoteText, Sidebar } from "./ui/Sidebar";
 import { updateOperations } from "./lib/update";
 import { useEffect } from "react";
+import { visitCount } from "./ui/services";
 
 function App() {
   const { operations, setOperation, currentId, setCurrentId, preferences } =
@@ -18,8 +19,12 @@ function App() {
   const currentOperation = operations[currentOperationIndex];
 
   useEffect(() => {
-    if (!currentOperationIndex) setCurrentId(operations[0].id || "");
-  }, [currentOperationIndex]);
+    if (!currentId && operations[0]) setCurrentId(operations[0]?.id);
+  });
+
+  useEffect(() => {
+    if (window.location.hostname !== "localhost") visitCount();
+  }, []);
 
   return (
     <ThemeProvider theme={theme}>
@@ -71,6 +76,7 @@ const AppContainer = styled.div`
 
 const OperationContainer = styled.div`
   padding: 0.25rem;
+  padding-bottom: 25%;
   flex: 1;
   overflow-y: auto;
   border-right: 1px solid ${({ theme }) => theme.color.border};

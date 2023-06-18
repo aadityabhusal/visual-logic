@@ -9,7 +9,7 @@ export function Sidebar() {
     useStore((state) => state);
 
   if (!localStorage.getItem("operations")) {
-    addOperation(createOperation({ name: "mainFunction" }));
+    addOperation(createOperation({ name: "main" }));
   }
   return (
     <SidebarWrapper>
