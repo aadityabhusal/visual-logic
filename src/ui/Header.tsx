@@ -1,8 +1,10 @@
-import { Bars, Gear } from "@styled-icons/fa-solid";
+import { Bars, Code, Gear } from "@styled-icons/fa-solid";
 import styled from "styled-components";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "../lib/store";
 import { preferenceOptions } from "../lib/data";
+import github from "./github.svg";
+import youtube from "./youtube.svg";
 
 export function Header() {
   const [displayPreference, setDisplayPreference] = useState(false);
@@ -23,8 +25,24 @@ export function Header() {
 
   return (
     <HeaderWrapper>
-      <h1>Visual Logic</h1>
-      <div ref={ref} style={{ position: "relative", marginLeft: "auto" }}>
+      <h1 style={{ marginRight: "auto" }}>Visual Logic</h1>
+      <a
+        href="https://www.youtube.com/watch?v=AOfOhNwQL64"
+        target="_blank"
+        style={{ display: "flex", userSelect: "none" }}
+        title="Demo video"
+      >
+        <img src={youtube} width={18} height={18} />
+      </a>
+      <a
+        href="https://github.com/aadityabhusal/visual-logic"
+        target="_blank"
+        style={{ display: "flex", userSelect: "none" }}
+        title="Source code"
+      >
+        <img src={github} width={16} height={16} />
+      </a>
+      <div ref={ref} style={{ position: "relative" }}>
         <Gear
           size={14}
           style={{ cursor: "pointer" }}
