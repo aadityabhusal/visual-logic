@@ -10,12 +10,14 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@mantine/hooks": "^7.12.2",
     "@styled-icons/fa-solid": "^10.46.0",
     "nanoid": "^4.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "styled-components": "^5.3.6",
-    "zustand": "^4.1.5"
+    "zundo": "^2.1.0",
+    "zustand": "^4.5.5"
   },
   "devDependencies": {
     "@testing-library/react": "^14.0.0",

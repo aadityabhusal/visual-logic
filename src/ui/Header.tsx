@@ -1,7 +1,7 @@
 import { Bars, Code, Gear } from "@styled-icons/fa-solid";
 import styled from "styled-components";
 import { useEffect, useRef, useState } from "react";
-import { useStore } from "../lib/store";
+import { uiConfigStore } from "../lib/store";
 import { preferenceOptions } from "../lib/data";
 import github from "./github.svg";
 import youtube from "./youtube.svg";
@@ -9,10 +9,7 @@ import youtube from "./youtube.svg";
 export function Header() {
   const [displayPreference, setDisplayPreference] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const [preference, setPreferences] = useStore((state) => [
-    state.preferences,
-    state.setPreferences,
-  ]);
+  const { setUiConfig, ...uiConfig } = uiConfigStore();
 
   useEffect(() => {
     function clickHandler(e: MouseEvent) {
@@ -55,10 +52,8 @@ export function Header() {
                 <input
                   id={item.id}
                   type="checkbox"
-                  checked={preference[item.id]}
-                  onChange={(e) =>
-                    setPreferences({ [item.id]: e.target.checked })
-                  }
+                  checked={uiConfig[item.id]}
+                  onChange={(e) => setUiConfig({ [item.id]: e.target.checked })}
                 />
                 <label htmlFor={item.id}>{item.label}</label>
               </div>
@@ -69,7 +64,7 @@ export function Header() {
       <Bars
         size={14}
         style={{ cursor: "pointer" }}
-        onClick={() => setPreferences({ hideSidebar: !preference.hideSidebar })}
+        onClick={() => setUiConfig({ hideSidebar: !uiConfig.hideSidebar })}
       />
     </HeaderWrapper>
   );

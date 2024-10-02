@@ -1,30 +1,41 @@
 import styled, { ThemeProvider } from "styled-components";
 import { Operation } from "./components/Operation";
 import { ParseOperation } from "./components/Parse/ParseOperation";
-import { useStore } from "./lib/store";
+import { uiConfigStore, useStore } from "./lib/store";
 import { theme } from "./lib/theme";
 import { Header } from "./ui/Header";
 import { NoteText, Sidebar } from "./ui/Sidebar";
 import { updateOperations } from "./lib/update";
 import { useEffect } from "react";
 import { visitCount } from "./ui/services";
+import { useHotkeys } from "@mantine/hooks";
 
 function App() {
-  const { operations, setOperation, currentId, setCurrentId, preferences } =
-    useStore((state) => state);
+  const { operations, setOperation } = useStore();
+  const { displayCode, hideSidebar, selectedOperationId, setUiConfig } =
+    uiConfigStore();
+  const { undo, redo } = useStore.temporal.getState();
 
   const currentOperationIndex = operations.findIndex(
-    (item) => item.id === currentId
+    (item) => item.id === selectedOperationId
   );
   const currentOperation = operations[currentOperationIndex];
 
   useEffect(() => {
-    if (!currentId && operations[0]) setCurrentId(operations[0]?.id);
+    if (!selectedOperationId && operations[0]) {
+      setUiConfig({ selectedOperationId: operations[0]?.id });
+    }
   });
 
   useEffect(() => {
     if (window.location.hostname !== "localhost") visitCount();
   }, []);
+
+  useHotkeys([
+    ["meta+shift+z", () => redo()],
+    ["meta+z", () => undo()],
+    ["meta+y", () => redo()],
+  ]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -45,7 +56,7 @@ function App() {
               <NoteText>Select an operation</NoteText>
             )}
           </OperationContainer>
-          {preferences.displayCode && currentOperation ? (
+          {displayCode && currentOperation ? (
             <OperationContainer>
               <NoteText border italic>
                 In-progress and preview-only.
@@ -55,7 +66,7 @@ function App() {
               </pre>
             </OperationContainer>
           ) : null}
-          {!preferences.hideSidebar && <Sidebar />}
+          {!hideSidebar && <Sidebar />}
         </AppContainer>
       </AppWrapper>
     </ThemeProvider>

@@ -9,5 +9,5 @@ interface VitestConfigExport extends UserConfig {
 export default defineConfig({
   plugins: [react()],
   test: { globals: true, environment: "jsdom" },
-  server: { port: 3000 },
+  server: { port: 3001, open: true },
 } as VitestConfigExport);

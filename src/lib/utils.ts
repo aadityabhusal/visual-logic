@@ -33,7 +33,9 @@ export function createOperation(props?: {
     entityType: "operation",
     name:
       props?.name ||
-      (props?.name !== undefined ? `f_${id.slice(-3)}` : undefined),
+      (props?.name !== undefined
+        ? `new_${(+new Date()).toString().slice(-5)}`
+        : undefined),
     parameters: props?.parameters || [],
     statements: [],
     closure: [],

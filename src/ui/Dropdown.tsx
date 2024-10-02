@@ -4,7 +4,7 @@ import styled from "styled-components";
 import { IData, IOperation, IType } from "../lib/types";
 import { ParseData } from "../components/Parse/ParseData";
 import { ErrorBoundary } from "../components/ErrorBoundary";
-import { useStore } from "../lib/store";
+import { uiConfigStore } from "../lib/store";
 
 interface IProps {
   head?: ReactNode;
@@ -24,7 +24,7 @@ export function Dropdown({
   const [display, setDisplay] = useState(false);
   const [content, setContent] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const preference = useStore((state) => state.preferences);
+  const { highlightOperation, highlightAll, hideResultValue } = uiConfigStore();
 
   useEffect(() => {
     function clickHandler(e: MouseEvent) {
@@ -38,9 +38,8 @@ export function Dropdown({
   }, [display]);
 
   const preferenceBorderDisplay =
-    (preference.highlightOperation &&
-      result.data?.entityType === "operation") ||
-    preference.highlight;
+    (highlightOperation && result.data?.entityType === "operation") ||
+    highlightAll;
 
   return (
     <DropdownWrapper
@@ -93,7 +92,7 @@ export function Dropdown({
                 ? result.data?.type
                 : result.data?.entityType)}
           </DataType>
-          {result.data?.entityType === "data" && !preference.hideData ? (
+          {result.data?.entityType === "data" && !hideResultValue ? (
             <ErrorBoundary displayError={true}>
               <pre>
                 <ParseData data={result.data} showData={true} />

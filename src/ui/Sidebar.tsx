@@ -1,12 +1,12 @@
 import { Plus, X } from "@styled-icons/fa-solid";
 import styled from "styled-components";
-import { useStore } from "../lib/store";
+import { uiConfigStore, useStore } from "../lib/store";
 import { updateOperations } from "../lib/update";
 import { createOperation } from "../lib/utils";
 
 export function Sidebar() {
-  const { operations, addOperation, setOperation, currentId, setCurrentId } =
-    useStore((state) => state);
+  const { operations, addOperation, setOperation } = useStore();
+  const { selectedOperationId, setUiConfig } = uiConfigStore();
 
   if (!localStorage.getItem("operations")) {
     addOperation(createOperation({ name: "main" }));
@@ -20,8 +20,8 @@ export function Sidebar() {
           {operations.map((item, index) => (
             <OperationListItem
               key={item.id}
-              onClick={() => setCurrentId(item.id)}
-              selected={item.id === currentId}
+              onClick={() => setUiConfig({ selectedOperationId: item.id })}
+              selected={item.id === selectedOperationId}
             >
               <span>{item.name}</span>
               <X

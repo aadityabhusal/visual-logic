@@ -1,41 +1,37 @@
-import create from "zustand";
+import { create } from "zustand";
+import { temporal } from "zundo";
+import { persist } from "zustand/middleware";
 import { IOperation } from "./types";
-import { getLocalStorage, setLocalStorage } from "./utils";
+import { preferenceOptions } from "./data";
 
 export interface IStore {
   operations: IOperation[];
-  currentId: string;
-  setCurrentId: (id: string) => void;
   addOperation: (operation: IOperation) => void;
   setOperation: (operations: IOperation[]) => void;
-  preferences: { [id: string]: boolean };
-  setPreferences: (preference: IStore["preferences"]) => void;
 }
 
-export const useStore = create<IStore>((set) => ({
-  operations: getLocalStorage("operations") || [],
-  currentId: "",
-  setCurrentId: (currentId) => set(() => ({ currentId })),
-  addOperation: (operation) =>
-    set((state) => {
-      let operations = [...state.operations, operation];
-      setLocalStorage("operations", operations);
-      return { operations };
-    }),
-  setOperation: (operations) =>
-    set((state) => {
-      setLocalStorage("operations", operations);
-      let currentId = operations.find(({ id }) => id === state.currentId)?.id;
-      return {
-        operations,
-        currentId: currentId || operations[0]?.id || "",
-      };
-    }),
-  preferences: getLocalStorage("preferences") || {},
-  setPreferences: (preference) =>
-    set((state) => {
-      let preferences = { ...state.preferences, ...preference };
-      setLocalStorage("preferences", preferences);
-      return { preferences };
-    }),
-}));
+export const useStore = create(
+  persist(
+    temporal<IStore>((set) => ({
+      operations: [],
+      addOperation: (operation) =>
+        set((state) => ({ operations: [...state.operations, operation] })),
+      setOperation: (operations) => set(() => ({ operations })),
+    })),
+    { name: "operations" }
+  )
+);
+
+type IUiConfig = Partial<{
+  [key in (typeof preferenceOptions)[number]["id"]]: boolean;
+}> & {
+  hideSidebar?: boolean;
+  selectedOperationId?: string;
+  setUiConfig: (change: Partial<Omit<IUiConfig, "setUiConfig">>) => void;
+};
+
+export const uiConfigStore = create(
+  persist<IUiConfig>((set) => ({ setUiConfig: (data) => set({ ...data }) }), {
+    name: "uiConfig",
+  })
+);
