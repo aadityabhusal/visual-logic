@@ -1,4 +1,3 @@
-import styled from "styled-components";
 import { IData, IOperation, IStatement } from "../../lib/types";
 import { createData, createStatement } from "../../lib/utils";
 import { Statement } from "../Statement";
@@ -42,7 +41,12 @@ export function ArrayInput({
     });
   }
   return (
-    <ArrayContainer isMultiline={isMultiline}>
+    <div
+      className={
+        "flex items-start gap-1 [&>span]:text-method " +
+        (isMultiline ? "flex-col" : "flex-row")
+      }
+    >
       <span>{"["}</span>
       {data.value.map((item, i, arr) => {
         return (
@@ -65,16 +69,6 @@ export function ArrayInput({
         +
       </div>
       <span>{"]"}</span>
-    </ArrayContainer>
+    </div>
   );
 }
-
-const ArrayContainer = styled.div<{ isMultiline: boolean }>`
-  display: flex;
-  flex-direction: ${({ isMultiline }) => (isMultiline ? "column" : "row")};
-  align-items: flex-start;
-  gap: 4px;
-  & > span {
-    color: ${({ theme }) => theme.color.method};
-  }
-`;

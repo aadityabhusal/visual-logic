@@ -1,8 +1,9 @@
-import { Plus, X } from "@styled-icons/fa-solid";
-import styled from "styled-components";
+import { FaPlus, FaX } from "react-icons/fa6";
 import { uiConfigStore, useStore } from "../lib/store";
 import { updateOperations } from "../lib/update";
 import { createOperation } from "../lib/utils";
+import { Button } from "./Button";
+import { NoteText } from "./NoteText";
 
 export function Sidebar() {
   const { operations, addOperation, setOperation } = useStore();
@@ -12,19 +13,27 @@ export function Sidebar() {
     addOperation(createOperation({ name: "main" }));
   }
   return (
-    <SidebarWrapper>
-      <SidebarHead>Operations</SidebarHead>
-      <SidebarContainer>
-        <OperationList>
+    <div className="flex flex-col ml-auto w-40">
+      <div className="p-1">Operations</div>
+      <div className="flex-1 border-y border-solid border-border p-1 overflow-y-auto dropdown-scrollbar">
+        <ul className="list-none p-0 m-0">
           {!operations.length && <NoteText center>Add an operation</NoteText>}
-          {operations.map((item, index) => (
-            <OperationListItem
+          {operations.map((item) => (
+            <li
+              className={
+                "flex items-center justify-between cursor-pointer p-1 hover:bg-dropdown-hover " +
+                (item.id === selectedOperationId
+                  ? "bg-dropdown-hover"
+                  : "bg-editor")
+              }
               key={item.id}
               onClick={() => setUiConfig({ selectedOperationId: item.id })}
-              selected={item.id === selectedOperationId}
             >
-              <span>{item.name}</span>
-              <X
+              <span className="whitespace-nowrap overflow-hidden text-ellipsis">
+                {item.name}
+              </span>
+              <FaX
+                className="shrink-0"
                 title="Delete operation"
                 size={8}
                 onClick={(e) => {
@@ -32,109 +41,18 @@ export function Sidebar() {
                   setOperation(updateOperations(operations, item, true));
                 }}
               />
-            </OperationListItem>
+            </li>
           ))}
-        </OperationList>
-      </SidebarContainer>
-      <SidebarFooter>
+        </ul>
+      </div>
+      <div className="p-1 flex">
         <Button
           title="Add a new operation"
           onClick={() => addOperation(createOperation({ name: "" }))}
         >
-          <Plus size={12} /> <span>Operation</span>
+          <FaPlus size={12} /> <span>Operation</span>
         </Button>
-      </SidebarFooter>
-    </SidebarWrapper>
+      </div>
+    </div>
   );
 }
-
-const SidebarWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  margin-left: auto;
-  width: 10rem;
-`;
-
-const SidebarHead = styled.div`
-  padding: 0.25rem;
-`;
-
-const SidebarContainer = styled.div`
-  flex: 1;
-  border: 1px solid ${({ theme }) => theme.color.border};
-  padding: 0.2rem;
-  border-width: 1px 0 1px 0;
-  overflow-y: auto;
-
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: ${({ theme }) => theme.background.dropdown.scrollbar};
-  }
-`;
-
-const OperationList = styled.ul`
-  list-style: none;
-  padding: 0;
-  margin: 0;
-`;
-
-const OperationListItem = styled.li<{ selected?: boolean }>`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  padding: 0.25rem;
-  background-color: ${({ selected, theme }) =>
-    selected ? theme.background.dropdown.hover : theme.background.editor};
-
-  &:hover {
-    background-color: ${({ theme }) => theme.background.dropdown.hover};
-  }
-
-  & span {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  & svg {
-    flex-shrink: 0;
-  }
-`;
-
-const SidebarFooter = styled.div`
-  padding: 0.25rem;
-  display: flex;
-`;
-
-const Button = styled.button`
-  padding: 0.3rem;
-  display: flex;
-  align-items: center;
-  flex: 1;
-  gap: 0.5rem;
-  justify-content: center;
-  cursor: pointer;
-  color: ${({ theme }) => theme.color.white};
-  border: none;
-  background-color: ${({ theme }) => theme.background.dropdown.selected}95;
-  &:hover {
-    background-color: ${({ theme }) => theme.background.dropdown.selected};
-  }
-`;
-
-export const NoteText = styled.div<{
-  italic?: boolean;
-  center?: boolean;
-  border?: boolean;
-}>`
-  font-size: 0.8rem;
-  color: ${({ theme }) => theme.color.disabled};
-  padding: 0.2rem;
-  ${({ border, theme }) =>
-    border && `border-bottom: 1px solid ${theme.color.border}`};
-  ${({ center }) => center && `text-align: center`};
-  ${({ italic }) => italic && "font-style: italic"};
-`;

@@ -1,6 +1,5 @@
-import { AngleLeft, AngleRight, Plus } from "@styled-icons/fa-solid";
+import { FaAngleLeft, FaAngleRight, FaPlus } from "react-icons/fa6";
 import { Fragment, ReactNode } from "react";
-import styled from "styled-components";
 import { theme } from "../lib/theme";
 import { IOperation, IStatement } from "../lib/types";
 import { updateStatements } from "../lib/update";
@@ -77,7 +76,7 @@ export function Operation({
   }
 
   const result = getOperationResult(operation);
-  const AngleIcon = operation.reference?.isCalled ? AngleLeft : AngleRight;
+  const AngleIcon = operation.reference?.isCalled ? FaAngleLeft : FaAngleRight;
 
   return (
     <Dropdown
@@ -92,7 +91,7 @@ export function Operation({
       addMethod={addMethod}
       head={
         operation.reference?.name ? (
-          <OperationHead>
+          <div className="flex items-start gap-1">
             <Input
               data={{
                 id: "",
@@ -106,7 +105,7 @@ export function Operation({
               noQuotes
             />
             {operation.reference.isCalled && (
-              <OperationHead>
+              <div className="flex items-start gap-1">
                 <span>{"("}</span>
                 {operation.parameters.map((parameter, i, paramList) => (
                   <Fragment key={i}>
@@ -125,7 +124,7 @@ export function Operation({
                   </Fragment>
                 ))}
                 <span>{")"}</span>
-              </OperationHead>
+              </div>
             )}
             {!disableDelete && (
               <AngleIcon
@@ -143,10 +142,10 @@ export function Operation({
                 }
               />
             )}
-          </OperationHead>
+          </div>
         ) : (
-          <OperationWrapper>
-            <OperationHead>
+          <div className="max-w-max">
+            <div className="flex items-start gap-1">
               {hasName && (
                 <Input
                   data={{
@@ -189,15 +188,15 @@ export function Operation({
                 </Fragment>
               ))}
               {!disableDelete && (
-                <Plus
+                <FaPlus
                   size={10}
                   style={{ cursor: "pointer", marginTop: 3 }}
                   onClick={addParameter}
                 />
               )}
               <span>{")"}</span>
-            </OperationHead>
-            <OperationBody>
+            </div>
+            <div className="pl-4 [&>div]:mb-1">
               {operation.statements.map((statement, i) => (
                 <Statement
                   key={statement.id}
@@ -213,13 +212,13 @@ export function Operation({
                   prevOperations={prevOperations}
                 />
               ))}
-              <Plus
+              <FaPlus
                 size={10}
                 style={{ cursor: "pointer" }}
                 onClick={addStatement}
               />
-            </OperationBody>
-          </OperationWrapper>
+            </div>
+          </div>
         )
       }
     >
@@ -227,20 +226,3 @@ export function Operation({
     </Dropdown>
   );
 }
-
-const OperationWrapper = styled.div`
-  max-width: max-content;
-`;
-
-const OperationHead = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 0.25rem;
-`;
-
-const OperationBody = styled.div`
-  padding-left: 1rem;
-  & > div {
-    margin-bottom: 4px;
-  }
-`;

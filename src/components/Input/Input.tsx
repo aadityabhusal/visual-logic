@@ -1,5 +1,4 @@
 import { useState } from "react";
-import styled from "styled-components";
 import { IData } from "../../lib/types";
 
 export interface IInput {
@@ -19,19 +18,27 @@ export function Input({ data, handleData, noQuotes, color, disabled }: IInput) {
     text: typeof data.value === "number" ? BigInt(data.value) : data.value,
   };
   return typeof data.value === "string" || typeof data.value === "number" ? (
-    <InputWrapper quote={inputData.quote}>
+    <div
+      className={
+        "relative flex flex-col py-0 " +
+        (inputData.quote ? "px-[7px] input-quotes" : "px-0")
+      }
+    >
       <div
-        style={{ whiteSpace: "pre" }}
+        className="self-start h-0 overflow-hidden whitespace-pre"
         ref={(elem) => setTextWidth(elem?.clientWidth || 7)}
       >
         {inputData.text.toString()}
       </div>
-      <InputStyled
+      <input
+        className="outline-none bg-inherit border-none p-0 text-white number-input"
+        style={{
+          ...(textWidth ? { width: textWidth } : {}),
+          ...(color ? { color } : {}),
+        }}
         type={inputData.type}
         value={data.value.toString()}
         placeholder={inputData.placeholder}
-        textWidth={textWidth}
-        color={color}
         disabled={disabled}
         onChange={(e) => {
           let value = e.target.value;
@@ -42,54 +49,6 @@ export function Input({ data, handleData, noQuotes, color, disabled }: IInput) {
         }}
         onClick={(e) => e.stopPropagation()}
       />
-    </InputWrapper>
+    </div>
   ) : null;
 }
-
-const InputWrapper = styled.div<{ quote?: boolean }>`
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  padding: 0 ${({ quote }) => (quote ? "7px" : "0")};
-
-  & > div {
-    align-self: flex-start;
-    height: 0px;
-    overflow: hidden;
-  }
-
-  &::before {
-    position: absolute;
-    top: 0;
-    left: 0;
-    color: ${({ theme }) => theme.color.string};
-    content: ${({ quote }) => (quote ? "open-quote" : "")};
-  }
-  &::after {
-    position: absolute;
-    top: 0;
-    right: 0;
-    color: ${({ theme }) => theme.color.string};
-    content: ${({ quote }) => (quote ? "close-quote" : "")};
-  }
-`;
-
-export const InputStyled = styled.input<{ textWidth?: number; color?: string }>`
-  outline: none;
-  background-color: inherit;
-  border: none;
-  color: ${({ color, theme }) => color || theme.color.white};
-  padding: 0;
-  ${({ textWidth }) => `width: ${textWidth}px`};
-
-  &::-webkit-outer-spin-button,
-  &::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-
-  &[type="number"] {
-    color: ${({ theme }) => theme.color.number};
-    appearance: textfield;
-  }
-`;

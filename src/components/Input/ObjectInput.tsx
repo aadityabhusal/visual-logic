@@ -1,4 +1,3 @@
-import styled from "styled-components";
 import { theme } from "../../lib/theme";
 import { IData, IOperation, IStatement } from "../../lib/types";
 import { createData, createStatement } from "../../lib/utils";
@@ -65,7 +64,12 @@ export function ObjectInput({
   }
 
   return (
-    <ObjectContainer isMultiline={isMultiline}>
+    <div
+      className={
+        "flex items-start gap-1 [&>span]:text-method " +
+        (isMultiline ? "flex-col" : "flex-row")
+      }
+    >
       <span>{"{"}</span>
       {Array.from(data.value).map(([key, value], i, arr) => {
         return (
@@ -102,16 +106,6 @@ export function ObjectInput({
         +
       </div>
       <span>{"}"}</span>
-    </ObjectContainer>
+    </div>
   );
 }
-
-const ObjectContainer = styled.div<{ isMultiline: boolean }>`
-  display: flex;
-  flex-direction: ${({ isMultiline }) => (isMultiline ? "column" : "row")};
-  align-items: flex-start;
-  gap: 4px;
-  & > span {
-    color: ${({ theme }) => theme.color.method};
-  }
-`;

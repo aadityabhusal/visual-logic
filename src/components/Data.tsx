@@ -26,6 +26,8 @@ export function Data({
   prevStatements,
   prevOperations,
 }: IProps) {
+  console.log({ data: data.value instanceof Map });
+
   return (
     <Dropdown
       result={data.reference ? { data } : { type: data.type }}

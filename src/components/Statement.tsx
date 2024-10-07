@@ -1,5 +1,4 @@
-import { Equals, RightLong, TurnUp } from "@styled-icons/fa-solid";
-import styled from "styled-components";
+import { FaEquals, FaArrowRightLong, FaArrowTurnUp } from "react-icons/fa6";
 import { theme } from "../lib/theme";
 import { IData, IMethod, IOperation, IStatement } from "../lib/types";
 import { updateStatementMethods } from "../lib/update";
@@ -35,7 +34,8 @@ export function Statement({
   prevOperations: IOperation[];
 }) {
   const hasName = statement.name !== undefined;
-  const PipeArrow = statement.methods.length > 1 ? TurnUp : RightLong;
+  const PipeArrow =
+    statement.methods.length > 1 ? FaArrowTurnUp : FaArrowRightLong;
 
   function addMethod() {
     let data = getStatementResult(statement);
@@ -107,9 +107,9 @@ export function Statement({
   );
 
   return (
-    <StatementWrapper>
+    <div className="flex items-start gap-1">
       {!disableName ? (
-        <StatementName>
+        <div className="flex items-center gap-1 mr-1 [&>svg]:cursor-pointer [&>svg]:shrink-0">
           {hasName ? (
             <Input
               data={{
@@ -129,9 +129,9 @@ export function Statement({
               noQuotes
             />
           ) : null}
-          <Equals
-            size={10}
-            style={{ paddingTop: "0.25rem" }}
+          <FaEquals
+            size={14}
+            className="pt-1"
             onClick={() =>
               !disableNameToggle &&
               handleStatement({
@@ -140,9 +140,14 @@ export function Statement({
               })
             }
           />
-        </StatementName>
+        </div>
       ) : null}
-      <RightHandWrapper newLine={statement.methods.length > 1}>
+      <div
+        className={
+          "flex items-start gap-0 " +
+          (statement.methods.length > 1 ? "flex-col" : "flex-row")
+        }
+      >
         {statement.data.entityType === "data" ? (
           <Data
             data={statement.data}
@@ -178,12 +183,11 @@ export function Statement({
           let data = getStatementResult(statement, i, true);
           if (data.entityType !== "data") return;
           return (
-            <div key={method.id} style={{ display: "flex" }}>
+            <div key={method.id} className="flex items-center gap-1 ml-1">
               <PipeArrow
-                size={12}
-                color={theme.color.disabled}
+                size={10}
+                className="text-disabled"
                 style={{
-                  margin: `4 4 0 ${methods.length > 1 ? 4 : 0}`,
                   transform: methods.length > 1 ? "rotate(90deg)" : "",
                 }}
               />
@@ -202,31 +206,7 @@ export function Statement({
             </div>
           );
         })}
-      </RightHandWrapper>
-    </StatementWrapper>
+      </div>
+    </div>
   );
 }
-
-const StatementWrapper = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 0.25rem;
-`;
-
-const StatementName = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  margin-right: 0.25rem;
-  & > svg {
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-`;
-
-const RightHandWrapper = styled.div<{ newLine?: boolean }>`
-  display: flex;
-  align-items: flex-start;
-  gap: ${({ newLine }) => (newLine ? "0px" : "4px")};
-  flex-direction: ${({ newLine }) => (newLine ? "column" : "row")};
-`;

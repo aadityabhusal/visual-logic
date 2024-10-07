@@ -1,10 +1,8 @@
 import { IData, IMethod, IOperation, IStatement } from "../lib/types";
 import { Statement } from "./Statement";
-import { DropdownOption, DropdownOptions } from "../ui/Dropdown";
 import { Dropdown } from "../ui/Dropdown";
 import { createMethod, getFilteredMethods, methodsList } from "../lib/methods";
 import { getStatementResult } from "../lib/utils";
-import { theme } from "../lib/theme";
 
 interface IProps {
   data: IData;
@@ -50,12 +48,10 @@ export function Method({
       addMethod={addMethod}
       head={
         <>
-          <span style={{ color: theme.color.method }}>
-            {method.name || ".."}
-          </span>
+          <span className="text-method">{method.name || ".."}</span>
           <span>{"("}</span>
           {method.parameters.map((item, i, arr) => (
-            <span key={i} style={{ display: "flex" }}>
+            <span key={i} className="flex">
               <Statement
                 statement={item}
                 handleStatement={(val) => val && handleParameter(val, i)}
@@ -71,17 +67,21 @@ export function Method({
         </>
       }
     >
-      <DropdownOptions>
+      <div className="dropdown-options">
         {getFilteredMethods(data).map((item) => (
-          <DropdownOption
+          <div
+            className={
+              item.name === method.name
+                ? "dropdown-option-selected"
+                : "dropdown-option"
+            }
             key={item.name}
             onClick={() => handleDropdown(item.name)}
-            selected={item.name === method.name}
           >
             {item.name}
-          </DropdownOption>
+          </div>
         ))}
-      </DropdownOptions>
+      </div>
     </Dropdown>
   );
 }

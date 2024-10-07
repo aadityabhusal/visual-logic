@@ -1,13 +1,12 @@
-import styled, { ThemeProvider } from "styled-components";
 import { Operation } from "./components/Operation";
 import { ParseOperation } from "./components/Parse/ParseOperation";
 import { uiConfigStore, useStore } from "./lib/store";
-import { theme } from "./lib/theme";
 import { Header } from "./ui/Header";
-import { NoteText, Sidebar } from "./ui/Sidebar";
+import { Sidebar } from "./ui/Sidebar";
+import { NoteText } from "./ui/NoteText";
 import { updateOperations } from "./lib/update";
 import { useEffect } from "react";
-import { visitCount } from "./ui/services";
+import { visitCount } from "./lib/services";
 import { useHotkeys } from "@mantine/hooks";
 
 function App() {
@@ -37,67 +36,41 @@ function App() {
     ["meta+y", () => redo()],
   ]);
 
+  const operationContainerClassNames =
+    "p-1 pb-[25%] flex-1 overflow-y-auto scroll border-r border-solid border-border";
+
   return (
-    <ThemeProvider theme={theme}>
-      <AppWrapper>
-        <Header />
-        <AppContainer>
-          <OperationContainer>
-            {currentOperation ? (
-              <Operation
-                operation={currentOperation}
-                handleOperation={(operation) =>
-                  setOperation(updateOperations(operations, operation))
-                }
-                prevStatements={[]}
-                prevOperations={operations.slice(0, currentOperationIndex)}
-              />
-            ) : (
-              <NoteText>Select an operation</NoteText>
-            )}
-          </OperationContainer>
-          {displayCode && currentOperation ? (
-            <OperationContainer>
-              <NoteText border italic>
-                In-progress and preview-only.
-              </NoteText>
-              <pre>
-                <ParseOperation operation={currentOperation} />
-              </pre>
-            </OperationContainer>
-          ) : null}
-          {!hideSidebar && <Sidebar />}
-        </AppContainer>
-      </AppWrapper>
-    </ThemeProvider>
+    <div className="flex flex-col h-screen">
+      <Header />
+      <div className="flex flex-1 min-h-0">
+        <div className={operationContainerClassNames}>
+          {currentOperation ? (
+            <Operation
+              operation={currentOperation}
+              handleOperation={(operation) =>
+                setOperation(updateOperations(operations, operation))
+              }
+              prevStatements={[]}
+              prevOperations={operations.slice(0, currentOperationIndex)}
+            />
+          ) : (
+            <NoteText>Select an operation</NoteText>
+          )}
+        </div>
+        {displayCode && currentOperation ? (
+          <div className={operationContainerClassNames}>
+            <NoteText border italic>
+              In-progress and preview-only.
+            </NoteText>
+            <pre>
+              <ParseOperation operation={currentOperation} />
+            </pre>
+          </div>
+        ) : null}
+        {!hideSidebar && <Sidebar />}
+      </div>
+    </div>
   );
 }
-
-const AppWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-`;
-
-const AppContainer = styled.div`
-  display: flex;
-  flex: 1;
-  min-height: 0;
-`;
-
-const OperationContainer = styled.div`
-  padding: 0.25rem;
-  padding-bottom: 25%;
-  flex: 1;
-  overflow-y: auto;
-  border-right: 1px solid ${({ theme }) => theme.color.border};
-
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: ${({ theme }) => theme.background.dropdown.scrollbar};
-  }
-`;
 
 export default App;

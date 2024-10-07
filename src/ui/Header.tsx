@@ -1,10 +1,8 @@
-import { Bars, Code, Gear } from "@styled-icons/fa-solid";
-import styled from "styled-components";
+import { SiGithub, SiYoutube } from "react-icons/si";
+import { FaBars, FaGear } from "react-icons/fa6";
 import { useEffect, useRef, useState } from "react";
 import { uiConfigStore } from "../lib/store";
 import { preferenceOptions } from "../lib/data";
-import github from "./github.svg";
-import youtube from "./youtube.svg";
 
 export function Header() {
   const [displayPreference, setDisplayPreference] = useState(false);
@@ -21,7 +19,7 @@ export function Header() {
   }, [displayPreference]);
 
   return (
-    <HeaderWrapper>
+    <div className="border-b border-solid border-border p-2 flex items-center justify-between gap-4">
       <h1 style={{ marginRight: "auto" }}>Visual Logic</h1>
       <a
         href="https://www.youtube.com/watch?v=AOfOhNwQL64"
@@ -29,7 +27,7 @@ export function Header() {
         style={{ display: "flex", userSelect: "none" }}
         title="Demo video"
       >
-        <img src={youtube} width={18} height={18} />
+        <SiYoutube size={16} />
       </a>
       <a
         href="https://github.com/aadityabhusal/visual-logic"
@@ -37,65 +35,41 @@ export function Header() {
         style={{ display: "flex", userSelect: "none" }}
         title="Source code"
       >
-        <img src={github} width={16} height={16} />
+        <SiGithub size={14} />
       </a>
       <div ref={ref} style={{ position: "relative" }}>
-        <Gear
+        <FaGear
           size={14}
           style={{ cursor: "pointer" }}
           onClick={() => setDisplayPreference((p) => !p)}
         />
         {displayPreference && (
-          <PreferenceDropdown>
+          <div className="absolute min-w-[130px] top-6 right-0 border border-border border-solid z-10 bg-editor">
             {preferenceOptions.map((item) => (
-              <div key={item.id}>
+              <div
+                className="flex items-center p-0.5 border-b border-border border-solid"
+                key={item.id}
+              >
                 <input
+                  className="m-1"
                   id={item.id}
                   type="checkbox"
                   checked={uiConfig[item.id]}
                   onChange={(e) => setUiConfig({ [item.id]: e.target.checked })}
                 />
-                <label htmlFor={item.id}>{item.label}</label>
+                <label className="cursor-pointer text-xs" htmlFor={item.id}>
+                  {item.label}
+                </label>
               </div>
             ))}
-          </PreferenceDropdown>
+          </div>
         )}
       </div>
-      <Bars
+      <FaBars
         size={14}
         style={{ cursor: "pointer" }}
         onClick={() => setUiConfig({ hideSidebar: !uiConfig.hideSidebar })}
       />
-    </HeaderWrapper>
+    </div>
   );
 }
-
-const PreferenceDropdown = styled.div`
-  position: absolute;
-  min-width: 130px;
-  top: 1.5rem;
-  right: 0;
-  border: 1px solid ${({ theme }) => theme.color.border};
-  z-index: 1;
-  background-color: ${({ theme }) => theme.background.editor};
-
-  & > div {
-    display: flex;
-    align-items: center;
-    padding: 2px;
-    border-bottom: 1px solid ${({ theme }) => theme.color.border};
-    & > label {
-      cursor: pointer;
-      font-size: 0.8rem;
-    }
-  }
-`;
-
-const HeaderWrapper = styled.div`
-  border-bottom: 1px solid ${({ theme }) => theme.color.border};
-  padding: 0 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-`;

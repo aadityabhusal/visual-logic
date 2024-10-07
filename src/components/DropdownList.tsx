@@ -7,9 +7,7 @@ import {
   isSameType,
   resetParameters,
 } from "../lib/utils";
-import { DropdownOption, DropdownOptions } from "../ui/Dropdown";
 import { TypeMapper } from "../lib/data";
-import { theme } from "../lib/theme";
 import { updateStatements } from "../lib/update";
 
 export function DropdownList({
@@ -78,61 +76,77 @@ export function DropdownList({
   }
 
   return (
-    <DropdownOptions>
+    <div className="dropdown-options">
       {Object.keys(TypeMapper).map((type) => {
         if (!data.isGeneric && type !== (data as IData).type) return;
         return (
-          <DropdownOption
+          <div
+            className={
+              !data.reference?.id && (data as IData).type === type
+                ? "dropdown-option-selected"
+                : "dropdown-option"
+            }
             key={type}
             onClick={() => handleDropdown(type as keyof IType)}
-            selected={!data.reference?.id && (data as IData).type === type}
           >
             {type}
-          </DropdownOption>
+          </div>
         );
       })}
       {data.isGeneric && (
-        <DropdownOption
+        <div
+          className={
+            !data.reference?.id && data.entityType === "operation"
+              ? "dropdown-option-selected"
+              : "dropdown-option"
+          }
           onClick={() =>
             handelOperation(createOperation({ isGeneric: data.isGeneric }))
           }
-          selected={!data.reference?.id && data.entityType === "operation"}
         >
           operation
-        </DropdownOption>
+        </div>
       )}
-      <div style={{ borderBottom: `1px solid ${theme.color.border}` }} />
+      <div className="border-b border-solid border-border" />
       {prevStatements.map((statement) => {
         let result = getStatementResult(statement);
         if ((!data.isGeneric && !isSameType(result, data)) || !statement.name)
           return;
         return (
-          <DropdownOption
+          <div
+            className={
+              statement.id === data.reference?.id
+                ? "dropdown-option-selected"
+                : "dropdown-option"
+            }
             key={statement.id}
             onClick={() =>
               result.entityType === "operation"
                 ? selectOperations(result, statement)
                 : selectData(result, statement)
             }
-            selected={statement.id === data.reference?.id}
           >
             {statement.name}
-          </DropdownOption>
+          </div>
         );
       })}
       {prevOperations.map((operation) => {
         let result = getStatementResult(createStatement({ data: operation }));
         if (!data.isGeneric && !isSameType(result, data)) return;
         return (
-          <DropdownOption
+          <div
+            className={
+              operation.id === data.reference?.id
+                ? "dropdown-option-selected"
+                : "dropdown-option"
+            }
             key={operation.id}
             onClick={() => selectOperations(operation, operation)}
-            selected={operation.id === data.reference?.id}
           >
             {operation.name}
-          </DropdownOption>
+          </div>
         );
       })}
-    </DropdownOptions>
+    </div>
   );
 }

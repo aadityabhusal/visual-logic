@@ -1,12 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 html,
 body {
   margin: 0;
   padding: 0;
   background-color: #1e1e1e;
   color: #eee;
-}
-
-* {
+  line-height: 1.25;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 14px;
 }
@@ -14,4 +16,43 @@ body {
 pre {
   margin: 0;
   tab-size: 3;
+}
+
+.dropdown-scrollbar::-webkit-scrollbar {
+  @apply w-1;
+}
+
+.dropdown-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-dropdown-scrollbar;
+}
+
+.dropdown-options {
+  @apply cursor-pointer bg-dropdown-default text-white;
+}
+
+.dropdown-option {
+  @apply text-xs py-[0.1rem] px-[0.2rem] hover:bg-dropdown-hover bg-inherit;
+}
+
+.dropdown-option-selected {
+  @apply dropdown-option bg-dropdown-selected;
+}
+
+.input-quotes::before {
+  @apply absolute top-0 left-0 text-string content-[open-quote];
+}
+
+.input-quotes::after {
+  @apply absolute top-0 right-0 text-string content-[close-quote];
+}
+
+.number-input::-webkit-outer-spin-button,
+.number-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.number-input[type="number"] {
+  appearance: textfield;
+  @apply text-number;
 }
