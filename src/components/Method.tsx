@@ -63,7 +63,7 @@ export function Method({
               {i < arr.length - 1 ? <span>{", "}</span> : null}
             </span>
           ))}
-          <span>{")"}</span>
+          <span className="self-end">{")"}</span>
         </>
       }
     >

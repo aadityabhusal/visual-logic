@@ -183,10 +183,10 @@ export function Statement({
           let data = getStatementResult(statement, i, true);
           if (data.entityType !== "data") return;
           return (
-            <div key={method.id} className="flex items-center gap-1 ml-1">
+            <div key={method.id} className="flex items-start gap-1 ml-1">
               <PipeArrow
                 size={10}
-                className="text-disabled"
+                className="text-disabled mt-1.5"
                 style={{
                   transform: methods.length > 1 ? "rotate(90deg)" : "",
                 }}

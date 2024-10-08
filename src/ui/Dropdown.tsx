@@ -43,10 +43,10 @@ export function Dropdown({
   return (
     <div
       className={
-        "relative bg-editor border border-solid " +
+        "relative bg-editor " +
         (preferenceBorderDisplay || display
-          ? "border-border"
-          : "border-transparent")
+          ? "outline outline-1 outline-border"
+          : "")
       }
       ref={ref}
       onMouseOver={(e) => {

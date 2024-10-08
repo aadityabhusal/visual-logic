@@ -3,6 +3,8 @@ import { temporal } from "zundo";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { IOperation } from "./types";
 import { preferenceOptions } from "./data";
+import { createWithEqualityFn } from "zustand/traditional";
+import { shallow } from "zustand/shallow";
 
 export interface IStore {
   operations: IOperation[];
@@ -41,8 +43,9 @@ type IUiConfig = Partial<{
   setUiConfig: (change: Partial<Omit<IUiConfig, "setUiConfig">>) => void;
 };
 
-export const uiConfigStore = create(
+export const uiConfigStore = createWithEqualityFn(
   persist<IUiConfig>((set) => ({ setUiConfig: (data) => set({ ...data }) }), {
     name: "uiConfig",
-  })
+  }),
+  shallow
 );

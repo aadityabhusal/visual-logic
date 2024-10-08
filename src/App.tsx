@@ -12,13 +12,24 @@ import { useHotkeys } from "@mantine/hooks";
 function App() {
   const { operations, setOperation } = useStore();
   const { displayCode, hideSidebar, selectedOperationId, setUiConfig } =
-    uiConfigStore();
+    uiConfigStore((s) => ({
+      displayCode: s.displayCode,
+      hideSidebar: s.hideSidebar,
+      selectedOperationId: s.selectedOperationId,
+      setUiConfig: s.setUiConfig,
+    }));
   const { undo, redo } = useStore.temporal.getState();
 
   const currentOperationIndex = operations.findIndex(
     (item) => item.id === selectedOperationId
   );
   const currentOperation = operations[currentOperationIndex];
+
+  useHotkeys([
+    ["meta+shift+z", () => redo()],
+    ["meta+z", () => undo()],
+    ["meta+y", () => redo()],
+  ]);
 
   useEffect(() => {
     if (!selectedOperationId && operations[0]) {
@@ -29,12 +40,6 @@ function App() {
   useEffect(() => {
     if (window.location.hostname !== "localhost") visitCount();
   }, []);
-
-  useHotkeys([
-    ["meta+shift+z", () => redo()],
-    ["meta+z", () => undo()],
-    ["meta+y", () => redo()],
-  ]);
 
   const operationContainerClassNames =
     "p-1 pb-[25%] flex-1 overflow-y-auto scroll border-r border-solid border-border";

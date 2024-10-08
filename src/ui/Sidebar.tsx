@@ -7,7 +7,10 @@ import { NoteText } from "./NoteText";
 
 export function Sidebar() {
   const { operations, addOperation, setOperation } = useStore();
-  const { selectedOperationId, setUiConfig } = uiConfigStore();
+  const { selectedOperationId, setUiConfig } = uiConfigStore((s) => ({
+    selectedOperationId: s.selectedOperationId,
+    setUiConfig: s.setUiConfig,
+  }));
 
   if (!localStorage.getItem("operations")) {
     addOperation(createOperation({ name: "main" }));
