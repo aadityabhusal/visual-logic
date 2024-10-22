@@ -1,6 +1,6 @@
 import { IData, IMethod, IOperation, IStatement } from "../lib/types";
 import { Statement } from "./Statement";
-import { Dropdown } from "../ui/Dropdown";
+import { Dropdown2 } from "../ui/Dropdown2";
 import { createMethod, getFilteredMethods, methodsList } from "../lib/methods";
 import { getStatementResult } from "../lib/utils";
 
@@ -42,46 +42,33 @@ export function Method({
   }
 
   return (
-    <Dropdown
-      result={{ data: method.result }}
-      handleDelete={() => handleMethod(method, true)}
+    <Dropdown2
+      id={method.id}
+      items={getFilteredMethods(data).map((item) => ({
+        label: item.name,
+        value: item.name,
+        color: "method",
+      }))}
+      value={method.name}
+      onSelect={handleDropdown}
       addMethod={addMethod}
-      head={
-        <>
-          <span className="text-method">{method.name || ".."}</span>
-          <span>{"("}</span>
-          {method.parameters.map((item, i, arr) => (
-            <span key={i} className="flex">
-              <Statement
-                statement={item}
-                handleStatement={(val) => val && handleParameter(val, i)}
-                disableDelete={true}
-                disableName={true}
-                prevStatements={prevStatements}
-                prevOperations={prevOperations}
-              />
-              {i < arr.length - 1 ? <span>{", "}</span> : null}
-            </span>
-          ))}
-          <span className="self-end">{")"}</span>
-        </>
-      }
+      handleDelete={() => handleMethod(method, true)}
     >
-      <div className="dropdown-options">
-        {getFilteredMethods(data).map((item) => (
-          <div
-            className={
-              item.name === method.name
-                ? "dropdown-option-selected"
-                : "dropdown-option"
-            }
-            key={item.name}
-            onClick={() => handleDropdown(item.name)}
-          >
-            {item.name}
-          </div>
-        ))}
-      </div>
-    </Dropdown>
+      <span>{"("}</span>
+      {method.parameters.map((item, i, arr) => (
+        <span key={i} className="flex">
+          <Statement
+            statement={item}
+            handleStatement={(val) => val && handleParameter(val, i)}
+            disableDelete={true}
+            disableName={true}
+            prevStatements={prevStatements}
+            prevOperations={prevOperations}
+          />
+          {i < arr.length - 1 ? <span>{", "}</span> : null}
+        </span>
+      ))}
+      <span className="self-end">{")"}</span>
+    </Dropdown2>
   );
 }

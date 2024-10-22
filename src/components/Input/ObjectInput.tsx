@@ -1,4 +1,3 @@
-import { theme } from "../../lib/theme";
 import { IData, IOperation, IStatement } from "../../lib/types";
 import { createData, createStatement } from "../../lib/utils";
 import { Input } from "./Input";
@@ -85,7 +84,7 @@ export function ObjectInput({
                 entityType: "data",
               }}
               handleData={(val) => handleKeyUpdate(arr, i, val)}
-              color={theme.color.property}
+              color={"property"}
               noQuotes
             />
             <span style={{ marginRight: 4 }}>:</span>

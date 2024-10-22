@@ -8,6 +8,7 @@ import { updateOperations } from "./lib/update";
 import { useEffect } from "react";
 import { visitCount } from "./lib/services";
 import { useHotkeys } from "@mantine/hooks";
+import { HeadlessMantineProvider } from "@mantine/core";
 
 function App() {
   const { operations, setOperation } = useStore();
@@ -45,36 +46,38 @@ function App() {
     "p-1 pb-[25%] flex-1 overflow-y-auto scroll border-r border-solid border-border";
 
   return (
-    <div className="flex flex-col h-screen">
-      <Header />
-      <div className="flex flex-1 min-h-0">
-        <div className={operationContainerClassNames}>
-          {currentOperation ? (
-            <Operation
-              operation={currentOperation}
-              handleOperation={(operation) =>
-                setOperation(updateOperations(operations, operation))
-              }
-              prevStatements={[]}
-              prevOperations={operations.slice(0, currentOperationIndex)}
-            />
-          ) : (
-            <NoteText>Select an operation</NoteText>
-          )}
-        </div>
-        {displayCode && currentOperation ? (
+    <HeadlessMantineProvider>
+      <div className="flex flex-col h-screen">
+        <Header />
+        <div className="flex flex-1 min-h-0">
           <div className={operationContainerClassNames}>
-            <NoteText border italic>
-              In-progress and preview-only.
-            </NoteText>
-            <pre>
-              <ParseOperation operation={currentOperation} />
-            </pre>
+            {currentOperation ? (
+              <Operation
+                operation={currentOperation}
+                handleOperation={(operation) =>
+                  setOperation(updateOperations(operations, operation))
+                }
+                prevStatements={[]}
+                prevOperations={operations.slice(0, currentOperationIndex)}
+              />
+            ) : (
+              <NoteText>Select an operation</NoteText>
+            )}
           </div>
-        ) : null}
-        {!hideSidebar && <Sidebar />}
+          {displayCode && currentOperation ? (
+            <div className={operationContainerClassNames}>
+              <NoteText border italic>
+                In-progress and preview-only.
+              </NoteText>
+              <pre>
+                <ParseOperation operation={currentOperation} />
+              </pre>
+            </div>
+          ) : null}
+          {!hideSidebar && <Sidebar />}
+        </div>
       </div>
-    </div>
+    </HeadlessMantineProvider>
   );
 }
 

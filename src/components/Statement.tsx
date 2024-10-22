@@ -1,5 +1,4 @@
 import { FaEquals, FaArrowRightLong, FaArrowTurnUp } from "react-icons/fa6";
-import { theme } from "../lib/theme";
 import { IData, IMethod, IOperation, IStatement } from "../lib/types";
 import { updateStatementMethods } from "../lib/update";
 import {
@@ -125,7 +124,7 @@ export function Statement({
                 );
                 if (!exists) handleStatement({ ...statement, name });
               }}
-              color={theme.color.variable}
+              color={"variable"}
               noQuotes
             />
           ) : null}

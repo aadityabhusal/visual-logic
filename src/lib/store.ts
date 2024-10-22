@@ -49,3 +49,21 @@ export const uiConfigStore = createWithEqualityFn(
   }),
   shallow
 );
+
+export type IDropdownStore = {
+  focusedEntityId?: string;
+  setDropdown: (
+    change:
+      | Omit<IDropdownStore, "setDropdown">
+      | ((
+          change: Omit<IDropdownStore, "setDropdown">
+        ) => Omit<IDropdownStore, "setDropdown">)
+  ) => void;
+};
+export const dropDownStore = createWithEqualityFn<IDropdownStore>(
+  (set) => ({
+    setDropdown: (change) =>
+      set((s) => (typeof change === "function" ? change(s) : change)),
+  }),
+  shallow
+);

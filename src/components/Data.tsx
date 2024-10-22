@@ -4,7 +4,6 @@ import { ArrayInput } from "./Input/ArrayInput";
 import { Input } from "./Input/Input";
 import { ObjectInput } from "./Input/ObjectInput";
 import { BooleanInput } from "./Input/BooleanInput";
-import { theme } from "../lib/theme";
 import { ReactNode } from "react";
 
 interface IProps {
@@ -42,7 +41,7 @@ export function Data({
             }}
             handleData={() => {}}
             disabled={true}
-            color={theme.color.variable}
+            color={"variable"}
             noQuotes
           />
         ) : Array.isArray(data.value) ? (
@@ -65,7 +64,7 @@ export function Data({
           <Input
             data={data}
             handleData={handleData}
-            color={theme.color[data.type === "number" ? "number" : "string"]}
+            color={data.type === "number" ? "number" : "string"}
           />
         )
       }

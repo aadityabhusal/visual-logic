@@ -1,6 +1,5 @@
 import { FaAngleLeft, FaAngleRight, FaPlus } from "react-icons/fa6";
 import { Fragment, ReactNode } from "react";
-import { theme } from "../lib/theme";
 import { IOperation, IStatement } from "../lib/types";
 import { updateStatements } from "../lib/update";
 import { getOperationResult, createStatement } from "../lib/utils";
@@ -101,7 +100,7 @@ export function Operation({
               }}
               handleData={() => {}}
               disabled={true}
-              color={theme.color.variable}
+              color={"variable"}
               noQuotes
             />
             {operation.reference.isCalled && (
@@ -161,7 +160,7 @@ export function Operation({
                     );
                     if (!exists) handleOperationProps("name", name);
                   }}
-                  color={theme.color.variable}
+                  color={"variable"}
                   noQuotes
                 />
               )}
