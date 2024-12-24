@@ -29,9 +29,16 @@ export function Header() {
       <a
         href="https://www.youtube.com/watch?v=AOfOhNwQL64"
         target="_blank"
-        style={{ display: "flex", userSelect: "none" }}
+        style={{
+          display: "flex",
+          userSelect: "none",
+          textDecoration: "none",
+        }}
         title="Demo video"
       >
+        <span style={{ padding: "1px", marginRight: "4px", color: "white" }}>
+          Watch Demo
+        </span>
         <img src={youtube} width={18} height={18} />
       </a>
       <a
