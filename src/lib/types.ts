@@ -48,3 +48,10 @@ export interface IOperation {
     isCalled?: boolean;
   };
 }
+
+export type IDropdownItem = {
+  label?: string;
+  value: string;
+  entityType: "data" | "method" | "operation";
+  onClick?: () => void;
+};

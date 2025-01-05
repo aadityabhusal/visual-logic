@@ -3,16 +3,18 @@ import { TypeMapper } from "./data";
 import { IData, IOperation, IMethod, IStatement, IType } from "./types";
 
 export function createData<T extends keyof IType>({
+  id,
   type,
   value,
   isGeneric,
 }: {
   type: T;
+  id?: string;
   value?: IType[T];
   isGeneric?: boolean;
 }): IData<T> {
   return {
-    id: nanoid(),
+    id: id ?? nanoid(),
     entityType: "data",
     type,
     value: value || TypeMapper[type].defaultValue,
@@ -22,13 +24,13 @@ export function createData<T extends keyof IType>({
 }
 
 export function createOperation(props?: {
+  id?: string;
   name?: string;
   parameters?: IStatement[];
   isGeneric?: boolean;
 }): IOperation {
-  let id = nanoid();
   return {
-    id,
+    id: props?.id ?? nanoid(),
     isGeneric: props?.isGeneric,
     entityType: "operation",
     name:

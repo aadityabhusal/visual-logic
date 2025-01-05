@@ -1,7 +1,7 @@
 import { IData, IOperation, IStatement } from "../../lib/types";
-import { createData, createStatement } from "../../lib/utils";
-import { Input } from "./Input";
 import { Statement } from "../Statement";
+import { BaseInput } from "./BaseInput";
+import { AddStatement } from "../AddStatement";
 
 export interface IObjectInput {
   data: IData<"object">;
@@ -16,21 +16,6 @@ export function ObjectInput({
   prevOperations,
 }: IObjectInput) {
   const isMultiline = data.value.size > 2;
-
-  function addToObject() {
-    if (!data.value.has("")) {
-      let newMap = new Map(data.value);
-      let newData = createStatement({
-        data: createData({ type: "string", isGeneric: true }),
-      });
-      newMap.set("", newData);
-      handleData({
-        ...data,
-        type: "object",
-        value: newMap,
-      });
-    }
-  }
 
   function handleUpdate(
     dataArray: [string, IStatement][],
@@ -76,16 +61,17 @@ export function ObjectInput({
             key={i}
             style={{ display: "flex", marginLeft: isMultiline ? 8 : 0 }}
           >
-            <Input
-              data={{
-                id: `${i}-${key}`,
-                type: "string",
-                value: key,
-                entityType: "data",
-              }}
-              handleData={(val) => handleKeyUpdate(arr, i, val)}
-              color={"property"}
-              noQuotes
+            <BaseInput
+              type="property"
+              value={key}
+              onChange={(value) =>
+                handleKeyUpdate(arr, i, {
+                  id: `${i}-${key}`,
+                  type: "string",
+                  value,
+                  entityType: "data",
+                })
+              }
             />
             <span style={{ marginRight: 4 }}>:</span>
             <Statement
@@ -101,9 +87,17 @@ export function ObjectInput({
           </div>
         );
       })}
-      <div onClick={addToObject} style={{ cursor: "pointer" }}>
-        +
-      </div>
+      <AddStatement
+        prevStatements={prevStatements}
+        prevOperations={prevOperations}
+        onSelect={(value) => {
+          if (!data.value.has("")) {
+            let newMap = new Map(data.value);
+            newMap.set("", value);
+            handleData({ ...data, type: "object", value: newMap });
+          }
+        }}
+      />
       <span>{"}"}</span>
     </div>
   );

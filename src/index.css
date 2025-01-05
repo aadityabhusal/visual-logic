@@ -47,13 +47,11 @@ pre {
   @apply absolute top-0 right-0 text-string content-[close-quote];
 }
 
-.number-input::-webkit-outer-spin-button,
-.number-input::-webkit-inner-spin-button {
+.number-input[type="number"]::-webkit-outer-spin-button,
+.number-input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-
 .number-input[type="number"] {
   appearance: textfield;
-  @apply text-number;
 }

@@ -8,10 +8,10 @@ import {
 } from "../lib/utils";
 import { createMethod } from "../lib/methods";
 import { Data } from "./Data";
-import { Input } from "./Input/Input";
+import { BaseInput } from "./Input/BaseInput";
 import { Method } from "./Method";
 import { Operation } from "./Operation";
-import { DropdownList } from "./DropdownList";
+import { IconButton } from "../ui/IconButton";
 
 export function Statement({
   statement,
@@ -95,42 +95,26 @@ export function Statement({
     );
   }
 
-  const dropdownList = (
-    <DropdownList
-      data={statement.data}
-      handleData={handleData}
-      prevStatements={prevStatements}
-      prevOperations={prevOperations}
-      handelOperation={handelOperation}
-    />
-  );
-
   return (
     <div className="flex items-start gap-1">
       {!disableName ? (
         <div className="flex items-center gap-1 mr-1 [&>svg]:cursor-pointer [&>svg]:shrink-0">
           {hasName ? (
-            <Input
-              data={{
-                id: "",
-                type: "string",
-                value: statement.name || "",
-                entityType: "data",
-              }}
-              handleData={(data) => {
-                let name = (data.value as string) || statement.name;
+            <BaseInput
+              value={statement.name || ""}
+              type="variable"
+              onChange={(value) => {
+                let name = value || statement.name;
                 const exists = prevStatements.find(
                   (item) => item.name === name
                 );
                 if (!exists) handleStatement({ ...statement, name });
               }}
-              color={"variable"}
-              noQuotes
             />
           ) : null}
-          <FaEquals
-            size={14}
-            className="pt-1"
+          <IconButton
+            icon={FaEquals}
+            className="mt-1"
             onClick={() =>
               !disableNameToggle &&
               handleStatement({
@@ -150,16 +134,19 @@ export function Statement({
         {statement.data.entityType === "data" ? (
           <Data
             data={statement.data}
-            handleData={(data, remove) => handleData(data, remove)}
             disableDelete={disableDelete}
             addMethod={
               !disableMethods && statement.methods.length === 0
                 ? addMethod
                 : undefined
             }
-            children={dropdownList}
             prevStatements={prevStatements}
             prevOperations={prevOperations}
+            handleChange={
+              statement.data.entityType === "data"
+                ? handleData
+                : handelOperation
+            }
           />
         ) : (
           <Operation
@@ -168,7 +155,6 @@ export function Statement({
             prevStatements={prevStatements}
             prevOperations={prevOperations}
             disableDelete={disableDelete}
-            children={dropdownList}
             addMethod={
               !disableMethods &&
               statement.methods.length === 0 &&

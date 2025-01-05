@@ -1,11 +1,13 @@
-import { FaAngleLeft, FaAngleRight, FaPlus } from "react-icons/fa6";
+import { FaAngleLeft, FaAngleRight } from "react-icons/fa6";
 import { Fragment, ReactNode } from "react";
 import { IOperation, IStatement } from "../lib/types";
 import { updateStatements } from "../lib/update";
 import { getOperationResult, createStatement } from "../lib/utils";
-import { Input } from "./Input/Input";
 import { Statement } from "./Statement";
 import { Dropdown } from "../ui/Dropdown";
+import { BaseInput } from "./Input/BaseInput";
+import { AddStatement } from "./AddStatement";
+import { IconButton } from "../ui/IconButton";
 
 export function Operation({
   operation,
@@ -34,11 +36,6 @@ export function Operation({
     handleOperation({ ...operation, [key]: value });
   }
 
-  function addStatement() {
-    let statements = [...operation.statements, createStatement()];
-    handleOperation({ ...operation, statements });
-  }
-
   function handleStatement({
     statement,
     remove,
@@ -62,18 +59,6 @@ export function Operation({
     });
   }
 
-  function addParameter() {
-    let newStatement = createStatement();
-    let parameter = {
-      ...newStatement,
-      name: `p_${newStatement.id.slice(-3)}`,
-    };
-    handleOperation({
-      ...operation,
-      parameters: [...operation.parameters, parameter],
-    });
-  }
-
   const result = getOperationResult(operation);
   const AngleIcon = operation.reference?.isCalled ? FaAngleLeft : FaAngleRight;
 
@@ -91,17 +76,10 @@ export function Operation({
       head={
         operation.reference?.name ? (
           <div className="flex items-start gap-1">
-            <Input
-              data={{
-                id: "",
-                type: "string",
-                value: operation.reference?.name,
-                entityType: "data",
-              }}
-              handleData={() => {}}
+            <BaseInput
+              value={operation.reference?.name}
               disabled={true}
-              color={"variable"}
-              noQuotes
+              type={"variable"}
             />
             {operation.reference.isCalled && (
               <div className="flex items-start gap-1">
@@ -126,9 +104,9 @@ export function Operation({
               </div>
             )}
             {!disableDelete && (
-              <AngleIcon
-                size={12}
-                style={{ marginTop: 2.5 }}
+              <IconButton
+                icon={AngleIcon}
+                className="mt-1"
                 onClick={() =>
                   operation.reference &&
                   handleOperation({
@@ -146,22 +124,16 @@ export function Operation({
           <div className="max-w-max">
             <div className="flex items-start gap-1">
               {hasName && (
-                <Input
-                  data={{
-                    id: "",
-                    type: "string",
-                    value: operation.name || "",
-                    entityType: "data",
-                  }}
-                  handleData={(data) => {
-                    let name = (data.value as string) || operation.name;
+                <BaseInput
+                  value={operation.name || ""}
+                  onChange={(value) => {
+                    let name = value || operation.name;
                     const exists = prevOperations.find(
                       (item) => item.name === name
                     );
                     if (!exists) handleOperationProps("name", name);
                   }}
-                  color={"variable"}
-                  noQuotes
+                  type={"variable"}
                 />
               )}
               <span>{"("}</span>
@@ -187,10 +159,18 @@ export function Operation({
                 </Fragment>
               ))}
               {!disableDelete && (
-                <FaPlus
-                  size={10}
-                  style={{ cursor: "pointer", marginTop: 3 }}
-                  onClick={addParameter}
+                <AddStatement
+                  prevStatements={prevStatements}
+                  prevOperations={prevOperations}
+                  onSelect={(statement) => {
+                    handleOperation({
+                      ...operation,
+                      parameters: [
+                        ...operation.parameters,
+                        { ...statement, name: `p_${statement.id.slice(-3)}` },
+                      ],
+                    });
+                  }}
                 />
               )}
               <span>{")"}</span>
@@ -211,10 +191,19 @@ export function Operation({
                   prevOperations={prevOperations}
                 />
               ))}
-              <FaPlus
-                size={10}
-                style={{ cursor: "pointer" }}
-                onClick={addStatement}
+              <AddStatement
+                prevStatements={[
+                  ...prevStatements,
+                  ...operation.parameters,
+                  ...operation.statements,
+                ]}
+                prevOperations={prevOperations}
+                onSelect={(statement) => {
+                  handleOperation({
+                    ...operation,
+                    statements: [...operation.statements, statement],
+                  });
+                }}
               />
             </div>
           </div>

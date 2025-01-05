@@ -1,6 +1,6 @@
 import { IData, IOperation, IStatement } from "../../lib/types";
-import { createData, createStatement } from "../../lib/utils";
 import { Statement } from "../Statement";
+import { AddStatement } from "../AddStatement";
 
 export interface IArrayInput {
   data: IData<"array">;
@@ -16,19 +16,6 @@ export function ArrayInput({
   prevOperations,
 }: IArrayInput) {
   const isMultiline = data.value.length > 3;
-
-  function addToArray() {
-    handleData({
-      ...data,
-      type: "array",
-      value: [
-        ...data.value,
-        createStatement({
-          data: createData({ type: "string", isGeneric: true }),
-        }),
-      ],
-    });
-  }
 
   function handleUpdate(result: IStatement, index: number, remove?: boolean) {
     let resList = [...data.value];
@@ -65,9 +52,13 @@ export function ArrayInput({
           </div>
         );
       })}
-      <div onClick={addToArray} style={{ cursor: "pointer" }}>
-        +
-      </div>
+      <AddStatement
+        prevStatements={prevStatements}
+        prevOperations={prevOperations}
+        onSelect={(value) => {
+          handleData({ ...data, type: "array", value: [...data.value, value] });
+        }}
+      />
       <span>{"]"}</span>
     </div>
   );

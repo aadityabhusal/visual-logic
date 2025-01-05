@@ -1,5 +1,6 @@
 import { useUncontrolled } from "@mantine/hooks";
 import { forwardRef, InputHTMLAttributes, useState } from "react";
+import { theme } from "../../lib/theme";
 
 export const BaseInput = forwardRef<
   HTMLInputElement,
@@ -7,19 +8,23 @@ export const BaseInput = forwardRef<
     InputHTMLAttributes<HTMLInputElement>,
     "value" | "defaultValue" | "onChange"
   > & {
+    type: keyof typeof theme.color;
     value?: string;
     defaultValue?: string;
     containerClassName?: string;
     onChange?: (change: string) => void;
+    options?: { withQuotes?: boolean };
   }
 >(
   (
     {
+      type,
       value,
       defaultValue,
-      className,
+      className = "",
       onChange,
       containerClassName,
+      options,
       ...inputProps
     },
     ref
@@ -32,21 +37,25 @@ export const BaseInput = forwardRef<
     });
 
     return (
-      <div className={`relative flex flex-col py-0 ${containerClassName}`}>
+      <div
+        className={`relative flex flex-col py-0 ${
+          options?.withQuotes ? "px-[7px] input-quotes" : "px-0"
+        } ${containerClassName}`}
+      >
         <div
           className="self-start h-0 overflow-hidden whitespace-pre"
-          ref={(elem) => setTextWidth(elem?.clientWidth || 7)}
+          ref={(elem) => setTextWidth(elem?.clientWidth || 12)}
         >
           {inputValue}
         </div>
         <input
           ref={ref}
+          type={type === "number" ? "number" : "text"}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          className={`outline-none bg-inherit border-none p-0 number-input ${
-            className || ""
-          }`}
+          className={`number-input outline-none bg-inherit border-none p-0 text-${type} ${className}`}
           style={textWidth ? { width: textWidth } : {}}
+          placeholder={type === "number" ? "0" : "..."}
           {...inputProps}
         />
       </div>

@@ -13,7 +13,7 @@ export const IconButton = forwardRef<
   return (
     <ActionIcon
       ref={ref}
-      className={`w-2.5 h-2.5 focus:outline focus:outline-1 focus:outline-white ${
+      className={`w-3 h-3 focus:outline focus:outline-1 focus:outline-white ${
         className || ""
       }`}
       {...props}

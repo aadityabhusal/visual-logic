@@ -1,8 +1,9 @@
 import { IData, IMethod, IOperation, IStatement } from "../lib/types";
 import { Statement } from "./Statement";
-import { Dropdown2 } from "../ui/Dropdown2";
+import { Dropdown } from "./Dropdown";
 import { createMethod, getFilteredMethods, methodsList } from "../lib/methods";
 import { getStatementResult } from "../lib/utils";
+import { BaseInput } from "./Input/BaseInput";
 
 interface IProps {
   data: IData;
@@ -23,7 +24,7 @@ export function Method({
 }: IProps) {
   function handleDropdown(name: string) {
     if (method.name === name) return;
-    handleMethod({ ...createMethod({ data, name }) });
+    handleMethod(createMethod({ data, name, prevParams: method.parameters }));
   }
 
   function handleParameter(item: IStatement, index: number) {
@@ -42,17 +43,26 @@ export function Method({
   }
 
   return (
-    <Dropdown2
+    <Dropdown<"input">
       id={method.id}
       items={getFilteredMethods(data).map((item) => ({
         label: item.name,
         value: item.name,
         color: "method",
+        entityType: "method",
+        onClick: () => handleDropdown(item.name),
       }))}
       value={method.name}
-      onSelect={handleDropdown}
       addMethod={addMethod}
       handleDelete={() => handleMethod(method, true)}
+      target={({ value, defaultValue, onChange, ...props }) => (
+        <BaseInput
+          {...props}
+          type="method"
+          value={value as string}
+          onChange={(val) => onChange?.(val as any)}
+        />
+      )}
     >
       <span>{"("}</span>
       {method.parameters.map((item, i, arr) => (
@@ -69,6 +79,6 @@ export function Method({
         </span>
       ))}
       <span className="self-end">{")"}</span>
-    </Dropdown2>
+    </Dropdown>
   );
 }
