@@ -5,7 +5,6 @@ import { BooleanInput } from "./Input/BooleanInput";
 import { Dropdown } from "./Dropdown";
 import { getDataDropdownList } from "./DropdownList";
 import { useMemo } from "react";
-import { Button } from "../ui/Button";
 import { BaseInput } from "./Input/BaseInput";
 
 interface IProps {
@@ -36,56 +35,58 @@ export function Data({
     [data, prevOperations, prevStatements]
   );
 
-  return data.reference?.name ? (
+  const showDropdownIcon =
+    !data.reference?.name &&
+    (Array.isArray(data.value) ||
+      data.value instanceof Map ||
+      typeof data.value === "boolean");
+
+  return (
     <Dropdown
       id={data.id}
       items={dropdownItems}
       handleDelete={!disableDelete ? () => handleChange(data, true) : undefined}
       addMethod={addMethod}
-      options={{ withSearch: true }}
-      target={(props) => (
-        <Button {...props} className="!p-0 bg-inherit outline-none">
-          {data.reference?.name}
-        </Button>
-      )}
-    />
-  ) : Array.isArray(data.value) ? (
-    <ArrayInput
-      data={data as IData<"array">}
-      handleData={handleChange}
-      prevStatements={prevStatements}
-      prevOperations={prevOperations}
-    />
-  ) : data.value instanceof Map ? (
-    <ObjectInput
-      data={data as IData<"object">}
-      handleData={handleChange}
-      prevStatements={prevStatements}
-      prevOperations={prevOperations}
-    />
-  ) : typeof data.value === "boolean" ? (
-    <BooleanInput data={data} handleData={handleChange} />
-  ) : (
-    <Dropdown<"input">
-      id={data.id}
-      items={dropdownItems}
-      value={data.value.toString()}
-      handleDelete={!disableDelete ? () => handleChange(data, true) : undefined}
-      addMethod={addMethod}
-      target={({ defaultValue, ...props }) => (
-        <BaseInput
-          {...props}
-          type={data.type === "number" ? "number" : "string"}
-          value={data.value.toString()}
-          onChange={(val) => {
-            handleChange({
-              ...data,
-              value: data.type === "number" ? Number(val.slice(0, 16)) : val,
-            });
-          }}
-          options={{ withQuotes: data.type === "string" }}
-        />
-      )}
+      options={{
+        withDropdownIcon: showDropdownIcon,
+        withSearch: showDropdownIcon,
+      }}
+      value={data.reference?.name || data.type}
+      target={({ onChange, ...props }) =>
+        data.reference?.name ? (
+          <BaseInput {...props} onChange={onChange} className="text-variable" />
+        ) : Array.isArray(data.value) ? (
+          <ArrayInput
+            data={data as IData<"array">}
+            handleData={handleChange}
+            prevStatements={prevStatements}
+            prevOperations={prevOperations}
+          />
+        ) : data.value instanceof Map ? (
+          <ObjectInput
+            data={data as IData<"object">}
+            handleData={handleChange}
+            prevStatements={prevStatements}
+            prevOperations={prevOperations}
+          />
+        ) : typeof data.value === "boolean" ? (
+          <BooleanInput data={data} handleData={handleChange} />
+        ) : (
+          <BaseInput
+            {...props}
+            type={data.type === "number" ? "number" : "text"}
+            className={data.type === "number" ? "text-number" : "text-string"}
+            value={data.value.toString()}
+            onChange={(_val) => {
+              onChange?.(_val);
+              const value =
+                data.type === "number" ? Number(_val.slice(0, 16)) : _val;
+              handleChange({ ...data, value });
+            }}
+            options={{ withQuotes: data.type === "string" }}
+          />
+        )
+      }
     />
   );
 }

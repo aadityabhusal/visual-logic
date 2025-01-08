@@ -22,18 +22,19 @@ export function AddStatement({
         onSelect: (data) => onSelect(createStatement({ data })),
         prevOperations,
         prevStatements,
-        options: { withDataTypes: true },
       }),
     [prevOperations, prevStatements]
   );
 
   return (
-    <Dropdown
-      items={dropdownItems}
-      options={{ withSearch: true }}
-      target={(props) => (
-        <IconButton icon={FaPlus} className="mt-1" {...props} />
-      )}
-    />
+    <div className="w-max">
+      <Dropdown
+        items={dropdownItems}
+        options={{ withSearch: true }}
+        target={({ onChange, ...props }) => (
+          <IconButton icon={FaPlus} className="mt-1" {...props} />
+        )}
+      />
+    </div>
   );
 }

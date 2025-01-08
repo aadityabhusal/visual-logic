@@ -24,7 +24,7 @@ export function Method({
 }: IProps) {
   function handleDropdown(name: string) {
     if (method.name === name) return;
-    handleMethod(createMethod({ data, name, prevParams: method.parameters }));
+    handleMethod(createMethod({ data, name }));
   }
 
   function handleParameter(item: IStatement, index: number) {
@@ -43,7 +43,7 @@ export function Method({
   }
 
   return (
-    <Dropdown<"input">
+    <Dropdown
       id={method.id}
       items={getFilteredMethods(data).map((item) => ({
         label: item.name,
@@ -55,14 +55,7 @@ export function Method({
       value={method.name}
       addMethod={addMethod}
       handleDelete={() => handleMethod(method, true)}
-      target={({ value, defaultValue, onChange, ...props }) => (
-        <BaseInput
-          {...props}
-          type="method"
-          value={value as string}
-          onChange={(val) => onChange?.(val as any)}
-        />
-      )}
+      target={(props) => <BaseInput {...props} className="text-method" />}
     >
       <span>{"("}</span>
       {method.parameters.map((item, i, arr) => (
@@ -70,8 +63,7 @@ export function Method({
           <Statement
             statement={item}
             handleStatement={(val) => val && handleParameter(val, i)}
-            disableDelete={true}
-            disableName={true}
+            options={{ disableDelete: true }}
             prevStatements={prevStatements}
             prevOperations={prevOperations}
           />

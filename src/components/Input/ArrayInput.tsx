@@ -46,7 +46,6 @@ export function ArrayInput({
               handleStatement={(val, remove) => handleUpdate(val, i, remove)}
               prevOperations={prevOperations}
               prevStatements={prevStatements}
-              disableName={true}
             />
             {i < arr.length - 1 ? <span>{","}</span> : null}
           </div>

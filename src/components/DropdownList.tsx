@@ -22,13 +22,11 @@ export function getDataDropdownList({
   onSelect,
   prevStatements,
   prevOperations,
-  options,
 }: {
   data: IStatement["data"];
   onSelect: (operation: IData | IOperation, remove?: boolean) => void;
   prevStatements: IStatement[];
   prevOperations: IOperation[];
-  options?: { withDataTypes?: boolean };
 }) {
   function selectData(dataOption: IData, reference: IStatement) {
     onSelect({
@@ -71,8 +69,9 @@ export function getDataDropdownList({
   }
 
   return [
-    ...(options?.withDataTypes
-      ? ((Object.keys(TypeMapper) as (keyof IType)[]).map((type) => ({
+    ...(Object.keys(TypeMapper) as (keyof IType)[]).reduce((acc, type) => {
+      if (data.isGeneric || (data.reference && type === (data as IData).type)) {
+        acc.push({
           entityType: "data",
           value: type,
           onClick: () => {
@@ -80,9 +79,11 @@ export function getDataDropdownList({
               createData({ id: data.id, type, isGeneric: data.isGeneric })
             );
           },
-        })) as IDropdownItem[])
-      : []),
-    ...(options?.withDataTypes
+        });
+      }
+      return acc;
+    }, [] as IDropdownItem[]),
+    ...(data.isGeneric
       ? ([
           {
             entityType: "operation",
@@ -99,6 +100,8 @@ export function getDataDropdownList({
       if ((!data.isGeneric && !isSameType(result, data)) || !statement.name)
         return [];
       return {
+        secondaryLabel:
+          result.entityType === "data" ? result.type : "operation",
         value: statement.name,
         entityType: "data",
         onClick: () =>
@@ -113,6 +116,7 @@ export function getDataDropdownList({
       return {
         value: operation.name,
         entityType: "operation",
+        secondaryLabel: "operation",
         onClick: () => selectOperations(operation, operation),
       } as IDropdownItem;
     }),

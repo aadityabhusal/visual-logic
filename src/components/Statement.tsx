@@ -16,21 +16,22 @@ import { IconButton } from "../ui/IconButton";
 export function Statement({
   statement,
   handleStatement,
-  disableName,
-  disableNameToggle,
-  disableDelete,
-  disableMethods,
   prevStatements,
   prevOperations,
+  addStatement,
+  options,
 }: {
   statement: IStatement;
   handleStatement: (statement: IStatement, remove?: boolean) => void;
-  disableName?: boolean;
-  disableNameToggle?: boolean;
-  disableDelete?: boolean;
-  disableMethods?: boolean;
   prevStatements: IStatement[];
   prevOperations: IOperation[];
+  addStatement?: (statement: IStatement, position: "before" | "after") => void;
+  options?: {
+    enableVariable?: boolean;
+    disableNameToggle?: boolean;
+    disableDelete?: boolean;
+    disableMethods?: boolean;
+  };
 }) {
   const hasName = statement.name !== undefined;
   const PipeArrow =
@@ -97,12 +98,12 @@ export function Statement({
 
   return (
     <div className="flex items-start gap-1">
-      {!disableName ? (
+      {options?.enableVariable ? (
         <div className="flex items-center gap-1 mr-1 [&>svg]:cursor-pointer [&>svg]:shrink-0">
           {hasName ? (
             <BaseInput
               value={statement.name || ""}
-              type="variable"
+              className="text-variable"
               onChange={(value) => {
                 let name = value || statement.name;
                 const exists = prevStatements.find(
@@ -116,7 +117,7 @@ export function Statement({
             icon={FaEquals}
             className="mt-1"
             onClick={() =>
-              !disableNameToggle &&
+              !options?.disableNameToggle &&
               handleStatement({
                 ...statement,
                 name: hasName ? undefined : `v_${statement.id.slice(-3)}`,
@@ -134,9 +135,9 @@ export function Statement({
         {statement.data.entityType === "data" ? (
           <Data
             data={statement.data}
-            disableDelete={disableDelete}
+            disableDelete={options?.disableDelete}
             addMethod={
-              !disableMethods && statement.methods.length === 0
+              !options?.disableMethods && statement.methods.length === 0
                 ? addMethod
                 : undefined
             }
@@ -151,12 +152,16 @@ export function Statement({
         ) : (
           <Operation
             operation={statement.data}
-            handleOperation={handelOperation}
+            handleChange={
+              statement.data.entityType === "operation"
+                ? handelOperation
+                : handleData
+            }
             prevStatements={prevStatements}
             prevOperations={prevOperations}
-            disableDelete={disableDelete}
+            disableDelete={options?.disableDelete}
             addMethod={
-              !disableMethods &&
+              !options?.disableMethods &&
               statement.methods.length === 0 &&
               statement.data.reference?.isCalled
                 ? addMethod
@@ -183,7 +188,7 @@ export function Statement({
                 prevStatements={prevStatements}
                 prevOperations={prevOperations}
                 addMethod={
-                  !disableMethods && i + 1 === methods.length
+                  !options?.disableMethods && i + 1 === methods.length
                     ? addMethod
                     : undefined
                 }

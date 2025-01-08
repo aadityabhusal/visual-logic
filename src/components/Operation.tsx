@@ -1,31 +1,41 @@
 import { FaAngleLeft, FaAngleRight } from "react-icons/fa6";
-import { Fragment, ReactNode } from "react";
-import { IOperation, IStatement } from "../lib/types";
+import { Fragment, useMemo } from "react";
+import { IData, IOperation, IStatement } from "../lib/types";
 import { updateStatements } from "../lib/update";
-import { getOperationResult, createStatement } from "../lib/utils";
+import { getOperationResult } from "../lib/utils";
 import { Statement } from "./Statement";
-import { Dropdown } from "../ui/Dropdown";
 import { BaseInput } from "./Input/BaseInput";
 import { AddStatement } from "./AddStatement";
 import { IconButton } from "../ui/IconButton";
+import { Dropdown } from "./Dropdown";
+import { getDataDropdownList } from "./DropdownList";
 
 export function Operation({
   operation,
-  handleOperation,
+  handleChange,
   addMethod,
   prevStatements,
   prevOperations,
   disableDelete,
-  children,
 }: {
   operation: IOperation;
-  handleOperation(operation: IOperation, remove?: boolean): void;
+  handleChange(item: IData | IOperation, remove?: boolean): void;
   addMethod?: () => void;
   prevStatements: IStatement[];
   prevOperations: IOperation[];
   disableDelete?: boolean;
-  children?: ReactNode;
 }) {
+  const dropdownItems = useMemo(
+    () =>
+      getDataDropdownList({
+        data: operation,
+        onSelect: handleChange,
+        prevOperations,
+        prevStatements,
+      }),
+    [operation, prevOperations, prevStatements]
+  );
+
   const hasName = operation.name !== undefined;
   function handleOperationProps(
     key: keyof IOperation,
@@ -33,7 +43,7 @@ export function Operation({
   ) {
     if (key === "name" && prevOperations.find((item) => item.name === value))
       return;
-    handleOperation({ ...operation, [key]: value });
+    handleChange({ ...operation, [key]: value });
   }
 
   function handleStatement({
@@ -52,7 +62,7 @@ export function Operation({
       removeStatement: remove,
     });
 
-    handleOperation({
+    handleChange({
       ...operation,
       parameters: updatedStatements.slice(0, parameterLength),
       statements: updatedStatements.slice(parameterLength),
@@ -64,23 +74,21 @@ export function Operation({
 
   return (
     <Dropdown
-      result={{
-        ...(operation?.reference?.isCalled && result.entityType === "data"
-          ? { data: result }
-          : { data: operation }),
-      }}
+      id={operation.id}
+      items={dropdownItems}
       handleDelete={
-        !disableDelete ? () => handleOperation(operation, true) : undefined
+        !disableDelete ? () => handleChange(operation, true) : undefined
       }
+      options={{
+        withSearch: !operation.reference?.name,
+        withDropdownIcon: !operation.reference?.name,
+      }}
+      value={operation.reference?.name || "operation"}
       addMethod={addMethod}
-      head={
+      target={(props) =>
         operation.reference?.name ? (
           <div className="flex items-start gap-1">
-            <BaseInput
-              value={operation.reference?.name}
-              disabled={true}
-              type={"variable"}
-            />
+            <BaseInput {...props} className="text-variable" />
             {operation.reference.isCalled && (
               <div className="flex items-start gap-1">
                 <span>{"("}</span>
@@ -94,8 +102,7 @@ export function Operation({
                       }
                       prevStatements={prevStatements}
                       prevOperations={prevOperations}
-                      disableName={true}
-                      disableDelete={true}
+                      options={{ disableDelete: true }}
                     />
                     {i + 1 < paramList.length && <span>,</span>}
                   </Fragment>
@@ -109,7 +116,7 @@ export function Operation({
                 className="mt-1"
                 onClick={() =>
                   operation.reference &&
-                  handleOperation({
+                  handleChange({
                     ...operation,
                     reference: {
                       ...operation.reference,
@@ -133,7 +140,7 @@ export function Operation({
                     );
                     if (!exists) handleOperationProps("name", name);
                   }}
-                  type={"variable"}
+                  className={"text-variable"}
                 />
               )}
               <span>{"("}</span>
@@ -149,9 +156,12 @@ export function Operation({
                         parameterLength: paramList.length + (remove ? -1 : 0),
                       })
                     }
-                    disableMethods={true}
-                    disableDelete={disableDelete}
-                    disableNameToggle={true}
+                    options={{
+                      enableVariable: true,
+                      disableDelete,
+                      disableMethods: true,
+                      disableNameToggle: true,
+                    }}
                     prevStatements={[]}
                     prevOperations={[]}
                   />
@@ -163,7 +173,7 @@ export function Operation({
                   prevStatements={prevStatements}
                   prevOperations={prevOperations}
                   onSelect={(statement) => {
-                    handleOperation({
+                    handleChange({
                       ...operation,
                       parameters: [
                         ...operation.parameters,
@@ -180,6 +190,7 @@ export function Operation({
                 <Statement
                   key={statement.id}
                   statement={statement}
+                  options={{ enableVariable: true }}
                   handleStatement={(statement, remove) =>
                     handleStatement({ statement, remove })
                   }
@@ -199,7 +210,7 @@ export function Operation({
                 ]}
                 prevOperations={prevOperations}
                 onSelect={(statement) => {
-                  handleOperation({
+                  handleChange({
                     ...operation,
                     statements: [...operation.statements, statement],
                   });
@@ -209,8 +220,6 @@ export function Operation({
           </div>
         )
       }
-    >
-      {children}
-    </Dropdown>
+    />
   );
 }

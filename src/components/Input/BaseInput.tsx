@@ -8,7 +8,6 @@ export const BaseInput = forwardRef<
     InputHTMLAttributes<HTMLInputElement>,
     "value" | "defaultValue" | "onChange"
   > & {
-    type: keyof typeof theme.color;
     value?: string;
     defaultValue?: string;
     containerClassName?: string;
@@ -18,7 +17,6 @@ export const BaseInput = forwardRef<
 >(
   (
     {
-      type,
       value,
       defaultValue,
       className = "",
@@ -50,12 +48,11 @@ export const BaseInput = forwardRef<
         </div>
         <input
           ref={ref}
-          type={type === "number" ? "number" : "text"}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          className={`number-input outline-none bg-inherit border-none p-0 text-${type} ${className}`}
+          className={`number-input outline-none bg-inherit border-none p-0 ${className}`}
           style={textWidth ? { width: textWidth } : {}}
-          placeholder={type === "number" ? "0" : "..."}
+          placeholder={inputProps.type === "number" ? "0" : "..."}
           {...inputProps}
         />
       </div>

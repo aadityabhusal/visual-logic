@@ -9,6 +9,7 @@ import { useEffect } from "react";
 import { visitCount } from "./lib/services";
 import { useHotkeys } from "@mantine/hooks";
 import { HeadlessMantineProvider } from "@mantine/core";
+import { IOperation } from "./lib/types";
 
 function App() {
   const { operations, setOperation } = useStore();
@@ -54,11 +55,12 @@ function App() {
             {currentOperation ? (
               <Operation
                 operation={currentOperation}
-                handleOperation={(operation) =>
+                handleChange={(operation: IOperation) =>
                   setOperation(updateOperations(operations, operation))
                 }
                 prevStatements={[]}
                 prevOperations={operations.slice(0, currentOperationIndex)}
+                disableDelete
               />
             ) : (
               <NoteText>Select an operation</NoteText>

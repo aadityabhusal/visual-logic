@@ -62,7 +62,7 @@ export function ObjectInput({
             style={{ display: "flex", marginLeft: isMultiline ? 8 : 0 }}
           >
             <BaseInput
-              type="property"
+              className="text-property"
               value={key}
               onChange={(value) =>
                 handleKeyUpdate(arr, i, {
@@ -81,7 +81,6 @@ export function ObjectInput({
               }
               prevOperations={prevOperations}
               prevStatements={prevStatements}
-              disableName={true}
             />
             {i < arr.length - 1 ? <span>{","}</span> : null}
           </div>
