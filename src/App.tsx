@@ -60,7 +60,7 @@ function App() {
                 }
                 prevStatements={[]}
                 prevOperations={operations.slice(0, currentOperationIndex)}
-                disableDelete
+                options={{ disableDelete: true, disableDropdown: true }}
               />
             ) : (
               <NoteText>Select an operation</NoteText>

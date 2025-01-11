@@ -19,6 +19,7 @@ export function Dropdown({
   addMethod,
   children,
   options,
+  isInputTarget,
   target,
 }: {
   id?: string;
@@ -28,6 +29,7 @@ export function Dropdown({
   addMethod?: () => void;
   children?: ReactNode;
   options?: { withSearch?: boolean; withDropdownIcon?: boolean };
+  isInputTarget?: boolean;
   target: (
     value: Omit<HTMLAttributes<HTMLElement>, "onChange" | "defaultValue"> & {
       value: string;
@@ -106,7 +108,7 @@ export function Dropdown({
       <Combobox.DropdownTarget>
         <div
           className={
-            "flex items-start relative" +
+            "flex items-start relative p-px" +
             (isFocused ? " outline outline-1 outline-border" : "")
           }
           onMouseOver={(e) => {
@@ -121,13 +123,18 @@ export function Dropdown({
           <Combobox.EventsTarget>
             {target({
               value: search,
-              onChange: (val) => handleSearch(val),
-              onKeyDown: getHotkeyHandler([
-                ["ctrl+space", () => combobox.openDropdown()],
-                ["meta+shift+z", () => redo()],
-                ["meta+z", () => undo()],
-                ["meta+y", () => redo()],
-              ]),
+              ...(isInputTarget
+                ? {
+                    onChange: (val) => handleSearch(val),
+                    onBlur: () => combobox?.closeDropdown(),
+                    onKeyDown: getHotkeyHandler([
+                      ["ctrl+space", () => combobox.openDropdown()],
+                      ["meta+shift+z", () => redo()],
+                      ["meta+z", () => undo()],
+                      ["meta+y", () => redo()],
+                    ]),
+                  }
+                : {}),
               onClick: () => combobox?.openDropdown(),
               onFocus: () => setDropdown({ focusedEntityId: id }),
             })}
@@ -181,7 +188,7 @@ export function Dropdown({
             value={search}
             onChange={(value) => handleSearch(value as unknown as string)}
             placeholder="Search..."
-            className="!w-16"
+            classNames={{ input: "min-w-full" }}
           />
         ) : null}
         {dropdownOptions?.length === 0 ? null : (

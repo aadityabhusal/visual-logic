@@ -12,6 +12,9 @@ import { BaseInput } from "./Input/BaseInput";
 import { Method } from "./Method";
 import { Operation } from "./Operation";
 import { IconButton } from "../ui/IconButton";
+import { AddStatement } from "./AddStatement";
+import { useDisclosure } from "@mantine/hooks";
+import { Popover, useDelayedHover } from "@mantine/core";
 
 export function Statement({
   statement,
@@ -34,6 +37,15 @@ export function Statement({
   };
 }) {
   const hasName = statement.name !== undefined;
+
+  const [hoverOpened, { open, close }] = useDisclosure(false);
+  const { openDropdown, closeDropdown } = useDelayedHover({
+    open,
+    close,
+    openDelay: 0,
+    closeDelay: 150,
+  });
+
   const PipeArrow =
     statement.methods.length > 1 ? FaArrowTurnUp : FaArrowRightLong;
 
@@ -96,6 +108,13 @@ export function Statement({
     );
   }
 
+  const hoverEvents = {
+    onMouseEnter: openDropdown,
+    onFocus: openDropdown,
+    onMouseLeave: closeDropdown,
+    onBlur: closeDropdown,
+  };
+
   return (
     <div className="flex items-start gap-1">
       {options?.enableVariable ? (
@@ -113,17 +132,35 @@ export function Statement({
               }}
             />
           ) : null}
-          <IconButton
-            icon={FaEquals}
-            className="mt-1"
-            onClick={() =>
-              !options?.disableNameToggle &&
-              handleStatement({
-                ...statement,
-                name: hasName ? undefined : `v_${statement.id.slice(-3)}`,
-              })
-            }
-          />
+          <Popover opened={hoverOpened} offset={-2} withinPortal={false}>
+            <Popover.Target>
+              <IconButton
+                icon={FaEquals}
+                className="mt-[5px]"
+                onClick={() =>
+                  !options?.disableNameToggle &&
+                  handleStatement({
+                    ...statement,
+                    name: hasName ? undefined : `v_${statement.id.slice(-3)}`,
+                  })
+                }
+                {...hoverEvents}
+              />
+            </Popover.Target>
+            <Popover.Dropdown
+              classNames={{ dropdown: "absolute bg-inherit" }}
+              {...hoverEvents}
+            >
+              <AddStatement
+                prevStatements={[...prevStatements, statement]}
+                prevOperations={prevOperations}
+                onSelect={(statement) => {
+                  addStatement?.(statement, "after");
+                  closeDropdown();
+                }}
+              />
+            </Popover.Dropdown>
+          </Popover>
         </div>
       ) : null}
       <div
@@ -159,7 +196,7 @@ export function Statement({
             }
             prevStatements={prevStatements}
             prevOperations={prevOperations}
-            disableDelete={options?.disableDelete}
+            options={{ disableDelete: options?.disableDelete }}
             addMethod={
               !options?.disableMethods &&
               statement.methods.length === 0 &&

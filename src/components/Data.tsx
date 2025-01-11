@@ -3,7 +3,7 @@ import { ArrayInput } from "./Input/ArrayInput";
 import { ObjectInput } from "./Input/ObjectInput";
 import { BooleanInput } from "./Input/BooleanInput";
 import { Dropdown } from "./Dropdown";
-import { getDataDropdownList } from "./DropdownList";
+import { getDataDropdownList } from "../lib/utils";
 import { useMemo } from "react";
 import { BaseInput } from "./Input/BaseInput";
 
@@ -52,6 +52,9 @@ export function Data({
         withSearch: showDropdownIcon,
       }}
       value={data.reference?.name || data.type}
+      isInputTarget={
+        !!data.reference || ["string", "number"].includes(data.type)
+      }
       target={({ onChange, ...props }) =>
         data.reference?.name ? (
           <BaseInput {...props} onChange={onChange} className="text-variable" />

@@ -1,6 +1,5 @@
-import { defineConfig, type UserConfig } from "vite";
+import { defineConfig, InlineConfig, type UserConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import type { InlineConfig } from "vitest";
 
 interface VitestConfigExport extends UserConfig {
   test: InlineConfig;

@@ -1,6 +1,14 @@
 import { nanoid } from "nanoid";
 import { TypeMapper } from "./data";
-import { IData, IOperation, IMethod, IStatement, IType } from "./types";
+import {
+  IData,
+  IOperation,
+  IMethod,
+  IStatement,
+  IType,
+  IDropdownItem,
+} from "./types";
+import { updateStatements } from "./update";
 
 export function createData<T extends keyof IType>({
   id,
@@ -168,3 +176,116 @@ export const setLocalStorage = (key: string, value: any) => {
   }
   localStorage.setItem(key, JSON.stringify(value, replacer));
 };
+
+export function getDataDropdownList({
+  data,
+  onSelect,
+  prevStatements,
+  prevOperations,
+}: {
+  data: IStatement["data"];
+  onSelect: (operation: IData | IOperation, remove?: boolean) => void;
+  prevStatements: IStatement[];
+  prevOperations: IOperation[];
+}) {
+  function selectData(dataOption: IData, reference: IStatement) {
+    onSelect({
+      ...dataOption,
+      id: data.id,
+      isGeneric: data.isGeneric,
+      reference: reference.name
+        ? { id: reference.id, name: reference.name }
+        : undefined,
+    });
+  }
+
+  function selectOperations(
+    operation: IOperation,
+    reference: IStatement | IOperation
+  ) {
+    const parameters = resetParameters(operation.parameters);
+    const closure = getClosureList(reference) || [];
+    const statements = updateStatements({
+      statements: operation.statements,
+      previous: [
+        ...prevOperations,
+        ...prevStatements,
+        ...closure,
+        ...parameters,
+      ],
+    });
+
+    onSelect({
+      ...operation,
+      isGeneric: data.isGeneric,
+      id: data.id,
+      parameters,
+      closure,
+      statements,
+      reference: reference.name
+        ? { id: reference.id, name: reference.name }
+        : undefined,
+    });
+  }
+
+  return [
+    ...(Object.keys(TypeMapper) as (keyof IType)[]).reduce((acc, type) => {
+      if (data.isGeneric || (data.reference && type === (data as IData).type)) {
+        acc.push({
+          entityType: "data",
+          value: type,
+          onClick: () => {
+            onSelect(
+              createData({ id: data.id, type, isGeneric: data.isGeneric })
+            );
+          },
+        });
+      }
+      return acc;
+    }, [] as IDropdownItem[]),
+    ...(data.isGeneric || (data.reference && data.entityType === "operation")
+      ? ([
+          {
+            entityType: "operation",
+            value: "operation",
+            onClick: () => {
+              const parameters =
+                data.entityType === "operation" ? data.parameters : [];
+              onSelect(
+                createOperation({
+                  id: data.id,
+                  isGeneric: data.isGeneric,
+                  parameters,
+                })
+              );
+            },
+          },
+        ] as IDropdownItem[])
+      : []),
+    ...prevStatements.flatMap((statement) => {
+      const result = getStatementResult(statement);
+      if ((!data.isGeneric && !isSameType(result, data)) || !statement.name)
+        return [];
+      return {
+        secondaryLabel:
+          result.entityType === "data" ? result.type : "operation",
+        value: statement.name,
+        entityType: "data",
+        onClick: () =>
+          result.entityType === "operation"
+            ? selectOperations(result, statement)
+            : selectData(result, statement),
+      } as IDropdownItem;
+    }),
+    ...prevOperations.flatMap((operation) => {
+      let result = getStatementResult(createStatement({ data: operation }));
+      if (!data.isGeneric && !isSameType(result, data)) return [];
+      return {
+        value: operation.name,
+        entityType: "operation",
+        secondaryLabel: "operation",
+        onClick: () => selectOperations(operation, operation),
+      } as IDropdownItem;
+    }),
+  ];
+}

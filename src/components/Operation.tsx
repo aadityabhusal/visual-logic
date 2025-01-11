@@ -2,13 +2,12 @@ import { FaAngleLeft, FaAngleRight } from "react-icons/fa6";
 import { Fragment, useMemo } from "react";
 import { IData, IOperation, IStatement } from "../lib/types";
 import { updateStatements } from "../lib/update";
-import { getOperationResult } from "../lib/utils";
+import { getDataDropdownList, getOperationResult } from "../lib/utils";
 import { Statement } from "./Statement";
 import { BaseInput } from "./Input/BaseInput";
 import { AddStatement } from "./AddStatement";
 import { IconButton } from "../ui/IconButton";
 import { Dropdown } from "./Dropdown";
-import { getDataDropdownList } from "./DropdownList";
 
 export function Operation({
   operation,
@@ -16,27 +15,26 @@ export function Operation({
   addMethod,
   prevStatements,
   prevOperations,
-  disableDelete,
+  options,
 }: {
   operation: IOperation;
   handleChange(item: IData | IOperation, remove?: boolean): void;
   addMethod?: () => void;
   prevStatements: IStatement[];
   prevOperations: IOperation[];
-  disableDelete?: boolean;
+  options?: { disableDelete?: boolean; disableDropdown?: boolean };
 }) {
   const dropdownItems = useMemo(
     () =>
       getDataDropdownList({
         data: operation,
         onSelect: handleChange,
-        prevOperations,
+        prevOperations: options?.disableDropdown ? [] : prevOperations,
         prevStatements,
       }),
-    [operation, prevOperations, prevStatements]
+    [operation, prevOperations, prevStatements, options?.disableDropdown]
   );
 
-  const hasName = operation.name !== undefined;
   function handleOperationProps(
     key: keyof IOperation,
     value: IOperation[typeof key]
@@ -77,16 +75,20 @@ export function Operation({
       id={operation.id}
       items={dropdownItems}
       handleDelete={
-        !disableDelete ? () => handleChange(operation, true) : undefined
+        !options?.disableDelete
+          ? () => handleChange(operation, true)
+          : undefined
       }
-      options={{
-        withSearch: !operation.reference?.name,
-        withDropdownIcon: !operation.reference?.name,
-      }}
+      options={
+        options?.disableDropdown || operation.reference
+          ? undefined
+          : { withSearch: true, withDropdownIcon: true }
+      }
       value={operation.reference?.name || "operation"}
       addMethod={addMethod}
+      isInputTarget={!!operation.reference}
       target={(props) =>
-        operation.reference?.name ? (
+        operation.reference ? (
           <div className="flex items-start gap-1">
             <BaseInput {...props} className="text-variable" />
             {operation.reference.isCalled && (
@@ -110,7 +112,7 @@ export function Operation({
                 <span>{")"}</span>
               </div>
             )}
-            {!disableDelete && (
+            {!options?.disableDelete && (
               <IconButton
                 icon={AngleIcon}
                 className="mt-1"
@@ -130,7 +132,7 @@ export function Operation({
         ) : (
           <div className="max-w-max">
             <div className="flex items-start gap-1">
-              {hasName && (
+              {operation.name !== undefined && (
                 <BaseInput
                   value={operation.name || ""}
                   onChange={(value) => {
@@ -158,7 +160,7 @@ export function Operation({
                     }
                     options={{
                       enableVariable: true,
-                      disableDelete,
+                      disableDelete: options?.disableDelete,
                       disableMethods: true,
                       disableNameToggle: true,
                     }}
@@ -168,7 +170,7 @@ export function Operation({
                   {i + 1 < paramList.length && <span>,</span>}
                 </Fragment>
               ))}
-              {!disableDelete && (
+              {!options?.disableDelete && (
                 <AddStatement
                   prevStatements={prevStatements}
                   prevOperations={prevOperations}
@@ -200,22 +202,35 @@ export function Operation({
                     ...operation.statements.slice(0, i),
                   ]}
                   prevOperations={prevOperations}
+                  addStatement={(statement, position) => {
+                    const index = position === "before" ? i : i + 1;
+                    handleChange({
+                      ...operation,
+                      statements: [
+                        ...operation.statements.slice(0, index),
+                        statement,
+                        ...operation.statements.slice(index),
+                      ],
+                    });
+                  }}
                 />
               ))}
-              <AddStatement
-                prevStatements={[
-                  ...prevStatements,
-                  ...operation.parameters,
-                  ...operation.statements,
-                ]}
-                prevOperations={prevOperations}
-                onSelect={(statement) => {
-                  handleChange({
-                    ...operation,
-                    statements: [...operation.statements, statement],
-                  });
-                }}
-              />
+              {operation.statements.length ? null : (
+                <AddStatement
+                  prevStatements={[
+                    ...prevStatements,
+                    ...operation.parameters,
+                    ...operation.statements,
+                  ]}
+                  prevOperations={prevOperations}
+                  onSelect={(statement) => {
+                    handleChange({
+                      ...operation,
+                      statements: [...operation.statements, statement],
+                    });
+                  }}
+                />
+              )}
             </div>
           </div>
         )

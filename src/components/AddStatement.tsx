@@ -1,9 +1,8 @@
 import { IconButton } from "../ui/IconButton";
 import { FaPlus } from "react-icons/fa6";
 import { IOperation, IStatement } from "../lib/types";
-import { createData, createStatement } from "../lib/utils";
+import { createData, createStatement, getDataDropdownList } from "../lib/utils";
 import { useMemo } from "react";
-import { getDataDropdownList } from "./DropdownList";
 import { Dropdown } from "./Dropdown";
 
 export function AddStatement({

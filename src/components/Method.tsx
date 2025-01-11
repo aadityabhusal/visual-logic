@@ -55,6 +55,7 @@ export function Method({
       value={method.name}
       addMethod={addMethod}
       handleDelete={() => handleMethod(method, true)}
+      isInputTarget
       target={(props) => <BaseInput {...props} className="text-method" />}
     >
       <span>{"("}</span>
