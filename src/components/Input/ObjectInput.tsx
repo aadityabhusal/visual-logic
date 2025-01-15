@@ -87,6 +87,7 @@ export function ObjectInput({
         );
       })}
       <AddStatement
+        id={`${data.id}_addStatement`}
         prevStatements={prevStatements}
         prevOperations={prevOperations}
         onSelect={(value) => {

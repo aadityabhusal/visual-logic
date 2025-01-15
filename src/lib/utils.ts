@@ -1,42 +1,23 @@
 import { nanoid } from "nanoid";
 import { TypeMapper } from "./data";
-import {
-  IData,
-  IOperation,
-  IMethod,
-  IStatement,
-  IType,
-  IDropdownItem,
-} from "./types";
+import { IData, IOperation, IStatement, IType, IDropdownItem } from "./types";
 import { updateStatements } from "./update";
 
-export function createData<T extends keyof IType>({
-  id,
-  type,
-  value,
-  isGeneric,
-}: {
-  type: T;
-  id?: string;
-  value?: IType[T];
-  isGeneric?: boolean;
-}): IData<T> {
+export function createData<T extends keyof IType>(
+  props: Partial<IData<T>>
+): IData<T> {
+  const type = (props.type || "string") as T;
   return {
-    id: id ?? nanoid(),
+    id: props.id ?? nanoid(),
     entityType: "data",
     type,
-    value: value || TypeMapper[type].defaultValue,
-    isGeneric,
-    reference: undefined,
+    value: props.value || TypeMapper[type].defaultValue,
+    isGeneric: props.isGeneric,
+    reference: props.reference,
   };
 }
 
-export function createOperation(props?: {
-  id?: string;
-  name?: string;
-  parameters?: IStatement[];
-  isGeneric?: boolean;
-}): IOperation {
+export function createOperation(props?: Partial<IOperation>): IOperation {
   return {
     id: props?.id ?? nanoid(),
     isGeneric: props?.isGeneric,
@@ -47,18 +28,13 @@ export function createOperation(props?: {
         ? `new_${(+new Date()).toString().slice(-5)}`
         : undefined),
     parameters: props?.parameters || [],
-    statements: [],
-    closure: [],
-    reference: undefined,
+    statements: props?.statements || [],
+    closure: props?.closure || [],
+    reference: props?.reference,
   };
 }
 
-export function createStatement(props?: {
-  id?: string;
-  name?: string;
-  data?: IStatement["data"];
-  methods?: IMethod[];
-}): IStatement {
+export function createStatement(props?: Partial<IStatement>): IStatement {
   let newData = props?.data || createData({ type: "string", isGeneric: true });
   let newId = props?.id || nanoid();
   return {
@@ -135,6 +111,7 @@ export function resetParameters(
       let argValue = argData?.entityType === "data" ? argData.value : undefined;
       paramData = {
         ...paramData,
+        id: nanoid(),
         value: argValue || TypeMapper[paramData.type].defaultValue,
       };
     } else {
@@ -142,10 +119,11 @@ export function resetParameters(
         argData?.entityType === "operation" ? argData.parameters : undefined;
       paramData = {
         ...paramData,
+        id: nanoid(),
         parameters: resetParameters(paramData.parameters, argParams),
       };
     }
-    return { ...param, data: paramData };
+    return { ...param, id: nanoid(), data: paramData };
   });
 }
 

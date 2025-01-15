@@ -73,6 +73,7 @@ export function Operation({
   return (
     <Dropdown
       id={operation.id}
+      data={operation}
       items={dropdownItems}
       handleDelete={
         !options?.disableDelete
@@ -116,6 +117,11 @@ export function Operation({
               <IconButton
                 icon={AngleIcon}
                 className="mt-1"
+                title={
+                  !operation.reference.isCalled
+                    ? "Call operation"
+                    : "Close operation call"
+                }
                 onClick={() =>
                   operation.reference &&
                   handleChange({
@@ -172,6 +178,7 @@ export function Operation({
               ))}
               {!options?.disableDelete && (
                 <AddStatement
+                  id={`${operation.id}_paramAddStatement`}
                   prevStatements={prevStatements}
                   prevOperations={prevOperations}
                   onSelect={(statement) => {
@@ -217,6 +224,7 @@ export function Operation({
               ))}
               {operation.statements.length ? null : (
                 <AddStatement
+                  id={`${operation.id}_addStatement`}
                   prevStatements={[
                     ...prevStatements,
                     ...operation.parameters,

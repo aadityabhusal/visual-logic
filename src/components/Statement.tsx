@@ -137,6 +137,7 @@ export function Statement({
               <IconButton
                 icon={FaEquals}
                 className="mt-[5px]"
+                title="Create variable"
                 onClick={() =>
                   !options?.disableNameToggle &&
                   handleStatement({
@@ -152,6 +153,7 @@ export function Statement({
               {...hoverEvents}
             >
               <AddStatement
+                id={`${statement.id}_addStatement`}
                 prevStatements={[...prevStatements, statement]}
                 prevOperations={prevOperations}
                 onSelect={(statement) => {

@@ -7,13 +7,14 @@ import {
   FaCirclePlus,
   FaCircleXmark,
 } from "react-icons/fa6";
-import { dropDownStore, useStore } from "../lib/store";
+import { dropDownStore, uiConfigStore, useStore } from "../lib/store";
 import { getHotkeyHandler } from "@mantine/hooks";
-import { IDropdownItem } from "../lib/types";
+import { IDropdownItem, IStatement } from "../lib/types";
 
 export function Dropdown({
   id,
   value,
+  data,
   items,
   handleDelete,
   addMethod,
@@ -22,8 +23,9 @@ export function Dropdown({
   isInputTarget,
   target,
 }: {
-  id?: string;
+  id: string;
   value?: string;
+  data?: IStatement["data"];
   items?: IDropdownItem[];
   handleDelete?: () => void;
   addMethod?: () => void;
@@ -42,7 +44,11 @@ export function Dropdown({
     focusedEntityId: s.focusedEntityId,
     setDropdown: s.setDropdown,
   }));
-  const isFocused = id && focusedEntityId === id;
+  const { highlightOperation } = uiConfigStore();
+  const forceDisplayBorder =
+    highlightOperation && data?.entityType === "operation";
+  const [isHovered, setHovered] = useState(false);
+  const isFocused = focusedEntityId === id;
   const [search, setSearch] = useState("");
   const combobox = useCombobox({
     loop: true,
@@ -109,15 +115,17 @@ export function Dropdown({
         <div
           className={
             "flex items-start relative p-px" +
-            (isFocused ? " outline outline-1 outline-border" : "")
+            (forceDisplayBorder || isFocused || isHovered
+              ? " outline outline-1 outline-border"
+              : "")
           }
           onMouseOver={(e) => {
             e.stopPropagation();
-            if (focusedEntityId !== id) setDropdown({ focusedEntityId: id });
+            setHovered(true);
           }}
           onMouseOut={(e) => {
             e.stopPropagation();
-            setDropdown({ focusedEntityId: undefined });
+            setHovered(false);
           }}
         >
           <Combobox.EventsTarget>
@@ -142,61 +150,67 @@ export function Dropdown({
           {handleDelete && (
             <IconButton
               tabIndex={-1}
-              className="absolute w-2.5 h-2.5 -top-1.5 -right-1 text-border bg-white rounded-full z-10"
+              size={12}
+              className="absolute -top-1.5 -right-1 text-border bg-white rounded-full z-10"
               icon={FaCircleXmark}
               onClick={() => {
                 combobox?.closeDropdown();
                 handleDelete();
               }}
-              hidden={!isFocused}
+              hidden={!isFocused && !isHovered}
             />
           )}
           {addMethod && (
             <IconButton
-              className="absolute w-2.5 h-2.5 top-[0.3125rem] -right-2 text-border bg-white rounded-full z-10"
+              size={12}
+              title="Add method"
+              className="absolute top-1.5 -right-2 text-border bg-white rounded-full z-10"
               icon={FaCirclePlus}
               onClick={() => {
                 combobox?.closeDropdown();
                 addMethod();
               }}
-              hidden={!isFocused}
+              hidden={!isFocused && !isHovered}
             />
           )}
           {options?.withDropdownIcon && !!items?.length && (
             <IconButton
-              className="absolute w-2.5 h-2.5 -bottom-1.5 -right-1 text-border bg-white rounded-full z-10"
+              size={12}
+              className="absolute -bottom-1.5 -right-1 text-border bg-white rounded-full z-10"
               icon={FaCircleChevronDown}
               onClick={() => combobox?.openDropdown()}
-              hidden={!isFocused}
+              hidden={!isFocused && !isHovered}
             />
           )}
           {children}
         </div>
       </Combobox.DropdownTarget>
-      <Combobox.Dropdown
-        classNames={{
-          dropdown:
-            "absolute min-w-max" +
-            (!!dropdownOptions?.length || options?.withSearch
-              ? " bg-editor border border-border"
-              : ""),
-        }}
-      >
-        {options?.withSearch ? (
-          <Combobox.Search
-            component={BaseInput}
-            value={search}
-            onChange={(value) => handleSearch(value as unknown as string)}
-            placeholder="Search..."
-            classNames={{ input: "min-w-full" }}
-          />
-        ) : null}
-        {dropdownOptions?.length === 0 ? null : (
-          <Combobox.Options className="overflow-y-auto max-h-32 dropdown-scrollbar">
-            {dropdownOptions}
-          </Combobox.Options>
-        )}
-      </Combobox.Dropdown>
+      {isFocused ? (
+        <Combobox.Dropdown
+          classNames={{
+            dropdown:
+              "absolute min-w-max" +
+              (!!dropdownOptions?.length || options?.withSearch
+                ? " bg-editor border"
+                : ""),
+          }}
+        >
+          {options?.withSearch ? (
+            <Combobox.Search
+              component={BaseInput}
+              value={search}
+              onChange={(value) => handleSearch(value as unknown as string)}
+              placeholder="Search..."
+              classNames={{ input: "min-w-full" }}
+            />
+          ) : null}
+          {dropdownOptions?.length === 0 ? null : (
+            <Combobox.Options className="overflow-y-auto max-h-32 dropdown-scrollbar">
+              {dropdownOptions}
+            </Combobox.Options>
+          )}
+        </Combobox.Dropdown>
+      ) : null}
     </Combobox>
   );
 }

@@ -9,8 +9,7 @@ export function NoteText(props: {
   return (
     <div
       className={
-        "text-xs text-disabled p-1 " +
-        (props.border ? "border-b border-solid border-border" : "")
+        "text-xs text-disabled p-1 " + (props.border ? "border-b" : "")
       }
       style={{
         ...(props.center ? { textAlign: "center" } : {}),

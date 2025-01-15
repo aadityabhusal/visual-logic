@@ -6,10 +6,12 @@ import { useMemo } from "react";
 import { Dropdown } from "./Dropdown";
 
 export function AddStatement({
+  id,
   onSelect,
   prevStatements = [],
   prevOperations = [],
 }: {
+  id: string;
   onSelect: (statement: IStatement) => void;
   prevStatements?: IStatement[];
   prevOperations?: IOperation[];
@@ -28,10 +30,11 @@ export function AddStatement({
   return (
     <div className="w-max">
       <Dropdown
+        id={id}
         items={dropdownItems}
         options={{ withSearch: true }}
         target={({ onChange, ...props }) => (
-          <IconButton icon={FaPlus} className="mt-1" {...props} />
+          <IconButton icon={FaPlus} className="mt-1 bg-editor" {...props} />
         )}
       />
     </div>

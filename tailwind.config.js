@@ -3,6 +3,7 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      borderColor: { DEFAULT: "#444444" },
       colors: {
         white: "#fafafa",
         reserved: "#569cd6",

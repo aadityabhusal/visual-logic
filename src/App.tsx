@@ -8,8 +8,29 @@ import { updateOperations } from "./lib/update";
 import { useEffect } from "react";
 import { visitCount } from "./lib/services";
 import { useHotkeys } from "@mantine/hooks";
-import { HeadlessMantineProvider } from "@mantine/core";
+import {
+  ActionIcon,
+  createTheme,
+  HeadlessMantineProvider,
+  Tooltip,
+} from "@mantine/core";
 import { IOperation } from "./lib/types";
+
+const theme = createTheme({
+  scale: 1,
+  components: {
+    Tooltip: Tooltip.extend({
+      classNames: {
+        tooltip: "absolute bg-dropdown-default px-2 py-1 rounded-md text-xs",
+      },
+    }),
+    ActionIcon: ActionIcon.extend({
+      classNames: {
+        root: "focus:outline focus:outline-1 focus:outline-white hover:opacity-90 disabled:text-disabled",
+      },
+    }),
+  },
+});
 
 function App() {
   const { operations, setOperation } = useStore();
@@ -43,15 +64,13 @@ function App() {
     if (window.location.hostname !== "localhost") visitCount();
   }, []);
 
-  const operationContainerClassNames =
-    "p-1 pb-[25%] flex-1 overflow-y-auto scroll border-r border-solid border-border";
-
   return (
-    <HeadlessMantineProvider>
+    <HeadlessMantineProvider theme={theme}>
       <div className="flex flex-col h-screen">
         <Header />
         <div className="flex flex-1 min-h-0">
-          <div className={operationContainerClassNames}>
+          {!hideSidebar && <Sidebar />}
+          <div className={"p-1 flex-1 overflow-y-auto scroll"}>
             {currentOperation ? (
               <Operation
                 operation={currentOperation}
@@ -67,7 +86,7 @@ function App() {
             )}
           </div>
           {displayCode && currentOperation ? (
-            <div className={operationContainerClassNames}>
+            <div className={"p-1 flex-1 overflow-y-auto scroll border-l"}>
               <NoteText border italic>
                 In-progress and preview-only.
               </NoteText>
@@ -76,7 +95,6 @@ function App() {
               </pre>
             </div>
           ) : null}
-          {!hideSidebar && <Sidebar />}
         </div>
       </div>
     </HeadlessMantineProvider>

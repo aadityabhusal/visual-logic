@@ -26,18 +26,6 @@ pre {
   @apply bg-dropdown-scrollbar;
 }
 
-.dropdown-options {
-  @apply cursor-pointer bg-dropdown-default text-white;
-}
-
-.dropdown-option {
-  @apply text-xs py-[0.1rem] px-[0.2rem] hover:bg-dropdown-hover bg-inherit;
-}
-
-.dropdown-option-selected {
-  @apply dropdown-option bg-dropdown-selected;
-}
-
 .input-quotes::before {
   @apply absolute top-0 left-0 text-string content-[open-quote];
 }

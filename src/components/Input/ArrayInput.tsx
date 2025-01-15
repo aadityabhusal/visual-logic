@@ -52,6 +52,7 @@ export function ArrayInput({
         );
       })}
       <AddStatement
+        id={`${data.id}_addStatement`}
         prevStatements={prevStatements}
         prevOperations={prevOperations}
         onSelect={(value) => {

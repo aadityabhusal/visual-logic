@@ -21,7 +21,7 @@ export const TypeMapper: {
 };
 
 export const preferenceOptions = [
-  { id: "highlightAll", label: "Highlight all" },
+  // { id: "highlightAll", label: "Highlight all" },
   { id: "highlightOperation", label: "Highlight operations" },
   { id: "hideResultValue", label: "Hide result value" },
   { id: "displayCode", label: "Display Code" },
