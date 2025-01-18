@@ -15,6 +15,7 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { IOperation } from "./lib/types";
+import { FocusInfo } from "./components/FocusInfo";
 
 const theme = createTheme({
   scale: 1,
@@ -35,12 +36,7 @@ const theme = createTheme({
 function App() {
   const { operations, setOperation } = useStore();
   const { displayCode, hideSidebar, selectedOperationId, setUiConfig } =
-    uiConfigStore((s) => ({
-      displayCode: s.displayCode,
-      hideSidebar: s.hideSidebar,
-      selectedOperationId: s.selectedOperationId,
-      setUiConfig: s.setUiConfig,
-    }));
+    uiConfigStore();
   const { undo, redo } = useStore.temporal.getState();
 
   const currentOperationIndex = operations.findIndex(
@@ -68,7 +64,7 @@ function App() {
     <HeadlessMantineProvider theme={theme}>
       <div className="flex flex-col h-screen">
         <Header />
-        <div className="flex flex-1 min-h-0">
+        <div className="flex flex-1 min-h-0 relative">
           {!hideSidebar && <Sidebar />}
           <div className={"p-1 flex-1 overflow-y-auto scroll"}>
             {currentOperation ? (
@@ -84,6 +80,7 @@ function App() {
             ) : (
               <NoteText>Select an operation</NoteText>
             )}
+            <FocusInfo />
           </div>
           {displayCode && currentOperation ? (
             <div className={"p-1 flex-1 overflow-y-auto scroll border-l"}>

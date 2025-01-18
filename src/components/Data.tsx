@@ -11,7 +11,7 @@ interface IProps {
   data: IData;
   disableDelete?: boolean;
   addMethod?: () => void;
-  handleChange(item: IData | IOperation, remove?: boolean): void;
+  handleChange(item: IStatement["data"], remove?: boolean): void;
   prevStatements: IStatement[];
   prevOperations: IOperation[];
 }
@@ -44,12 +44,14 @@ export function Data({
   return (
     <Dropdown
       id={data.id}
+      result={data}
       items={dropdownItems}
       handleDelete={!disableDelete ? () => handleChange(data, true) : undefined}
       addMethod={addMethod}
       options={{
         withDropdownIcon: showDropdownIcon,
         withSearch: showDropdownIcon,
+        focusOnClick: showDropdownIcon,
       }}
       value={data.reference?.name || data.type}
       isInputTarget={
@@ -64,6 +66,7 @@ export function Data({
             handleData={handleChange}
             prevStatements={prevStatements}
             prevOperations={prevOperations}
+            onClick={props.onClick}
           />
         ) : data.value instanceof Map ? (
           <ObjectInput
@@ -71,6 +74,7 @@ export function Data({
             handleData={handleChange}
             prevStatements={prevStatements}
             prevOperations={prevOperations}
+            onClick={props.onClick}
           />
         ) : typeof data.value === "boolean" ? (
           <BooleanInput data={data} handleData={handleChange} />

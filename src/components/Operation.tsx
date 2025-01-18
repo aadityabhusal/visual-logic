@@ -1,6 +1,6 @@
 import { FaAngleLeft, FaAngleRight } from "react-icons/fa6";
 import { Fragment, useMemo } from "react";
-import { IData, IOperation, IStatement } from "../lib/types";
+import { IOperation, IStatement } from "../lib/types";
 import { updateStatements } from "../lib/update";
 import { getDataDropdownList, getOperationResult } from "../lib/utils";
 import { Statement } from "./Statement";
@@ -18,7 +18,7 @@ export function Operation({
   options,
 }: {
   operation: IOperation;
-  handleChange(item: IData | IOperation, remove?: boolean): void;
+  handleChange(item: IStatement["data"], remove?: boolean): void;
   addMethod?: () => void;
   prevStatements: IStatement[];
   prevOperations: IOperation[];
@@ -67,13 +67,14 @@ export function Operation({
     });
   }
 
-  const result = getOperationResult(operation);
+  const result = useMemo(() => getOperationResult(operation), [operation]);
   const AngleIcon = operation.reference?.isCalled ? FaAngleLeft : FaAngleRight;
 
   return (
     <Dropdown
       id={operation.id}
       data={operation}
+      result={operation?.reference?.isCalled ? result : operation}
       items={dropdownItems}
       handleDelete={
         !options?.disableDelete
@@ -83,14 +84,14 @@ export function Operation({
       options={
         options?.disableDropdown || operation.reference
           ? undefined
-          : { withSearch: true, withDropdownIcon: true }
+          : { withSearch: true, withDropdownIcon: true, focusOnClick: true }
       }
       value={operation.reference?.name || "operation"}
       addMethod={addMethod}
       isInputTarget={!!operation.reference}
       target={(props) =>
         operation.reference ? (
-          <div className="flex items-start gap-1">
+          <div className="flex items-start gap-1" onClick={props.onClick}>
             <BaseInput {...props} className="text-variable" />
             {operation.reference.isCalled && (
               <div className="flex items-start gap-1">
@@ -136,7 +137,7 @@ export function Operation({
             )}
           </div>
         ) : (
-          <div className="max-w-max">
+          <div className="max-w-max" onClick={props.onClick}>
             <div className="flex items-start gap-1">
               {operation.name !== undefined && (
                 <BaseInput
@@ -194,7 +195,7 @@ export function Operation({
               )}
               <span>{")"}</span>
             </div>
-            <div className="pl-4 [&>div]:mb-1">
+            <div className="pl-4 [&>div]:mb-1 w-fit">
               {operation.statements.map((statement, i) => (
                 <Statement
                   key={statement.id}

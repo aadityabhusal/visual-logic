@@ -90,7 +90,7 @@ export function getStatementResult(
   statement: IStatement,
   index?: number,
   prevEntity?: boolean
-): IData | IOperation {
+): IStatement["data"] {
   let data = statement.data;
   if (index) return statement.methods[index - 1]?.result;
   let lastStatement = statement.methods[statement.methods.length - 1];
@@ -162,7 +162,7 @@ export function getDataDropdownList({
   prevOperations,
 }: {
   data: IStatement["data"];
-  onSelect: (operation: IData | IOperation, remove?: boolean) => void;
+  onSelect: (operation: IStatement["data"], remove?: boolean) => void;
   prevStatements: IStatement[];
   prevOperations: IOperation[];
 }) {

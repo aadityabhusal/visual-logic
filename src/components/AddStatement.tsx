@@ -34,7 +34,12 @@ export function AddStatement({
         items={dropdownItems}
         options={{ withSearch: true }}
         target={({ onChange, ...props }) => (
-          <IconButton icon={FaPlus} className="mt-1 bg-editor" {...props} />
+          <IconButton
+            icon={FaPlus}
+            size={14}
+            className="mt-1 bg-editor"
+            {...props}
+          />
         )}
       />
     </div>

@@ -7,7 +7,7 @@ import {
   FaCirclePlus,
   FaCircleXmark,
 } from "react-icons/fa6";
-import { dropDownStore, uiConfigStore, useStore } from "../lib/store";
+import { focusStore, uiConfigStore, useStore } from "../lib/store";
 import { getHotkeyHandler } from "@mantine/hooks";
 import { IDropdownItem, IStatement } from "../lib/types";
 
@@ -15,6 +15,7 @@ export function Dropdown({
   id,
   value,
   data,
+  result,
   items,
   handleDelete,
   addMethod,
@@ -26,35 +27,38 @@ export function Dropdown({
   id: string;
   value?: string;
   data?: IStatement["data"];
+  result?: IStatement["data"];
   items?: IDropdownItem[];
   handleDelete?: () => void;
   addMethod?: () => void;
   children?: ReactNode;
-  options?: { withSearch?: boolean; withDropdownIcon?: boolean };
+  options?: {
+    withSearch?: boolean;
+    withDropdownIcon?: boolean;
+    focusOnClick?: boolean;
+  };
   isInputTarget?: boolean;
   target: (
     value: Omit<HTMLAttributes<HTMLElement>, "onChange" | "defaultValue"> & {
-      value: string;
+      value?: string;
       onChange?: (value: string) => void;
     }
   ) => ReactNode;
 }) {
   const { undo, redo } = useStore.temporal.getState();
-  const { focusedEntityId, setDropdown } = dropDownStore((s) => ({
-    focusedEntityId: s.focusedEntityId,
-    setDropdown: s.setDropdown,
-  }));
+  const { focusId, setFocus } = focusStore();
   const { highlightOperation } = uiConfigStore();
   const forceDisplayBorder =
     highlightOperation && data?.entityType === "operation";
   const [isHovered, setHovered] = useState(false);
-  const isFocused = focusedEntityId === id;
+  const isFocused = focusId === id;
   const [search, setSearch] = useState("");
   const combobox = useCombobox({
     loop: true,
     onDropdownClose: () => {
       handleSearch(options?.withSearch ? "" : value || "");
       combobox.resetSelectedOption();
+      setFocus((p) => ({ ...p, focusId: undefined, result }));
     },
     onDropdownOpen: () => options?.withSearch && combobox.focusSearchInput(),
   });
@@ -130,9 +134,9 @@ export function Dropdown({
         >
           <Combobox.EventsTarget>
             {target({
-              value: search,
               ...(isInputTarget
                 ? {
+                    value: search,
                     onChange: (val) => handleSearch(val),
                     onBlur: () => combobox?.closeDropdown(),
                     onKeyDown: getHotkeyHandler([
@@ -143,8 +147,16 @@ export function Dropdown({
                     ]),
                   }
                 : {}),
-              onClick: () => combobox?.openDropdown(),
-              onFocus: () => setDropdown({ focusedEntityId: id }),
+              onClick: (e) => {
+                e.stopPropagation();
+                if (options?.focusOnClick) {
+                  if (e.target === e.currentTarget) {
+                    setFocus({ focusId: id, result, showPopup: true });
+                    combobox?.openDropdown();
+                  }
+                } else combobox?.openDropdown();
+              },
+              onFocus: () => setFocus({ focusId: id, result, showPopup: true }),
             })}
           </Combobox.EventsTarget>
           {handleDelete && (
@@ -178,7 +190,10 @@ export function Dropdown({
               size={12}
               className="absolute -bottom-1.5 -right-1 text-border bg-white rounded-full z-10"
               icon={FaCircleChevronDown}
-              onClick={() => combobox?.openDropdown()}
+              onClick={() => {
+                setFocus({ focusId: id, result, showPopup: true });
+                combobox?.openDropdown();
+              }}
               hidden={!isFocused && !isHovered}
             />
           )}

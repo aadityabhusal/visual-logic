@@ -45,6 +45,7 @@ export function Method({
   return (
     <Dropdown
       id={method.id}
+      result={method.result}
       items={getFilteredMethods(data).map((item) => ({
         label: item.name,
         value: item.name,

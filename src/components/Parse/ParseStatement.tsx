@@ -31,7 +31,7 @@ export function ParseStatement({
   return statement.methods.reduce(
     (prev, method, i) => (
       <span key={i}>
-        <span className="text-type">V</span>
+        <span className="text-type">_</span>
         {"."}
         <span className="text-method">{method.name}</span>
         {"("}

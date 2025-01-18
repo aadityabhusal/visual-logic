@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { temporal } from "zundo";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { IOperation } from "./types";
+import { IOperation, IStatement } from "./types";
 import { preferenceOptions } from "./data";
 import { createWithEqualityFn } from "zustand/traditional";
 import { shallow } from "zustand/shallow";
@@ -50,19 +50,21 @@ export const uiConfigStore = createWithEqualityFn(
   shallow
 );
 
-export type IDropdownStore = {
-  focusedEntityId?: string;
-  setDropdown: (
+export type IFocusStore = {
+  focusId?: string;
+  result?: IStatement["data"];
+  showPopup?: boolean;
+  setFocus: (
     change:
-      | Omit<IDropdownStore, "setDropdown">
+      | Omit<IFocusStore, "setFocus">
       | ((
-          change: Omit<IDropdownStore, "setDropdown">
-        ) => Omit<IDropdownStore, "setDropdown">)
+          change: Omit<IFocusStore, "setFocus">
+        ) => Omit<IFocusStore, "setFocus">)
   ) => void;
 };
-export const dropDownStore = createWithEqualityFn<IDropdownStore>(
+export const focusStore = createWithEqualityFn<IFocusStore>(
   (set) => ({
-    setDropdown: (change) =>
+    setFocus: (change) =>
       set((s) => (typeof change === "function" ? change(s) : change)),
   }),
   shallow
