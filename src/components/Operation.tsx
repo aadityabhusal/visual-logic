@@ -2,7 +2,11 @@ import { FaAngleLeft, FaAngleRight } from "react-icons/fa6";
 import { Fragment, useMemo } from "react";
 import { IOperation, IStatement } from "../lib/types";
 import { updateStatements } from "../lib/update";
-import { getDataDropdownList, getOperationResult } from "../lib/utils";
+import {
+  createVariableName,
+  getDataDropdownList,
+  getOperationResult,
+} from "../lib/utils";
 import { Statement } from "./Statement";
 import { BaseInput } from "./Input/BaseInput";
 import { AddStatement } from "./AddStatement";
@@ -22,7 +26,11 @@ export function Operation({
   addMethod?: () => void;
   prevStatements: IStatement[];
   prevOperations: IOperation[];
-  options?: { disableDelete?: boolean; disableDropdown?: boolean };
+  options?: {
+    disableDelete?: boolean;
+    disableDropdown?: boolean;
+    isTopLevel?: boolean;
+  };
 }) {
   const dropdownItems = useMemo(
     () =>
@@ -77,9 +85,9 @@ export function Operation({
       result={operation?.reference?.isCalled ? result : operation}
       items={dropdownItems}
       handleDelete={
-        !options?.disableDelete
-          ? () => handleChange(operation, true)
-          : undefined
+        options?.disableDelete || options?.isTopLevel
+          ? undefined
+          : () => handleChange(operation, true)
       }
       options={
         options?.disableDropdown || operation.reference
@@ -144,6 +152,7 @@ export function Operation({
                   value={operation.name || ""}
                   onChange={(value) => {
                     let name = value || operation.name;
+                    if (name === "operation") return;
                     const exists = prevOperations.find(
                       (item) => item.name === name
                     );
@@ -177,7 +186,7 @@ export function Operation({
                   {i + 1 < paramList.length && <span>,</span>}
                 </Fragment>
               ))}
-              {!options?.disableDelete && (
+              {options?.disableDelete ? null : (
                 <AddStatement
                   id={`${operation.id}_paramAddStatement`}
                   prevStatements={prevStatements}
@@ -187,7 +196,17 @@ export function Operation({
                       ...operation,
                       parameters: [
                         ...operation.parameters,
-                        { ...statement, name: `p_${statement.id.slice(-3)}` },
+                        {
+                          ...statement,
+                          name: createVariableName({
+                            prefix: "param",
+                            prev: [
+                              ...operation.parameters,
+                              ...prevStatements,
+                              ...prevOperations,
+                            ],
+                          }),
+                        },
                       ],
                     });
                   }}

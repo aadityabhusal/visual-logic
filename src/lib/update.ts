@@ -60,7 +60,7 @@ function getReferenceData(
       data.type !== referenceResult?.type);
   const isReferenceRemoved =
     currentReference?.id &&
-    (!reference || !reference.name || referenceResult?.entityType !== "data");
+    (!reference?.name || referenceResult?.entityType !== "data");
 
   const { id: newId, ...newData } = createData({
     type: data.type,
@@ -99,9 +99,7 @@ export function getReferenceOperation(
   let referenceResult = reference && getStatementResult(reference);
   let isReferenceRemoved =
     currentReference?.id &&
-    (!reference ||
-      !reference.name ||
-      referenceResult?.entityType !== "operation");
+    (!reference?.name || referenceResult?.entityType !== "operation");
   let isTypeChanged = reference ? !isSameType(operation, reference.data) : true;
 
   let parameterList = operation.parameters;

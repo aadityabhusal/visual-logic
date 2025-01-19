@@ -10,9 +10,9 @@ export function FocusInfo() {
   const type =
     result?.entityType === "data" ? result?.type : result?.entityType;
 
-  if (!showPopup) return null;
+  if (!showPopup || !result) return null;
   return (
-    <div className="absolute border top-1 right-1 flex flex-col">
+    <div className="absolute border top-1 right-1 flex flex-col bg-editor">
       <div className="flex justify-between min-w-60 max-w-96 p-1 border-b">
         <div>Details</div>
         <IconButton
@@ -31,7 +31,7 @@ export function FocusInfo() {
       </div>
       {result?.entityType === "data" ? (
         <div className="p-1">
-          <div className="text-gray-400 mb-1.5">Result</div>
+          <div className="text-gray-300 mb-1.5">Result</div>
           <ErrorBoundary displayError={true}>
             <pre className="max-w-96 overflow-x-auto dropdown-scrollbar text-wrap">
               <ParseData data={result} showData={true} />

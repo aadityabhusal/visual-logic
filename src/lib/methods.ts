@@ -489,14 +489,14 @@ function mapArrayParameters(data: IData<"array">, operation: IOperation) {
   });
 }
 
-function getParams(
+function createParamData(
   item: IMethodList["parameters"][0],
   data: IData
 ): IStatement["data"] {
   return item.type === "operation"
     ? createOperation({
         parameters: item.parameters?.map((item) =>
-          createStatement({ data: getParams(item, data), name: "" })
+          createStatement({ data: createParamData(item, data) })
         ),
         isGeneric: item.isGeneric,
       })
@@ -505,25 +505,49 @@ function getParams(
 
 export function getFilteredMethods(data: IData) {
   return methodsList[data.type].filter((item) => {
-    let parameters = item.parameters.map((p) => getParams(p, data));
+    let parameters = item.parameters.map((p) => createParamData(p, data));
     return (
-      data.isGeneric || isSameType(data, item.handler(data, ...parameters))
+      data.isGeneric ||
+      (isSameType(data, item.handler(data, ...parameters)) &&
+        parameters.every((p) => !p.isGeneric))
     );
   });
 }
 
-export function createMethod({ data, name }: { data: IData; name?: string }) {
+export function createMethod({
+  data,
+  name,
+  prevParams,
+}: {
+  data: IData;
+  name?: string;
+  prevParams?: IStatement[];
+}): IMethod {
   let methods = getFilteredMethods(data);
   let methodByName = methods.find((method) => method.name === name);
   let newMethod = methodByName || methods[0];
 
-  let parameters = newMethod.parameters.map((item) => getParams(item, data));
-  let result = newMethod.handler(data, ...parameters);
+  let parameters = newMethod.parameters.map((item, index) => {
+    const newParam = createStatement({ data: createParamData(item, data) });
+    const prevParam = prevParams?.[index];
+    if (
+      prevParam &&
+      isSameType(newParam.data, prevParam.data) &&
+      isSameType(newParam.data, getStatementResult(prevParam))
+    ) {
+      return prevParam;
+    }
+    return newParam;
+  });
+  let result = newMethod.handler(
+    data,
+    ...parameters.map((p) => getStatementResult(p))
+  );
   return {
     id: nanoid(),
     entityType: "method",
     name: newMethod.name,
-    parameters: parameters.map((item) => createStatement({ data: item })),
+    parameters,
     result: { ...result, isGeneric: data.isGeneric },
   } as IMethod;
 }

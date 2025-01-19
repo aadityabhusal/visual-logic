@@ -22,11 +22,7 @@ export function createOperation(props?: Partial<IOperation>): IOperation {
     id: props?.id ?? nanoid(),
     isGeneric: props?.isGeneric,
     entityType: "operation",
-    name:
-      props?.name ||
-      (props?.name !== undefined
-        ? `new_${(+new Date()).toString().slice(-5)}`
-        : undefined),
+    name: props?.name,
     parameters: props?.parameters || [],
     statements: props?.statements || [],
     closure: props?.closure || [],
@@ -39,13 +35,30 @@ export function createStatement(props?: Partial<IStatement>): IStatement {
   let newId = props?.id || nanoid();
   return {
     id: newId,
-    name:
-      props?.name ||
-      (props?.name !== undefined ? `v_${newId.slice(-3)}` : undefined),
+    name: props?.name,
     entityType: "statement",
     data: newData,
     methods: props?.methods || [],
   };
+}
+
+export function createVariableName({
+  prefix,
+  prev,
+  indexOffset = 0,
+}: {
+  prefix: string;
+  prev: (IStatement | IOperation)[];
+  indexOffset?: number;
+}) {
+  const index = prev
+    .map((s) => s.name)
+    .reduce((acc, cur) => {
+      const match = cur?.match(new RegExp(`^${prefix}(\\d)?$`));
+      if (!match) return acc;
+      return match[1] ? Math.max(acc, Number(match[1]) + 1) : Math.max(acc, 1);
+    }, indexOffset);
+  return `${prefix}${index || ""}`;
 }
 
 export function isSameType(

@@ -5,6 +5,8 @@ import { IOperation, IStatement } from "./types";
 import { preferenceOptions } from "./data";
 import { createWithEqualityFn } from "zustand/traditional";
 import { shallow } from "zustand/shallow";
+import { get, set, del, createStore } from "idb-keyval";
+import { createOperation } from "./utils";
 
 export interface IStore {
   operations: IOperation[];
@@ -12,26 +14,35 @@ export interface IStore {
   setOperation: (operations: IOperation[]) => void;
 }
 
-const jsonStorage = createJSONStorage(() => localStorage, {
-  reviver: (_, data: any) => {
-    return data.type === "object"
-      ? { ...data, value: new Map(data.value as []) }
-      : data;
-  },
-  replacer: (key, value) => {
-    return value instanceof Map ? Array.from(value.entries()) : value;
-  },
-});
+const idbStore = createStore("visualLogic", "operations");
+const storage = createJSONStorage(
+  () => ({
+    getItem: async (name: string) => (await get(name, idbStore)) || null,
+    setItem: async (name: string, value: string) =>
+      await set(name, value, idbStore),
+    removeItem: async (name: string) => await del(name, idbStore),
+  }),
+  {
+    reviver: (_, data: any) => {
+      return data.type === "object"
+        ? { ...data, value: new Map(data.value as []) }
+        : data;
+    },
+    replacer: (_key, value) => {
+      return value instanceof Map ? Array.from(value.entries()) : value;
+    },
+  }
+);
 
 export const useStore = create(
   persist(
     temporal<IStore>((set) => ({
-      operations: [],
+      operations: [createOperation({ name: "main" })],
       addOperation: (operation) =>
         set((state) => ({ operations: [...state.operations, operation] })),
       setOperation: (operations) => set(() => ({ operations })),
     })),
-    { name: "operations", storage: jsonStorage }
+    { name: "operations", storage }
   )
 );
 

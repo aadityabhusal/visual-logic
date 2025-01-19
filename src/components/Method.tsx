@@ -24,7 +24,7 @@ export function Method({
 }: IProps) {
   function handleDropdown(name: string) {
     if (method.name === name) return;
-    handleMethod(createMethod({ data, name }));
+    handleMethod(createMethod({ data, name, prevParams: method.parameters }));
   }
 
   function handleParameter(item: IStatement, index: number) {

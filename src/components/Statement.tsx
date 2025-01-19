@@ -5,6 +5,7 @@ import {
   isSameType,
   getStatementResult,
   getPreviousStatements,
+  createVariableName,
 } from "../lib/utils";
 import { createMethod } from "../lib/methods";
 import { Data } from "./Data";
@@ -15,6 +16,7 @@ import { IconButton } from "../ui/IconButton";
 import { AddStatement } from "./AddStatement";
 import { useDisclosure } from "@mantine/hooks";
 import { Popover, useDelayedHover } from "@mantine/core";
+import { TypeMapper } from "../lib/data";
 
 export function Statement({
   statement,
@@ -124,11 +126,18 @@ export function Statement({
               value={statement.name || ""}
               className="text-variable"
               onChange={(value) => {
-                let name = value || statement.name;
-                const exists = prevStatements.find(
-                  (item) => item.name === name
-                );
-                if (!exists) handleStatement({ ...statement, name });
+                let name = value || statement.name || "";
+                if (
+                  [
+                    ...Object.keys(TypeMapper),
+                    ...prevStatements.map((s) => s.name),
+                    ...prevOperations.map((s) => s.name),
+                    "operation",
+                  ].includes(name)
+                ) {
+                  return;
+                }
+                handleStatement({ ...statement, name });
               }}
             />
           ) : null}
@@ -142,7 +151,12 @@ export function Statement({
                   !options?.disableNameToggle &&
                   handleStatement({
                     ...statement,
-                    name: hasName ? undefined : `v_${statement.id.slice(-3)}`,
+                    name: hasName
+                      ? undefined
+                      : createVariableName({
+                          prefix: "var",
+                          prev: [...prevStatements, ...prevOperations],
+                        }),
                   })
                 }
                 {...hoverEvents}

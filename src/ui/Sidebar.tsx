@@ -1,7 +1,7 @@
 import { FaGear, FaPlus, FaX } from "react-icons/fa6";
 import { uiConfigStore, useStore } from "../lib/store";
 import { updateOperations } from "../lib/update";
-import { createOperation } from "../lib/utils";
+import { createOperation, createVariableName } from "../lib/utils";
 import { NoteText } from "./NoteText";
 import { IconButton } from "./IconButton";
 import { SiGithub, SiYoutube } from "react-icons/si";
@@ -12,9 +12,6 @@ export function Sidebar() {
   const { operations, addOperation, setOperation } = useStore();
   const { selectedOperationId, setUiConfig, ...uiConfig } = uiConfigStore();
 
-  if (!localStorage.getItem("operations")) {
-    addOperation(createOperation({ name: "main" }));
-  }
   return (
     <div className="flex flex-col ml-auto w-40 border-r">
       <div className="p-1 flex gap-2 justify-between items-center border-b">
@@ -23,7 +20,17 @@ export function Sidebar() {
           size={16}
           icon={FaPlus}
           title="Add operation"
-          onClick={() => addOperation(createOperation({ name: "" }))}
+          onClick={() =>
+            addOperation(
+              createOperation({
+                name: createVariableName({
+                  prefix: "operation",
+                  prev: operations,
+                  indexOffset: 1,
+                }),
+              })
+            )
+          }
         >
           Add
         </IconButton>
