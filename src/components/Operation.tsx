@@ -210,6 +210,7 @@ export function Operation({
                       ],
                     });
                   }}
+                  iconProps={{ title: "Add parameter" }}
                 />
               )}
               <span>{")"}</span>
@@ -257,6 +258,7 @@ export function Operation({
                       statements: [...operation.statements, statement],
                     });
                   }}
+                  iconProps={{ title: "Add statement" }}
                 />
               )}
             </div>

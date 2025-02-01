@@ -174,6 +174,7 @@ export function Statement({
                   addStatement?.(statement, "after");
                   closeDropdown();
                 }}
+                iconProps={{ title: "Add statement below" }}
               />
             </Popover.Dropdown>
           </Popover>

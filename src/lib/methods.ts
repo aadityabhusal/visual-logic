@@ -4,6 +4,7 @@ import {
   createData,
   createOperation,
   createStatement,
+  createVariableName,
   getOperationResult,
   getStatementResult,
   isSameType,
@@ -13,6 +14,7 @@ import { updateStatements } from "./update";
 type IMethodList = {
   name: string;
   parameters: {
+    name?: string;
     type?: keyof IType | "operation";
     parameters?: IMethodList["parameters"];
     isGeneric?: boolean;
@@ -333,9 +335,9 @@ const arrayMethods: IMethodList[] = [
       {
         type: "operation",
         parameters: [
-          { type: "string", isGeneric: true },
-          { type: "number" },
-          { type: "array" },
+          { name: "item", type: "string", isGeneric: true },
+          { name: "index", type: "number" },
+          { name: "arr", type: "array" },
         ],
       },
     ],
@@ -353,9 +355,9 @@ const arrayMethods: IMethodList[] = [
       {
         type: "operation",
         parameters: [
-          { type: "string", isGeneric: true },
-          { type: "number" },
-          { type: "array" },
+          { name: "item", type: "string", isGeneric: true },
+          { name: "index", type: "number" },
+          { name: "arr", type: "array" },
         ],
       },
     ],
@@ -376,9 +378,9 @@ const arrayMethods: IMethodList[] = [
       {
         type: "operation",
         parameters: [
-          { type: "string", isGeneric: true },
-          { type: "number" },
-          { type: "array" },
+          { name: "item", type: "string", isGeneric: true },
+          { name: "index", type: "number" },
+          { name: "arr", type: "array" },
         ],
       },
     ],
@@ -495,9 +497,15 @@ function createParamData(
 ): IStatement["data"] {
   return item.type === "operation"
     ? createOperation({
-        parameters: item.parameters?.map((item) =>
-          createStatement({ data: createParamData(item, data) })
-        ),
+        parameters: item.parameters?.reduce((prev, item) => {
+          prev.push(
+            createStatement({
+              name: item.name ?? createVariableName({ prefix: "param", prev }),
+              data: createParamData(item, data),
+            })
+          );
+          return prev;
+        }, [] as IStatement[]),
         isGeneric: item.isGeneric,
       })
     : createData({ type: item.type || data.type, isGeneric: item.isGeneric });

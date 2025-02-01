@@ -2,7 +2,7 @@ import { IconButton } from "../ui/IconButton";
 import { FaPlus } from "react-icons/fa6";
 import { IOperation, IStatement } from "../lib/types";
 import { createData, createStatement, getDataDropdownList } from "../lib/utils";
-import { useMemo } from "react";
+import { ComponentPropsWithoutRef, useMemo } from "react";
 import { Dropdown } from "./Dropdown";
 
 export function AddStatement({
@@ -10,11 +10,13 @@ export function AddStatement({
   onSelect,
   prevStatements = [],
   prevOperations = [],
+  iconProps,
 }: {
   id: string;
   onSelect: (statement: IStatement) => void;
   prevStatements?: IStatement[];
   prevOperations?: IOperation[];
+  iconProps?: Partial<ComponentPropsWithoutRef<typeof IconButton>>;
 }) {
   const dropdownItems = useMemo(
     () =>
@@ -39,6 +41,7 @@ export function AddStatement({
             size={14}
             className="mt-1 bg-editor"
             {...props}
+            {...iconProps}
           />
         )}
       />

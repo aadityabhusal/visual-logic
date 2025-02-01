@@ -3,12 +3,17 @@ import { IconButton } from "../ui/IconButton";
 import { focusStore } from "../lib/store";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { ParseData } from "./Parse/ParseData";
+import { useHotkeys } from "@mantine/hooks";
 
 export function FocusInfo() {
   const { showPopup, result, setFocus } = focusStore();
 
   const type =
     result?.entityType === "data" ? result?.type : result?.entityType;
+
+  useHotkeys([
+    ["Escape", () => setFocus({ showPopup: false, result: undefined })],
+  ]);
 
   if (!showPopup || !result) return null;
   return (

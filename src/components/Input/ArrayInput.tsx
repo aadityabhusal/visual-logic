@@ -62,6 +62,7 @@ export const ArrayInput = forwardRef<HTMLDivElement, IArrayInput>(
               value: [...data.value, value],
             });
           }}
+          iconProps={{ title: "Add array item" }}
         />
         <span>{"]"}</span>
       </div>

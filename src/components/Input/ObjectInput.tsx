@@ -97,6 +97,7 @@ export const ObjectInput = forwardRef<HTMLDivElement, IObjectInput>(
               handleData({ ...data, type: "object", value: newMap });
             }
           }}
+          iconProps={{ title: "Add object item" }}
         />
         <span>{"}"}</span>
       </div>
