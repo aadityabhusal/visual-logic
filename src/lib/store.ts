@@ -5,7 +5,7 @@ import { IOperation, IStatement } from "./types";
 import { preferenceOptions } from "./data";
 import { createWithEqualityFn } from "zustand/traditional";
 import { shallow } from "zustand/shallow";
-import { get, set, del, createStore } from "idb-keyval";
+import { openDB } from "idb";
 import { createOperation } from "./utils";
 
 export interface IStore {
@@ -14,27 +14,33 @@ export interface IStore {
   setOperation: (operations: IOperation[]) => void;
 }
 
-const idbStore = createStore("visualLogic", "operations");
-const storage = createJSONStorage(
-  () => ({
-    getItem: async (name: string) => (await get(name, idbStore)) || null,
-    setItem: async (name: string, value: string) =>
-      await set(name, value, idbStore),
-    removeItem: async (name: string) => await del(name, idbStore),
-  }),
-  {
-    reviver: (_, data: any) => {
-      return data.type === "object"
-        ? { ...data, value: new Map(data.value as []) }
-        : data;
-    },
-    replacer: (_key, value) => {
-      return value instanceof Map ? Array.from(value.entries()) : value;
-    },
-  }
-);
+const IDbStore = await openDB("visualLogic", 1, {
+  upgrade(db) {
+    db.createObjectStore("operations");
+    db.createObjectStore("uiConfig");
+  },
+});
 
-export const useStore = create(
+const createIDbStorage = <T>(storeName: string) =>
+  createJSONStorage<T>(
+    () => ({
+      getItem: async (key) => (await IDbStore.get(storeName, key)) || null,
+      setItem: async (key, value) => await IDbStore.put(storeName, value, key),
+      removeItem: async (key) => await IDbStore.delete(storeName, key),
+    }),
+    {
+      reviver: (_, data: any) => {
+        return typeof data === "object" && data.type === "object"
+          ? { ...data, value: new Map(data.value as []) }
+          : data;
+      },
+      replacer: (_key, value) => {
+        return value instanceof Map ? Array.from(value.entries()) : value;
+      },
+    }
+  );
+
+export const operationsStore = create(
   persist(
     temporal<IStore>((set) => ({
       operations: [createOperation({ name: "main" })],
@@ -42,41 +48,31 @@ export const useStore = create(
         set((state) => ({ operations: [...state.operations, operation] })),
       setOperation: (operations) => set(() => ({ operations })),
     })),
-    { name: "operations", storage }
+    { name: "operations", storage: createIDbStorage("operations") }
   )
 );
 
+type SetUIConfig = Partial<Omit<IUiConfig, "setUiConfig">>;
 type IUiConfig = Partial<{
   [key in (typeof preferenceOptions)[number]["id"]]: boolean;
 }> & {
   hideSidebar?: boolean;
   selectedOperationId?: string;
-  setUiConfig: (change: Partial<Omit<IUiConfig, "setUiConfig">>) => void;
-};
-
-export const uiConfigStore = createWithEqualityFn(
-  persist<IUiConfig>((set) => ({ setUiConfig: (data) => set({ ...data }) }), {
-    name: "uiConfig",
-  }),
-  shallow
-);
-
-export type IFocusStore = {
   focusId?: string;
   result?: IStatement["data"];
   showPopup?: boolean;
-  setFocus: (
-    change:
-      | Omit<IFocusStore, "setFocus">
-      | ((
-          change: Omit<IFocusStore, "setFocus">
-        ) => Omit<IFocusStore, "setFocus">)
+  setUiConfig: (
+    change: SetUIConfig | ((change: SetUIConfig) => SetUIConfig)
   ) => void;
 };
-export const focusStore = createWithEqualityFn<IFocusStore>(
-  (set) => ({
-    setFocus: (change) =>
-      set((s) => (typeof change === "function" ? change(s) : change)),
-  }),
+
+export const uiConfigStore = createWithEqualityFn(
+  persist<IUiConfig>(
+    (set) => ({
+      setUiConfig: (change) =>
+        set((state) => (typeof change === "function" ? change(state) : change)),
+    }),
+    { name: "uiConfig", storage: createIDbStorage("uiConfig") }
+  ),
   shallow
 );

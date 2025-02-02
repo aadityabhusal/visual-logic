@@ -1,5 +1,5 @@
 import { FaGear, FaPlus, FaX } from "react-icons/fa6";
-import { uiConfigStore, useStore } from "../lib/store";
+import { uiConfigStore, operationsStore } from "../lib/store";
 import { updateOperations } from "../lib/update";
 import { createOperation, createVariableName } from "../lib/utils";
 import { NoteText } from "./NoteText";
@@ -9,7 +9,7 @@ import { Popover } from "@mantine/core";
 import { preferenceOptions } from "../lib/data";
 
 export function Sidebar() {
-  const { operations, addOperation, setOperation } = useStore();
+  const { operations, addOperation, setOperation } = operationsStore();
   const { selectedOperationId, setUiConfig, ...uiConfig } = uiConfigStore();
 
   return (

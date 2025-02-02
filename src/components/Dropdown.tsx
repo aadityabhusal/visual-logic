@@ -7,7 +7,7 @@ import {
   FaCirclePlus,
   FaCircleXmark,
 } from "react-icons/fa6";
-import { focusStore, uiConfigStore, useStore } from "../lib/store";
+import { uiConfigStore, operationsStore } from "../lib/store";
 import { getHotkeyHandler } from "@mantine/hooks";
 import { IDropdownItem, IStatement } from "../lib/types";
 
@@ -45,9 +45,8 @@ export function Dropdown({
     }
   ) => ReactNode;
 }) {
-  const { undo, redo } = useStore.temporal.getState();
-  const { focusId, setFocus } = focusStore();
-  const { highlightOperation } = uiConfigStore();
+  const { undo, redo } = operationsStore.temporal.getState();
+  const { highlightOperation, focusId, setUiConfig } = uiConfigStore();
   const forceDisplayBorder =
     highlightOperation && data?.entityType === "operation";
   const [isHovered, setHovered] = useState(false);
@@ -58,7 +57,7 @@ export function Dropdown({
     onDropdownClose: () => {
       handleSearch(options?.withSearch ? "" : value || "");
       combobox.resetSelectedOption();
-      setFocus((p) => ({ ...p, focusId: undefined, result }));
+      setUiConfig((p) => ({ ...p, focusId: undefined, result }));
     },
     onDropdownOpen: () => options?.withSearch && combobox.focusSearchInput(),
   });
@@ -151,12 +150,13 @@ export function Dropdown({
                 e.stopPropagation();
                 if (options?.focusOnClick) {
                   if (e.target === e.currentTarget) {
-                    setFocus({ focusId: id, result, showPopup: true });
+                    setUiConfig({ focusId: id, result, showPopup: true });
                     combobox?.openDropdown();
                   }
                 } else combobox?.openDropdown();
               },
-              onFocus: () => setFocus({ focusId: id, result, showPopup: true }),
+              onFocus: () =>
+                setUiConfig({ focusId: id, result, showPopup: true }),
             })}
           </Combobox.EventsTarget>
           {handleDelete && (
@@ -191,7 +191,7 @@ export function Dropdown({
               className="absolute -bottom-1.5 -right-1 text-border bg-white rounded-full z-10"
               icon={FaCircleChevronDown}
               onClick={() => {
-                setFocus({ focusId: id, result, showPopup: true });
+                setUiConfig({ focusId: id, result, showPopup: true });
                 combobox?.openDropdown();
               }}
               hidden={!isFocused && !isHovered}

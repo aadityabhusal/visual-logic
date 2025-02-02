@@ -1,6 +1,6 @@
 import { Operation } from "./components/Operation";
 import { ParseOperation } from "./components/Parse/ParseOperation";
-import { uiConfigStore, useStore } from "./lib/store";
+import { uiConfigStore, operationsStore } from "./lib/store";
 import { Header } from "./ui/Header";
 import { Sidebar } from "./ui/Sidebar";
 import { NoteText } from "./ui/NoteText";
@@ -34,10 +34,10 @@ const theme = createTheme({
 });
 
 function App() {
-  const { operations, setOperation } = useStore();
+  const { operations, setOperation } = operationsStore();
   const { displayCode, hideSidebar, selectedOperationId, setUiConfig } =
     uiConfigStore();
-  const { undo, redo } = useStore.temporal.getState();
+  const { undo, redo } = operationsStore.temporal.getState();
 
   const currentOperationIndex = operations.findIndex(
     (item) => item.id === selectedOperationId

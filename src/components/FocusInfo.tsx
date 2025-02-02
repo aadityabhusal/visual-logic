@@ -1,18 +1,18 @@
 import { FaX } from "react-icons/fa6";
 import { IconButton } from "../ui/IconButton";
-import { focusStore } from "../lib/store";
+import { uiConfigStore } from "../lib/store";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { ParseData } from "./Parse/ParseData";
 import { useHotkeys } from "@mantine/hooks";
 
 export function FocusInfo() {
-  const { showPopup, result, setFocus } = focusStore();
+  const { showPopup, result, setUiConfig } = uiConfigStore();
 
   const type =
     result?.entityType === "data" ? result?.type : result?.entityType;
 
   useHotkeys([
-    ["Escape", () => setFocus({ showPopup: false, result: undefined })],
+    ["Escape", () => setUiConfig({ showPopup: false, result: undefined })],
   ]);
 
   if (!showPopup || !result) return null;
@@ -26,7 +26,7 @@ export function FocusInfo() {
           size={12}
           onClick={(e) => {
             e.stopPropagation();
-            setFocus({ showPopup: false, result: undefined });
+            setUiConfig({ showPopup: false, result: undefined });
           }}
         />
       </div>
