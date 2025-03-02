@@ -48,11 +48,11 @@ export function createVariableName({
   indexOffset = 0,
 }: {
   prefix: string;
-  prev: (IStatement | IOperation)[];
+  prev: (IStatement | IOperation | string)[];
   indexOffset?: number;
 }) {
   const index = prev
-    .map((s) => s.name)
+    .map((s) => (typeof s === "string" ? s : s.name))
     .reduce((acc, cur) => {
       const match = cur?.match(new RegExp(`^${prefix}(\\d)?$`));
       if (!match) return acc;

@@ -11,7 +11,7 @@ import {
 } from "./utils";
 import { updateStatements } from "./update";
 
-type IMethodList = {
+export type IMethodList = {
   name: string;
   parameters: {
     name?: string;

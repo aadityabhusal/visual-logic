@@ -3,6 +3,7 @@ import { Statement } from "../Statement";
 import { BaseInput } from "./BaseInput";
 import { AddStatement } from "../AddStatement";
 import { forwardRef, HTMLAttributes } from "react";
+import { createVariableName } from "../../lib/utils";
 
 export interface IObjectInput extends HTMLAttributes<HTMLDivElement> {
   data: IData<"object">;
@@ -93,7 +94,13 @@ export const ObjectInput = forwardRef<HTMLDivElement, IObjectInput>(
           onSelect={(value) => {
             if (!data.value.has("")) {
               let newMap = new Map(data.value);
-              newMap.set("", value);
+              newMap.set(
+                createVariableName({
+                  prefix: "key",
+                  prev: Array.from(data.value.keys()),
+                }),
+                value
+              );
               handleData({ ...data, type: "object", value: newMap });
             }
           }}

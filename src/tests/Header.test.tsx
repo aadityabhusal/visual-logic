@@ -5,6 +5,6 @@ import { Header } from "../ui/Header";
 describe("Header component", () => {
   it("renders header title", () => {
     render(<Header />);
-    expect(screen.getByText(/Visual Logic/i)).toBeDefined();
+    expect(screen.getByText(/Logic Flow/i)).toBeDefined();
   });
 });

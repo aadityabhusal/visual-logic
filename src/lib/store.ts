@@ -14,7 +14,7 @@ export interface IStore {
   setOperation: (operations: IOperation[]) => void;
 }
 
-const IDbStore = await openDB("visualLogic", 1, {
+const IDbStore = await openDB("logicFlow", 1, {
   upgrade(db) {
     db.createObjectStore("operations");
     db.createObjectStore("uiConfig");
