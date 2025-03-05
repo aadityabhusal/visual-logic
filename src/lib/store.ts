@@ -14,7 +14,7 @@ export interface IStore {
   setOperation: (operations: IOperation[]) => void;
 }
 
-const IDbStore = await openDB("logicFlow", 1, {
+const IDbStore = openDB("logicFlow", 1, {
   upgrade(db) {
     db.createObjectStore("operations");
     db.createObjectStore("uiConfig");
@@ -24,9 +24,10 @@ const IDbStore = await openDB("logicFlow", 1, {
 const createIDbStorage = <T>(storeName: string) =>
   createJSONStorage<T>(
     () => ({
-      getItem: async (key) => (await IDbStore.get(storeName, key)) || null,
-      setItem: async (key, value) => await IDbStore.put(storeName, value, key),
-      removeItem: async (key) => await IDbStore.delete(storeName, key),
+      getItem: async (key) => (await IDbStore).get(storeName, key) || null,
+      setItem: async (key, value) =>
+        (await IDbStore).put(storeName, value, key),
+      removeItem: async (key) => (await IDbStore).delete(storeName, key),
     }),
     {
       reviver: (_, data: any) => {
