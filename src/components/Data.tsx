@@ -1,76 +1,99 @@
 import { IData, IOperation, IStatement } from "../lib/types";
-import { Dropdown } from "../ui/Dropdown";
 import { ArrayInput } from "./Input/ArrayInput";
-import { Input } from "./Input/Input";
 import { ObjectInput } from "./Input/ObjectInput";
 import { BooleanInput } from "./Input/BooleanInput";
-import { theme } from "../lib/theme";
-import { ReactNode } from "react";
+import { Dropdown } from "./Dropdown";
+import { getDataDropdownList } from "../lib/utils";
+import { useMemo } from "react";
+import { BaseInput } from "./Input/BaseInput";
 
 interface IProps {
   data: IData;
-  handleData: (data: IData, remove?: boolean) => void;
   disableDelete?: boolean;
   addMethod?: () => void;
-  children?: ReactNode;
+  handleChange(item: IStatement["data"], remove?: boolean): void;
   prevStatements: IStatement[];
   prevOperations: IOperation[];
 }
 
 export function Data({
   data,
-  handleData,
   disableDelete,
   addMethod,
-  children,
+  handleChange,
   prevStatements,
   prevOperations,
 }: IProps) {
+  const dropdownItems = useMemo(
+    () =>
+      getDataDropdownList({
+        data,
+        onSelect: handleChange,
+        prevOperations,
+        prevStatements,
+      }),
+    [data, prevOperations, prevStatements]
+  );
+
+  const showDropdownIcon =
+    !data.reference?.name &&
+    (Array.isArray(data.value) ||
+      data.value instanceof Map ||
+      typeof data.value === "boolean");
+
   return (
     <Dropdown
-      result={data.reference ? { data } : { type: data.type }}
-      handleDelete={!disableDelete ? () => handleData(data, true) : undefined}
+      id={data.id}
+      result={data}
+      items={dropdownItems}
+      handleDelete={!disableDelete ? () => handleChange(data, true) : undefined}
       addMethod={addMethod}
-      head={
+      options={{
+        withDropdownIcon: showDropdownIcon,
+        withSearch: showDropdownIcon,
+        focusOnClick: showDropdownIcon,
+      }}
+      value={data.reference?.name || data.type}
+      isInputTarget={
+        !!data.reference || ["string", "number"].includes(data.type)
+      }
+      target={({ onChange, ...props }) =>
         data.reference?.name ? (
-          <Input
-            data={{
-              id: "",
-              type: "string",
-              value: data.reference?.name,
-              entityType: "data",
-            }}
-            handleData={() => {}}
-            disabled={true}
-            color={theme.color.variable}
-            noQuotes
-          />
+          <BaseInput {...props} onChange={onChange} className="text-variable" />
         ) : Array.isArray(data.value) ? (
           <ArrayInput
             data={data as IData<"array">}
-            handleData={handleData}
+            handleData={handleChange}
             prevStatements={prevStatements}
             prevOperations={prevOperations}
+            onClick={props.onClick}
           />
         ) : data.value instanceof Map ? (
           <ObjectInput
             data={data as IData<"object">}
-            handleData={handleData}
+            handleData={handleChange}
             prevStatements={prevStatements}
             prevOperations={prevOperations}
+            onClick={props.onClick}
           />
         ) : typeof data.value === "boolean" ? (
-          <BooleanInput data={data} handleData={handleData} />
+          <BooleanInput data={data} handleData={handleChange} />
         ) : (
-          <Input
-            data={data}
-            handleData={handleData}
-            color={theme.color[data.type === "number" ? "number" : "string"]}
+          <BaseInput
+            {...props}
+            type={data.type === "number" ? "number" : "text"}
+            className={data.type === "number" ? "text-number" : "text-string"}
+            value={data.value.toString()}
+            onChange={(_val) => {
+              onChange?.(_val);
+              const value =
+                data.type === "number" ? Number(_val.slice(0, 16)) : _val;
+              handleChange({ ...data, value });
+            }}
+            options={{ withQuotes: data.type === "string" }}
           />
         )
       }
-    >
-      {children}
-    </Dropdown>
+    />
   );
 }

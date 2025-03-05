@@ -1,44 +1,55 @@
-import { AngleLeft, AngleRight, Plus } from "@styled-icons/fa-solid";
-import { Fragment, ReactNode } from "react";
-import styled from "styled-components";
-import { theme } from "../lib/theme";
+import { FaAngleLeft, FaAngleRight } from "react-icons/fa6";
+import { Fragment, useMemo } from "react";
 import { IOperation, IStatement } from "../lib/types";
 import { updateStatements } from "../lib/update";
-import { getOperationResult, createStatement } from "../lib/utils";
-import { Input } from "./Input/Input";
+import {
+  createVariableName,
+  getDataDropdownList,
+  getOperationResult,
+} from "../lib/utils";
 import { Statement } from "./Statement";
-import { Dropdown } from "../ui/Dropdown";
+import { BaseInput } from "./Input/BaseInput";
+import { AddStatement } from "./AddStatement";
+import { IconButton } from "../ui/IconButton";
+import { Dropdown } from "./Dropdown";
 
 export function Operation({
   operation,
-  handleOperation,
+  handleChange,
   addMethod,
   prevStatements,
   prevOperations,
-  disableDelete,
-  children,
+  options,
 }: {
   operation: IOperation;
-  handleOperation(operation: IOperation, remove?: boolean): void;
+  handleChange(item: IStatement["data"], remove?: boolean): void;
   addMethod?: () => void;
   prevStatements: IStatement[];
   prevOperations: IOperation[];
-  disableDelete?: boolean;
-  children?: ReactNode;
+  options?: {
+    disableDelete?: boolean;
+    disableDropdown?: boolean;
+    isTopLevel?: boolean;
+  };
 }) {
-  const hasName = operation.name !== undefined;
+  const dropdownItems = useMemo(
+    () =>
+      getDataDropdownList({
+        data: operation,
+        onSelect: handleChange,
+        prevOperations: options?.disableDropdown ? [] : prevOperations,
+        prevStatements,
+      }),
+    [operation, prevOperations, prevStatements, options?.disableDropdown]
+  );
+
   function handleOperationProps(
     key: keyof IOperation,
     value: IOperation[typeof key]
   ) {
     if (key === "name" && prevOperations.find((item) => item.name === value))
       return;
-    handleOperation({ ...operation, [key]: value });
-  }
-
-  function addStatement() {
-    let statements = [...operation.statements, createStatement()];
-    handleOperation({ ...operation, statements });
+    handleChange({ ...operation, [key]: value });
   }
 
   function handleStatement({
@@ -57,56 +68,41 @@ export function Operation({
       removeStatement: remove,
     });
 
-    handleOperation({
+    handleChange({
       ...operation,
       parameters: updatedStatements.slice(0, parameterLength),
       statements: updatedStatements.slice(parameterLength),
     });
   }
 
-  function addParameter() {
-    let newStatement = createStatement();
-    let parameter = {
-      ...newStatement,
-      name: `p_${newStatement.id.slice(-3)}`,
-    };
-    handleOperation({
-      ...operation,
-      parameters: [...operation.parameters, parameter],
-    });
-  }
-
-  const result = getOperationResult(operation);
-  const AngleIcon = operation.reference?.isCalled ? AngleLeft : AngleRight;
+  const result = useMemo(() => getOperationResult(operation), [operation]);
+  const AngleIcon = operation.reference?.isCalled ? FaAngleLeft : FaAngleRight;
 
   return (
     <Dropdown
-      result={{
-        ...(operation?.reference?.isCalled && result.entityType === "data"
-          ? { data: result }
-          : { data: operation }),
-      }}
+      id={operation.id}
+      data={operation}
+      result={operation?.reference?.isCalled ? result : operation}
+      items={dropdownItems}
       handleDelete={
-        !disableDelete ? () => handleOperation(operation, true) : undefined
+        options?.disableDelete || options?.isTopLevel
+          ? undefined
+          : () => handleChange(operation, true)
       }
+      options={
+        options?.disableDropdown || operation.reference
+          ? undefined
+          : { withSearch: true, withDropdownIcon: true, focusOnClick: true }
+      }
+      value={operation.reference?.name || "operation"}
       addMethod={addMethod}
-      head={
-        operation.reference?.name ? (
-          <OperationHead>
-            <Input
-              data={{
-                id: "",
-                type: "string",
-                value: operation.reference?.name,
-                entityType: "data",
-              }}
-              handleData={() => {}}
-              disabled={true}
-              color={theme.color.variable}
-              noQuotes
-            />
+      isInputTarget={!!operation.reference}
+      target={(props) =>
+        operation.reference ? (
+          <div className="flex items-start gap-1" onClick={props.onClick}>
+            <BaseInput {...props} className="text-variable" />
             {operation.reference.isCalled && (
-              <OperationHead>
+              <div className="flex items-start gap-1">
                 <span>{"("}</span>
                 {operation.parameters.map((parameter, i, paramList) => (
                   <Fragment key={i}>
@@ -118,22 +114,26 @@ export function Operation({
                       }
                       prevStatements={prevStatements}
                       prevOperations={prevOperations}
-                      disableName={true}
-                      disableDelete={true}
+                      options={{ disableDelete: true }}
                     />
                     {i + 1 < paramList.length && <span>,</span>}
                   </Fragment>
                 ))}
                 <span>{")"}</span>
-              </OperationHead>
+              </div>
             )}
-            {!disableDelete && (
-              <AngleIcon
-                size={12}
-                style={{ marginTop: 2.5 }}
+            {!options?.disableDelete && (
+              <IconButton
+                icon={AngleIcon}
+                className="mt-1"
+                title={
+                  !operation.reference.isCalled
+                    ? "Call operation"
+                    : "Close operation call"
+                }
                 onClick={() =>
                   operation.reference &&
-                  handleOperation({
+                  handleChange({
                     ...operation,
                     reference: {
                       ...operation.reference,
@@ -143,27 +143,22 @@ export function Operation({
                 }
               />
             )}
-          </OperationHead>
+          </div>
         ) : (
-          <OperationWrapper>
-            <OperationHead>
-              {hasName && (
-                <Input
-                  data={{
-                    id: "",
-                    type: "string",
-                    value: operation.name || "",
-                    entityType: "data",
-                  }}
-                  handleData={(data) => {
-                    let name = (data.value as string) || operation.name;
+          <div className="max-w-max" onClick={props.onClick}>
+            <div className="flex items-start gap-1">
+              {operation.name !== undefined && (
+                <BaseInput
+                  value={operation.name || ""}
+                  onChange={(value) => {
+                    let name = value || operation.name;
+                    if (name === "operation") return;
                     const exists = prevOperations.find(
                       (item) => item.name === name
                     );
                     if (!exists) handleOperationProps("name", name);
                   }}
-                  color={theme.color.variable}
-                  noQuotes
+                  className={"text-variable"}
                 />
               )}
               <span>{"("}</span>
@@ -179,29 +174,53 @@ export function Operation({
                         parameterLength: paramList.length + (remove ? -1 : 0),
                       })
                     }
-                    disableMethods={true}
-                    disableDelete={disableDelete}
-                    disableNameToggle={true}
+                    options={{
+                      enableVariable: true,
+                      disableDelete: options?.disableDelete,
+                      disableMethods: true,
+                      disableNameToggle: true,
+                    }}
                     prevStatements={[]}
                     prevOperations={[]}
                   />
                   {i + 1 < paramList.length && <span>,</span>}
                 </Fragment>
               ))}
-              {!disableDelete && (
-                <Plus
-                  size={10}
-                  style={{ cursor: "pointer", marginTop: 3 }}
-                  onClick={addParameter}
+              {options?.disableDelete ? null : (
+                <AddStatement
+                  id={`${operation.id}_paramAddStatement`}
+                  prevStatements={prevStatements}
+                  prevOperations={prevOperations}
+                  onSelect={(statement) => {
+                    handleChange({
+                      ...operation,
+                      parameters: [
+                        ...operation.parameters,
+                        {
+                          ...statement,
+                          name: createVariableName({
+                            prefix: "param",
+                            prev: [
+                              ...operation.parameters,
+                              ...prevStatements,
+                              ...prevOperations,
+                            ],
+                          }),
+                        },
+                      ],
+                    });
+                  }}
+                  iconProps={{ title: "Add parameter" }}
                 />
               )}
               <span>{")"}</span>
-            </OperationHead>
-            <OperationBody>
+            </div>
+            <div className="pl-4 [&>div]:mb-1 w-fit">
               {operation.statements.map((statement, i) => (
                 <Statement
                   key={statement.id}
                   statement={statement}
+                  options={{ enableVariable: true }}
                   handleStatement={(statement, remove) =>
                     handleStatement({ statement, remove })
                   }
@@ -211,36 +230,41 @@ export function Operation({
                     ...operation.statements.slice(0, i),
                   ]}
                   prevOperations={prevOperations}
+                  addStatement={(statement, position) => {
+                    const index = position === "before" ? i : i + 1;
+                    handleChange({
+                      ...operation,
+                      statements: [
+                        ...operation.statements.slice(0, index),
+                        statement,
+                        ...operation.statements.slice(index),
+                      ],
+                    });
+                  }}
                 />
               ))}
-              <Plus
-                size={10}
-                style={{ cursor: "pointer" }}
-                onClick={addStatement}
-              />
-            </OperationBody>
-          </OperationWrapper>
+              {operation.statements.length ? null : (
+                <AddStatement
+                  id={`${operation.id}_addStatement`}
+                  prevStatements={[
+                    ...prevStatements,
+                    ...operation.parameters,
+                    ...operation.statements,
+                  ]}
+                  prevOperations={prevOperations}
+                  onSelect={(statement) => {
+                    handleChange({
+                      ...operation,
+                      statements: [...operation.statements, statement],
+                    });
+                  }}
+                  iconProps={{ title: "Add statement" }}
+                />
+              )}
+            </div>
+          </div>
         )
       }
-    >
-      {children}
-    </Dropdown>
+    />
   );
 }
-
-const OperationWrapper = styled.div`
-  max-width: max-content;
-`;
-
-const OperationHead = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 0.25rem;
-`;
-
-const OperationBody = styled.div`
-  padding-left: 1rem;
-  & > div {
-    margin-bottom: 4px;
-  }
-`;

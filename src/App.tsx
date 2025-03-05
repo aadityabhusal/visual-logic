@@ -1,25 +1,59 @@
-import styled, { ThemeProvider } from "styled-components";
 import { Operation } from "./components/Operation";
 import { ParseOperation } from "./components/Parse/ParseOperation";
-import { useStore } from "./lib/store";
-import { theme } from "./lib/theme";
+import { uiConfigStore, operationsStore } from "./lib/store";
 import { Header } from "./ui/Header";
-import { NoteText, Sidebar } from "./ui/Sidebar";
+import { Sidebar } from "./ui/Sidebar";
+import { NoteText } from "./ui/NoteText";
 import { updateOperations } from "./lib/update";
 import { useEffect } from "react";
-import { visitCount } from "./ui/services";
+import { visitCount } from "./lib/services";
+import { useHotkeys } from "@mantine/hooks";
+import {
+  ActionIcon,
+  createTheme,
+  HeadlessMantineProvider,
+  Tooltip,
+} from "@mantine/core";
+import { IOperation } from "./lib/types";
+import { FocusInfo } from "./components/FocusInfo";
+
+const theme = createTheme({
+  scale: 1,
+  components: {
+    Tooltip: Tooltip.extend({
+      classNames: {
+        tooltip: "absolute bg-dropdown-default px-2 py-1 rounded-md text-xs",
+      },
+    }),
+    ActionIcon: ActionIcon.extend({
+      classNames: {
+        root: "focus:outline focus:outline-1 focus:outline-white hover:opacity-90 disabled:text-disabled",
+      },
+    }),
+  },
+});
 
 function App() {
-  const { operations, setOperation, currentId, setCurrentId, preferences } =
-    useStore((state) => state);
+  const { operations, setOperation } = operationsStore();
+  const { displayCode, hideSidebar, selectedOperationId, setUiConfig } =
+    uiConfigStore();
+  const { undo, redo } = operationsStore.temporal.getState();
 
   const currentOperationIndex = operations.findIndex(
-    (item) => item.id === currentId
+    (item) => item.id === selectedOperationId
   );
   const currentOperation = operations[currentOperationIndex];
 
+  useHotkeys([
+    ["meta+shift+z", () => redo()],
+    ["meta+z", () => undo()],
+    ["meta+y", () => redo()],
+  ]);
+
   useEffect(() => {
-    if (!currentId && operations[0]) setCurrentId(operations[0]?.id);
+    if (!selectedOperationId && operations[0]) {
+      setUiConfig({ selectedOperationId: operations[0]?.id });
+    }
   });
 
   useEffect(() => {
@@ -27,66 +61,41 @@ function App() {
   }, []);
 
   return (
-    <ThemeProvider theme={theme}>
-      <AppWrapper>
+    <HeadlessMantineProvider theme={theme}>
+      <div className="flex flex-col h-screen">
         <Header />
-        <AppContainer>
-          <OperationContainer>
+        <div className="flex flex-1 min-h-0 relative">
+          {!hideSidebar && <Sidebar />}
+          <div className={"p-1 flex-1 overflow-y-auto scroll"}>
             {currentOperation ? (
               <Operation
                 operation={currentOperation}
-                handleOperation={(operation) =>
+                handleChange={(operation: IOperation) =>
                   setOperation(updateOperations(operations, operation))
                 }
                 prevStatements={[]}
                 prevOperations={operations.slice(0, currentOperationIndex)}
+                options={{ isTopLevel: true, disableDropdown: true }}
               />
             ) : (
               <NoteText>Select an operation</NoteText>
             )}
-          </OperationContainer>
-          {preferences.displayCode && currentOperation ? (
-            <OperationContainer>
+            <FocusInfo />
+          </div>
+          {displayCode && currentOperation ? (
+            <div className={"p-1 flex-1 overflow-y-auto scroll border-l"}>
               <NoteText border italic>
                 In-progress and preview-only.
               </NoteText>
               <pre>
                 <ParseOperation operation={currentOperation} />
               </pre>
-            </OperationContainer>
+            </div>
           ) : null}
-          {!preferences.hideSidebar && <Sidebar />}
-        </AppContainer>
-      </AppWrapper>
-    </ThemeProvider>
+        </div>
+      </div>
+    </HeadlessMantineProvider>
   );
 }
-
-const AppWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-`;
-
-const AppContainer = styled.div`
-  display: flex;
-  flex: 1;
-  min-height: 0;
-`;
-
-const OperationContainer = styled.div`
-  padding: 0.25rem;
-  padding-bottom: 25%;
-  flex: 1;
-  overflow-y: auto;
-  border-right: 1px solid ${({ theme }) => theme.color.border};
-
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: ${({ theme }) => theme.background.dropdown.scrollbar};
-  }
-`;
 
 export default App;

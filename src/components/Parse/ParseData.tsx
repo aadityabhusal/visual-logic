@@ -1,5 +1,4 @@
 import { Fragment } from "react";
-import styled from "styled-components";
 import { theme } from "../../lib/theme";
 import { IData } from "../../lib/types";
 import { ParseStatement } from "./ParseStatement";
@@ -14,7 +13,7 @@ export function ParseData({
   nest?: number;
 }) {
   if (!showData && data.reference?.name) {
-    return <Variable>{data.reference?.name}</Variable>;
+    return <span className="text-variable">{data.reference?.name}</span>;
   }
   if (Array.isArray(data.value)) {
     return (
@@ -52,18 +51,18 @@ function ParseObject({
 }) {
   let val = Array.from(data.value);
   return (
-    <DataWrapper>
-      <Brackets>{"{"}</Brackets>
+    <span className="gap-1">
+      <span className="text-method">{"{"}</span>
       {val.map(([key, val], i, arr) => (
         <Fragment key={i}>
-          <Property>{key}</Property>
+          <span className="text-property">{key}</span>
           {": "}
           <ParseStatement statement={val} showData={showData} nest={nest} />
           {i + 1 < arr.length && ", "}
         </Fragment>
       ))}
-      <Brackets>{"}"}</Brackets>
-    </DataWrapper>
+      <span className="text-method">{"}"}</span>
+    </span>
   );
 }
 
@@ -77,31 +76,15 @@ function ParseArray({
   nest?: number;
 }) {
   return (
-    <DataWrapper>
-      <Brackets>{"["}</Brackets>
+    <span className="gap-1">
+      <span className="text-method">{"["}</span>
       {data.value.map((item, i, arr) => (
         <Fragment key={i}>
           <ParseStatement statement={item} showData={showData} nest={nest} />
           {i + 1 < arr.length && ", "}
         </Fragment>
       ))}
-      <Brackets>{"]"}</Brackets>
-    </DataWrapper>
+      <span className="text-method">{"]"}</span>
+    </span>
   );
 }
-
-const Brackets = styled.span`
-  color: ${({ theme }) => theme.color.method};
-`;
-
-const Variable = styled.span`
-  color: ${({ theme }) => theme.color.variable};
-`;
-
-const DataWrapper = styled.span`
-  gap: 4px;
-`;
-
-const Property = styled.span`
-  color: ${({ theme }) => theme.color.property};
-`;

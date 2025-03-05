@@ -1,5 +1,4 @@
 import React, { ReactNode } from "react";
-import { theme } from "../lib/theme";
 
 export class ErrorBoundary extends React.Component<{
   displayError?: boolean;
@@ -13,11 +12,7 @@ export class ErrorBoundary extends React.Component<{
 
   render() {
     if (this.state.errorMessage && this.props.displayError) {
-      return (
-        <div style={{ color: theme.color.error }}>
-          {this.state.errorMessage}
-        </div>
-      );
+      return <div className="text-error">{this.state.errorMessage}</div>;
     }
     return this.props.children;
   }

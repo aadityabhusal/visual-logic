@@ -1,63 +1,64 @@
 import { nanoid } from "nanoid";
 import { TypeMapper } from "./data";
-import { IData, IOperation, IMethod, IStatement, IType } from "./types";
+import { IData, IOperation, IStatement, IType, IDropdownItem } from "./types";
+import { updateStatements } from "./update";
 
-export function createData<T extends keyof IType>({
-  type,
-  value,
-  isGeneric,
-}: {
-  type: T;
-  value?: IType[T];
-  isGeneric?: boolean;
-}): IData<T> {
+export function createData<T extends keyof IType>(
+  props: Partial<IData<T>>
+): IData<T> {
+  const type = (props.type || "string") as T;
   return {
-    id: nanoid(),
+    id: props.id ?? nanoid(),
     entityType: "data",
     type,
-    value: value || TypeMapper[type].defaultValue,
-    isGeneric,
-    reference: undefined,
+    value: props.value || TypeMapper[type].defaultValue,
+    isGeneric: props.isGeneric,
+    reference: props.reference,
   };
 }
 
-export function createOperation(props?: {
-  name?: string;
-  parameters?: IStatement[];
-  isGeneric?: boolean;
-}): IOperation {
-  let id = nanoid();
+export function createOperation(props?: Partial<IOperation>): IOperation {
   return {
-    id,
+    id: props?.id ?? nanoid(),
     isGeneric: props?.isGeneric,
     entityType: "operation",
-    name:
-      props?.name ||
-      (props?.name !== undefined ? `f_${id.slice(-3)}` : undefined),
+    name: props?.name,
     parameters: props?.parameters || [],
-    statements: [],
-    closure: [],
-    reference: undefined,
+    statements: props?.statements || [],
+    closure: props?.closure || [],
+    reference: props?.reference,
   };
 }
 
-export function createStatement(props?: {
-  id?: string;
-  name?: string;
-  data?: IStatement["data"];
-  methods?: IMethod[];
-}): IStatement {
+export function createStatement(props?: Partial<IStatement>): IStatement {
   let newData = props?.data || createData({ type: "string", isGeneric: true });
   let newId = props?.id || nanoid();
   return {
     id: newId,
-    name:
-      props?.name ||
-      (props?.name !== undefined ? `v_${newId.slice(-3)}` : undefined),
+    name: props?.name,
     entityType: "statement",
     data: newData,
     methods: props?.methods || [],
   };
+}
+
+export function createVariableName({
+  prefix,
+  prev,
+  indexOffset = 0,
+}: {
+  prefix: string;
+  prev: (IStatement | IOperation | string)[];
+  indexOffset?: number;
+}) {
+  const index = prev
+    .map((s) => (typeof s === "string" ? s : s.name))
+    .reduce((acc, cur) => {
+      const match = cur?.match(new RegExp(`^${prefix}(\\d)?$`));
+      if (!match) return acc;
+      return match[1] ? Math.max(acc, Number(match[1]) + 1) : Math.max(acc, 1);
+    }, indexOffset);
+  return `${prefix}${index || ""}`;
 }
 
 export function isSameType(
@@ -102,7 +103,7 @@ export function getStatementResult(
   statement: IStatement,
   index?: number,
   prevEntity?: boolean
-): IData | IOperation {
+): IStatement["data"] {
   let data = statement.data;
   if (index) return statement.methods[index - 1]?.result;
   let lastStatement = statement.methods[statement.methods.length - 1];
@@ -123,6 +124,7 @@ export function resetParameters(
       let argValue = argData?.entityType === "data" ? argData.value : undefined;
       paramData = {
         ...paramData,
+        id: nanoid(),
         value: argValue || TypeMapper[paramData.type].defaultValue,
       };
     } else {
@@ -130,10 +132,11 @@ export function resetParameters(
         argData?.entityType === "operation" ? argData.parameters : undefined;
       paramData = {
         ...paramData,
+        id: nanoid(),
         parameters: resetParameters(paramData.parameters, argParams),
       };
     }
-    return { ...param, data: paramData };
+    return { ...param, id: nanoid(), data: paramData };
   });
 }
 
@@ -164,3 +167,116 @@ export const setLocalStorage = (key: string, value: any) => {
   }
   localStorage.setItem(key, JSON.stringify(value, replacer));
 };
+
+export function getDataDropdownList({
+  data,
+  onSelect,
+  prevStatements,
+  prevOperations,
+}: {
+  data: IStatement["data"];
+  onSelect: (operation: IStatement["data"], remove?: boolean) => void;
+  prevStatements: IStatement[];
+  prevOperations: IOperation[];
+}) {
+  function selectData(dataOption: IData, reference: IStatement) {
+    onSelect({
+      ...dataOption,
+      id: data.id,
+      isGeneric: data.isGeneric,
+      reference: reference.name
+        ? { id: reference.id, name: reference.name }
+        : undefined,
+    });
+  }
+
+  function selectOperations(
+    operation: IOperation,
+    reference: IStatement | IOperation
+  ) {
+    const parameters = resetParameters(operation.parameters);
+    const closure = getClosureList(reference) || [];
+    const statements = updateStatements({
+      statements: operation.statements,
+      previous: [
+        ...prevOperations,
+        ...prevStatements,
+        ...closure,
+        ...parameters,
+      ],
+    });
+
+    onSelect({
+      ...operation,
+      isGeneric: data.isGeneric,
+      id: data.id,
+      parameters,
+      closure,
+      statements,
+      reference: reference.name
+        ? { id: reference.id, name: reference.name }
+        : undefined,
+    });
+  }
+
+  return [
+    ...(Object.keys(TypeMapper) as (keyof IType)[]).reduce((acc, type) => {
+      if (data.isGeneric || (data.reference && type === (data as IData).type)) {
+        acc.push({
+          entityType: "data",
+          value: type,
+          onClick: () => {
+            onSelect(
+              createData({ id: data.id, type, isGeneric: data.isGeneric })
+            );
+          },
+        });
+      }
+      return acc;
+    }, [] as IDropdownItem[]),
+    ...(data.isGeneric || (data.reference && data.entityType === "operation")
+      ? ([
+          {
+            entityType: "operation",
+            value: "operation",
+            onClick: () => {
+              const parameters =
+                data.entityType === "operation" ? data.parameters : [];
+              onSelect(
+                createOperation({
+                  id: data.id,
+                  isGeneric: data.isGeneric,
+                  parameters,
+                })
+              );
+            },
+          },
+        ] as IDropdownItem[])
+      : []),
+    ...prevStatements.flatMap((statement) => {
+      const result = getStatementResult(statement);
+      if ((!data.isGeneric && !isSameType(result, data)) || !statement.name)
+        return [];
+      return {
+        secondaryLabel:
+          result.entityType === "data" ? result.type : "operation",
+        value: statement.name,
+        entityType: "data",
+        onClick: () =>
+          result.entityType === "operation"
+            ? selectOperations(result, statement)
+            : selectData(result, statement),
+      } as IDropdownItem;
+    }),
+    ...prevOperations.flatMap((operation) => {
+      let result = getStatementResult(createStatement({ data: operation }));
+      if (!data.isGeneric && !isSameType(result, data)) return [];
+      return {
+        value: operation.name,
+        entityType: "operation",
+        secondaryLabel: "operation",
+        onClick: () => selectOperations(operation, operation),
+      } as IDropdownItem;
+    }),
+  ];
+}

@@ -1,7 +1,6 @@
 import { Fragment } from "react";
 import { IOperation } from "../../lib/types";
 import { ParseStatement } from "./ParseStatement";
-import { Reserved, Variable } from "./styles";
 
 export function ParseOperation({
   operation,
@@ -16,7 +15,7 @@ export function ParseOperation({
   }
   return operation.reference ? (
     <>
-      <Variable>{operation.reference.name}</Variable>
+      <span className="text-variable">{operation.reference.name}</span>
       {operation.reference.isCalled && (
         <>
           {"("}
@@ -33,11 +32,12 @@ export function ParseOperation({
   ) : (
     <>
       <span>
-        <Reserved>function</Reserved> <Variable>{operation.name}</Variable>
+        <span className="text-reserved">function</span>{" "}
+        <span className="text-variable">{operation.name}</span>
         {`(`}
         {operation.parameters.map((parameter, i, arr) => (
           <Fragment key={i}>
-            <Variable>{parameter.name}</Variable>
+            <span className="text-variable">{parameter.name}</span>
             {i + 1 < arr.length && <span>{","}</span>}
           </Fragment>
         ))}
@@ -48,7 +48,7 @@ export function ParseOperation({
           <span key={i}>
             {getTabs(nest + 1)}
             {i + 1 === statements.length ? (
-              <Reserved>return </Reserved>
+              <span className="text-reserved">return </span>
             ) : (
               <ParseVariable name={statement.name} />
             )}
@@ -66,7 +66,8 @@ export function ParseOperation({
 export function ParseVariable({ name }: { name?: string }) {
   return !name ? null : (
     <>
-      <Reserved>let</Reserved> <Variable>{name}</Variable> <span>= </span>
+      <span className="text-reserved">let</span>{" "}
+      <span className="text-variable">{name}</span> <span>= </span>
     </>
   );
 }

@@ -1,41 +1,55 @@
-import { Equals, RightLong, TurnUp } from "@styled-icons/fa-solid";
-import styled from "styled-components";
-import { theme } from "../lib/theme";
+import { FaEquals, FaArrowRightLong, FaArrowTurnUp } from "react-icons/fa6";
 import { IData, IMethod, IOperation, IStatement } from "../lib/types";
 import { updateStatementMethods } from "../lib/update";
 import {
   isSameType,
   getStatementResult,
   getPreviousStatements,
+  createVariableName,
 } from "../lib/utils";
 import { createMethod } from "../lib/methods";
 import { Data } from "./Data";
-import { Input } from "./Input/Input";
+import { BaseInput } from "./Input/BaseInput";
 import { Method } from "./Method";
 import { Operation } from "./Operation";
-import { DropdownList } from "./DropdownList";
+import { IconButton } from "../ui/IconButton";
+import { AddStatement } from "./AddStatement";
+import { useDisclosure } from "@mantine/hooks";
+import { Popover, useDelayedHover } from "@mantine/core";
+import { TypeMapper } from "../lib/data";
 
 export function Statement({
   statement,
   handleStatement,
-  disableName,
-  disableNameToggle,
-  disableDelete,
-  disableMethods,
   prevStatements,
   prevOperations,
+  addStatement,
+  options,
 }: {
   statement: IStatement;
   handleStatement: (statement: IStatement, remove?: boolean) => void;
-  disableName?: boolean;
-  disableNameToggle?: boolean;
-  disableDelete?: boolean;
-  disableMethods?: boolean;
   prevStatements: IStatement[];
   prevOperations: IOperation[];
+  addStatement?: (statement: IStatement, position: "before" | "after") => void;
+  options?: {
+    enableVariable?: boolean;
+    disableNameToggle?: boolean;
+    disableDelete?: boolean;
+    disableMethods?: boolean;
+  };
 }) {
   const hasName = statement.name !== undefined;
-  const PipeArrow = statement.methods.length > 1 ? TurnUp : RightLong;
+
+  const [hoverOpened, { open, close }] = useDisclosure(false);
+  const { openDropdown, closeDropdown } = useDelayedHover({
+    open,
+    close,
+    openDelay: 0,
+    closeDelay: 150,
+  });
+
+  const PipeArrow =
+    statement.methods.length > 1 ? FaArrowTurnUp : FaArrowRightLong;
 
   function addMethod() {
     let data = getStatementResult(statement);
@@ -96,77 +110,112 @@ export function Statement({
     );
   }
 
-  const dropdownList = (
-    <DropdownList
-      data={statement.data}
-      handleData={handleData}
-      prevStatements={prevStatements}
-      prevOperations={prevOperations}
-      handelOperation={handelOperation}
-    />
-  );
+  const hoverEvents = {
+    onMouseEnter: openDropdown,
+    onFocus: openDropdown,
+    onMouseLeave: closeDropdown,
+    onBlur: closeDropdown,
+  };
 
   return (
-    <StatementWrapper>
-      {!disableName ? (
-        <StatementName>
+    <div className="flex items-start gap-1">
+      {options?.enableVariable ? (
+        <div className="flex items-center gap-1 mr-1 [&>svg]:cursor-pointer [&>svg]:shrink-0">
           {hasName ? (
-            <Input
-              data={{
-                id: "",
-                type: "string",
-                value: statement.name || "",
-                entityType: "data",
+            <BaseInput
+              value={statement.name || ""}
+              className="text-variable"
+              onChange={(value) => {
+                let name = value || statement.name || "";
+                if (
+                  [
+                    ...Object.keys(TypeMapper),
+                    ...prevStatements.map((s) => s.name),
+                    ...prevOperations.map((s) => s.name),
+                    "operation",
+                  ].includes(name)
+                ) {
+                  return;
+                }
+                handleStatement({ ...statement, name });
               }}
-              handleData={(data) => {
-                let name = (data.value as string) || statement.name;
-                const exists = prevStatements.find(
-                  (item) => item.name === name
-                );
-                if (!exists) handleStatement({ ...statement, name });
-              }}
-              color={theme.color.variable}
-              noQuotes
             />
           ) : null}
-          <Equals
-            size={10}
-            style={{ paddingTop: "0.25rem" }}
-            onClick={() =>
-              !disableNameToggle &&
-              handleStatement({
-                ...statement,
-                name: hasName ? undefined : `v_${statement.id.slice(-3)}`,
-              })
-            }
-          />
-        </StatementName>
+          <Popover opened={hoverOpened} offset={-2} withinPortal={false}>
+            <Popover.Target>
+              <IconButton
+                icon={FaEquals}
+                className="mt-[5px]"
+                title="Create variable"
+                onClick={() =>
+                  !options?.disableNameToggle &&
+                  handleStatement({
+                    ...statement,
+                    name: hasName
+                      ? undefined
+                      : createVariableName({
+                          prefix: "var",
+                          prev: [...prevStatements, ...prevOperations],
+                        }),
+                  })
+                }
+                {...hoverEvents}
+              />
+            </Popover.Target>
+            <Popover.Dropdown
+              classNames={{ dropdown: "absolute bg-inherit" }}
+              {...hoverEvents}
+            >
+              <AddStatement
+                id={`${statement.id}_addStatement`}
+                prevStatements={[...prevStatements, statement]}
+                prevOperations={prevOperations}
+                onSelect={(statement) => {
+                  addStatement?.(statement, "after");
+                  closeDropdown();
+                }}
+                iconProps={{ title: "Add statement below" }}
+              />
+            </Popover.Dropdown>
+          </Popover>
+        </div>
       ) : null}
-      <RightHandWrapper newLine={statement.methods.length > 1}>
+      <div
+        className={
+          "flex items-start gap-0 " +
+          (statement.methods.length > 1 ? "flex-col" : "flex-row")
+        }
+      >
         {statement.data.entityType === "data" ? (
           <Data
             data={statement.data}
-            handleData={(data, remove) => handleData(data, remove)}
-            disableDelete={disableDelete}
+            disableDelete={options?.disableDelete}
             addMethod={
-              !disableMethods && statement.methods.length === 0
+              !options?.disableMethods && statement.methods.length === 0
                 ? addMethod
                 : undefined
             }
-            children={dropdownList}
             prevStatements={prevStatements}
             prevOperations={prevOperations}
+            handleChange={
+              statement.data.entityType === "data"
+                ? handleData
+                : handelOperation
+            }
           />
         ) : (
           <Operation
             operation={statement.data}
-            handleOperation={handelOperation}
+            handleChange={
+              statement.data.entityType === "operation"
+                ? handelOperation
+                : handleData
+            }
             prevStatements={prevStatements}
             prevOperations={prevOperations}
-            disableDelete={disableDelete}
-            children={dropdownList}
+            options={{ disableDelete: options?.disableDelete }}
             addMethod={
-              !disableMethods &&
+              !options?.disableMethods &&
               statement.methods.length === 0 &&
               statement.data.reference?.isCalled
                 ? addMethod
@@ -178,12 +227,11 @@ export function Statement({
           let data = getStatementResult(statement, i, true);
           if (data.entityType !== "data") return;
           return (
-            <div key={method.id} style={{ display: "flex" }}>
+            <div key={method.id} className="flex items-start gap-1 ml-1">
               <PipeArrow
-                size={12}
-                color={theme.color.disabled}
+                size={10}
+                className="text-disabled mt-1.5"
                 style={{
-                  margin: `4 4 0 ${methods.length > 1 ? 4 : 0}`,
                   transform: methods.length > 1 ? "rotate(90deg)" : "",
                 }}
               />
@@ -194,7 +242,7 @@ export function Statement({
                 prevStatements={prevStatements}
                 prevOperations={prevOperations}
                 addMethod={
-                  !disableMethods && i + 1 === methods.length
+                  !options?.disableMethods && i + 1 === methods.length
                     ? addMethod
                     : undefined
                 }
@@ -202,31 +250,7 @@ export function Statement({
             </div>
           );
         })}
-      </RightHandWrapper>
-    </StatementWrapper>
+      </div>
+    </div>
   );
 }
-
-const StatementWrapper = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 0.25rem;
-`;
-
-const StatementName = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  margin-right: 0.25rem;
-  & > svg {
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-`;
-
-const RightHandWrapper = styled.div<{ newLine?: boolean }>`
-  display: flex;
-  align-items: flex-start;
-  gap: ${({ newLine }) => (newLine ? "0px" : "4px")};
-  flex-direction: ${({ newLine }) => (newLine ? "column" : "row")};
-`;

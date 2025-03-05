@@ -1,10 +1,9 @@
 import { IData, IMethod, IOperation, IStatement } from "../lib/types";
 import { Statement } from "./Statement";
-import { DropdownOption, DropdownOptions } from "../ui/Dropdown";
-import { Dropdown } from "../ui/Dropdown";
+import { Dropdown } from "./Dropdown";
 import { createMethod, getFilteredMethods, methodsList } from "../lib/methods";
 import { getStatementResult } from "../lib/utils";
-import { theme } from "../lib/theme";
+import { BaseInput } from "./Input/BaseInput";
 
 interface IProps {
   data: IData;
@@ -25,7 +24,7 @@ export function Method({
 }: IProps) {
   function handleDropdown(name: string) {
     if (method.name === name) return;
-    handleMethod({ ...createMethod({ data, name }) });
+    handleMethod(createMethod({ data, name, prevParams: method.parameters }));
   }
 
   function handleParameter(item: IStatement, index: number) {
@@ -45,43 +44,35 @@ export function Method({
 
   return (
     <Dropdown
-      result={{ data: method.result }}
-      handleDelete={() => handleMethod(method, true)}
+      id={method.id}
+      result={method.result}
+      items={getFilteredMethods(data).map((item) => ({
+        label: item.name,
+        value: item.name,
+        color: "method",
+        entityType: "method",
+        onClick: () => handleDropdown(item.name),
+      }))}
+      value={method.name}
       addMethod={addMethod}
-      head={
-        <>
-          <span style={{ color: theme.color.method }}>
-            {method.name || ".."}
-          </span>
-          <span>{"("}</span>
-          {method.parameters.map((item, i, arr) => (
-            <span key={i} style={{ display: "flex" }}>
-              <Statement
-                statement={item}
-                handleStatement={(val) => val && handleParameter(val, i)}
-                disableDelete={true}
-                disableName={true}
-                prevStatements={prevStatements}
-                prevOperations={prevOperations}
-              />
-              {i < arr.length - 1 ? <span>{", "}</span> : null}
-            </span>
-          ))}
-          <span>{")"}</span>
-        </>
-      }
+      handleDelete={() => handleMethod(method, true)}
+      isInputTarget
+      target={(props) => <BaseInput {...props} className="text-method" />}
     >
-      <DropdownOptions>
-        {getFilteredMethods(data).map((item) => (
-          <DropdownOption
-            key={item.name}
-            onClick={() => handleDropdown(item.name)}
-            selected={item.name === method.name}
-          >
-            {item.name}
-          </DropdownOption>
-        ))}
-      </DropdownOptions>
+      <span>{"("}</span>
+      {method.parameters.map((item, i, arr) => (
+        <span key={i} className="flex">
+          <Statement
+            statement={item}
+            handleStatement={(val) => val && handleParameter(val, i)}
+            options={{ disableDelete: true }}
+            prevStatements={prevStatements}
+            prevOperations={prevOperations}
+          />
+          {i < arr.length - 1 ? <span>{", "}</span> : null}
+        </span>
+      ))}
+      <span className="self-end">{")"}</span>
     </Dropdown>
   );
 }
