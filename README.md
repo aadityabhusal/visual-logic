@@ -1,6 +1,6 @@
-# Logic Flow
+# Visual Logic
 
-Coding made simple by chaining operations on data.
+Creating programming logic visually by chaining operations on data.
 
 ## Demo
 

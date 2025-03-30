@@ -14,7 +14,7 @@ export function Header() {
         size={20}
         onClick={() => setUiConfig((p) => ({ hideSidebar: !p.hideSidebar }))}
       />
-      <h1 style={{ marginRight: "auto" }}>Logic Flow</h1>
+      <h1 style={{ marginRight: "auto" }}>Visual Logic</h1>
       <div className="flex items-center gap-2">
         <IconButton
           title="Undo"
