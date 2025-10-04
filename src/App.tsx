@@ -39,10 +39,9 @@ function App() {
     uiConfigStore();
   const { undo, redo } = operationsStore.temporal.getState();
 
-  const currentOperationIndex = operations.findIndex(
-    (item) => item.id === selectedOperationId
+  const currentOperation = operations.find(
+    (operation) => operation.id === selectedOperationId
   );
-  const currentOperation = operations[currentOperationIndex];
 
   useHotkeys([
     ["meta+shift+z", () => redo()],
@@ -63,7 +62,7 @@ function App() {
   return (
     <HeadlessMantineProvider theme={theme}>
       <div className="flex flex-col h-screen">
-        <Header />
+        <Header currentOperation={currentOperation} />
         <div className="flex flex-1 min-h-0 relative">
           {!hideSidebar && <Sidebar />}
           <div className={"p-1 flex-1 overflow-y-auto scroll"}>
@@ -74,7 +73,9 @@ function App() {
                   setOperation(updateOperations(operations, operation))
                 }
                 prevStatements={[]}
-                prevOperations={operations.slice(0, currentOperationIndex)}
+                prevOperations={operations.filter(
+                  (operation) => operation.id !== currentOperation.id
+                )}
                 options={{ isTopLevel: true, disableDropdown: true }}
               />
             ) : (
