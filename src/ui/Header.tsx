@@ -4,13 +4,15 @@ import {
   FaArrowRotateRight,
   FaRegCopy,
   FaRegPaste,
+  FaCheck,
 } from "react-icons/fa6";
 import { uiConfigStore, operationsStore } from "../lib/store";
 import { IconButton } from "./IconButton";
-import { useClipboard } from "@mantine/hooks";
+import { useClipboard, useTimeout } from "@mantine/hooks";
 import { IOperation } from "../lib/types";
 import { updateOperations } from "../lib/update";
 import { isValidOperation, jsonParseReviver } from "../lib/utils";
+import { useState } from "react";
 
 export function Header({
   currentOperation,
@@ -21,7 +23,9 @@ export function Header({
   const { undo, redo, pastStates, futureStates } =
     operationsStore.temporal.getState();
   const { operations, setOperation } = operationsStore();
-  const clipboard = useClipboard();
+  const clipboard = useClipboard({ timeout: 500 });
+  const [isOperationPasted, setIsOperationPasted] = useState(false);
+  const pasteAnimation = useTimeout(() => setIsOperationPasted(false), 500);
 
   return (
     <div className="border-b p-2 flex items-center justify-between gap-4">
@@ -34,7 +38,7 @@ export function Header({
       <div className="flex items-center gap-2">
         <IconButton
           title="Copy"
-          icon={FaRegCopy}
+          icon={clipboard.copied ? FaCheck : FaRegCopy}
           size={20}
           onClick={() => clipboard.copy(JSON.stringify(currentOperation))}
           disabled={!currentOperation}
@@ -42,7 +46,7 @@ export function Header({
         />
         <IconButton
           title="Paste"
-          icon={FaRegPaste}
+          icon={isOperationPasted ? FaCheck : FaRegPaste}
           size={20}
           onClick={async () => {
             try {
@@ -58,8 +62,11 @@ export function Header({
                   name: currentOperation?.name,
                 })
               );
+              setIsOperationPasted(true);
+              pasteAnimation.start();
             } catch (error) {
               console.error(error);
+              pasteAnimation.clear();
             }
           }}
           disabled={!currentOperation}
