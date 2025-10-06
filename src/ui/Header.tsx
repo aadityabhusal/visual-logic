@@ -11,8 +11,9 @@ import { IconButton } from "./IconButton";
 import { useClipboard, useTimeout } from "@mantine/hooks";
 import { IOperation } from "../lib/types";
 import { updateOperations } from "../lib/update";
-import { isValidOperation, jsonParseReviver } from "../lib/utils";
+import { jsonParseReviver } from "../lib/utils";
 import { useState } from "react";
+import { IOperationSchema } from "../lib/schemas";
 
 export function Header({
   currentOperation,
@@ -52,8 +53,10 @@ export function Header({
             try {
               const copied = await navigator.clipboard.readText();
               const parsedOperation = JSON.parse(copied, jsonParseReviver);
-              if (!isValidOperation(parsedOperation)) {
-                throw new Error("Invalid operation pasted");
+              const validatedOperation =
+                IOperationSchema.safeParse(parsedOperation);
+              if (validatedOperation.error) {
+                throw new Error(validatedOperation.error.message);
               }
               setOperation(
                 updateOperations(operations, {
