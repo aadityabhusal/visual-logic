@@ -16,6 +16,7 @@ import {
 } from "@mantine/core";
 import { IOperation } from "./lib/types";
 import { FocusInfo } from "./components/FocusInfo";
+import { useSearchParams } from "react-router";
 
 const theme = createTheme({
   scale: 1,
@@ -34,13 +35,13 @@ const theme = createTheme({
 });
 
 function App() {
+  const [searchParams] = useSearchParams();
   const { operations, setOperation } = operationsStore();
-  const { displayCode, hideSidebar, selectedOperationId, setUiConfig } =
-    uiConfigStore();
+  const { displayCode, hideSidebar } = uiConfigStore();
   const { undo, redo } = operationsStore.temporal.getState();
 
   const currentOperation = operations.find(
-    (operation) => operation.id === selectedOperationId
+    (operation) => operation.id === searchParams.get("operationId")
   );
 
   useHotkeys([
@@ -48,12 +49,6 @@ function App() {
     ["meta+z", () => undo()],
     ["meta+y", () => redo()],
   ]);
-
-  useEffect(() => {
-    if (!selectedOperationId && operations[0]) {
-      setUiConfig({ selectedOperationId: operations[0]?.id });
-    }
-  });
 
   useEffect(() => {
     if (window.location.hostname !== "localhost") visitCount();

@@ -7,7 +7,7 @@ export function NoteText(props: {
   children?: ReactNode;
 }) {
   return (
-    <div
+    <p
       className={
         "text-xs text-disabled p-1 " + (props.border ? "border-b" : "")
       }
@@ -17,6 +17,6 @@ export function NoteText(props: {
       }}
     >
       {props.children}
-    </div>
+    </p>
   );
 }

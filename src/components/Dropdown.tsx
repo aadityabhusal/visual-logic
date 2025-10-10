@@ -6,10 +6,12 @@ import {
   FaCircleChevronDown,
   FaCirclePlus,
   FaCircleXmark,
+  FaSquareArrowUpRight,
 } from "react-icons/fa6";
 import { uiConfigStore, operationsStore } from "../lib/store";
 import { getHotkeyHandler } from "@mantine/hooks";
-import { IDropdownItem, IStatement } from "../lib/types";
+import { IDropdownItem, IReference, IStatement } from "../lib/types";
+import { useSearchParams } from "react-router";
 
 export function Dropdown({
   id,
@@ -22,6 +24,7 @@ export function Dropdown({
   children,
   options,
   isInputTarget,
+  reference,
   target,
 }: {
   id: string;
@@ -38,6 +41,7 @@ export function Dropdown({
     focusOnClick?: boolean;
   };
   isInputTarget?: boolean;
+  reference?: IReference;
   target: (
     value: Omit<HTMLAttributes<HTMLElement>, "onChange" | "defaultValue"> & {
       value?: string;
@@ -45,6 +49,7 @@ export function Dropdown({
     }
   ) => ReactNode;
 }) {
+  const [, setSearchParams] = useSearchParams();
   const { undo, redo } = operationsStore.temporal.getState();
   const { highlightOperation, focusId, setUiConfig } = uiConfigStore();
   const forceDisplayBorder =
@@ -159,6 +164,17 @@ export function Dropdown({
                 setUiConfig({ focusId: id, result, showPopup: true }),
             })}
           </Combobox.EventsTarget>
+          {data?.entityType === "operation" && reference && (
+            <IconButton
+              tabIndex={-1}
+              size={8}
+              className="absolute -top-1.5 right-2.5 text-white bg-border rounded-full z-10 p-0.5"
+              icon={FaSquareArrowUpRight}
+              onClick={() => setSearchParams({ operationId: reference.id })}
+              hidden={!isFocused && !isHovered}
+              title="Go to reference"
+            />
+          )}
           {handleDelete && (
             <IconButton
               tabIndex={-1}
@@ -170,6 +186,7 @@ export function Dropdown({
                 handleDelete();
               }}
               hidden={!isFocused && !isHovered}
+              title="Delete"
             />
           )}
           {addMethod && (

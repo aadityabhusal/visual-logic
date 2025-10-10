@@ -32,7 +32,7 @@ export function Header({
     <div className="border-b p-2 flex items-center justify-between gap-4">
       <IconButton
         icon={FaBars}
-        size={20}
+        size={16}
         onClick={() => setUiConfig((p) => ({ hideSidebar: !p.hideSidebar }))}
       />
       <h1 style={{ marginRight: "auto" }}>Visual Logic</h1>
@@ -40,7 +40,7 @@ export function Header({
         <IconButton
           title="Copy"
           icon={clipboard.copied ? FaCheck : FaRegCopy}
-          size={20}
+          size={16}
           onClick={() => clipboard.copy(JSON.stringify(currentOperation))}
           disabled={!currentOperation}
           className={!currentOperation ? "cursor-not-allowed" : ""}
@@ -48,7 +48,7 @@ export function Header({
         <IconButton
           title="Paste"
           icon={isOperationPasted ? FaCheck : FaRegPaste}
-          size={20}
+          size={16}
           onClick={async () => {
             try {
               const copied = await navigator.clipboard.readText();
@@ -78,7 +78,7 @@ export function Header({
         <IconButton
           title="Undo"
           icon={FaArrowRotateLeft}
-          size={20}
+          size={16}
           onClick={() => undo()}
           disabled={!pastStates.length}
           className={!pastStates.length ? "cursor-not-allowed" : ""}
@@ -86,7 +86,7 @@ export function Header({
         <IconButton
           title="Redo"
           icon={FaArrowRotateRight}
-          size={20}
+          size={16}
           onClick={() => redo()}
           disabled={!futureStates.length}
           className={!futureStates.length ? "cursor-not-allowed" : ""}

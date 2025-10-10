@@ -6,16 +6,19 @@ export type IType = {
   object: Map<string, IStatement>;
 };
 
+export type IReference = {
+  id: string;
+  name: string;
+  isCalled?: boolean;
+};
+
 export interface IData<T extends keyof IType = keyof IType> {
   id: string;
   entityType: "data";
   type: T;
   value: IType[T];
   isGeneric?: boolean;
-  reference?: {
-    id: string;
-    name: string;
-  };
+  reference?: IReference;
 }
 
 export interface IMethod {
@@ -42,11 +45,7 @@ export interface IOperation {
   closure: IStatement[];
   statements: IStatement[];
   isGeneric?: boolean;
-  reference?: {
-    id: string;
-    name: string;
-    isCalled?: boolean;
-  };
+  reference?: IReference;
 }
 
 export type IDropdownItem = {

@@ -6,7 +6,14 @@ import type {
   IStatement,
   IOperation,
   IDropdownItem,
+  IReference,
 } from "./types";
+
+export const IReferenceSchema: z.ZodType<IReference> = z.object({
+  id: z.string(),
+  name: z.string(),
+  isCalled: z.boolean().optional(),
+});
 
 export const IStatementSchema: z.ZodType<IStatement> = z.object({
   id: z.string(),
@@ -43,7 +50,7 @@ export const IDataSchema: z.ZodType<IData> = z
     id: z.string(),
     entityType: z.literal("data"),
     isGeneric: z.boolean().optional(),
-    reference: z.object({ id: z.string(), name: z.string() }).optional(),
+    reference: IReferenceSchema.optional(),
   })
   .and(IDataTypeValueSchema);
 
@@ -52,13 +59,7 @@ export const IOperationSchema: z.ZodType<IOperation> = z.object({
   entityType: z.literal("operation"),
   name: z.string().optional(),
   isGeneric: z.boolean().optional(),
-  reference: z
-    .object({
-      id: z.string(),
-      name: z.string(),
-      isCalled: z.boolean().optional(),
-    })
-    .optional(),
+  reference: IReferenceSchema.optional(),
   get parameters() {
     return z.array(IStatementSchema);
   },

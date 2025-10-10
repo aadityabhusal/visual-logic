@@ -7,10 +7,12 @@ import { IconButton } from "./IconButton";
 import { SiGithub, SiYoutube } from "react-icons/si";
 import { Popover } from "@mantine/core";
 import { preferenceOptions } from "../lib/data";
+import { useSearchParams } from "react-router";
 
 export function Sidebar() {
   const { operations, addOperation, setOperation } = operationsStore();
-  const { selectedOperationId, setUiConfig, ...uiConfig } = uiConfigStore();
+  const { setUiConfig, ...uiConfig } = uiConfigStore();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   return (
     <div className="flex flex-col ml-auto w-40 border-r">
@@ -41,12 +43,12 @@ export function Sidebar() {
           <li
             className={
               "flex items-center justify-between cursor-pointer p-1 hover:bg-dropdown-hover " +
-              (item.id === selectedOperationId
+              (item.id === searchParams.get("operationId")
                 ? "bg-dropdown-hover"
                 : "bg-editor")
             }
             key={item.id}
-            onClick={() => setUiConfig({ selectedOperationId: item.id })}
+            onClick={() => setSearchParams({ operationId: item.id })}
           >
             <span className="truncate">{item.name}</span>
             <IconButton

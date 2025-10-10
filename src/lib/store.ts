@@ -58,7 +58,6 @@ type IUiConfig = Partial<{
   [key in (typeof preferenceOptions)[number]["id"]]: boolean;
 }> & {
   hideSidebar?: boolean;
-  selectedOperationId?: string;
   focusId?: string;
   result?: IStatement["data"];
   showPopup?: boolean;

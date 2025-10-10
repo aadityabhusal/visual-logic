@@ -97,6 +97,7 @@ export function Operation({
       value={operation.reference?.name || "operation"}
       addMethod={addMethod}
       isInputTarget={!!operation.reference}
+      reference={operation.reference}
       target={(props) =>
         operation.reference ? (
           <div className="flex items-start gap-1" onClick={props.onClick}>
