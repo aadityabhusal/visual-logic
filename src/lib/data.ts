@@ -1,22 +1,46 @@
-import { IType } from "./types";
+import { IType, IValue } from "./types";
 
 export const TypeMapper: {
-  [T in keyof IType]: { defaultValue: IType[T] };
+  [K in IType["kind"]]: {
+    defaultValue: any;
+    createType: () => Extract<IType, { kind: K }>;
+  };
 } = {
+  undefined: {
+    defaultValue: undefined,
+    createType: () => ({ kind: "undefined" }),
+  },
   string: {
     defaultValue: "",
+    createType: () => ({ kind: "string" }),
   },
   number: {
     defaultValue: 0,
+    createType: () => ({ kind: "number" }),
   },
   boolean: {
     defaultValue: false,
+    createType: () => ({ kind: "boolean" }),
   },
-  array: {
+  tuple: {
     defaultValue: [],
+    createType: () => ({ kind: "tuple", elementsType: [] }),
+  },
+  list: {
+    defaultValue: [],
+    createType: () => ({ kind: "list", elementType: { kind: "undefined" } }),
   },
   object: {
+    defaultValue: {},
+    createType: () => ({ kind: "object", properties: {} }),
+  },
+  record: {
     defaultValue: new Map(),
+    createType: () => ({ kind: "record", valueType: { kind: "undefined" } }),
+  },
+  union: {
+    defaultValue: undefined,
+    createType: () => ({ kind: "union", types: [] }),
   },
 };
 

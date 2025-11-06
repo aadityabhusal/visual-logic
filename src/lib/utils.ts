@@ -4,15 +4,15 @@ import { methodsList } from "./methods";
 import { IData, IOperation, IStatement, IType, IDropdownItem } from "./types";
 import { updateStatements } from "./update";
 
-export function createData<T extends keyof IType>(
+export function createData<T extends IType>(
   props: Partial<IData<T>>
 ): IData<T> {
-  const type = (props.type || "string") as T;
+  const type = (props.type || { kind: "undefined" }) as T;
   return {
     id: props.id ?? nanoid(),
     entityType: "data",
     type,
-    value: props.value || TypeMapper[type].defaultValue,
+    value: props.value || TypeMapper[type.kind].defaultValue,
     isGeneric: props.isGeneric,
     reference: props.reference,
   };
@@ -281,4 +281,34 @@ export function getDataDropdownList({
       } as IDropdownItem;
     }),
   ];
+}
+
+export function isTypeCompatible(actual: IType, expected: IType): boolean {
+  if (actual.kind === "list" && expected.kind === "list") {
+    return isTypeCompatible(actual.elementType, expected.elementType);
+  }
+
+  if (actual.kind === "tuple" && expected.kind === "tuple") {
+    return actual.elementsType.every((elementType, index) =>
+      isTypeCompatible(elementType, expected.elementsType[index])
+    );
+  }
+
+  if (actual.kind === "record" && expected.kind === "record") {
+    return isTypeCompatible(actual.valueType, expected.valueType);
+  }
+
+  if (actual.kind === "object" && expected.kind === "object") {
+    return Object.entries(expected.properties).every(
+      ([key, expectedType]) =>
+        actual.properties[key] &&
+        isTypeCompatible(actual.properties[key], expectedType)
+    );
+  }
+
+  if (actual.kind === "union") {
+    return actual.types.some((t) => isTypeCompatible(t, expected));
+  }
+
+  return actual.kind === expected.kind;
 }
