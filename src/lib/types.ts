@@ -1,58 +1,61 @@
-export type IUndefinedType = { kind: "undefined" };
-export type IStringType = { kind: "string" };
-export type INumberType = { kind: "number" };
-export type IBooleanType = { kind: "boolean" };
-export type ITupleType = { kind: "tuple"; elementsType: IType[] };
-export type IListType = { kind: "list"; elementType: IType };
-export type IObjectType = {
+export type UndefinedType = { kind: "undefined" };
+export type StringType = { kind: "string" };
+export type NumberType = { kind: "number" };
+export type BooleanType = { kind: "boolean" };
+export type TupleType = { kind: "tuple"; elementsType: DataType[] };
+export type ListType = { kind: "list"; elementType: DataType };
+export type ObjectType = {
   kind: "object";
-  properties: { [key: string]: IType };
+  properties: { [key: string]: DataType };
 };
-export type IRecordType = { kind: "record"; valueType: IType };
-export type IUnionType = { kind: "union"; types: IType[] };
+export type RecordType = { kind: "record"; valueType: DataType };
+export type UnionType = { kind: "union"; types: DataType[] };
 
-export type IType =
-  | IUndefinedType
-  | IStringType
-  | INumberType
-  | IBooleanType
-  | ITupleType
-  | IListType
-  | IObjectType
-  | IRecordType
-  | IUnionType;
+export type DataType =
+  | UndefinedType
+  | StringType
+  | NumberType
+  | BooleanType
+  | TupleType
+  | ListType
+  | ObjectType
+  | RecordType
+  | UnionType;
 
-export type IValue<T extends IType = IUndefinedType> = T extends IUndefinedType
+export type DataValue<T extends DataType> = T extends UndefinedType
   ? undefined
-  : T extends IStringType
+  : T extends StringType
   ? string
-  : T extends INumberType
+  : T extends NumberType
   ? number
-  : T extends IBooleanType
+  : T extends BooleanType
   ? boolean
-  : T extends ITupleType & { elementsType: infer E extends IType[] }
-  ? { [K in keyof E]: E[K] extends IType ? IStatement<E[K]> : never }
-  : T extends IListType
+  : T extends TupleType & { elementsType: infer E extends DataType[] }
+  ? { [K in keyof E]: E[K] extends DataType ? IStatement<E[K]> : never }
+  : T extends ListType
   ? IStatement<T["elementType"]>[]
-  : T extends IObjectType
-  ? { [K in keyof T["properties"]]: IStatement<T["properties"][K]> }
-  : T extends IRecordType
+  : T extends ObjectType
+  ? Map<
+      keyof T["properties"],
+      IStatement<T["properties"][keyof T["properties"]]>
+    >
+  : T extends RecordType
   ? Map<string, IStatement<T["valueType"]>>
-  : T extends IUnionType
-  ? IStatement<T["types"][number]>
+  : T extends UnionType & { types: infer U extends DataType[] }
+  ? DataValue<U[number]>
   : any;
 
-export type IReference = {
+export interface IReference {
   id: string;
   name: string;
   isCalled?: boolean;
-};
+}
 
-export interface IData<T extends IType = IType> {
+export interface IData<T extends DataType = DataType> {
   id: string;
   entityType: "data";
   type: T;
-  value: IValue<T>;
+  value: DataValue<T>;
   isGeneric?: boolean;
   reference?: IReference;
 }
@@ -65,7 +68,7 @@ export interface IMethod {
   result: IStatement["data"];
 }
 
-export interface IStatement<T extends IType = IType> {
+export interface IStatement<T extends DataType = DataType> {
   id: string;
   entityType: "statement";
   data: IData<T> | IOperation;
@@ -84,10 +87,10 @@ export interface IOperation {
   reference?: IReference;
 }
 
-export type IDropdownItem = {
+export interface IDropdownItem {
   label?: string;
   secondaryLabel?: string;
   value: string;
   entityType: "data" | "method" | "operation";
   onClick?: () => void;
-};
+}

@@ -1,46 +1,46 @@
-import { IType, IValue } from "./types";
+import { DataType, DataValue } from "./types";
 
 export const TypeMapper: {
-  [K in IType["kind"]]: {
-    defaultValue: any;
-    createType: () => Extract<IType, { kind: K }>;
+  [K in DataType["kind"]]: {
+    defaultValue: DataValue<Extract<DataType, { kind: K }>>;
+    type: Extract<DataType, { kind: K }>;
   };
 } = {
   undefined: {
     defaultValue: undefined,
-    createType: () => ({ kind: "undefined" }),
+    type: { kind: "undefined" },
   },
   string: {
     defaultValue: "",
-    createType: () => ({ kind: "string" }),
+    type: { kind: "string" },
   },
   number: {
     defaultValue: 0,
-    createType: () => ({ kind: "number" }),
+    type: { kind: "number" },
   },
   boolean: {
     defaultValue: false,
-    createType: () => ({ kind: "boolean" }),
+    type: { kind: "boolean" },
   },
   tuple: {
     defaultValue: [],
-    createType: () => ({ kind: "tuple", elementsType: [] }),
+    type: { kind: "tuple", elementsType: [] },
   },
   list: {
     defaultValue: [],
-    createType: () => ({ kind: "list", elementType: { kind: "undefined" } }),
+    type: { kind: "list", elementType: { kind: "undefined" } },
   },
   object: {
-    defaultValue: {},
-    createType: () => ({ kind: "object", properties: {} }),
+    defaultValue: new Map(),
+    type: { kind: "object", properties: {} },
   },
   record: {
     defaultValue: new Map(),
-    createType: () => ({ kind: "record", valueType: { kind: "undefined" } }),
+    type: { kind: "record", valueType: { kind: "undefined" } },
   },
   union: {
     defaultValue: undefined,
-    createType: () => ({ kind: "union", types: [] }),
+    type: { kind: "union", types: [{ kind: "undefined" }] },
   },
 };
 

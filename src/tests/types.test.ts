@@ -1,23 +1,23 @@
-import { IValue } from "../lib/types";
+import { DataValue } from "../lib/types";
 import { createData } from "../lib/utils";
 
-type stringValue = IValue<{
+type stringValue = DataValue<{
   kind: "string";
 }>;
 
-type numberValue = IValue<{
+type numberValue = DataValue<{
   kind: "number";
 }>;
 
-type booleanValue = IValue<{
+type booleanValue = DataValue<{
   kind: "boolean";
 }>;
 
-type undefinedValue = IValue<{
+type undefinedValue = DataValue<{
   kind: "undefined";
 }>;
 
-type arrayValue = IValue<{
+type arrayValue = DataValue<{
   kind: "list";
   elementType: {
     kind: "union";
@@ -25,7 +25,7 @@ type arrayValue = IValue<{
   };
 }>;
 
-type tupleValue = IValue<{
+type tupleValue = DataValue<{
   kind: "tuple";
   elementsType: [
     { kind: "string" },
@@ -34,12 +34,12 @@ type tupleValue = IValue<{
   ];
 }>;
 
-type recordValue = IValue<{
+type recordValue = DataValue<{
   kind: "record";
   valueType: { kind: "number" };
 }>;
 
-type objectValue = IValue<{
+type objectValue = DataValue<{
   kind: "object";
   properties: {
     name: { kind: "string" };
@@ -56,7 +56,7 @@ type objectValue = IValue<{
   };
 }>;
 
-type unionValue = IValue<{
+type unionValue = DataValue<{
   kind: "union";
   types: [
     { kind: "string" },
@@ -66,37 +66,65 @@ type unionValue = IValue<{
 }>;
 
 const stringData = createData({ type: { kind: "string" } });
+
 const numberData = createData({ type: { kind: "number" } });
+
 const booleanData = createData({ type: { kind: "boolean" } });
+
 const undefinedData = createData({ type: { kind: "undefined" } });
+
 const arrayData = createData({
-  type: { kind: "list", elementType: { kind: "string" } },
+  type: {
+    kind: "list",
+    elementType: {
+      kind: "union",
+      types: [{ kind: "string" }, { kind: "number" }],
+    },
+  },
 });
+
 const tupleData = createData({
   type: {
     kind: "tuple",
-    elementsType: [{ kind: "string" }, { kind: "number" }],
+    elementsType: [
+      { kind: "string" },
+      { kind: "number" },
+      { kind: "union", types: [{ kind: "string" }, { kind: "number" }] },
+    ],
   },
 });
+
 const recordData = createData({
   type: { kind: "record", valueType: { kind: "string" } },
 });
+
 const objectData = createData({
   type: {
     kind: "object",
-    properties: { name: { kind: "string" }, age: { kind: "number" } },
+    properties: {
+      name: { kind: "string" },
+      age: { kind: "number" },
+      address: {
+        kind: "object",
+        properties: {
+          street: { kind: "string" },
+          city: { kind: "string" },
+          state: { kind: "string" },
+          zip: { kind: "number" },
+        },
+      },
+    },
   },
 });
-const unionData = createData({
-  type: { kind: "union", types: [{ kind: "string" }, { kind: "number" }] },
-});
 
-console.log(stringData);
-console.log(numberData);
-console.log(booleanData);
-console.log(undefinedData);
-console.log(arrayData);
-console.log(tupleData);
-console.log(recordData);
-console.log(objectData);
-console.log(unionData);
+const unionData = createData({
+  type: {
+    kind: "union",
+    types: [
+      { kind: "string" },
+      { kind: "number" },
+      { kind: "record", valueType: { kind: "string" } },
+      { kind: "tuple", elementsType: [{ kind: "string" }, { kind: "number" }] },
+    ],
+  },
+});

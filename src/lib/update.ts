@@ -6,6 +6,7 @@ import {
   getPreviousStatements,
   getStatementResult,
   isSameType,
+  isTypeCompatible,
   resetParameters,
 } from "./utils";
 
@@ -28,7 +29,7 @@ export function updateStatementMethods(
           data: { ...item.data, ...closure },
         });
       });
-      let methodHandler = methodsList[(data as IData).type]?.find(
+      let methodHandler = methodsList[(data as IData).type.kind]?.find(
         (item) => item.name === currentMethod.name
       )?.handler;
 
@@ -57,7 +58,7 @@ function getReferenceData(
   const isTypeChanged =
     reference &&
     (referenceResult?.entityType !== "data" ||
-      data.type !== referenceResult?.type);
+      !isTypeCompatible(data.type, referenceResult?.type));
   const isReferenceRemoved =
     currentReference?.id &&
     (!reference?.name || referenceResult?.entityType !== "data");

@@ -1,10 +1,15 @@
 import { nanoid } from "nanoid";
 import { TypeMapper } from "./data";
-import { methodsList } from "./methods";
-import { IData, IOperation, IStatement, IType, IDropdownItem } from "./types";
+import {
+  IData,
+  IOperation,
+  IStatement,
+  DataType,
+  IDropdownItem,
+} from "./types";
 import { updateStatements } from "./update";
 
-export function createData<T extends IType>(
+export function createData<T extends DataType>(
   props: Partial<IData<T>>
 ): IData<T> {
   const type = (props.type || { kind: "undefined" }) as T;
@@ -12,7 +17,7 @@ export function createData<T extends IType>(
     id: props.id ?? nanoid(),
     entityType: "data",
     type,
-    value: props.value || TypeMapper[type.kind].defaultValue,
+    value: props.value ?? TypeMapper[type.kind].defaultValue,
     isGeneric: props.isGeneric,
     reference: props.reference,
   };
@@ -32,7 +37,8 @@ export function createOperation(props?: Partial<IOperation>): IOperation {
 }
 
 export function createStatement(props?: Partial<IStatement>): IStatement {
-  let newData = props?.data || createData({ type: "string", isGeneric: true });
+  let newData =
+    props?.data || createData({ type: { kind: "undefined" }, isGeneric: true });
   let newId = props?.id || nanoid();
   return {
     id: newId,
@@ -78,8 +84,41 @@ export function isSameType(
     if (!second.reference?.isCalled) return false;
     return isSameType(first, getOperationResult(second));
   } else {
-    return first.type === second.type;
+    return isTypeCompatible(first.type, second.type);
   }
+}
+
+export function isTypeCompatible(
+  actual: DataType,
+  expected: DataType
+): boolean {
+  if (actual.kind === "list" && expected.kind === "list") {
+    return isTypeCompatible(actual.elementType, expected.elementType);
+  }
+
+  if (actual.kind === "tuple" && expected.kind === "tuple") {
+    return actual.elementsType.every((elementType, index) =>
+      isTypeCompatible(elementType, expected.elementsType[index])
+    );
+  }
+
+  if (actual.kind === "record" && expected.kind === "record") {
+    return isTypeCompatible(actual.valueType, expected.valueType);
+  }
+
+  if (actual.kind === "object" && expected.kind === "object") {
+    return Object.entries(expected.properties).every(
+      ([key, expectedType]) =>
+        actual.properties[key] &&
+        isTypeCompatible(actual.properties[key], expectedType)
+    );
+  }
+
+  if (actual.kind === "union") {
+    return actual.types.some((t) => isTypeCompatible(t, expected));
+  }
+
+  return actual.kind === expected.kind;
 }
 
 export function getClosureList(reference: IStatement | IOperation) {
@@ -97,7 +136,7 @@ export function getOperationResult(operation: IOperation) {
   let lastStatement = operation.statements.slice(-1)[0];
   return lastStatement
     ? getStatementResult(lastStatement)
-    : createData({ type: "string" });
+    : createData({ type: { kind: "undefined" } });
 }
 
 export function getStatementResult(
@@ -126,7 +165,7 @@ export function resetParameters(
       paramData = {
         ...paramData,
         id: nanoid(),
-        value: argValue || TypeMapper[paramData.type].defaultValue,
+        value: argValue || TypeMapper[paramData.type.kind].defaultValue,
       };
     } else {
       let argParams =
@@ -150,7 +189,7 @@ export function getPreviousStatements(previous: (IStatement | IOperation)[]) {
 }
 
 export function jsonParseReviver(_: string, data: IData) {
-  return data.type === "object"
+  return data.type.kind === "record" || data.type.kind === "object"
     ? { ...data, value: new Map(data.value as []) }
     : data;
 }
@@ -222,14 +261,21 @@ export function getDataDropdownList({
   }
 
   return [
-    ...(Object.keys(TypeMapper) as (keyof IType)[]).reduce((acc, type) => {
-      if (data.isGeneric || (data.reference && type === (data as IData).type)) {
+    ...(Object.keys(TypeMapper) as DataType["kind"][]).reduce((acc, kind) => {
+      if (
+        data.isGeneric ||
+        (data.reference && kind === (data as IData).type.kind)
+      ) {
         acc.push({
           entityType: "data",
-          value: type,
+          value: kind,
           onClick: () => {
             onSelect(
-              createData({ id: data.id, type, isGeneric: data.isGeneric })
+              createData({
+                id: data.id,
+                type: TypeMapper[kind].type,
+                isGeneric: data.isGeneric,
+              })
             );
           },
         });
@@ -261,7 +307,7 @@ export function getDataDropdownList({
         return [];
       return {
         secondaryLabel:
-          result.entityType === "data" ? result.type : "operation",
+          result.entityType === "data" ? result.type.kind : "operation",
         value: statement.name,
         entityType: "data",
         onClick: () =>
@@ -281,34 +327,4 @@ export function getDataDropdownList({
       } as IDropdownItem;
     }),
   ];
-}
-
-export function isTypeCompatible(actual: IType, expected: IType): boolean {
-  if (actual.kind === "list" && expected.kind === "list") {
-    return isTypeCompatible(actual.elementType, expected.elementType);
-  }
-
-  if (actual.kind === "tuple" && expected.kind === "tuple") {
-    return actual.elementsType.every((elementType, index) =>
-      isTypeCompatible(elementType, expected.elementsType[index])
-    );
-  }
-
-  if (actual.kind === "record" && expected.kind === "record") {
-    return isTypeCompatible(actual.valueType, expected.valueType);
-  }
-
-  if (actual.kind === "object" && expected.kind === "object") {
-    return Object.entries(expected.properties).every(
-      ([key, expectedType]) =>
-        actual.properties[key] &&
-        isTypeCompatible(actual.properties[key], expectedType)
-    );
-  }
-
-  if (actual.kind === "union") {
-    return actual.types.some((t) => isTypeCompatible(t, expected));
-  }
-
-  return actual.kind === expected.kind;
 }
