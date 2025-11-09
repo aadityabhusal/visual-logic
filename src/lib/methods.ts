@@ -25,11 +25,9 @@ export const methodsList: Record<DataType["kind"], IMethodList[]> = {
   string: [],
   number: [],
   boolean: [],
-  list: [],
+  array: [],
   object: [],
-  record: [],
   union: [],
-  tuple: [],
 };
 
 function createParamData(

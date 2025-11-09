@@ -5,10 +5,8 @@ import type {
   StringType,
   NumberType,
   BooleanType,
-  TupleType,
-  ListType,
+  ArrayType,
   ObjectType,
-  RecordType,
   UnionType,
   IData,
   IMethod,
@@ -44,15 +42,8 @@ const BooleanTypeSchema: z.ZodType<BooleanType> = z.object({
   kind: z.literal("boolean"),
 });
 
-const TupleTypeSchema: z.ZodType<TupleType> = z.object({
-  kind: z.literal("tuple"),
-  get elementsType() {
-    return z.array(DataTypeSchema);
-  },
-});
-
-const ListTypeSchema: z.ZodType<ListType> = z.object({
-  kind: z.literal("list"),
+const ArrayTypeSchema: z.ZodType<ArrayType> = z.object({
+  kind: z.literal("array"),
   get elementType() {
     return DataTypeSchema;
   },
@@ -62,14 +53,6 @@ const ObjectTypeSchema: z.ZodType<ObjectType> = z.object({
   kind: z.literal("object"),
   get properties() {
     return z.record(z.string(), DataTypeSchema);
-  },
-  sealed: z.boolean().optional(),
-});
-
-const RecordTypeSchema: z.ZodType<RecordType> = z.object({
-  kind: z.literal("record"),
-  get valueType() {
-    return DataTypeSchema;
   },
 });
 
@@ -85,10 +68,8 @@ export const DataTypeSchema: z.ZodType<DataType> = z.union([
   StringTypeSchema,
   NumberTypeSchema,
   BooleanTypeSchema,
-  TupleTypeSchema,
-  ListTypeSchema,
+  ArrayTypeSchema,
   ObjectTypeSchema,
-  RecordTypeSchema,
   UnionTypeSchema,
 ]);
 
@@ -119,25 +100,13 @@ export const IDataSchema: z.ZodType<IData> = z
         value: z.boolean(),
       }),
       z.object({
-        type: TupleTypeSchema,
-        get value() {
-          return z.array(IStatementSchema);
-        },
-      }),
-      z.object({
-        type: ListTypeSchema,
+        type: ArrayTypeSchema,
         get value() {
           return z.array(IStatementSchema);
         },
       }),
       z.object({
         type: ObjectTypeSchema,
-        get value() {
-          return z.record(z.string(), IStatementSchema);
-        },
-      }),
-      z.object({
-        type: RecordTypeSchema,
         get value() {
           return z.map(z.string(), IStatementSchema);
         },

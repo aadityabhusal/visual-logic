@@ -18,25 +18,11 @@ type undefinedValue = DataValue<{
 }>;
 
 type arrayValue = DataValue<{
-  kind: "list";
+  kind: "array";
   elementType: {
     kind: "union";
     types: [{ kind: "string" }, { kind: "number" }];
   };
-}>;
-
-type tupleValue = DataValue<{
-  kind: "tuple";
-  elementsType: [
-    { kind: "string" },
-    { kind: "number" },
-    { kind: "union"; types: [{ kind: "string" }, { kind: "number" }] }
-  ];
-}>;
-
-type recordValue = DataValue<{
-  kind: "record";
-  valueType: { kind: "number" };
 }>;
 
 type objectValue = DataValue<{
@@ -58,11 +44,7 @@ type objectValue = DataValue<{
 
 type unionValue = DataValue<{
   kind: "union";
-  types: [
-    { kind: "string" },
-    { kind: "number" },
-    { kind: "tuple"; elementsType: [{ kind: "string" }, { kind: "number" }] }
-  ];
+  types: [{ kind: "string" }, { kind: "number" }];
 }>;
 
 const stringData = createData({ type: { kind: "string" } });
@@ -75,27 +57,12 @@ const undefinedData = createData({ type: { kind: "undefined" } });
 
 const arrayData = createData({
   type: {
-    kind: "list",
+    kind: "array",
     elementType: {
       kind: "union",
       types: [{ kind: "string" }, { kind: "number" }],
     },
   },
-});
-
-const tupleData = createData({
-  type: {
-    kind: "tuple",
-    elementsType: [
-      { kind: "string" },
-      { kind: "number" },
-      { kind: "union", types: [{ kind: "string" }, { kind: "number" }] },
-    ],
-  },
-});
-
-const recordData = createData({
-  type: { kind: "record", valueType: { kind: "string" } },
 });
 
 const objectData = createData({
@@ -123,8 +90,10 @@ const unionData = createData({
     types: [
       { kind: "string" },
       { kind: "number" },
-      { kind: "record", valueType: { kind: "string" } },
-      { kind: "tuple", elementsType: [{ kind: "string" }, { kind: "number" }] },
+      {
+        kind: "object",
+        properties: { name: { kind: "string" }, age: { kind: "number" } },
+      },
     ],
   },
 });

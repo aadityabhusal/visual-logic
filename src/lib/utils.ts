@@ -92,18 +92,8 @@ export function isTypeCompatible(
   actual: DataType,
   expected: DataType
 ): boolean {
-  if (actual.kind === "list" && expected.kind === "list") {
+  if (actual.kind === "array" && expected.kind === "array") {
     return isTypeCompatible(actual.elementType, expected.elementType);
-  }
-
-  if (actual.kind === "tuple" && expected.kind === "tuple") {
-    return actual.elementsType.every((elementType, index) =>
-      isTypeCompatible(elementType, expected.elementsType[index])
-    );
-  }
-
-  if (actual.kind === "record" && expected.kind === "record") {
-    return isTypeCompatible(actual.valueType, expected.valueType);
   }
 
   if (actual.kind === "object" && expected.kind === "object") {
@@ -189,7 +179,7 @@ export function getPreviousStatements(previous: (IStatement | IOperation)[]) {
 }
 
 export function jsonParseReviver(_: string, data: IData) {
-  return data.type.kind === "record" || data.type.kind === "object"
+  return data.type.kind === "object"
     ? { ...data, value: new Map(data.value as []) }
     : data;
 }

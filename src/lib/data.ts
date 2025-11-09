@@ -22,21 +22,13 @@ export const TypeMapper: {
     defaultValue: false,
     type: { kind: "boolean" },
   },
-  tuple: {
+  array: {
     defaultValue: [],
-    type: { kind: "tuple", elementsType: [] },
-  },
-  list: {
-    defaultValue: [],
-    type: { kind: "list", elementType: { kind: "undefined" } },
+    type: { kind: "array", elementType: { kind: "undefined" } },
   },
   object: {
     defaultValue: new Map(),
     type: { kind: "object", properties: {} },
-  },
-  record: {
-    defaultValue: new Map(),
-    type: { kind: "record", valueType: { kind: "undefined" } },
   },
   union: {
     defaultValue: undefined,
