@@ -29,7 +29,7 @@ export type DataValue<T extends DataType> = T extends UndefinedType
   : T extends ArrayType
   ? IStatement[]
   : T extends ObjectType
-  ? Map<keyof T["properties"], IStatement>
+  ? Map<keyof T["properties"] & string, IStatement>
   : T extends UnionType & { types: infer U extends DataType[] }
   ? DataValue<U[number]>
   : any;

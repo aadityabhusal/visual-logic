@@ -111,6 +111,13 @@ export function isTypeCompatible(
   return actual.kind === expected.kind;
 }
 
+export function isDataOfType<K extends DataType["kind"]>(
+  data: IData<DataType>,
+  kind: K
+): data is IData<Extract<DataType, { kind: K }>> {
+  return data.type.kind === kind;
+}
+
 export function getClosureList(reference: IStatement | IOperation) {
   const referenceData =
     reference.entityType === "statement" ? reference.data : reference;
@@ -198,6 +205,38 @@ export const setLocalStorage = (key: string, value: any) => {
   }
   localStorage.setItem(key, JSON.stringify(value, replacer));
 };
+
+export function getElementType(data: IData | IOperation): DataType {
+  return data.entityType === "data" ? data.type : { kind: "undefined" };
+}
+
+export function getArrayElementType(elements: IStatement[]): DataType {
+  if (elements.length === 0) return { kind: "undefined" };
+  const firstType = getElementType(elements[0].data);
+  const allSameType = elements.every((element) => {
+    return isTypeCompatible(getElementType(element.data), firstType);
+  });
+  if (allSameType) return firstType;
+
+  const unionTypes = elements.reduce((acc, element) => {
+    const elementType = getElementType(element.data);
+    const exists = acc.some((t) => isTypeCompatible(t, elementType));
+    if (!exists) acc.push(elementType);
+    return acc;
+  }, [] as DataType[]);
+  return { kind: "union", types: unionTypes };
+}
+
+export function getObjectPropertiesType(entries: Map<string, IStatement>): {
+  [key: string]: DataType;
+} {
+  const properties: { [key: string]: DataType } = {};
+  entries.forEach((statement, key) => {
+    properties[key] = getElementType(statement.data);
+  });
+
+  return properties;
+}
 
 export function getDataDropdownList({
   data,

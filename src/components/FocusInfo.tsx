@@ -9,7 +9,7 @@ export function FocusInfo() {
   const { showPopup, result, setUiConfig } = uiConfigStore();
 
   const type =
-    result?.entityType === "data" ? result?.type : result?.entityType;
+    result?.entityType === "data" ? result?.type.kind : result?.entityType;
 
   useHotkeys([
     ["Escape", () => setUiConfig({ showPopup: false, result: undefined })],

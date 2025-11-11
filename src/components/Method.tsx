@@ -30,7 +30,7 @@ export function Method({
   function handleParameter(item: IStatement, index: number) {
     let parameters = [...method.parameters];
     parameters[index] = item;
-    let methodHandler = methodsList[data.type].find(
+    let methodHandler = methodsList[data.type.kind].find(
       (item) => item.name === method.name
     )?.handler;
     let parametersResult = parameters.map((item) => getStatementResult(item));

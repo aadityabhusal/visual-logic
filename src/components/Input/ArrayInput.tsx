@@ -1,11 +1,12 @@
-import { IData, IOperation, IStatement } from "../../lib/types";
+import { ArrayType, IData, IOperation, IStatement } from "../../lib/types";
 import { Statement } from "../Statement";
 import { AddStatement } from "../AddStatement";
 import { forwardRef, HTMLAttributes } from "react";
+import { getArrayElementType } from "../../lib/utils";
 
 export interface IArrayInput extends HTMLAttributes<HTMLDivElement> {
-  data: IData<"array">;
-  handleData: (data: IData) => void;
+  data: IData<ArrayType>;
+  handleData: (data: IData<ArrayType>) => void;
   prevStatements: IStatement[];
   prevOperations: IOperation[];
 }
@@ -20,7 +21,7 @@ export const ArrayInput = forwardRef<HTMLDivElement, IArrayInput>(
       else resList[index] = result;
       handleData({
         ...data,
-        type: "array",
+        type: { kind: "array", elementType: getArrayElementType(resList) },
         value: resList,
       });
     }
@@ -56,10 +57,11 @@ export const ArrayInput = forwardRef<HTMLDivElement, IArrayInput>(
           prevStatements={prevStatements}
           prevOperations={prevOperations}
           onSelect={(value) => {
+            const newVal = [...data.value, value];
             handleData({
               ...data,
-              type: "array",
-              value: [...data.value, value],
+              type: { kind: "array", elementType: getArrayElementType(newVal) },
+              value: newVal,
             });
           }}
           iconProps={{ title: "Add array item" }}

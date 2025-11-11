@@ -21,7 +21,7 @@ export function AddStatement({
   const dropdownItems = useMemo(
     () =>
       getDataDropdownList({
-        data: createData({ type: "string", isGeneric: true }),
+        data: createData({ type: { kind: "undefined" }, isGeneric: true }),
         onSelect: (data) => onSelect(createStatement({ data })),
         prevOperations,
         prevStatements,

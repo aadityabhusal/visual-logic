@@ -1,9 +1,9 @@
 import { forwardRef } from "react";
-import { IData } from "../../lib/types";
+import { BooleanType, IData } from "../../lib/types";
 
 export interface IBooleanInput {
-  data: IData;
-  handleData: (data: IData) => void;
+  data: IData<BooleanType>;
+  handleData: (data: IData<BooleanType>) => void;
   className?: string;
 }
 export const BooleanInput = forwardRef<HTMLInputElement, IBooleanInput>(

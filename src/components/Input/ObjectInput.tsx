@@ -1,13 +1,19 @@
-import { IData, IOperation, IStatement } from "../../lib/types";
+import {
+  IData,
+  IOperation,
+  IStatement,
+  ObjectType,
+  StringType,
+} from "../../lib/types";
 import { Statement } from "../Statement";
 import { BaseInput } from "./BaseInput";
 import { AddStatement } from "../AddStatement";
 import { forwardRef, HTMLAttributes } from "react";
-import { createVariableName } from "../../lib/utils";
+import { createVariableName, getObjectPropertiesType } from "../../lib/utils";
 
 export interface IObjectInput extends HTMLAttributes<HTMLDivElement> {
-  data: IData<"object">;
-  handleData: (data: IData) => void;
+  data: IData<ObjectType>;
+  handleData: (data: IData<ObjectType>) => void;
   prevStatements: IStatement[];
   prevOperations: IOperation[];
 }
@@ -23,24 +29,28 @@ export const ObjectInput = forwardRef<HTMLDivElement, IObjectInput>(
     ) {
       if (remove) dataArray.splice(index, 1);
       else dataArray[index] = [dataArray[index][0], result];
+      const newValue = new Map(dataArray);
+      const properties = getObjectPropertiesType(newValue);
       handleData({
         ...data,
-        type: "object",
-        value: new Map(dataArray),
+        type: { kind: "object", properties },
+        value: newValue,
       });
     }
 
     function handleKeyUpdate(
       dataArray: [string, IStatement][],
       index: number,
-      result: IData
+      value: string
     ) {
-      if (typeof result.value === "string" && !data.value.has(result.value)) {
-        dataArray[index] = [result.value, dataArray[index][1]];
+      if (typeof value === "string" && !data.value.has(value)) {
+        dataArray[index] = [value, dataArray[index][1]];
+        const newValue = new Map(dataArray);
+        const properties = getObjectPropertiesType(newValue);
         handleData({
           ...data,
-          type: "object",
-          value: new Map(dataArray),
+          type: { kind: "object", properties },
+          value: newValue,
         });
       }
     }
@@ -65,14 +75,7 @@ export const ObjectInput = forwardRef<HTMLDivElement, IObjectInput>(
               <BaseInput
                 className="text-property"
                 value={key}
-                onChange={(value) =>
-                  handleKeyUpdate(arr, i, {
-                    id: `${i}-${key}`,
-                    type: "string",
-                    value,
-                    entityType: "data",
-                  })
-                }
+                onChange={(value) => handleKeyUpdate(arr, i, value)}
               />
               <span style={{ marginRight: 4 }}>:</span>
               <Statement
@@ -93,7 +96,7 @@ export const ObjectInput = forwardRef<HTMLDivElement, IObjectInput>(
           prevOperations={prevOperations}
           onSelect={(value) => {
             if (!data.value.has("")) {
-              let newMap = new Map(data.value);
+              const newMap = new Map(data.value);
               newMap.set(
                 createVariableName({
                   prefix: "key",
@@ -101,7 +104,14 @@ export const ObjectInput = forwardRef<HTMLDivElement, IObjectInput>(
                 }),
                 value
               );
-              handleData({ ...data, type: "object", value: newMap });
+              handleData({
+                ...data,
+                type: {
+                  kind: "object",
+                  properties: getObjectPropertiesType(newMap),
+                },
+                value: newMap,
+              });
             }
           }}
           iconProps={{ title: "Add object item" }}
