@@ -1,0 +1,259 @@
+---
+description: These rules give a top-level idea and direction while building feature for the next version of Visual Logic.
+alwaysApply: false
+---
+
+# Visual Logic - Cursor Rules
+
+## Core Philosophy
+
+Visual Logic is a block-based (not node-based) visual programming environment built on the principle that **programming is operations on data**. All features, patterns, and architectural decisions must align with this functional, data-transformation paradigm.
+
+### Key Principles
+
+- Operations transform data from one type to another
+- Visual blocks map 1-to-1 with code statements/expressions
+- Real-time execution shows results inline at each step
+- Type safety drives the development experience
+- Functional composition over imperative control flow
+
+## Vision: Next Version
+
+The next version transforms Visual Logic from a simple logic builder into a **complete serverless function development platform** while maintaining its core simplicity and visual-first approach.
+
+### Target Capability
+
+Users should be able to visually create production-ready serverless cloud functions with:
+
+- Full TypeScript type safety
+- External service integrations via npm packages
+- Asynchronous operations through promise chaining
+- Platform-agnostic code generation
+- Professional-grade error handling and security
+
+## Architectural Direction
+
+### Type System Evolution
+
+Build an expressive, recursive type system supporting:
+
+- Primitive types (string, number, boolean)
+- Complex types (array with item types, objects with property types, tuples)
+- Advanced types (union, literal, promise, date, undefined, any, file)
+- **Function/operation types** with parameter and return type signatures
+- Discriminated unions for type narrowing
+- Skip generics—they add complexity without value in visual contexts.
+
+### Operations as First-Class Data
+
+Operations and methods merge into a single "operation" entity that is itself a data type. This enables:
+
+- Higher-order operations (map, filter, reduce taking operations as parameters)
+- Operation composition and piping
+- Passing operations as values
+
+### Asynchronous Execution Model
+
+**Use promise chaining, not async/await**. Promises align with the "operations on data" philosophy:
+
+- `.then()` and `.catch()` are visible operations on promise data
+- Each chain step is explicit and visual
+- Natural fit for block-based representation
+- Easier to generate clean TypeScript code
+
+**No traditional loops**—they introduce imperative control flow incompatible with the functional paradigm. Use `range` + `forEach`/`map`/`reduce` instead.
+
+## NPM Package Integration Strategy
+
+This is the **killer feature** that differentiates Visual Logic from other visual programming tools.
+
+### Implementation Approach
+
+- Users import npm packages into their Projects
+- Extract TypeScript type definitions automatically from `.d.ts` files
+- Generate visual operations from package exports
+- Preserve type information for IntelliSense-like experiences
+
+### Entity Generation Rules
+
+From imported packages, create:
+
+- Top-level functions as standalone operations
+- Named exports as importable operations
+- Object/class methods as chainable operations on that type
+- Proper namespace handling for scoped operations
+
+### Type Safety Integration
+
+- Use TypeScript compiler API for type inference, don't reimplement
+- Validate runtime results match expected types during development
+- Extract JSDoc comments for inline documentation
+- Support discriminated unions from package types
+
+### Security Considerations
+
+- Sandbox npm package execution (Web Workers, isolated contexts)
+- Provide "mock mode" for packages returning typed mock data
+- Consider allowlist approach for untrusted packages
+- Validate type definitions match runtime behavior
+
+## Control Flow Philosophy
+
+### Conditionals
+
+Implement **ternary operator-style components** for conditional logic:
+
+- Keeps conditionals as expressions that return values
+- Enables type narrowing (especially with discriminated unions)
+- Maintains expression-based paradigm
+- Visually cleaner than if-else blocks
+
+### Iteration
+
+- **No traditional for/while loops**—use declarative array operations
+- Support `map`, `filter`, `reduce`, `forEach` as operations
+- Combine with `range` for counted iterations
+- Make each iteration's transformation visible
+
+### Parallel Execution
+
+Support `Promise.all` for parallel operations:
+
+- Visual representation of multiple promise chains merging
+- Type-safe return of array/tuple of results
+- Makes parallelism explicit in the visual flow
+
+## Error Handling Strategy
+
+**No try-catch blocks**. Instead:
+
+- Use React error boundaries per entity
+- Display errors inline where they occur during real-time execution
+- Support `.catch()` on promises for error recovery
+- Allow `.catch()` to transform errors into valid data, updating types accordingly
+
+## Code Generation Requirements
+
+### Target Output
+
+Generate **production-ready TypeScript** with:
+
+- Proper import statements based on used packages
+- Platform-specific handler signatures (AWS Lambda, Google Cloud Functions, Azure Functions, etc.)
+- Environment variable references
+- Infrastructure-as-code files (serverless.yml, SAM templates, Terraform)
+- Auto-generated package.json with dependencies
+
+### Platform Adaptability
+
+Create templates for major serverless platforms:
+
+- Each platform's specific handler signature
+- Context object handling
+- Callback vs Promise vs async handler patterns
+- Proper error responses for each platform
+
+## Built-in Type Extensions
+
+Add specialized types to the type registry:
+
+- **HTTP Request**: headers, body, query params, path params, method
+- **HTTP Response**: status code, headers, body
+- **Promise<T>**: wrapped type visible, unwrapping on `.then()`
+- **Environment/Secret Variables**: special variable type for configuration
+
+## User Experience Principles
+
+### Real-time Execution
+
+- Execute code as users build visually
+- Show results inline at each operation
+- Use inline errors with error boundaries per entity
+- Testing and debugging happen in-place, no separate mode
+
+### Block-Based Layout
+
+Design for a **text-like linear structure**, not graph-based:
+
+- 1-to-1 correspondence with generated code
+- Handle deep nesting with collapsible blocks
+- Support wide operations with multi-line parameters
+- Show nesting depth with visual indicators
+
+### Composition Patterns
+
+Enable reusable operation patterns through:
+
+- **Pipe**: left-to-right operation chaining
+- **Compose**: right-to-left function composition
+- **Middleware**: operations that wrap other operations (logging, auth, error handling)
+- Visual extraction of nested chains into named operations
+
+## Project Structure
+
+Projects are collections of operations and configurations containing:
+
+- Multiple operations with dependency tracking
+- Shared custom types defined at project level
+- Project-level constants separate from environment variables
+- NPM package dependencies and imports
+- Platform deployment configurations
+
+## Version Control Integration
+
+Implement lightweight Git integration:
+
+- Export/import flows as JSON for Git storage
+- Visual diff for flow changes
+- Branching and merging support
+- Deployment versioning
+
+## Future Extensibility
+
+### Library/Marketplace
+
+- Share complete Projects (collections of operations)
+- Community-contributed operation libraries
+- Template projects for common use cases
+
+### Documentation Generation
+
+Auto-generate from visual flows:
+
+- Type signature API documentation
+- Visual flow diagrams (SVG/PNG export)
+- Real-time execution examples as documentation
+- JSDoc integration from imported packages
+
+## What to Avoid
+
+- ❌ **Node-based graph editors**—this is block-based, text-like
+- ❌ **Async/await syntax**—use promise chaining instead
+- ❌ **Traditional loops**—use functional array operations
+- ❌ **Try-catch blocks**—use error boundaries and promise `.catch()`
+- ❌ **Generics in type system**—unnecessary complexity for visual contexts
+- ❌ **Custom integration nodes**—leverage npm packages instead
+- ❌ **Imperative control flow**—maintain functional, expression-based paradigm
+
+## Development Priorities
+
+When building features, prioritize in this order:
+
+1. **Type system correctness**—types drive everything
+2. **Visual-to-code fidelity**—blocks must map clearly to TypeScript
+3. **Real-time execution accuracy**—results must match generated code behavior
+4. **NPM integration robustness**—this is the differentiation factor
+5. **Code generation quality**—output must be production-ready
+
+## Decision Framework
+
+When evaluating new features or approaches, ask:
+
+1. Does this align with "operations on data" philosophy?
+2. Can this be represented clearly in a block-based, linear editor?
+3. Does this maintain 1-to-1 correspondence with TypeScript code?
+4. Is the type system capable of representing this safely?
+5. Can real-time execution show meaningful results?
+6. Does this add genuine capability or just complexity?
+
+Favor solutions that maintain simplicity while adding power. Visual Logic's strength is making programming more accessible to non-developers and no-code developers without sacrificing capability—every feature should serve this goal.
