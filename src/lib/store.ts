@@ -1,17 +1,17 @@
 import { create } from "zustand";
 import { temporal } from "zundo";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { IOperation, IStatement } from "./types";
+import { IData, IStatement, OperationType } from "./types";
 import { preferenceOptions } from "./data";
 import { createWithEqualityFn } from "zustand/traditional";
 import { shallow } from "zustand/shallow";
 import { openDB } from "idb";
-import { createOperation } from "./utils";
+import { createData } from "./utils";
 
 export interface IStore {
-  operations: IOperation[];
-  addOperation: (operation: IOperation) => void;
-  setOperation: (operations: IOperation[]) => void;
+  operations: IData<OperationType>[];
+  addOperation: (operation: IData<OperationType>) => void;
+  setOperation: (operations: IData<OperationType>[]) => void;
 }
 
 const IDbStore = openDB("logicFlow", 1, {
@@ -44,7 +44,15 @@ const createIDbStorage = <T>(storeName: string) =>
 export const operationsStore = create(
   persist(
     temporal<IStore>((set) => ({
-      operations: [createOperation({ name: "main" })],
+      operations: [
+        createData({
+          type: {
+            kind: "operation",
+            parameters: [],
+            result: { kind: "undefined" },
+          },
+        }),
+      ],
       addOperation: (operation) =>
         set((state) => ({ operations: [...state.operations, operation] })),
       setOperation: (operations) => set(() => ({ operations })),

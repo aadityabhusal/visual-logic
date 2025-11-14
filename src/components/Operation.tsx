@@ -1,16 +1,10 @@
-import { FaAngleLeft, FaAngleRight } from "react-icons/fa6";
 import { Fragment, useMemo } from "react";
-import { IOperation, IStatement } from "../lib/types";
+import { IData, IStatement, OperationType } from "../lib/types";
 import { updateStatements } from "../lib/update";
-import {
-  createVariableName,
-  getDataDropdownList,
-  getOperationResult,
-} from "../lib/utils";
+import { createVariableName, getDataDropdownList } from "../lib/utils";
 import { Statement } from "./Statement";
 import { BaseInput } from "./Input/BaseInput";
 import { AddStatement } from "./AddStatement";
-import { IconButton } from "../ui/IconButton";
 import { Dropdown } from "./Dropdown";
 
 export function Operation({
@@ -18,14 +12,12 @@ export function Operation({
   handleChange,
   addMethod,
   prevStatements,
-  prevOperations,
   options,
 }: {
-  operation: IOperation;
+  operation: IData<OperationType>;
   handleChange(item: IStatement["data"], remove?: boolean): void;
   addMethod?: () => void;
   prevStatements: IStatement[];
-  prevOperations: IOperation[];
   options?: {
     disableDelete?: boolean;
     disableDropdown?: boolean;
@@ -37,52 +29,45 @@ export function Operation({
       getDataDropdownList({
         data: operation,
         onSelect: handleChange,
-        prevOperations: options?.disableDropdown ? [] : prevOperations,
         prevStatements,
       }),
-    [operation, prevOperations, prevStatements, options?.disableDropdown]
+    [operation, prevStatements, options?.disableDropdown]
   );
-
-  function handleOperationProps(
-    key: keyof IOperation,
-    value: IOperation[typeof key]
-  ) {
-    if (key === "name" && prevOperations.find((item) => item.name === value))
-      return;
-    handleChange({ ...operation, [key]: value });
-  }
 
   function handleStatement({
     statement,
     remove,
-    parameterLength = operation.parameters.length,
+    parameterLength = operation.value.parameters.length,
   }: {
     statement: IStatement;
     remove?: boolean;
     parameterLength?: number;
   }) {
     let updatedStatements = updateStatements({
-      statements: [...operation.parameters, ...operation.statements],
-      previous: [...prevOperations, ...prevStatements, ...operation.closure],
+      statements: [
+        ...operation.value.parameters,
+        ...operation.value.statements,
+      ],
+      previous: prevStatements,
       changedStatement: statement,
       removeStatement: remove,
     });
 
     handleChange({
       ...operation,
-      parameters: updatedStatements.slice(0, parameterLength),
-      statements: updatedStatements.slice(parameterLength),
+      value: {
+        ...operation.value,
+        parameters: updatedStatements.slice(0, parameterLength),
+        statements: updatedStatements.slice(parameterLength),
+      },
     });
   }
-
-  const result = useMemo(() => getOperationResult(operation), [operation]);
-  const AngleIcon = operation.reference?.isCalled ? FaAngleLeft : FaAngleRight;
 
   return (
     <Dropdown
       id={operation.id}
       data={operation}
-      result={operation?.reference?.isCalled ? result : operation}
+      result={operation}
       items={dropdownItems}
       handleDelete={
         options?.disableDelete || options?.isTopLevel
@@ -102,68 +87,12 @@ export function Operation({
         operation.reference ? (
           <div className="flex items-start gap-1" onClick={props.onClick}>
             <BaseInput {...props} className="text-variable" />
-            {operation.reference.isCalled && (
-              <div className="flex items-start gap-1">
-                <span>{"("}</span>
-                {operation.parameters.map((parameter, i, paramList) => (
-                  <Fragment key={i}>
-                    <Statement
-                      key={i}
-                      statement={parameter}
-                      handleStatement={(statement) =>
-                        handleStatement({ statement })
-                      }
-                      prevStatements={prevStatements}
-                      prevOperations={prevOperations}
-                      options={{ disableDelete: true }}
-                    />
-                    {i + 1 < paramList.length && <span>,</span>}
-                  </Fragment>
-                ))}
-                <span>{")"}</span>
-              </div>
-            )}
-            {!options?.disableDelete && (
-              <IconButton
-                icon={AngleIcon}
-                className="mt-1"
-                title={
-                  !operation.reference.isCalled
-                    ? "Call operation"
-                    : "Close operation call"
-                }
-                onClick={() =>
-                  operation.reference &&
-                  handleChange({
-                    ...operation,
-                    reference: {
-                      ...operation.reference,
-                      isCalled: !operation.reference.isCalled,
-                    },
-                  })
-                }
-              />
-            )}
           </div>
         ) : (
           <div className="max-w-max" onClick={props.onClick}>
             <div className="flex items-start gap-1">
-              {operation.name !== undefined && (
-                <BaseInput
-                  value={operation.name || ""}
-                  onChange={(value) => {
-                    let name = value || operation.name;
-                    if (name === "operation") return;
-                    const exists = prevOperations.find(
-                      (item) => item.name === name
-                    );
-                    if (!exists) handleOperationProps("name", name);
-                  }}
-                  className={"text-variable"}
-                />
-              )}
               <span>{"("}</span>
-              {operation.parameters.map((parameter, i, paramList) => (
+              {operation.value.parameters.map((parameter, i, paramList) => (
                 <Fragment key={i}>
                   <Statement
                     key={i}
@@ -182,7 +111,6 @@ export function Operation({
                       disableNameToggle: true,
                     }}
                     prevStatements={[]}
-                    prevOperations={[]}
                   />
                   {i + 1 < paramList.length && <span>,</span>}
                 </Fragment>
@@ -191,24 +119,25 @@ export function Operation({
                 <AddStatement
                   id={`${operation.id}_paramAddStatement`}
                   prevStatements={prevStatements}
-                  prevOperations={prevOperations}
                   onSelect={(statement) => {
                     handleChange({
                       ...operation,
-                      parameters: [
-                        ...operation.parameters,
-                        {
-                          ...statement,
-                          name: createVariableName({
-                            prefix: "param",
-                            prev: [
-                              ...operation.parameters,
-                              ...prevStatements,
-                              ...prevOperations,
-                            ],
-                          }),
-                        },
-                      ],
+                      value: {
+                        ...operation.value,
+                        parameters: [
+                          ...operation.value.parameters,
+                          {
+                            ...statement,
+                            name: createVariableName({
+                              prefix: "param",
+                              prev: [
+                                ...operation.value.parameters,
+                                ...prevStatements,
+                              ],
+                            }),
+                          },
+                        ],
+                      },
                     });
                   }}
                   iconProps={{ title: "Add parameter" }}
@@ -217,7 +146,7 @@ export function Operation({
               <span>{")"}</span>
             </div>
             <div className="pl-4 [&>div]:mb-1 w-fit">
-              {operation.statements.map((statement, i) => (
+              {operation.value.statements.map((statement, i) => (
                 <Statement
                   key={statement.id}
                   statement={statement}
@@ -227,36 +156,40 @@ export function Operation({
                   }
                   prevStatements={[
                     ...prevStatements,
-                    ...operation.parameters,
-                    ...operation.statements.slice(0, i),
+                    ...operation.value.parameters,
+                    ...operation.value.statements.slice(0, i),
                   ]}
-                  prevOperations={prevOperations}
                   addStatement={(statement, position) => {
                     const index = position === "before" ? i : i + 1;
                     handleChange({
                       ...operation,
-                      statements: [
-                        ...operation.statements.slice(0, index),
-                        statement,
-                        ...operation.statements.slice(index),
-                      ],
+                      value: {
+                        ...operation.value,
+                        statements: [
+                          ...operation.value.statements.slice(0, index),
+                          statement,
+                          ...operation.value.statements.slice(index),
+                        ],
+                      },
                     });
                   }}
                 />
               ))}
-              {operation.statements.length ? null : (
+              {operation.value.statements.length ? null : (
                 <AddStatement
                   id={`${operation.id}_addStatement`}
                   prevStatements={[
                     ...prevStatements,
-                    ...operation.parameters,
-                    ...operation.statements,
+                    ...operation.value.parameters,
+                    ...operation.value.statements,
                   ]}
-                  prevOperations={prevOperations}
                   onSelect={(statement) => {
                     handleChange({
                       ...operation,
-                      statements: [...operation.statements, statement],
+                      value: {
+                        ...operation.value,
+                        statements: [...operation.value.statements, statement],
+                      },
                     });
                   }}
                   iconProps={{ title: "Add statement" }}

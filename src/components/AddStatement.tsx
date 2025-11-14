@@ -1,6 +1,6 @@
 import { IconButton } from "../ui/IconButton";
 import { FaPlus } from "react-icons/fa6";
-import { IOperation, IStatement } from "../lib/types";
+import { IStatement } from "../lib/types";
 import { createData, createStatement, getDataDropdownList } from "../lib/utils";
 import { ComponentPropsWithoutRef, useMemo } from "react";
 import { Dropdown } from "./Dropdown";
@@ -9,13 +9,11 @@ export function AddStatement({
   id,
   onSelect,
   prevStatements = [],
-  prevOperations = [],
   iconProps,
 }: {
   id: string;
   onSelect: (statement: IStatement) => void;
   prevStatements?: IStatement[];
-  prevOperations?: IOperation[];
   iconProps?: Partial<ComponentPropsWithoutRef<typeof IconButton>>;
 }) {
   const dropdownItems = useMemo(
@@ -23,10 +21,9 @@ export function AddStatement({
       getDataDropdownList({
         data: createData({ type: { kind: "undefined" }, isGeneric: true }),
         onSelect: (data) => onSelect(createStatement({ data })),
-        prevOperations,
         prevStatements,
       }),
-    [prevOperations, prevStatements]
+    [prevStatements]
   );
 
   return (

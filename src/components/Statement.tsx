@@ -1,11 +1,11 @@
-import { FaEquals, FaArrowRightLong, FaArrowTurnUp } from "react-icons/fa6";
-import { IData, IMethod, IOperation, IStatement } from "../lib/types";
+import { FaEquals } from "react-icons/fa6";
+import { IData, IStatement, OperationType } from "../lib/types";
 import { updateStatementMethods } from "../lib/update";
 import {
-  isSameType,
+  isTypeCompatible,
   getStatementResult,
-  getPreviousStatements,
   createVariableName,
+  isDataOfType,
 } from "../lib/utils";
 import { createMethod } from "../lib/methods";
 import { Data } from "./Data";
@@ -22,14 +22,12 @@ export function Statement({
   statement,
   handleStatement,
   prevStatements,
-  prevOperations,
   addStatement,
   options,
 }: {
   statement: IStatement;
   handleStatement: (statement: IStatement, remove?: boolean) => void;
   prevStatements: IStatement[];
-  prevOperations: IOperation[];
   addStatement?: (statement: IStatement, position: "before" | "after") => void;
   options?: {
     enableVariable?: boolean;
@@ -48,65 +46,54 @@ export function Statement({
     closeDelay: 150,
   });
 
-  const PipeArrow =
-    statement.methods.length > 1 ? FaArrowTurnUp : FaArrowRightLong;
-
   function addMethod() {
     let data = getStatementResult(statement);
     if (data.entityType !== "data") return;
-    let method = createMethod({ data });
-    let methods = [...statement.methods, method];
+    let operation = createMethod({ data });
+    let operations = [...statement.operations, operation];
     handleStatement(
-      updateStatementMethods(
-        { ...statement, methods },
-        getPreviousStatements([...prevStatements, ...prevOperations])
-      )
+      updateStatementMethods({ ...statement, operations }, prevStatements)
     );
   }
 
   function handleData(data: IData, remove?: boolean) {
     if (remove) handleStatement(statement, remove);
     else {
-      let methods = [...statement.methods];
-      let statementData = statement.data as IData;
-      if (statementData.type !== data.type) methods = [];
+      let operations = [...statement.operations];
+      if (statement.data.type !== data.type) operations = [];
       handleStatement(
         updateStatementMethods(
-          { ...statement, data, methods },
-          getPreviousStatements([...prevStatements, ...prevOperations])
+          { ...statement, data, operations },
+          prevStatements
         )
       );
     }
   }
 
-  function handelOperation(operation: IOperation, remove?: boolean) {
-    let methods = operation.reference?.isCalled ? [...statement.methods] : [];
+  function handelOperation(operation: IData<OperationType>, remove?: boolean) {
     if (remove) handleStatement(statement, remove);
     else
       handleStatement(
         updateStatementMethods(
-          { ...statement, data: operation, methods },
-          getPreviousStatements([...prevStatements, ...prevOperations])
+          { ...statement, data: operation, operations: statement.operations },
+          prevStatements
         )
       );
   }
 
   function handleMethod(method: IMethod, index: number, remove?: boolean) {
-    let methods = [...statement.methods];
+    let methods = [...statement.operations];
     if (remove) {
       let data = getStatementResult(statement, index);
-      if (!isSameType(method.result, data)) methods.splice(index);
+      if (!isTypeCompatible(method.result, data)) methods.splice(index);
       else methods.splice(index, 1);
     } else {
-      if (!isSameType(method.result, methods[index].result))
+      if (!isTypeCompatible(method.result, methods[index].result))
         methods.splice(index + 1);
       methods[index] = method;
     }
     handleStatement(
-      updateStatementMethods(
-        { ...statement, methods },
-        getPreviousStatements([...prevStatements, ...prevOperations])
-      )
+      updateStatementMethods({ ...statement, methods }, prevStatements)
     );
   }
 
@@ -131,7 +118,6 @@ export function Statement({
                   [
                     ...Object.keys(TypeMapper),
                     ...prevStatements.map((s) => s.name),
-                    ...prevOperations.map((s) => s.name),
                     "operation",
                   ].includes(name)
                 ) {
@@ -155,7 +141,7 @@ export function Statement({
                       ? undefined
                       : createVariableName({
                           prefix: "var",
-                          prev: [...prevStatements, ...prevOperations],
+                          prev: prevStatements,
                         }),
                   })
                 }
@@ -169,7 +155,6 @@ export function Statement({
               <AddStatement
                 id={`${statement.id}_addStatement`}
                 prevStatements={[...prevStatements, statement]}
-                prevOperations={prevOperations}
                 onSelect={(statement) => {
                   addStatement?.(statement, "after");
                   closeDropdown();
@@ -183,64 +168,47 @@ export function Statement({
       <div
         className={
           "flex items-start gap-0 " +
-          (statement.methods.length > 1 ? "flex-col" : "flex-row")
+          (statement.operations.length > 1 ? "flex-col" : "flex-row")
         }
       >
-        {statement.data.entityType === "data" ? (
-          <Data
-            data={statement.data}
-            disableDelete={options?.disableDelete}
-            addMethod={
-              !options?.disableMethods && statement.methods.length === 0
-                ? addMethod
-                : undefined
-            }
-            prevStatements={prevStatements}
-            prevOperations={prevOperations}
-            handleChange={
-              statement.data.entityType === "data"
-                ? handleData
-                : handelOperation
-            }
-          />
-        ) : (
+        {isDataOfType(statement.data, "operation") ? (
           <Operation
             operation={statement.data}
             handleChange={
-              statement.data.entityType === "operation"
+              isDataOfType(statement.data, "operation")
                 ? handelOperation
                 : handleData
             }
             prevStatements={prevStatements}
-            prevOperations={prevOperations}
             options={{ disableDelete: options?.disableDelete }}
+          />
+        ) : (
+          <Data
+            data={statement.data}
+            disableDelete={options?.disableDelete}
             addMethod={
-              !options?.disableMethods &&
-              statement.methods.length === 0 &&
-              statement.data.reference?.isCalled
+              !options?.disableMethods && statement.operations.length === 0
                 ? addMethod
                 : undefined
             }
+            prevStatements={prevStatements}
+            handleChange={
+              isDataOfType(statement.data, "operation")
+                ? handelOperation
+                : handleData
+            }
           />
         )}
-        {statement.methods.map((method, i, methods) => {
+        {statement.operations.map((method, i, methods) => {
           let data = getStatementResult(statement, i, true);
           if (data.entityType !== "data") return;
           return (
             <div key={method.id} className="flex items-start gap-1 ml-1">
-              <PipeArrow
-                size={10}
-                className="text-disabled mt-1.5"
-                style={{
-                  transform: methods.length > 1 ? "rotate(90deg)" : "",
-                }}
-              />
               <Method
                 data={data}
                 method={method}
                 handleMethod={(meth, remove) => handleMethod(meth, i, remove)}
                 prevStatements={prevStatements}
-                prevOperations={prevOperations}
                 addMethod={
                   !options?.disableMethods && i + 1 === methods.length
                     ? addMethod

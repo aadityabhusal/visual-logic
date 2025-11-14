@@ -44,7 +44,14 @@ type objectValue = DataValue<{
 
 type unionValue = DataValue<{
   kind: "union";
-  types: [{ kind: "string" }, { kind: "number" }];
+  types: [
+    { kind: "string" },
+    { kind: "number" },
+    {
+      kind: "object";
+      properties: { name: { kind: "string" }; age: { kind: "number" } };
+    }
+  ];
 }>;
 
 const stringData = createData({ type: { kind: "string" } });

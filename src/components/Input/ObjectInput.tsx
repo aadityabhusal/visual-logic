@@ -1,10 +1,4 @@
-import {
-  IData,
-  IOperation,
-  IStatement,
-  ObjectType,
-  StringType,
-} from "../../lib/types";
+import { IData, IStatement, ObjectType } from "../../lib/types";
 import { Statement } from "../Statement";
 import { BaseInput } from "./BaseInput";
 import { AddStatement } from "../AddStatement";
@@ -15,10 +9,9 @@ export interface IObjectInput extends HTMLAttributes<HTMLDivElement> {
   data: IData<ObjectType>;
   handleData: (data: IData<ObjectType>) => void;
   prevStatements: IStatement[];
-  prevOperations: IOperation[];
 }
 export const ObjectInput = forwardRef<HTMLDivElement, IObjectInput>(
-  ({ data, handleData, prevStatements, prevOperations, ...props }, ref) => {
+  ({ data, handleData, prevStatements, ...props }, ref) => {
     const isMultiline = data.value.size > 2;
 
     function handleUpdate(
@@ -83,7 +76,6 @@ export const ObjectInput = forwardRef<HTMLDivElement, IObjectInput>(
                 handleStatement={(val, remove) =>
                   handleUpdate(arr, i, val, remove)
                 }
-                prevOperations={prevOperations}
                 prevStatements={prevStatements}
               />
               {i < arr.length - 1 ? <span>{","}</span> : null}
@@ -93,7 +85,6 @@ export const ObjectInput = forwardRef<HTMLDivElement, IObjectInput>(
         <AddStatement
           id={`${data.id}_addStatement`}
           prevStatements={prevStatements}
-          prevOperations={prevOperations}
           onSelect={(value) => {
             if (!data.value.has("")) {
               const newMap = new Map(data.value);

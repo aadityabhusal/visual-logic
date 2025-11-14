@@ -8,23 +8,15 @@ import type {
   ArrayType,
   ObjectType,
   UnionType,
+  OperationType,
   IData,
-  IMethod,
   IStatement,
-  IOperation,
   IDropdownItem,
-  IReference,
 } from "./types";
 
 /**
  * Note: Zod schemas are derived from types because the type relations are complex and some not possible to express in Zod.
  */
-
-export const IReferenceSchema: z.ZodType<IReference> = z.object({
-  id: z.string(),
-  name: z.string(),
-  isCalled: z.boolean().optional(),
-});
 
 const UndefinedTypeSchema: z.ZodType<UndefinedType> = z.object({
   kind: z.literal("undefined"),
@@ -63,6 +55,18 @@ const UnionTypeSchema: z.ZodType<UnionType> = z.object({
   },
 });
 
+const OperationTypeSchema: z.ZodType<OperationType> = z.object({
+  kind: z.literal("operation"),
+  get parameters() {
+    return z.array(
+      z.object({ name: z.string().optional(), type: DataTypeSchema })
+    );
+  },
+  get result() {
+    return DataTypeSchema;
+  },
+});
+
 export const DataTypeSchema: z.ZodType<DataType> = z.union([
   UndefinedTypeSchema,
   StringTypeSchema,
@@ -71,6 +75,7 @@ export const DataTypeSchema: z.ZodType<DataType> = z.union([
   ArrayTypeSchema,
   ObjectTypeSchema,
   UnionTypeSchema,
+  OperationTypeSchema,
 ]);
 
 export const IDataSchema: z.ZodType<IData> = z
@@ -78,7 +83,7 @@ export const IDataSchema: z.ZodType<IData> = z
     id: z.string(),
     entityType: z.literal("data"),
     isGeneric: z.boolean().optional(),
-    reference: IReferenceSchema.optional(),
+    reference: z.object({ id: z.string(), name: z.string() }).optional(),
   })
   .and(
     // Note: We use z.union instead of z.discriminatedUnion because the discriminator (kind) is nested inside the type object.
@@ -114,7 +119,31 @@ export const IDataSchema: z.ZodType<IData> = z
       z.object({
         type: UnionTypeSchema,
         get value() {
-          return IStatementSchema;
+          return z.union([
+            z.undefined(),
+            z.string(),
+            z.number(),
+            z.boolean(),
+            z.array(IStatementSchema),
+            z.map(z.string(), IStatementSchema),
+            z.object({
+              parameters: z.array(IStatementSchema),
+              statements: z.array(IStatementSchema),
+              return: IDataSchema.optional(),
+              name: z.string().optional(),
+            }),
+          ]);
+        },
+      }),
+      z.object({
+        type: OperationTypeSchema,
+        get value() {
+          return z.object({
+            parameters: z.array(IStatementSchema),
+            statements: z.array(IStatementSchema),
+            return: IDataSchema.optional(),
+            name: z.string().optional(),
+          });
         },
       }),
     ])
@@ -125,39 +154,14 @@ export const IStatementSchema: z.ZodType<IStatement> = z.object({
   entityType: z.literal("statement"),
   name: z.string().optional(),
   get data() {
-    return z.union([IDataSchema, IOperationSchema]);
+    return IDataSchema;
   },
-  get methods() {
-    return z.array(IMethodSchema);
-  },
-});
-
-export const IOperationSchema: z.ZodType<IOperation> = z.object({
-  id: z.string(),
-  entityType: z.literal("operation"),
-  name: z.string().optional(),
-  isGeneric: z.boolean().optional(),
-  reference: IReferenceSchema.optional(),
-  get parameters() {
-    return z.array(IStatementSchema);
-  },
-  get closure() {
-    return z.array(IStatementSchema);
-  },
-  get statements() {
-    return z.array(IStatementSchema);
-  },
-});
-
-export const IMethodSchema: z.ZodType<IMethod> = z.object({
-  id: z.string(),
-  name: z.string(),
-  entityType: z.literal("method"),
-  get parameters() {
-    return z.array(IStatementSchema);
-  },
-  get result() {
-    return z.union([IDataSchema, IOperationSchema]);
+  get operations() {
+    return z
+      .array(IDataSchema)
+      .refine((ops) => ops.every((op) => op.type.kind === "operation"), {
+        message: "All operations must have type.kind === 'operation'",
+      }) as z.ZodType<IData<OperationType>[]>;
   },
 });
 
@@ -172,7 +176,5 @@ export const IDropdownItemSchema: z.ZodType<IDropdownItem> = z.object({
 // Type inference helpers to verify schemas match the original types
 export type InferredDataType = z.infer<typeof DataTypeSchema>;
 export type InferredIData = z.infer<typeof IDataSchema>;
-export type InferredIMethod = z.infer<typeof IMethodSchema>;
 export type InferredIStatement = z.infer<typeof IStatementSchema>;
-export type InferredIOperation = z.infer<typeof IOperationSchema>;
 export type InferredIDropdownItem = z.infer<typeof IDropdownItemSchema>;

@@ -14,9 +14,10 @@ import {
   HeadlessMantineProvider,
   Tooltip,
 } from "@mantine/core";
-import { IOperation } from "./lib/types";
 import { FocusInfo } from "./components/FocusInfo";
 import { useSearchParams } from "react-router";
+import { IData, OperationType } from "./lib/types";
+import { createStatement } from "./lib/utils";
 
 const theme = createTheme({
   scale: 1,
@@ -64,13 +65,18 @@ function App() {
             {currentOperation ? (
               <Operation
                 operation={currentOperation}
-                handleChange={(operation: IOperation) =>
+                handleChange={(operation: IData<OperationType>) =>
                   setOperation(updateOperations(operations, operation))
                 }
-                prevStatements={[]}
-                prevOperations={operations.filter(
-                  (operation) => operation.id !== currentOperation.id
-                )}
+                prevStatements={operations
+                  .filter((operation) => operation.id !== currentOperation.id)
+                  .map((operation) =>
+                    createStatement({
+                      data: operation,
+                      name: operation.value.name,
+                      id: operation.id,
+                    })
+                  )}
                 options={{ isTopLevel: true, disableDropdown: true }}
               />
             ) : (

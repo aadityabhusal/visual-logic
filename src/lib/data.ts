@@ -34,6 +34,14 @@ export const TypeMapper: {
     defaultValue: undefined,
     type: { kind: "union", types: [{ kind: "undefined" }] },
   },
+  operation: {
+    defaultValue: { parameters: [], statements: [] },
+    type: {
+      kind: "operation",
+      parameters: [],
+      result: { kind: "undefined" },
+    },
+  },
 };
 
 export const preferenceOptions = [

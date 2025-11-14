@@ -1,6 +1,5 @@
 import {
   IData,
-  IOperation,
   IStatement,
   NumberType,
   StringType,
@@ -23,7 +22,6 @@ interface IProps {
   addMethod?: () => void;
   handleChange(item: IStatement["data"], remove?: boolean): void;
   prevStatements: IStatement[];
-  prevOperations: IOperation[];
 }
 
 export function Data({
@@ -32,17 +30,15 @@ export function Data({
   addMethod,
   handleChange,
   prevStatements,
-  prevOperations,
 }: IProps) {
   const dropdownItems = useMemo(
     () =>
       getDataDropdownList({
         data,
         onSelect: handleChange,
-        prevOperations,
         prevStatements,
       }),
-    [data, prevOperations, prevStatements]
+    [data, prevStatements]
   );
 
   const showDropdownIcon =
@@ -81,12 +77,13 @@ export function Data({
       target={({ onChange, ...props }) =>
         data.reference?.name ? (
           <BaseInput {...props} onChange={onChange} className="text-variable" />
+        ) : isDataOfType(data, "operation") ? (
+          <></>
         ) : isDataOfType(data, "array") ? (
           <ArrayInput
             data={data}
             handleData={handleChange}
             prevStatements={prevStatements}
-            prevOperations={prevOperations}
             onClick={props.onClick}
           />
         ) : isDataOfType(data, "object") ? (
@@ -94,7 +91,6 @@ export function Data({
             data={data}
             handleData={handleChange}
             prevStatements={prevStatements}
-            prevOperations={prevOperations}
             onClick={props.onClick}
           />
         ) : isDataOfType(data, "boolean") ? (
@@ -134,6 +130,7 @@ export function Data({
             type="text"
             className="text-border"
             value={data.value?.toString() || ""}
+            disabled={!data.isGeneric}
             onChange={(_val) => {
               const transform = isNumberLike(_val)
                 ? { type: "number", value: Number(_val.slice(0, 16)) }

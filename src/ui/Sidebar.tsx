@@ -1,7 +1,7 @@
 import { FaGear, FaPlus, FaX } from "react-icons/fa6";
 import { uiConfigStore, operationsStore } from "../lib/store";
 import { updateOperations } from "../lib/update";
-import { createOperation, createVariableName } from "../lib/utils";
+import { createData, createVariableName } from "../lib/utils";
 import { NoteText } from "./NoteText";
 import { IconButton } from "./IconButton";
 import { SiGithub, SiYoutube } from "react-icons/si";
@@ -24,12 +24,23 @@ export function Sidebar() {
           title="Add operation"
           onClick={() =>
             addOperation(
-              createOperation({
-                name: createVariableName({
-                  prefix: "operation",
-                  prev: operations,
-                  indexOffset: 1,
-                }),
+              createData({
+                type: {
+                  kind: "operation",
+                  parameters: [],
+                  result: { kind: "undefined" },
+                },
+                value: {
+                  parameters: [],
+                  statements: [],
+                  name: createVariableName({
+                    prefix: "operation",
+                    prev: operations
+                      .map((operation) => operation.value.name)
+                      .filter(Boolean) as string[],
+                    indexOffset: 1,
+                  }),
+                },
               })
             )
           }
@@ -50,7 +61,7 @@ export function Sidebar() {
             key={item.id}
             onClick={() => setSearchParams({ operationId: item.id })}
           >
-            <span className="truncate">{item.name}</span>
+            <span className="truncate">{item.value.name}</span>
             <IconButton
               icon={FaX}
               title="Delete operation"

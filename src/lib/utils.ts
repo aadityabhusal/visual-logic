@@ -2,10 +2,11 @@ import { nanoid } from "nanoid";
 import { TypeMapper } from "./data";
 import {
   IData,
-  IOperation,
   IStatement,
   DataType,
   IDropdownItem,
+  DataValue,
+  OperationType,
 } from "./types";
 import { updateStatements } from "./update";
 
@@ -17,22 +18,9 @@ export function createData<T extends DataType>(
     id: props.id ?? nanoid(),
     entityType: "data",
     type,
-    value: props.value ?? TypeMapper[type.kind].defaultValue,
+    value: props.value ?? (TypeMapper[type.kind].defaultValue as DataValue<T>),
     isGeneric: props.isGeneric,
     reference: props.reference,
-  };
-}
-
-export function createOperation(props?: Partial<IOperation>): IOperation {
-  return {
-    id: props?.id ?? nanoid(),
-    isGeneric: props?.isGeneric,
-    entityType: "operation",
-    name: props?.name,
-    parameters: props?.parameters || [],
-    statements: props?.statements || [],
-    closure: props?.closure || [],
-    reference: props?.reference,
   };
 }
 
@@ -45,7 +33,7 @@ export function createStatement(props?: Partial<IStatement>): IStatement {
     name: props?.name,
     entityType: "statement",
     data: newData,
-    methods: props?.methods || [],
+    operations: props?.operations || [],
   };
 }
 
@@ -55,7 +43,7 @@ export function createVariableName({
   indexOffset = 0,
 }: {
   prefix: string;
-  prev: (IStatement | IOperation | string)[];
+  prev: (IStatement | string)[];
   indexOffset?: number;
 }) {
   const index = prev
@@ -68,121 +56,112 @@ export function createVariableName({
   return `${prefix}${index || ""}`;
 }
 
-export function isSameType(
-  first: IStatement["data"],
-  second: IStatement["data"]
-): boolean {
-  if (first.entityType === "operation" && second.entityType === "operation") {
+export function isTypeCompatible(first: DataType, second: DataType): boolean {
+  if (first.kind === "operation" && second.kind === "operation") {
     if (first.parameters.length !== second.parameters.length) return false;
+    if (!isTypeCompatible(first.result, second.result)) return false;
     return first.parameters.every((firstParam, index) =>
-      isSameType(firstParam.data, second.parameters[index].data)
-    );
-  } else if (first.entityType === "operation") {
-    if (!first.reference?.isCalled) return false;
-    return isSameType(getOperationResult(first), second);
-  } else if (second.entityType === "operation") {
-    if (!second.reference?.isCalled) return false;
-    return isSameType(first, getOperationResult(second));
-  } else {
-    return isTypeCompatible(first.type, second.type);
-  }
-}
-
-export function isTypeCompatible(
-  actual: DataType,
-  expected: DataType
-): boolean {
-  if (actual.kind === "array" && expected.kind === "array") {
-    return isTypeCompatible(actual.elementType, expected.elementType);
-  }
-
-  if (actual.kind === "object" && expected.kind === "object") {
-    return Object.entries(expected.properties).every(
-      ([key, expectedType]) =>
-        actual.properties[key] &&
-        isTypeCompatible(actual.properties[key], expectedType)
+      isTypeCompatible(firstParam.type, second.parameters[index].type)
     );
   }
 
-  if (actual.kind === "union") {
-    return actual.types.some((t) => isTypeCompatible(t, expected));
+  if (first.kind === "array" && second.kind === "array") {
+    return isTypeCompatible(first.elementType, second.elementType);
   }
 
-  return actual.kind === expected.kind;
+  if (first.kind === "object" && second.kind === "object") {
+    const firstKeys = Object.keys(first.properties);
+    const secondKeys = Object.keys(second.properties);
+    if (firstKeys.length !== secondKeys.length) return false;
+    return secondKeys.every(
+      (key) =>
+        first.properties[key] &&
+        isTypeCompatible(first.properties[key], second.properties[key])
+    );
+  }
+
+  if (first.kind === "union" && second.kind === "union") {
+    if (first.types.length !== second.types.length) return false;
+    // Bi-directional check to maintain order-independence and avoid duplicate types
+    return (
+      first.types.every((firstType) =>
+        second.types.some((secondType) =>
+          isTypeCompatible(firstType, secondType)
+        )
+      ) &&
+      second.types.every((secondType) =>
+        first.types.some((firstType) => isTypeCompatible(firstType, secondType))
+      )
+    );
+  }
+
+  if (first.kind === "union") {
+    return first.types.some((t) => isTypeCompatible(t, second));
+  }
+
+  if (second.kind === "union") {
+    return second.types.some((t) => isTypeCompatible(first, t));
+  }
+
+  return first.kind === second.kind;
 }
 
 export function isDataOfType<K extends DataType["kind"]>(
-  data: IData<DataType>,
+  data: IData<DataType> | undefined,
   kind: K
 ): data is IData<Extract<DataType, { kind: K }>> {
-  return data.type.kind === kind;
+  return data?.type.kind === kind;
 }
 
-export function getClosureList(reference: IStatement | IOperation) {
-  const referenceData =
-    reference.entityType === "statement" ? reference.data : reference;
-
-  return referenceData.entityType === "operation"
-    ? referenceData.reference?.isCalled
-      ? referenceData.parameters.concat(referenceData.closure)
-      : referenceData.closure
-    : null;
-}
-
-export function getOperationResult(operation: IOperation) {
-  let lastStatement = operation.statements.slice(-1)[0];
-  return lastStatement
-    ? getStatementResult(lastStatement)
-    : createData({ type: { kind: "undefined" } });
-}
-
+// TODO: Make use of the data type to create a better type for result e.g. a union type
 export function getStatementResult(
   statement: IStatement,
   index?: number,
   prevEntity?: boolean
-): IStatement["data"] {
+): IData {
   let data = statement.data;
-  if (index) return statement.methods[index - 1]?.result;
-  let lastStatement = statement.methods[statement.methods.length - 1];
-  if (!prevEntity && lastStatement) return lastStatement.result;
-  return data.entityType === "operation" && data.reference?.isCalled
-    ? getOperationResult(data)
-    : data;
+  if (index !== undefined) {
+    const result = statement.operations[index - 1]?.value.result;
+    if (!result) return createData({ type: { kind: "undefined" } });
+    return result;
+  }
+  let lastStatement = statement.operations[statement.operations.length - 1];
+  if (!prevEntity && lastStatement) {
+    const result = lastStatement.value.result;
+    if (!result) return createData({ type: { kind: "undefined" } });
+    return result;
+  }
+  return data;
 }
 
 export function resetParameters(
-  parameters: IOperation["parameters"],
-  argumentList?: IOperation["parameters"]
+  parameters: DataValue<OperationType>["parameters"],
+  argumentList?: DataValue<OperationType>["parameters"]
 ): IStatement[] {
   return parameters.map((param) => {
     let argData = argumentList?.find((item) => item.id === param.id)?.data;
-    let paramData = { ...param.data, isGeneric: argData?.isGeneric };
-    if (paramData.entityType === "data") {
-      let argValue = argData?.entityType === "data" ? argData.value : undefined;
+    let paramData = { ...param.data, isGeneric: argData?.isGeneric } as IData;
+    if (isDataOfType(paramData, "operation")) {
+      let argParams = isDataOfType(argData, "operation")
+        ? argData.value.parameters
+        : undefined;
       paramData = {
         ...paramData,
         id: nanoid(),
-        value: argValue || TypeMapper[paramData.type.kind].defaultValue,
+        value: {
+          ...paramData.value,
+          parameters: resetParameters(paramData.value.parameters, argParams),
+        },
       };
     } else {
-      let argParams =
-        argData?.entityType === "operation" ? argData.parameters : undefined;
       paramData = {
         ...paramData,
         id: nanoid(),
-        parameters: resetParameters(paramData.parameters, argParams),
+        value: argData?.value || TypeMapper[paramData.type.kind].defaultValue,
       };
     }
     return { ...param, id: nanoid(), data: paramData };
   });
-}
-
-export function getPreviousStatements(previous: (IStatement | IOperation)[]) {
-  return previous.map((item) =>
-    item.entityType === "operation"
-      ? createStatement({ id: item.id, name: item.name, data: item })
-      : item
-  );
 }
 
 export function jsonParseReviver(_: string, data: IData) {
@@ -206,20 +185,16 @@ export const setLocalStorage = (key: string, value: any) => {
   localStorage.setItem(key, JSON.stringify(value, replacer));
 };
 
-export function getElementType(data: IData | IOperation): DataType {
-  return data.entityType === "data" ? data.type : { kind: "undefined" };
-}
-
 export function getArrayElementType(elements: IStatement[]): DataType {
   if (elements.length === 0) return { kind: "undefined" };
-  const firstType = getElementType(elements[0].data);
+  const firstType = elements[0].data.type;
   const allSameType = elements.every((element) => {
-    return isTypeCompatible(getElementType(element.data), firstType);
+    return isTypeCompatible(element.data.type, firstType);
   });
   if (allSameType) return firstType;
 
   const unionTypes = elements.reduce((acc, element) => {
-    const elementType = getElementType(element.data);
+    const elementType = element.data.type;
     const exists = acc.some((t) => isTypeCompatible(t, elementType));
     if (!exists) acc.push(elementType);
     return acc;
@@ -232,7 +207,7 @@ export function getObjectPropertiesType(entries: Map<string, IStatement>): {
 } {
   const properties: { [key: string]: DataType } = {};
   entries.forEach((statement, key) => {
-    properties[key] = getElementType(statement.data);
+    properties[key] = statement.data.type;
   });
 
   return properties;
@@ -242,47 +217,16 @@ export function getDataDropdownList({
   data,
   onSelect,
   prevStatements,
-  prevOperations,
 }: {
   data: IStatement["data"];
   onSelect: (operation: IStatement["data"], remove?: boolean) => void;
   prevStatements: IStatement[];
-  prevOperations: IOperation[];
 }) {
   function selectData(dataOption: IData, reference: IStatement) {
     onSelect({
       ...dataOption,
       id: data.id,
       isGeneric: data.isGeneric,
-      reference: reference.name
-        ? { id: reference.id, name: reference.name }
-        : undefined,
-    });
-  }
-
-  function selectOperations(
-    operation: IOperation,
-    reference: IStatement | IOperation
-  ) {
-    const parameters = resetParameters(operation.parameters);
-    const closure = getClosureList(reference) || [];
-    const statements = updateStatements({
-      statements: operation.statements,
-      previous: [
-        ...prevOperations,
-        ...prevStatements,
-        ...closure,
-        ...parameters,
-      ],
-    });
-
-    onSelect({
-      ...operation,
-      isGeneric: data.isGeneric,
-      id: data.id,
-      parameters,
-      closure,
-      statements,
       reference: reference.name
         ? { id: reference.id, name: reference.name }
         : undefined,
@@ -311,48 +255,19 @@ export function getDataDropdownList({
       }
       return acc;
     }, [] as IDropdownItem[]),
-    ...(data.isGeneric || (data.reference && data.entityType === "operation")
-      ? ([
-          {
-            entityType: "operation",
-            value: "operation",
-            onClick: () => {
-              const parameters =
-                data.entityType === "operation" ? data.parameters : [];
-              onSelect(
-                createOperation({
-                  id: data.id,
-                  isGeneric: data.isGeneric,
-                  parameters,
-                })
-              );
-            },
-          },
-        ] as IDropdownItem[])
-      : []),
     ...prevStatements.flatMap((statement) => {
       const result = getStatementResult(statement);
-      if ((!data.isGeneric && !isSameType(result, data)) || !statement.name)
+      if (
+        (!data.isGeneric && !isTypeCompatible(result.type, data.type)) ||
+        !statement.name
+      )
         return [];
       return {
         secondaryLabel:
           result.entityType === "data" ? result.type.kind : "operation",
         value: statement.name,
         entityType: "data",
-        onClick: () =>
-          result.entityType === "operation"
-            ? selectOperations(result, statement)
-            : selectData(result, statement),
-      } as IDropdownItem;
-    }),
-    ...prevOperations.flatMap((operation) => {
-      let result = getStatementResult(createStatement({ data: operation }));
-      if (!data.isGeneric && !isSameType(result, data)) return [];
-      return {
-        value: operation.name,
-        entityType: "operation",
-        secondaryLabel: "operation",
-        onClick: () => selectOperations(operation, operation),
+        onClick: () => selectData(result, statement),
       } as IDropdownItem;
     }),
   ];

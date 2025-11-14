@@ -1,4 +1,4 @@
-import { ArrayType, IData, IOperation, IStatement } from "../../lib/types";
+import { ArrayType, IData, IStatement } from "../../lib/types";
 import { Statement } from "../Statement";
 import { AddStatement } from "../AddStatement";
 import { forwardRef, HTMLAttributes } from "react";
@@ -8,11 +8,10 @@ export interface IArrayInput extends HTMLAttributes<HTMLDivElement> {
   data: IData<ArrayType>;
   handleData: (data: IData<ArrayType>) => void;
   prevStatements: IStatement[];
-  prevOperations: IOperation[];
 }
 
 export const ArrayInput = forwardRef<HTMLDivElement, IArrayInput>(
-  ({ data, handleData, prevStatements, prevOperations, ...props }, ref) => {
+  ({ data, handleData, prevStatements, ...props }, ref) => {
     const isMultiline = data.value.length > 3;
 
     function handleUpdate(result: IStatement, index: number, remove?: boolean) {
@@ -45,7 +44,6 @@ export const ArrayInput = forwardRef<HTMLDivElement, IArrayInput>(
               <Statement
                 statement={item}
                 handleStatement={(val, remove) => handleUpdate(val, i, remove)}
-                prevOperations={prevOperations}
                 prevStatements={prevStatements}
               />
               {i < arr.length - 1 ? <span>{","}</span> : null}
@@ -55,7 +53,6 @@ export const ArrayInput = forwardRef<HTMLDivElement, IArrayInput>(
         <AddStatement
           id={`${data.id}_addStatement`}
           prevStatements={prevStatements}
-          prevOperations={prevOperations}
           onSelect={(value) => {
             const newVal = [...data.value, value];
             handleData({
