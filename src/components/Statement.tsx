@@ -1,4 +1,4 @@
-import { FaEquals } from "react-icons/fa6";
+import { FaArrowRightLong, FaArrowTurnUp, FaEquals } from "react-icons/fa6";
 import { IData, IStatement, OperationType } from "../lib/types";
 import { updateStatementMethods } from "../lib/update";
 import {
@@ -7,16 +7,17 @@ import {
   createVariableName,
   isDataOfType,
 } from "../lib/utils";
-import { createMethod } from "../lib/methods";
+import { createOperationCall } from "../lib/methods";
 import { Data } from "./Data";
 import { BaseInput } from "./Input/BaseInput";
-import { Method } from "./Method";
+import { OperationCall } from "./OperationCall";
 import { Operation } from "./Operation";
 import { IconButton } from "../ui/IconButton";
 import { AddStatement } from "./AddStatement";
 import { useDisclosure } from "@mantine/hooks";
 import { Popover, useDelayedHover } from "@mantine/core";
 import { TypeMapper } from "../lib/data";
+import { useMemo } from "react";
 
 export function Statement({
   statement,
@@ -45,12 +46,24 @@ export function Statement({
     openDelay: 0,
     closeDelay: 150,
   });
+  const PipeArrow =
+    statement.operations.length > 1 ? FaArrowTurnUp : FaArrowRightLong;
 
-  function addMethod() {
-    let data = getStatementResult(statement);
+  const hoverEvents = useMemo(
+    () => ({
+      onMouseEnter: openDropdown,
+      onFocus: openDropdown,
+      onMouseLeave: closeDropdown,
+      onBlur: closeDropdown,
+    }),
+    [openDropdown, closeDropdown]
+  );
+
+  function addOperationCall() {
+    const data = getStatementResult(statement);
     if (data.entityType !== "data") return;
-    let operation = createMethod({ data });
-    let operations = [...statement.operations, operation];
+    const operation = createOperationCall({ data, prevStatements });
+    const operations = [...statement.operations, operation];
     handleStatement(
       updateStatementMethods({ ...statement, operations }, prevStatements)
     );
@@ -81,28 +94,39 @@ export function Statement({
       );
   }
 
-  function handleMethod(method: IMethod, index: number, remove?: boolean) {
-    let methods = [...statement.operations];
+  function handleOperationCall(
+    operation: IData<OperationType>,
+    index: number,
+    remove?: boolean
+  ) {
+    let operations = [...statement.operations];
     if (remove) {
-      let data = getStatementResult(statement, index);
-      if (!isTypeCompatible(method.result, data)) methods.splice(index);
-      else methods.splice(index, 1);
+      const data = getStatementResult(statement, index);
+      if (
+        !operation.value.result ||
+        !isTypeCompatible(operation.value.result.type, data.type)
+      ) {
+        operations.splice(index);
+      } else {
+        operations.splice(index, 1);
+      }
     } else {
-      if (!isTypeCompatible(method.result, methods[index].result))
-        methods.splice(index + 1);
-      methods[index] = method;
+      if (
+        !operation.value.result ||
+        !operations[index].value.result ||
+        !isTypeCompatible(
+          operation.value.result.type,
+          operations[index].value.result.type
+        )
+      ) {
+        operations.splice(index + 1);
+      }
+      operations[index] = operation;
     }
     handleStatement(
-      updateStatementMethods({ ...statement, methods }, prevStatements)
+      updateStatementMethods({ ...statement, operations }, prevStatements)
     );
   }
-
-  const hoverEvents = {
-    onMouseEnter: openDropdown,
-    onFocus: openDropdown,
-    onMouseLeave: closeDropdown,
-    onBlur: closeDropdown,
-  };
 
   return (
     <div className="flex items-start gap-1">
@@ -186,9 +210,9 @@ export function Statement({
           <Data
             data={statement.data}
             disableDelete={options?.disableDelete}
-            addMethod={
+            addOperationCall={
               !options?.disableMethods && statement.operations.length === 0
-                ? addMethod
+                ? addOperationCall
                 : undefined
             }
             prevStatements={prevStatements}
@@ -199,19 +223,28 @@ export function Statement({
             }
           />
         )}
-        {statement.operations.map((method, i, methods) => {
+        {statement.operations.map((operation, i, operationsList) => {
           let data = getStatementResult(statement, i, true);
           if (data.entityType !== "data") return;
           return (
-            <div key={method.id} className="flex items-start gap-1 ml-1">
-              <Method
+            <div key={operation.id} className="flex items-start gap-1 ml-1">
+              <PipeArrow
+                size={10}
+                className="text-disabled mt-1.5"
+                style={{
+                  transform: operationsList.length > 1 ? "rotate(90deg)" : "",
+                }}
+              />
+              <OperationCall
                 data={data}
-                method={method}
-                handleMethod={(meth, remove) => handleMethod(meth, i, remove)}
+                operation={operation}
+                handleOperationCall={(op, remove) =>
+                  handleOperationCall(op, i, remove)
+                }
                 prevStatements={prevStatements}
-                addMethod={
-                  !options?.disableMethods && i + 1 === methods.length
-                    ? addMethod
+                addOperationCall={
+                  !options?.disableMethods && i + 1 === operationsList.length
+                    ? addOperationCall
                     : undefined
                 }
               />

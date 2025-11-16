@@ -10,8 +10,9 @@ import {
 } from "react-icons/fa6";
 import { uiConfigStore, operationsStore } from "../lib/store";
 import { getHotkeyHandler } from "@mantine/hooks";
-import { IDropdownItem, IReference, IStatement } from "../lib/types";
+import { IData, IDropdownItem, IStatement } from "../lib/types";
 import { useSearchParams } from "react-router";
+import { isDataOfType } from "../lib/utils";
 
 export function Dropdown({
   id,
@@ -20,7 +21,7 @@ export function Dropdown({
   result,
   items,
   handleDelete,
-  addMethod,
+  addOperationCall,
   children,
   options,
   isInputTarget,
@@ -33,7 +34,7 @@ export function Dropdown({
   result?: IStatement["data"];
   items?: IDropdownItem[];
   handleDelete?: () => void;
-  addMethod?: () => void;
+  addOperationCall?: () => void;
   children?: ReactNode;
   options?: {
     withSearch?: boolean;
@@ -41,7 +42,7 @@ export function Dropdown({
     focusOnClick?: boolean;
   };
   isInputTarget?: boolean;
-  reference?: IReference;
+  reference?: IData["reference"];
   target: (
     value: Omit<HTMLAttributes<HTMLElement>, "onChange" | "defaultValue"> & {
       value?: string;
@@ -53,7 +54,7 @@ export function Dropdown({
   const { undo, redo } = operationsStore.temporal.getState();
   const { highlightOperation, focusId, setUiConfig } = uiConfigStore();
   const forceDisplayBorder =
-    highlightOperation && data?.entityType === "operation";
+    highlightOperation && isDataOfType(data, "operation");
   const [isHovered, setHovered] = useState(false);
   const isFocused = focusId === id;
   const [search, setSearch] = useState("");
@@ -164,7 +165,7 @@ export function Dropdown({
                 setUiConfig({ focusId: id, result, showPopup: true }),
             })}
           </Combobox.EventsTarget>
-          {data?.entityType === "operation" && reference && (
+          {isDataOfType(data, "operation") && reference && (
             <IconButton
               tabIndex={-1}
               size={8}
@@ -189,7 +190,7 @@ export function Dropdown({
               title="Delete"
             />
           )}
-          {addMethod && (
+          {addOperationCall && (
             <IconButton
               size={12}
               title="Add method"
@@ -197,7 +198,7 @@ export function Dropdown({
               icon={FaCirclePlus}
               onClick={() => {
                 combobox?.closeDropdown();
-                addMethod();
+                addOperationCall();
               }}
               hidden={!isFocused && !isHovered}
             />

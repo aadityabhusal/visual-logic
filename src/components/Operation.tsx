@@ -1,7 +1,11 @@
 import { Fragment, useMemo } from "react";
 import { IData, IStatement, OperationType } from "../lib/types";
 import { updateStatements } from "../lib/update";
-import { createVariableName, getDataDropdownList } from "../lib/utils";
+import {
+  createVariableName,
+  getDataDropdownList,
+  getOperationType,
+} from "../lib/utils";
 import { Statement } from "./Statement";
 import { BaseInput } from "./Input/BaseInput";
 import { AddStatement } from "./AddStatement";
@@ -10,13 +14,13 @@ import { Dropdown } from "./Dropdown";
 export function Operation({
   operation,
   handleChange,
-  addMethod,
+  addOperationCall,
   prevStatements,
   options,
 }: {
   operation: IData<OperationType>;
   handleChange(item: IStatement["data"], remove?: boolean): void;
-  addMethod?: () => void;
+  addOperationCall?: () => void;
   prevStatements: IStatement[];
   options?: {
     disableDelete?: boolean;
@@ -53,12 +57,16 @@ export function Operation({
       removeStatement: remove,
     });
 
+    const updatedParameters = updatedStatements.slice(0, parameterLength);
+    const updatedStatementsList = updatedStatements.slice(parameterLength);
+
     handleChange({
       ...operation,
+      type: getOperationType(updatedParameters, updatedStatementsList),
       value: {
         ...operation.value,
-        parameters: updatedStatements.slice(0, parameterLength),
-        statements: updatedStatements.slice(parameterLength),
+        parameters: updatedParameters,
+        statements: updatedStatementsList,
       },
     });
   }
@@ -80,7 +88,7 @@ export function Operation({
           : { withSearch: true, withDropdownIcon: true, focusOnClick: true }
       }
       value={operation.reference?.name || "operation"}
-      addMethod={addMethod}
+      addOperationCall={addOperationCall}
       isInputTarget={!!operation.reference}
       reference={operation.reference}
       target={(props) =>
@@ -120,23 +128,22 @@ export function Operation({
                   id={`${operation.id}_paramAddStatement`}
                   prevStatements={prevStatements}
                   onSelect={(statement) => {
+                    const parameters = [...operation.value.parameters];
+                    const statements = [...operation.value.statements];
+                    const newParameter = {
+                      ...statement,
+                      name: createVariableName({
+                        prefix: "param",
+                        prev: [...parameters, ...prevStatements],
+                      }),
+                    };
+                    const updatedParameters = [...parameters, newParameter];
                     handleChange({
                       ...operation,
+                      type: getOperationType(updatedParameters, statements),
                       value: {
                         ...operation.value,
-                        parameters: [
-                          ...operation.value.parameters,
-                          {
-                            ...statement,
-                            name: createVariableName({
-                              prefix: "param",
-                              prev: [
-                                ...operation.value.parameters,
-                                ...prevStatements,
-                              ],
-                            }),
-                          },
-                        ],
+                        parameters: updatedParameters,
                       },
                     });
                   }}

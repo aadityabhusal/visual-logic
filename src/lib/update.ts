@@ -1,4 +1,4 @@
-import { methodsList } from "./methods";
+import { getFilteredOperations, executeOperation } from "./methods";
 import { IStatement, IData, OperationType } from "./types";
 import {
   createData,
@@ -7,6 +7,7 @@ import {
   isDataOfType,
   isTypeCompatible,
   resetParameters,
+  getOperationType,
 } from "./utils";
 
 export function updateStatementMethods(
@@ -28,20 +29,22 @@ export function updateStatementMethods(
           data: { ...item.data /* ...closure */ },
         });
       });
-      let methodHandler = methodsList.find(
-        (item) => item.name === currentOperation.value.name
-      )?.handler;
 
-      let result =
-        methodHandler?.(data, ...parameters) || currentOperation.value.result;
-      let rest = {
-        id: currentOperation.value.result?.id,
-        isGeneric: data.isGeneric,
-      };
+      const foundOperation = getFilteredOperations(data, previous).find(
+        (operation) => operation.name === currentOperation.value.name
+      );
+      const currentResult = currentOperation.value.result;
+      let result = foundOperation
+        ? {
+            ...executeOperation(foundOperation, data, parameters),
+            ...(currentResult && { id: currentResult?.id }),
+            isGeneric: data.isGeneric,
+          }
+        : currentResult;
 
       return [
         ...previousOperations,
-        { ...currentOperation, result: { ...result, ...rest } },
+        { ...currentOperation, value: { ...currentOperation.value, result } },
       ];
     },
     [] as IData<OperationType>[]
@@ -159,13 +162,16 @@ export function getReferenceOperation(
     previous: [...previous, /* ...closure, */ ...updatedParameters],
   });
 
+  const finalParameters = isTypeChanged
+    ? resetParameters(updatedParameters, operation.value.parameters)
+    : updatedParameters;
+
   return {
     ...operation,
+    type: getOperationType(finalParameters, updatedStatements),
     value: {
       ...operation.value,
-      parameters: isTypeChanged
-        ? resetParameters(updatedParameters, operation.value.parameters)
-        : updatedParameters,
+      parameters: finalParameters,
       statements: updatedStatements,
     },
     reference:
@@ -188,13 +194,28 @@ export function updateStatementReference(
     data: isDataOfType(currentStatement.data, "operation")
       ? getReferenceOperation(currentStatement.data, previous, reference)
       : getReferenceData(currentStatement.data, previous, reference),
-    operations: currentStatement.operations.map((operation) => ({
-      ...operation,
-      parameters: updateStatements({
+    operations: currentStatement.operations.map((operation) => {
+      const updatedParameters = updateStatements({
         statements: operation.value.parameters,
         previous,
-      }),
-    })),
+      });
+      // For operation calls, preserve the result type from the definition
+      // Only update parameter types
+      return {
+        ...operation,
+        type: {
+          ...operation.type,
+          parameters: updatedParameters.map((param) => ({
+            name: param.name,
+            type: param.data.type,
+          })),
+        },
+        value: {
+          ...operation.value,
+          parameters: updatedParameters,
+        },
+      };
+    }),
   };
 }
 
@@ -260,12 +281,14 @@ export function updateOperations(
       ),
     });
     const parameterLength = currentOperation.value.parameters.length;
+    const parameters = updatedStatements.slice(0, parameterLength);
+    const statements = updatedStatements.slice(parameterLength);
     return [
       ...prevOperations,
       {
         ...currentOperation,
-        parameters: updatedStatements.slice(0, parameterLength),
-        statements: updatedStatements.slice(parameterLength),
+        type: getOperationType(parameters, statements),
+        value: { ...currentOperation.value, parameters, statements },
       },
     ];
   }, [] as IData<OperationType>[]);

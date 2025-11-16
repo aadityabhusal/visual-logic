@@ -19,7 +19,7 @@ import { TypeMapper } from "../lib/data";
 interface IProps {
   data: IData;
   disableDelete?: boolean;
-  addMethod?: () => void;
+  addOperationCall?: () => void;
   handleChange(item: IStatement["data"], remove?: boolean): void;
   prevStatements: IStatement[];
 }
@@ -27,7 +27,7 @@ interface IProps {
 export function Data({
   data,
   disableDelete,
-  addMethod,
+  addOperationCall,
   handleChange,
   prevStatements,
 }: IProps) {
@@ -63,7 +63,7 @@ export function Data({
       result={data}
       items={dropdownItems}
       handleDelete={!disableDelete ? () => handleChange(data, true) : undefined}
-      addMethod={addMethod}
+      addOperationCall={addOperationCall}
       options={{
         withDropdownIcon: showDropdownIcon,
         withSearch: showDropdownIcon,

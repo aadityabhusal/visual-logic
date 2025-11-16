@@ -120,14 +120,14 @@ export function getStatementResult(
   prevEntity?: boolean
 ): IData {
   let data = statement.data;
-  if (index !== undefined) {
+  if (index) {
     const result = statement.operations[index - 1]?.value.result;
     if (!result) return createData({ type: { kind: "undefined" } });
     return result;
   }
-  let lastStatement = statement.operations[statement.operations.length - 1];
-  if (!prevEntity && lastStatement) {
-    const result = lastStatement.value.result;
+  let lastOperation = statement.operations[statement.operations.length - 1];
+  if (!prevEntity && lastOperation) {
+    const result = lastOperation.value.result;
     if (!result) return createData({ type: { kind: "undefined" } });
     return result;
   }
@@ -145,12 +145,14 @@ export function resetParameters(
       let argParams = isDataOfType(argData, "operation")
         ? argData.value.parameters
         : undefined;
+      const params = resetParameters(paramData.value.parameters, argParams);
       paramData = {
         ...paramData,
         id: nanoid(),
+        type: getOperationType(params, paramData.value.statements),
         value: {
           ...paramData.value,
-          parameters: resetParameters(paramData.value.parameters, argParams),
+          parameters: params,
         },
       };
     } else {
@@ -212,6 +214,25 @@ export function getObjectPropertiesType(entries: Map<string, IStatement>): {
 
   return properties;
 }
+
+export function getOperationType(
+  parameters: IStatement[],
+  statements: IStatement[]
+): OperationType {
+  const parameterTypes = parameters.map((param) => ({
+    name: param.name,
+    type: param.data.type,
+  }));
+
+  let resultType: DataType = { kind: "undefined" };
+  if (statements.length > 0) {
+    const lastStatement = statements[statements.length - 1];
+    resultType = getStatementResult(lastStatement).type;
+  }
+
+  return { kind: "operation", parameters: parameterTypes, result: resultType };
+}
+
 
 export function getDataDropdownList({
   data,
