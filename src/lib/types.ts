@@ -14,8 +14,11 @@ export type OperationType = {
   parameters: { name?: string; type: DataType }[];
   result: DataType;
 };
+export type ConditionType = { kind: "condition"; type: UnionType };
+export type UnknownType = { kind: "unknown" };
 
 export type DataType =
+  | UnknownType
   | UndefinedType
   | StringType
   | NumberType
@@ -23,9 +26,12 @@ export type DataType =
   | ArrayType
   | ObjectType
   | UnionType
-  | OperationType;
+  | OperationType
+  | ConditionType;
 
-type BaseDataValue<T extends DataType> = T extends UndefinedType
+type BaseDataValue<T extends DataType> = T extends UnknownType
+  ? unknown
+  : T extends UndefinedType
   ? undefined
   : T extends StringType
   ? string
@@ -43,6 +49,13 @@ type BaseDataValue<T extends DataType> = T extends UndefinedType
       statements: IStatement[];
       result?: IData;
       name?: string; // for non-statement operations
+    }
+  : T extends ConditionType
+  ? {
+      condition: IStatement;
+      true: IStatement;
+      false: IStatement;
+      result?: IData;
     }
   : never;
 

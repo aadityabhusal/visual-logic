@@ -7,6 +7,9 @@ import {
   StringType,
   ArrayType,
   NumberType,
+  UnknownType,
+  ConditionType,
+  DataValue,
 } from "./types";
 import {
   createData,
@@ -28,41 +31,41 @@ export const builtInOperations: OperationListItem[] = [
     name: "capitalize",
     parameters: [{ type: { kind: "string" } }],
     result: { kind: "string" },
-    handler: (data: IData<StringType>) => {
+    handler: ((data: IData<StringType>) => {
       return createData({
         type: { kind: "string" },
         value:
           (data.value[0]?.toUpperCase() || "") + (data.value?.slice(1) || ""),
       });
-    },
+    }) as (...args: IData[]) => IData,
   },
   {
     name: "concat",
     parameters: [{ type: { kind: "string" } }, { type: { kind: "string" } }],
     result: { kind: "string" },
-    handler: (data: IData<StringType>, p1: IData<StringType>) => {
+    handler: ((data: IData<StringType>, p1: IData<StringType>) => {
       return createData({
         type: { kind: "string" },
         value: data.value.concat(p1.value),
       });
-    },
+    }) as (...args: IData[]) => IData,
   },
   {
     name: "add",
     parameters: [{ type: { kind: "number" } }, { type: { kind: "number" } }],
     result: { kind: "number" },
-    handler: (data: IData<NumberType>, p1: IData<NumberType>) => {
+    handler: ((data: IData<NumberType>, p1: IData<NumberType>) => {
       return createData({
         type: { kind: "number" },
         value: data.value + p1.value,
       });
-    },
+    }) as (...args: IData[]) => IData,
   },
   {
     name: "range",
     parameters: [{ type: { kind: "number" } }, { type: { kind: "number" } }],
     result: { kind: "array", elementType: { kind: "number" } },
-    handler: (data: IData<NumberType>, p1: IData<NumberType>) => {
+    handler: ((data: IData<NumberType>, p1: IData<NumberType>) => {
       let rev = data.value > p1.value;
       let [start, end] = rev ? [p1.value, data.value] : [data.value, p1.value];
       return createData({
@@ -76,7 +79,7 @@ export const builtInOperations: OperationListItem[] = [
           })
         ),
       });
-    },
+    }) as (...args: IData[]) => IData,
   },
   {
     name: "find",
@@ -106,7 +109,7 @@ export const builtInOperations: OperationListItem[] = [
       },
     ],
     result: { kind: "string" },
-    handler: (data: IData<ArrayType>, operation: IData<OperationType>) => {
+    handler: ((data: IData<ArrayType>, operation: IData<OperationType>) => {
       let value = mapArrayParameters(data, operation);
       let foundData = data.value.find((_, i) => {
         let val = value[i];
@@ -116,7 +119,29 @@ export const builtInOperations: OperationListItem[] = [
         type: foundData?.type || { kind: "string" },
         value: foundData?.value || "",
       });
+    }) as (...args: IData[]) => IData,
+  },
+  {
+    name: "getCurrentTime",
+    parameters: [],
+    result: { kind: "string" },
+    handler: () => {
+      return createData({
+        type: { kind: "string" },
+        value: new Date().toISOString(),
+      });
     },
+  },
+  {
+    name: "equals",
+    parameters: [{ type: { kind: "unknown" } }, { type: { kind: "unknown" } }],
+    result: { kind: "boolean" },
+    handler: ((data: IData<UnknownType>, p1: IData<UnknownType>) => {
+      return createData({
+        type: { kind: "boolean" },
+        value: JSON.stringify(data.value) === JSON.stringify(p1.value),
+      });
+    }) as (...args: IData[]) => IData,
   },
 ];
 
@@ -135,43 +160,110 @@ function mapArrayParameters(
       data,
     ];
 
-    // Check if the operation is user-defined (has statements) or built-in
-    if (operation.value.statements && operation.value.statements.length > 0) {
-      // User-defined operation: execute statements with parameter mapping
-      const paramMapping = new Map<string, IData>();
+    const foundOp = builtInOperations.find(
+      (op) => op.name === operation.value.name
+    );
 
-      // Map parameters to their values
-      operation.type.parameters.forEach((param, i) => {
-        if (param.name && paramValues[i]) {
-          paramMapping.set(param.name, paramValues[i]);
-        }
-      });
-
-      // Execute statements sequentially
-      let lastResult: IData = createData({ type: { kind: "undefined" } });
-      const stmtResults = new Map<string, IData>();
-
-      for (const statement of operation.value.statements) {
-        const result = executeStatementWithContext(
-          statement,
-          paramMapping,
-          stmtResults
-        );
-
-        if (statement.name) {
-          stmtResults.set(statement.name, result);
-        }
-        lastResult = result;
-      }
-
-      return lastResult;
-    } else if (operation.value.result) {
-      // Built-in operation or operation with cached result
-      return operation.value.result;
+    if (foundOp) {
+      return executeOperation(foundOp, paramValues[0], paramValues.slice(1));
     }
 
-    return createData({ type: { kind: "undefined" } });
+    return (
+      operation.value.result || createData({ type: { kind: "undefined" } })
+    );
   });
+}
+
+type ExecutionContext = {
+  parameters: Map<string, IData>;
+  statements: Map<string, IData>;
+};
+
+function buildExecutionContext(
+  operation: OperationListItem,
+  data: IData,
+  parameters: IData[]
+): ExecutionContext {
+  const context = { parameters: new Map(), statements: new Map() };
+
+  // Map first parameter to the data being operated on
+  if (operation.parameters[0]?.name) {
+    context.parameters.set(operation.parameters[0].name, data);
+  }
+
+  // Map remaining parameters to provided arguments
+  operation.parameters.slice(1).forEach((param, index) => {
+    if (param.name && parameters[index]) {
+      context.parameters.set(param.name, parameters[index]);
+    }
+  });
+
+  return context;
+}
+
+function executeCondition(
+  condition: DataValue<ConditionType>,
+  context: ExecutionContext
+): IData {
+  const conditionResult = executeStatement(condition.condition, context);
+  const conditionValue = conditionResult.value;
+
+  const isTrue =
+    conditionValue === true ||
+    (typeof conditionValue === "string" && conditionValue.length > 0) ||
+    (typeof conditionValue === "number" && conditionValue !== 0);
+
+  return executeStatement(isTrue ? condition.true : condition.false, context);
+}
+
+function executeStatement(
+  statement: IStatement,
+  context: ExecutionContext
+): IData {
+  // Resolve base data (parameter reference, statement reference, or direct data)
+  let currentData = statement.data;
+
+  if (statement.data.reference?.name) {
+    const refName = statement.data.reference.name;
+    currentData =
+      context.parameters.get(refName) ||
+      context.statements.get(refName) ||
+      statement.data;
+  }
+
+  if (isDataOfType(currentData, "condition")) {
+    currentData = executeCondition(currentData.value, context);
+  }
+
+  // Apply operation chain to the resolved data
+  let result = currentData;
+
+  for (const operation of statement.operations) {
+    // Resolve operation parameters from context
+    const resolvedParams = operation.value.parameters.map((param) => {
+      if (param.data.reference?.name) {
+        return (
+          context.parameters.get(param.data.reference.name) ||
+          context.statements.get(param.data.reference.name) ||
+          getStatementResult(param)
+        );
+      }
+      return getStatementResult(param);
+    });
+
+    // Execute the operation
+    const foundOp = builtInOperations.find(
+      (op) => op.name === operation.value.name
+    );
+
+    if (foundOp && "handler" in foundOp) {
+      result = foundOp.handler(result, ...resolvedParams);
+    } else if (operation.value.result) {
+      result = operation.value.result;
+    }
+  }
+
+  return result;
 }
 
 export function executeOperation(
@@ -182,117 +274,18 @@ export function executeOperation(
   if ("handler" in operation) return operation.handler(data, ...parameters);
 
   if ("statements" in operation && operation.statements.length > 0) {
-    // Create parameter mapping: first parameter is the data being operated on
-    const paramMapping = new Map<string, IData>();
-
-    // Map the first parameter (the data being operated on)
-    if (operation.parameters[0]?.name) {
-      paramMapping.set(operation.parameters[0].name, data);
-    }
-
-    // Map remaining parameters to provided arguments
-    operation.parameters.slice(1).forEach((param, index) => {
-      if (param.name && parameters[index]) {
-        paramMapping.set(param.name, parameters[index]);
-      }
-    });
-
-    // Execute statements sequentially
+    const context = buildExecutionContext(operation, data, parameters);
     let lastResult: IData = createData({ type: { kind: "undefined" } });
-    const stmtResults = new Map<string, IData>();
 
     for (const statement of operation.statements) {
-      // Resolve statement with parameter context
-      const result = executeStatementWithContext(
-        statement,
-        paramMapping,
-        stmtResults
-      );
-
-      if (statement.name) {
-        stmtResults.set(statement.name, result);
-      }
-      lastResult = result;
+      lastResult = executeStatement(statement, context);
+      if (statement.name) context.statements.set(statement.name, lastResult);
     }
 
     return lastResult;
   }
 
   return createData({ type: { kind: "undefined" } });
-}
-
-function executeStatementWithContext(
-  statement: IStatement,
-  paramMapping: Map<string, IData>,
-  stmtResults: Map<string, IData>
-): IData {
-  // If this statement references a parameter or previous statement, use that value
-  if (statement.data.reference?.name) {
-    const refName = statement.data.reference.name;
-    const paramValue = paramMapping.get(refName);
-    if (paramValue) {
-      // Apply any operations on top of the parameter value
-      return applyOperations(
-        paramValue,
-        statement.operations,
-        paramMapping,
-        stmtResults
-      );
-    }
-    const stmtValue = stmtResults.get(refName);
-    if (stmtValue) {
-      return applyOperations(
-        stmtValue,
-        statement.operations,
-        paramMapping,
-        stmtResults
-      );
-    }
-  }
-
-  // Execute the statement's data and operations normally
-  let currentData = statement.data;
-  return applyOperations(
-    currentData,
-    statement.operations,
-    paramMapping,
-    stmtResults
-  );
-}
-
-function applyOperations(
-  data: IData,
-  operations: IData<OperationType>[],
-  paramMapping: Map<string, IData>,
-  stmtResults: Map<string, IData>
-): IData {
-  let result = data;
-
-  for (const operation of operations) {
-    // Resolve parameters for this operation
-    const resolvedParams = operation.value.parameters.map((param) => {
-      if (param.data.reference?.name) {
-        return (
-          paramMapping.get(param.data.reference.name) ||
-          stmtResults.get(param.data.reference.name) ||
-          getStatementResult(param)
-        );
-      }
-      return getStatementResult(param);
-    });
-
-    // Find and execute the operation
-    const foundOp = builtInOperations.find(
-      (op) => op.name === operation.value.name
-    );
-    if (foundOp && "handler" in foundOp && foundOp.handler) {
-      result = foundOp.handler(result, ...resolvedParams);
-    } else if (operation.value.result) {
-      result = operation.value.result;
-    }
-  }
-
-  return result;
 }
 
 function createParamData(

@@ -15,6 +15,7 @@ import { useMemo } from "react";
 import { BaseInput } from "./Input/BaseInput";
 import { isNumberLike } from "@mantine/core";
 import { TypeMapper } from "../lib/data";
+import { Condition } from "./Input/Condition";
 
 interface IProps {
   data: IData;
@@ -45,7 +46,8 @@ export function Data({
     !data.reference?.name &&
     (isDataOfType(data, "array") ||
       isDataOfType(data, "object") ||
-      isDataOfType(data, "boolean"));
+      isDataOfType(data, "boolean") ||
+      isDataOfType(data, "condition"));
 
   function handleUndefinedKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Backspace" && e.currentTarget.value.length === 0) {
@@ -122,6 +124,12 @@ export function Data({
             }}
             onKeyDown={handleUndefinedKeyDown}
             options={{ withQuotes: true }}
+          />
+        ) : isDataOfType(data, "condition") ? (
+          <Condition
+            data={data}
+            handleData={handleChange}
+            prevStatements={prevStatements}
           />
         ) : (
           // Undefined type

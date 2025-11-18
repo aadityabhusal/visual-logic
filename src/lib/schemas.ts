@@ -9,15 +9,20 @@ import type {
   ObjectType,
   UnionType,
   OperationType,
+  ConditionType,
   IData,
   IStatement,
   IDropdownItem,
+  UnknownType,
 } from "./types";
 
 /**
  * Note: Zod schemas are derived from types because the type relations are complex and some not possible to express in Zod.
  */
 
+const UnknownTypeSchema: z.ZodType<UnknownType> = z.object({
+  kind: z.literal("unknown"),
+});
 const UndefinedTypeSchema: z.ZodType<UndefinedType> = z.object({
   kind: z.literal("undefined"),
 });
@@ -67,7 +72,15 @@ const OperationTypeSchema: z.ZodType<OperationType> = z.object({
   },
 });
 
+const ConditionTypeSchema: z.ZodType<ConditionType> = z.object({
+  kind: z.literal("condition"),
+  get type() {
+    return UnionTypeSchema;
+  },
+});
+
 export const DataTypeSchema: z.ZodType<DataType> = z.union([
+  UnknownTypeSchema,
   UndefinedTypeSchema,
   StringTypeSchema,
   NumberTypeSchema,
@@ -76,6 +89,7 @@ export const DataTypeSchema: z.ZodType<DataType> = z.union([
   ObjectTypeSchema,
   UnionTypeSchema,
   OperationTypeSchema,
+  ConditionTypeSchema,
 ]);
 
 export const IDataSchema: z.ZodType<IData> = z
@@ -88,6 +102,10 @@ export const IDataSchema: z.ZodType<IData> = z
   .and(
     // Note: We use z.union instead of z.discriminatedUnion because the discriminator (kind) is nested inside the type object.
     z.union([
+      z.object({
+        type: UnknownTypeSchema,
+        value: z.unknown(),
+      }),
       z.object({
         type: UndefinedTypeSchema,
         value: z.undefined(),
@@ -143,6 +161,17 @@ export const IDataSchema: z.ZodType<IData> = z
             statements: z.array(IStatementSchema),
             return: IDataSchema.optional(),
             name: z.string().optional(),
+          });
+        },
+      }),
+      z.object({
+        type: ConditionTypeSchema,
+        get value() {
+          return z.object({
+            condition: IStatementSchema,
+            true: IStatementSchema,
+            false: IStatementSchema,
+            result: IDataSchema.optional(),
           });
         },
       }),

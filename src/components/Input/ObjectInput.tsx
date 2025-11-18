@@ -5,12 +5,12 @@ import { AddStatement } from "../AddStatement";
 import { forwardRef, HTMLAttributes } from "react";
 import { createVariableName, getObjectPropertiesType } from "../../lib/utils";
 
-export interface IObjectInput extends HTMLAttributes<HTMLDivElement> {
+export interface ObjectInputProps extends HTMLAttributes<HTMLDivElement> {
   data: IData<ObjectType>;
   handleData: (data: IData<ObjectType>) => void;
   prevStatements: IStatement[];
 }
-export const ObjectInput = forwardRef<HTMLDivElement, IObjectInput>(
+export const ObjectInput = forwardRef<HTMLDivElement, ObjectInputProps>(
   ({ data, handleData, prevStatements, ...props }, ref) => {
     const isMultiline = data.value.size > 2;
 

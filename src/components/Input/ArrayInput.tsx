@@ -4,13 +4,13 @@ import { AddStatement } from "../AddStatement";
 import { forwardRef, HTMLAttributes } from "react";
 import { getArrayElementType } from "../../lib/utils";
 
-export interface IArrayInput extends HTMLAttributes<HTMLDivElement> {
+export interface ArrayInputProps extends HTMLAttributes<HTMLDivElement> {
   data: IData<ArrayType>;
   handleData: (data: IData<ArrayType>) => void;
   prevStatements: IStatement[];
 }
 
-export const ArrayInput = forwardRef<HTMLDivElement, IArrayInput>(
+export const ArrayInput = forwardRef<HTMLDivElement, ArrayInputProps>(
   ({ data, handleData, prevStatements, ...props }, ref) => {
     const isMultiline = data.value.length > 3;
 

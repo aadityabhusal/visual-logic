@@ -1,7 +1,8 @@
 import { Fragment } from "react";
 import { theme } from "../../lib/theme";
-import { IData } from "../../lib/types";
+import { ArrayType, ConditionType, IData, ObjectType } from "../../lib/types";
 import { ParseStatement } from "./ParseStatement";
+import { getConditionResult, isDataOfType } from "../../lib/utils";
 
 export function ParseData({
   data,
@@ -15,27 +16,29 @@ export function ParseData({
   if (!showData && data.reference?.name) {
     return <span className="text-variable">{data.reference?.name}</span>;
   }
-  if (Array.isArray(data.value)) {
-    return (
-      <ParseArray
-        data={data as IData<"array">}
-        showData={showData}
-        nest={nest}
-      />
-    );
+  if (isDataOfType(data, "array")) {
+    return <ParseArray data={data} showData={showData} nest={nest} />;
   }
-  if (data.value instanceof Map) {
+  if (isDataOfType(data, "object")) {
+    return <ParseObject data={data} showData={showData} nest={nest} />;
+  }
+  if (isDataOfType(data, "condition")) {
     return (
-      <ParseObject
-        data={data as IData<"object">}
+      <ParseData
+        data={getConditionResult(data.value)}
         showData={showData}
         nest={nest}
       />
     );
   }
   return (
-    <span style={{ whiteSpace: "pre", color: theme.color[data.type] }}>
-      {data.type === "string" ? `"${data.value}"` : `${data.value}`}
+    <span
+      style={{
+        whiteSpace: "pre",
+        color: theme.color[data.type.kind as keyof typeof theme.color],
+      }}
+    >
+      {isDataOfType(data, "string") ? `"${data.value}"` : `${data.value}`}
     </span>
   );
 }
@@ -45,7 +48,7 @@ function ParseObject({
   showData,
   nest = 0,
 }: {
-  data: IData<"object">;
+  data: IData<ObjectType>;
   showData?: boolean;
   nest?: number;
 }) {
@@ -71,7 +74,7 @@ function ParseArray({
   showData,
   nest = 0,
 }: {
-  data: IData<"array">;
+  data: IData<ArrayType>;
   showData?: boolean;
   nest?: number;
 }) {
@@ -85,6 +88,38 @@ function ParseArray({
         </Fragment>
       ))}
       <span className="text-method">{"]"}</span>
+    </span>
+  );
+}
+
+function ParseCondition({
+  data,
+  showData,
+  nest = 0,
+}: {
+  data: IData<ConditionType>;
+  showData?: boolean;
+  nest?: number;
+}) {
+  return (
+    <span className="gap-1">
+      <ParseStatement
+        statement={data.value.condition}
+        showData={showData}
+        nest={nest}
+      />
+      <span>{"?"}</span>
+      <ParseStatement
+        statement={data.value.true}
+        showData={showData}
+        nest={nest}
+      />
+      <span>{":"}</span>
+      <ParseStatement
+        statement={data.value.false}
+        showData={showData}
+        nest={nest}
+      />
     </span>
   );
 }

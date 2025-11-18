@@ -7,18 +7,27 @@ import {
   IDropdownItem,
   DataValue,
   OperationType,
+  ConditionType,
 } from "./types";
-import { updateStatements } from "./update";
 
 export function createData<T extends DataType>(
   props: Partial<IData<T>>
 ): IData<T> {
   const type = (props.type || { kind: "undefined" }) as T;
+  let defaultValue = TypeMapper[type.kind].defaultValue as DataValue<T>;
+  if (props.type?.kind === "condition") {
+    defaultValue = {
+      condition: createStatement(),
+      true: createStatement(),
+      false: createStatement(),
+      result: createData({ type: { kind: "boolean" }, value: false }),
+    } as DataValue<T>;
+  }
   return {
     id: props.id ?? nanoid(),
     entityType: "data",
     type,
-    value: props.value ?? (TypeMapper[type.kind].defaultValue as DataValue<T>),
+    value: props.value ?? defaultValue,
     isGeneric: props.isGeneric,
     reference: props.reference,
   };
@@ -131,7 +140,20 @@ export function getStatementResult(
     if (!result) return createData({ type: { kind: "undefined" } });
     return result;
   }
+  if (isDataOfType(data, "condition")) {
+    return data.value.result ?? getConditionResult(data.value);
+  }
   return data;
+}
+
+export function getConditionResult(condition: DataValue<ConditionType>): IData {
+  const conditionResult = getStatementResult(condition.condition);
+  const conditionValue = conditionResult.value;
+  const isTrue =
+    conditionValue === true ||
+    (typeof conditionValue === "string" && conditionValue.length > 0) ||
+    (typeof conditionValue === "number" && conditionValue !== 0);
+  return getStatementResult(isTrue ? condition.true : condition.false);
 }
 
 export function resetParameters(
@@ -233,7 +255,6 @@ export function getOperationType(
   return { kind: "operation", parameters: parameterTypes, result: resultType };
 }
 
-
 export function getDataDropdownList({
   data,
   onSelect,
@@ -256,6 +277,7 @@ export function getDataDropdownList({
 
   return [
     ...(Object.keys(TypeMapper) as DataType["kind"][]).reduce((acc, kind) => {
+      if (["unknown"].includes(kind)) return acc;
       if (
         data.isGeneric ||
         (data.reference && kind === (data as IData).type.kind)

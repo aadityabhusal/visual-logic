@@ -8,6 +8,7 @@ import {
   isTypeCompatible,
   resetParameters,
   getOperationType,
+  getConditionResult,
 } from "./utils";
 
 export function updateStatementMethods(
@@ -91,6 +92,27 @@ function getReferenceData(
               updateStatements({ statements: [value], previous })[0],
             ])
           )
+        : isDataOfType(data, "condition")
+        ? (() => {
+            const condition = updateStatements({
+              statements: [data.value.condition],
+              previous,
+            })[0];
+            const _true = updateStatements({
+              statements: [data.value.true],
+              previous,
+            })[0];
+            const _false = updateStatements({
+              statements: [data.value.false],
+              previous,
+            })[0];
+            const result = getConditionResult({
+              condition,
+              true: _true,
+              false: _false,
+            });
+            return { condition, true: _true, false: _false, result };
+          })()
         : data.value,
     ...((isReferenceRemoved || isTypeChanged) && newData),
   };

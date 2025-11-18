@@ -1,7 +1,7 @@
 import { IStatement } from "../../lib/types";
 import { ParseData } from "./ParseData";
 import { ParseOperation } from "./ParseOperation";
-import { getStatementResult } from "../../lib/utils";
+import { getStatementResult, isDataOfType } from "../../lib/utils";
 
 export function ParseStatement({
   statement,
@@ -14,30 +14,29 @@ export function ParseStatement({
 }) {
   if (showData) {
     let result = getStatementResult(statement);
-    return result.entityType === "data" ? (
-      <ParseData data={result} showData={showData} nest={nest + 1} />
-    ) : (
+    return isDataOfType(result, "operation") ? (
       <ParseOperation operation={result} nest={nest + 1} />
+    ) : (
+      <ParseData data={result} showData={showData} nest={nest + 1} />
     );
   }
 
-  let dataNode =
-    statement.data.entityType === "data" ? (
-      <ParseData data={statement.data} showData={showData} nest={nest + 1} />
-    ) : (
-      <ParseOperation operation={statement.data} nest={nest + 1} />
-    );
+  let dataNode = isDataOfType(statement.data, "operation") ? (
+    <ParseOperation operation={statement.data} nest={nest + 1} />
+  ) : (
+    <ParseData data={statement.data} showData={showData} nest={nest + 1} />
+  );
 
-  return statement.methods.reduce(
-    (prev, method, i) => (
+  return statement.operations.reduce(
+    (prev, operation, i) => (
       <span key={i}>
         <span className="text-type">_</span>
         {"."}
-        <span className="text-method">{method.name}</span>
+        <span className="text-method">{operation.value.name}</span>
         {"("}
         {prev}
-        {method.parameters.length ? ", " : ""}
-        {method.parameters.map((param, i, arr) => (
+        {operation.value.parameters.length ? ", " : ""}
+        {operation.value.parameters.map((param, i, arr) => (
           <span key={i}>
             <ParseStatement nest={nest + 1} statement={param} />
             {i + 1 < arr.length && ", "}

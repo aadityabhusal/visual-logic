@@ -6,6 +6,10 @@ export const TypeMapper: {
     type: Extract<DataType, { kind: K }>;
   };
 } = {
+  unknown: {
+    defaultValue: undefined,
+    type: { kind: "unknown" },
+  },
   undefined: {
     defaultValue: undefined,
     type: { kind: "undefined" },
@@ -40,6 +44,13 @@ export const TypeMapper: {
       kind: "operation",
       parameters: [],
       result: { kind: "undefined" },
+    },
+  },
+  condition: {
+    defaultValue: undefined as any, // can't use createStatement() because of circular dependency
+    type: {
+      kind: "condition",
+      type: { kind: "union", types: [{ kind: "undefined" }] },
     },
   },
 };

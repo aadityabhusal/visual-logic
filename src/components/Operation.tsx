@@ -19,7 +19,7 @@ export function Operation({
   options,
 }: {
   operation: IData<OperationType>;
-  handleChange(item: IStatement["data"], remove?: boolean): void;
+  handleChange(data: IData, remove?: boolean): void;
   addOperationCall?: () => void;
   prevStatements: IStatement[];
   options?: {
