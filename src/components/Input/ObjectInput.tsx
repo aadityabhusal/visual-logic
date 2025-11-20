@@ -112,3 +112,5 @@ export const ObjectInput = forwardRef<HTMLDivElement, ObjectInputProps>(
     );
   }
 );
+
+ObjectInput.displayName = "ObjectInput";

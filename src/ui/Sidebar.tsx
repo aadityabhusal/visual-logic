@@ -78,6 +78,7 @@ export function Sidebar() {
         <a
           href="https://www.youtube.com/watch?v=AOfOhNwQL64"
           target="_blank"
+          rel="noreferrer"
           className="flex items-center select-none decoration-0"
           title="Demo video"
         >
@@ -87,6 +88,7 @@ export function Sidebar() {
         <a
           href="https://github.com/aadityabhusal/visual-logic"
           target="_blank"
+          rel="noreferrer"
           style={{ display: "flex", userSelect: "none" }}
           title="Source code"
         >

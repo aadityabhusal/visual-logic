@@ -47,6 +47,7 @@ export const TypeMapper: {
     },
   },
   condition: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     defaultValue: undefined as any, // can't use createStatement() because of circular dependency
     type: {
       kind: "condition",

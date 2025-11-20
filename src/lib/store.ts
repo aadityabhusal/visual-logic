@@ -30,8 +30,12 @@ const createIDbStorage = <T>(storeName: string) =>
       removeItem: async (key) => (await IDbStore).delete(storeName, key),
     }),
     {
-      reviver: (_, data: any) => {
-        return typeof data === "object" && data.type === "object"
+      reviver: (_, data: unknown) => {
+        return data &&
+          typeof data === "object" &&
+          "type" in data &&
+          data.type === "object" &&
+          "value" in data
           ? { ...data, value: new Map(data.value as []) }
           : data;
       },

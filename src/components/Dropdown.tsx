@@ -14,6 +14,12 @@ import { IData, IDropdownItem, IStatement } from "../lib/types";
 import { useSearchParams } from "react-router";
 import { isDataOfType } from "../lib/utils";
 
+export interface IDropdownTargetProps
+  extends Omit<HTMLAttributes<HTMLElement>, "onChange" | "defaultValue"> {
+  value?: string;
+  onChange?: (value: string) => void;
+}
+
 export function Dropdown({
   id,
   value,
@@ -43,12 +49,7 @@ export function Dropdown({
   };
   isInputTarget?: boolean;
   reference?: IData["reference"];
-  target: (
-    value: Omit<HTMLAttributes<HTMLElement>, "onChange" | "defaultValue"> & {
-      value?: string;
-      onChange?: (value: string) => void;
-    }
-  ) => ReactNode;
+  target: (value: IDropdownTargetProps) => ReactNode;
 }) {
   const [, setSearchParams] = useSearchParams();
   const { undo, redo } = operationsStore.temporal.getState();
@@ -95,6 +96,7 @@ export function Dropdown({
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (value) setSearch(options?.withSearch ? "" : value);
   }, [value, options?.withSearch]);
 

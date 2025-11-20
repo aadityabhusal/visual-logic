@@ -9,7 +9,7 @@ import {
 import { Statement } from "./Statement";
 import { BaseInput } from "./Input/BaseInput";
 import { AddStatement } from "./AddStatement";
-import { Dropdown } from "./Dropdown";
+import { Dropdown, IDropdownTargetProps } from "./Dropdown";
 
 export function Operation({
   operation,
@@ -47,7 +47,7 @@ export function Operation({
     remove?: boolean;
     parameterLength?: number;
   }) {
-    let updatedStatements = updateStatements({
+    const updatedStatements = updateStatements({
       statements: [
         ...operation.value.parameters,
         ...operation.value.statements,
@@ -91,7 +91,7 @@ export function Operation({
       addOperationCall={addOperationCall}
       isInputTarget={!!operation.reference}
       reference={operation.reference}
-      target={(props) =>
+      target={(props: IDropdownTargetProps) =>
         operation.reference ? (
           <div className="flex items-start gap-1" onClick={props.onClick}>
             <BaseInput {...props} className="text-variable" />

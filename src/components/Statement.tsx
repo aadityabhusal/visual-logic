@@ -99,6 +99,7 @@ export function Statement({
     index: number,
     remove?: boolean
   ) {
+    // eslint-disable-next-line prefer-const
     let operations = [...statement.operations];
     if (remove) {
       const data = getStatementResult(statement, index);
@@ -137,7 +138,7 @@ export function Statement({
               value={statement.name || ""}
               className="text-variable"
               onChange={(value) => {
-                let name = value || statement.name || "";
+                const name = value || statement.name || "";
                 if (
                   [
                     ...Object.keys(TypeMapper),
@@ -224,7 +225,7 @@ export function Statement({
           />
         )}
         {statement.operations.map((operation, i, operationsList) => {
-          let data = getStatementResult(statement, i, true);
+          const data = getStatementResult(statement, i, true);
           if (data.entityType !== "data") return;
           return (
             <div key={operation.id} className="flex items-start gap-1 ml-1">

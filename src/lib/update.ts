@@ -15,13 +15,13 @@ export function updateStatementMethods(
   statement: IStatement,
   previous: IStatement[] = []
 ): IStatement {
-  let updatedOperations = statement.operations.reduce(
+  const updatedOperations = statement.operations.reduce(
     (previousOperations, currentOperation, index) => {
-      let data = getStatementResult(
+      const data = getStatementResult(
         { ...statement, operations: previousOperations },
         index
       );
-      let parameters = currentOperation.value.parameters.map((item) => {
+      const parameters = currentOperation.value.parameters.map((item) => {
         // let closure = item.data.entityType === "operation" && {
         //   closure: [...item.data.closure, ...previous],
         // };
@@ -35,7 +35,7 @@ export function updateStatementMethods(
         (operation) => operation.name === currentOperation.value.name
       );
       const currentResult = currentOperation.value.result;
-      let result = foundOperation
+      const result = foundOperation
         ? {
             ...executeOperation(foundOperation, data, parameters),
             ...(currentResult && { id: currentResult?.id }),
@@ -59,7 +59,7 @@ function getReferenceData(
   reference?: IStatement
 ): IData {
   const currentReference = data.reference;
-  let referenceResult = reference && getStatementResult(reference);
+  const referenceResult = reference && getStatementResult(reference);
 
   const isTypeChanged =
     reference &&
@@ -69,7 +69,7 @@ function getReferenceData(
     currentReference?.id &&
     (!reference?.name || referenceResult?.entityType !== "data");
 
-  const { id: newId, ...newData } = createData({
+  const { id: _id, ...newData } = createData({
     type: data.type,
     isGeneric: data.isGeneric,
   });
@@ -124,11 +124,11 @@ export function getReferenceOperation(
   reference?: IStatement
 ): IData<OperationType> {
   const currentReference = operation.reference;
-  let referenceResult = reference && getStatementResult(reference);
-  let isReferenceRemoved =
+  const referenceResult = reference && getStatementResult(reference);
+  const isReferenceRemoved =
     currentReference?.id &&
     (!reference?.name || isDataOfType(referenceResult, "operation"));
-  let isTypeChanged = reference
+  const isTypeChanged = reference
     ? !isTypeCompatible(operation.type, reference.data.type)
     : true;
 
@@ -142,7 +142,7 @@ export function getReferenceOperation(
     // closure = getClosureList(reference) || closure;
   }
 
-  let updatedParameters = parameterList.map((parameter) => {
+  const updatedParameters = parameterList.map((parameter) => {
     let argument = operation.value.parameters?.find(
       (item) => item.id === parameter.id
     );
@@ -154,7 +154,7 @@ export function getReferenceOperation(
         )
       ) {
         if (isDataOfType(argument.data, "operation")) {
-          let params = isDataOfType(parameter.data, "operation")
+          const params = isDataOfType(parameter.data, "operation")
             ? parameter.data.value.parameters
             : argument.data.value.parameters;
           argument = {
@@ -179,7 +179,7 @@ export function getReferenceOperation(
     return { ...parameter, data: { ...parameter.data, isGeneric: false } };
   });
 
-  let updatedStatements = updateStatements({
+  const updatedStatements = updateStatements({
     statements: statementList,
     previous: [...previous, /* ...closure, */ ...updatedParameters],
   });
@@ -209,7 +209,7 @@ export function updateStatementReference(
   previous: IStatement[]
 ): IStatement {
   const currentReference = currentStatement.data.reference;
-  let reference = previous.find((item) => item.id === currentReference?.id);
+  const reference = previous.find((item) => item.id === currentReference?.id);
 
   return {
     ...currentStatement,
@@ -263,7 +263,7 @@ export function updateStatements({
     if (changedStatement && !currentIndexFound)
       return [...prevStatements, currentStatement];
 
-    let previousList = [...previous, ...prevStatements];
+    const previousList = [...previous, ...prevStatements];
     return [
       ...prevStatements,
       updateStatementMethods(
@@ -289,7 +289,7 @@ export function updateOperations(
 
     if (!currentIndexFound) return [...prevOperations, currentOperation];
 
-    let updatedStatements = updateStatements({
+    const updatedStatements = updateStatements({
       statements: [
         ...currentOperation.value.parameters,
         ...currentOperation.value.statements,

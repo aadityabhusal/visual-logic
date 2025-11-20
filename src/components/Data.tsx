@@ -9,13 +9,13 @@ import {
 import { ArrayInput } from "./Input/ArrayInput";
 import { ObjectInput } from "./Input/ObjectInput";
 import { BooleanInput } from "./Input/BooleanInput";
-import { Dropdown } from "./Dropdown";
+import { Dropdown, IDropdownTargetProps } from "./Dropdown";
 import { getDataDropdownList, isDataOfType } from "../lib/utils";
 import { useMemo } from "react";
 import { BaseInput } from "./Input/BaseInput";
 import { isNumberLike } from "@mantine/core";
 import { TypeMapper } from "../lib/data";
-import { Condition } from "./Input/Condition";
+import { ConditionInput } from "./Input/ConditionInput";
 
 interface IProps {
   data: IData;
@@ -39,7 +39,7 @@ export function Data({
         onSelect: handleChange,
         prevStatements,
       }),
-    [data, prevStatements]
+    [data, handleChange, prevStatements]
   );
 
   const showDropdownIcon =
@@ -76,7 +76,7 @@ export function Data({
         !!data.reference ||
         ["string", "number", "undefined"].includes(data.type.kind)
       }
-      target={({ onChange, ...props }) =>
+      target={({ onChange, ...props }: IDropdownTargetProps) =>
         data.reference?.name ? (
           <BaseInput {...props} onChange={onChange} className="text-variable" />
         ) : isDataOfType(data, "operation") ? (
@@ -126,10 +126,11 @@ export function Data({
             options={{ withQuotes: true }}
           />
         ) : isDataOfType(data, "condition") ? (
-          <Condition
+          <ConditionInput
             data={data}
             handleData={handleChange}
             prevStatements={prevStatements}
+            onClick={props.onClick}
           />
         ) : (
           // Undefined type

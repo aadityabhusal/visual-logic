@@ -9,7 +9,7 @@ export interface ConditionInputProps extends HTMLAttributes<HTMLDivElement> {
   prevStatements: IStatement[];
 }
 
-export const Condition = forwardRef<HTMLDivElement, ConditionInputProps>(
+export const ConditionInput = forwardRef<HTMLDivElement, ConditionInputProps>(
   ({ data, handleData, prevStatements, ...props }, ref) => {
     function handleUpdate(
       key: "condition" | "true" | "false",
@@ -63,3 +63,5 @@ export const Condition = forwardRef<HTMLDivElement, ConditionInputProps>(
     );
   }
 );
+
+ConditionInput.displayName = "ConditionInput";

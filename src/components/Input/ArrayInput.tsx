@@ -15,7 +15,7 @@ export const ArrayInput = forwardRef<HTMLDivElement, ArrayInputProps>(
     const isMultiline = data.value.length > 3;
 
     function handleUpdate(result: IStatement, index: number, remove?: boolean) {
-      let resList = [...data.value];
+      const resList = [...data.value];
       if (remove) resList.splice(index, 1);
       else resList[index] = result;
       handleData({
@@ -68,3 +68,5 @@ export const ArrayInput = forwardRef<HTMLDivElement, ArrayInputProps>(
     );
   }
 );
+
+ArrayInput.displayName = "ArrayInput";

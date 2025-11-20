@@ -20,7 +20,7 @@ export function createData<T extends DataType>(
       condition: createStatement(),
       true: createStatement(),
       false: createStatement(),
-      result: createData({ type: { kind: "boolean" }, value: false }),
+      result: createData({ type: { kind: "undefined" } }),
     } as DataValue<T>;
   }
   return {
@@ -34,9 +34,9 @@ export function createData<T extends DataType>(
 }
 
 export function createStatement(props?: Partial<IStatement>): IStatement {
-  let newData =
+  const newData =
     props?.data || createData({ type: { kind: "undefined" }, isGeneric: true });
-  let newId = props?.id || nanoid();
+  const newId = props?.id || nanoid();
   return {
     id: newId,
     name: props?.name,
@@ -128,13 +128,13 @@ export function getStatementResult(
   index?: number,
   prevEntity?: boolean
 ): IData {
-  let data = statement.data;
+  const data = statement.data;
   if (index) {
     const result = statement.operations[index - 1]?.value.result;
     if (!result) return createData({ type: { kind: "undefined" } });
     return result;
   }
-  let lastOperation = statement.operations[statement.operations.length - 1];
+  const lastOperation = statement.operations[statement.operations.length - 1];
   if (!prevEntity && lastOperation) {
     const result = lastOperation.value.result;
     if (!result) return createData({ type: { kind: "undefined" } });
@@ -161,10 +161,10 @@ export function resetParameters(
   argumentList?: DataValue<OperationType>["parameters"]
 ): IStatement[] {
   return parameters.map((param) => {
-    let argData = argumentList?.find((item) => item.id === param.id)?.data;
+    const argData = argumentList?.find((item) => item.id === param.id)?.data;
     let paramData = { ...param.data, isGeneric: argData?.isGeneric } as IData;
     if (isDataOfType(paramData, "operation")) {
-      let argParams = isDataOfType(argData, "operation")
+      const argParams = isDataOfType(argData, "operation")
         ? argData.value.parameters
         : undefined;
       const params = resetParameters(paramData.value.parameters, argParams);
@@ -197,12 +197,12 @@ export function jsonParseReviver(_: string, data: IData) {
 export const getLocalStorage = (key: string) => {
   try {
     return JSON.parse(localStorage.getItem(key) || "", jsonParseReviver);
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 };
 
-export const setLocalStorage = (key: string, value: any) => {
+export const setLocalStorage = (key: string, value: unknown) => {
   function replacer(_: string, value: IData["value"]) {
     return value instanceof Map ? Array.from(value.entries()) : value;
   }

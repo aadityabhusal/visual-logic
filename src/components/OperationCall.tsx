@@ -6,7 +6,7 @@ import {
   getFilteredOperations,
   executeOperation,
 } from "../lib/methods";
-import { getStatementResult, getOperationType } from "../lib/utils";
+import { getStatementResult } from "../lib/utils";
 import { BaseInput } from "./Input/BaseInput";
 
 export function OperationCall({
@@ -38,15 +38,18 @@ export function OperationCall({
   }
 
   function handleParameter(item: IStatement, index: number) {
-    let parameters = [...operation.value.parameters];
-    parameters[index] = item;
+    const parameters = [
+      ...operation.value.parameters.slice(0, index),
+      item,
+      ...operation.value.parameters.slice(index + 1),
+    ];
 
     const foundOperation = getFilteredOperations(data, prevStatements).find(
       (op) => op.name === operation.value.name
     );
 
-    let parametersResult = parameters.map((item) => getStatementResult(item));
-    let result = foundOperation
+    const parametersResult = parameters.map((item) => getStatementResult(item));
+    const result = foundOperation
       ? executeOperation(foundOperation, data, parametersResult)
       : operation.value.result;
 

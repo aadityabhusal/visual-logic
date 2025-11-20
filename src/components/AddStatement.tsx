@@ -23,7 +23,7 @@ export function AddStatement({
         onSelect: (data) => onSelect(createStatement({ data })),
         prevStatements,
       }),
-    [prevStatements]
+    [onSelect, prevStatements]
   );
 
   return (
@@ -32,7 +32,7 @@ export function AddStatement({
         id={id}
         items={dropdownItems}
         options={{ withSearch: true }}
-        target={({ onChange, ...props }) => (
+        target={({ onChange: _onChange, ...props }) => (
           <IconButton
             icon={FaPlus}
             size={14}
