@@ -80,7 +80,7 @@ export function Dropdown({
       <Combobox.Option
         value={option.value}
         key={option.value}
-        className={`flex items-center justify-between gap-4 data-[combobox-selected]:bg-dropdown-hover data-[combobox-active]:bg-dropdown-selected hover:bg-dropdown-hover`}
+        className={`flex items-center justify-between gap-4 data-combobox-selected:bg-dropdown-hover data-combobox-active:bg-dropdown-selected hover:bg-dropdown-hover`}
         active={option.value === value}
       >
         <span className="text-sm max-w-32 truncate">
@@ -127,7 +127,7 @@ export function Dropdown({
           className={
             "flex items-start relative p-px" +
             (forceDisplayBorder || isFocused || isHovered
-              ? " outline outline-1 outline-border"
+              ? " outline outline-border"
               : "")
           }
           onMouseOver={(e) => {

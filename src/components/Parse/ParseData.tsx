@@ -52,7 +52,7 @@ function ParseObject({
   showData?: boolean;
   nest?: number;
 }) {
-  let val = Array.from(data.value);
+  const val = Array.from(data.value);
   return (
     <span className="gap-1">
       <span className="text-method">{"{"}</span>
@@ -92,7 +92,7 @@ function ParseArray({
   );
 }
 
-function ParseCondition({
+function _ParseCondition({
   data,
   showData,
   nest = 0,

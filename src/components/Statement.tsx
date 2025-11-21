@@ -11,12 +11,11 @@ import { createOperationCall } from "../lib/methods";
 import { Data } from "./Data";
 import { BaseInput } from "./Input/BaseInput";
 import { OperationCall } from "./OperationCall";
-import { Operation } from "./Operation";
 import { IconButton } from "../ui/IconButton";
 import { AddStatement } from "./AddStatement";
 import { useDisclosure } from "@mantine/hooks";
 import { Popover, useDelayedHover } from "@mantine/core";
-import { TypeMapper } from "../lib/data";
+import { DataTypes } from "../lib/data";
 import { useMemo } from "react";
 
 export function Statement({
@@ -73,7 +72,7 @@ export function Statement({
     if (remove) handleStatement(statement, remove);
     else {
       let operations = [...statement.operations];
-      if (statement.data.type !== data.type) operations = [];
+      if (!isTypeCompatible(statement.data.type, data.type)) operations = [];
       handleStatement(
         updateStatementMethods(
           { ...statement, data, operations },
@@ -141,7 +140,7 @@ export function Statement({
                 const name = value || statement.name || "";
                 if (
                   [
-                    ...Object.keys(TypeMapper),
+                    ...Object.keys(DataTypes),
                     ...prevStatements.map((s) => s.name),
                     "operation",
                   ].includes(name)
@@ -196,34 +195,23 @@ export function Statement({
           (statement.operations.length > 1 ? "flex-col" : "flex-row")
         }
       >
-        {isDataOfType(statement.data, "operation") ? (
-          <Operation
-            operation={statement.data}
-            handleChange={
-              isDataOfType(statement.data, "operation")
-                ? handelOperation
-                : handleData
-            }
-            prevStatements={prevStatements}
-            options={{ disableDelete: options?.disableDelete }}
-          />
-        ) : (
-          <Data
-            data={statement.data}
-            disableDelete={options?.disableDelete}
-            addOperationCall={
-              !options?.disableMethods && statement.operations.length === 0
-                ? addOperationCall
-                : undefined
-            }
-            prevStatements={prevStatements}
-            handleChange={
-              isDataOfType(statement.data, "operation")
-                ? handelOperation
-                : handleData
-            }
-          />
-        )}
+        <Data
+          data={statement.data}
+          disableDelete={options?.disableDelete}
+          addOperationCall={
+            !options?.disableMethods &&
+            statement.operations.length === 0 &&
+            !isDataOfType(statement.data, "operation")
+              ? addOperationCall
+              : undefined
+          }
+          prevStatements={prevStatements}
+          handleChange={
+            isDataOfType(statement.data, "operation")
+              ? handelOperation
+              : handleData
+          }
+        />
         {statement.operations.map((operation, i, operationsList) => {
           const data = getStatementResult(statement, i, true);
           if (data.entityType !== "data") return;

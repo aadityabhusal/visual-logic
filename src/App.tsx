@@ -16,7 +16,6 @@ import {
 } from "@mantine/core";
 import { FocusInfo } from "./components/FocusInfo";
 import { useSearchParams } from "react-router";
-import { IData, OperationType } from "./lib/types";
 import { createStatement } from "./lib/utils";
 
 const theme = createTheme({
@@ -29,7 +28,7 @@ const theme = createTheme({
     }),
     ActionIcon: ActionIcon.extend({
       classNames: {
-        root: "focus:outline focus:outline-1 focus:outline-white hover:opacity-90 disabled:text-disabled",
+        root: "focus:outline focus:outline-white hover:opacity-90 disabled:text-disabled",
       },
     }),
   },
@@ -65,7 +64,7 @@ function App() {
             {currentOperation ? (
               <Operation
                 operation={currentOperation}
-                handleChange={(operation: IData<OperationType>) =>
+                handleChange={(operation) =>
                   setOperation(updateOperations(operations, operation))
                 }
                 prevStatements={operations

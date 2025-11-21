@@ -6,7 +6,7 @@ import { preferenceOptions } from "./data";
 import { createWithEqualityFn } from "zustand/traditional";
 import { shallow } from "zustand/shallow";
 import { openDB } from "idb";
-import { createData } from "./utils";
+import { createData, jsonParseReviver, jsonStringifyReplacer } from "./utils";
 
 export interface IStore {
   operations: IData<OperationType>[];
@@ -30,18 +30,8 @@ const createIDbStorage = <T>(storeName: string) =>
       removeItem: async (key) => (await IDbStore).delete(storeName, key),
     }),
     {
-      reviver: (_, data: unknown) => {
-        return data &&
-          typeof data === "object" &&
-          "type" in data &&
-          data.type === "object" &&
-          "value" in data
-          ? { ...data, value: new Map(data.value as []) }
-          : data;
-      },
-      replacer: (_key, value) => {
-        return value instanceof Map ? Array.from(value.entries()) : value;
-      },
+      reviver: jsonParseReviver,
+      replacer: jsonStringifyReplacer,
     }
   );
 

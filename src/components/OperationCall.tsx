@@ -38,11 +38,9 @@ export function OperationCall({
   }
 
   function handleParameter(item: IStatement, index: number) {
-    const parameters = [
-      ...operation.value.parameters.slice(0, index),
-      item,
-      ...operation.value.parameters.slice(index + 1),
-    ];
+    // eslint-disable-next-line prefer-const
+    let parameters = [...operation.value.parameters];
+    parameters[index] = item;
 
     const foundOperation = getFilteredOperations(data, prevStatements).find(
       (op) => op.name === operation.value.name

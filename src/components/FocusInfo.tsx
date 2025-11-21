@@ -4,12 +4,10 @@ import { uiConfigStore } from "../lib/store";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { ParseData } from "./Parse/ParseData";
 import { useHotkeys } from "@mantine/hooks";
+import { getTypeSignature } from "@/lib/utils";
 
 export function FocusInfo() {
   const { showPopup, result, setUiConfig } = uiConfigStore();
-
-  const type =
-    result?.entityType === "data" ? result?.type.kind : result?.entityType;
 
   useHotkeys([
     ["Escape", () => setUiConfig({ showPopup: false, result: undefined })],
@@ -24,7 +22,7 @@ export function FocusInfo() {
           icon={FaX}
           title="Delete operation"
           size={12}
-          onClick={(e) => {
+          onClick={(e: MouseEvent) => {
             e.stopPropagation();
             setUiConfig({ showPopup: false, result: undefined });
           }}
@@ -32,7 +30,7 @@ export function FocusInfo() {
       </div>
       <div className="border-b p-1">
         <span className="text-type">Type: </span>
-        <span className={`text-${type}`}>{type}</span>
+        <span>{getTypeSignature(result?.type ?? { kind: "unknown" })}</span>
       </div>
       {result?.entityType === "data" ? (
         <div className="p-1">

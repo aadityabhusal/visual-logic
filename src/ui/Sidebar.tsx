@@ -66,7 +66,7 @@ export function Sidebar() {
               icon={FaX}
               title="Delete operation"
               size={10}
-              onClick={(e) => {
+              onClick={(e: MouseEvent) => {
                 e.stopPropagation();
                 setOperation(updateOperations(operations, item, true));
               }}

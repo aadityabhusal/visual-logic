@@ -1,45 +1,37 @@
-import { DataType, DataValue } from "./types";
+import { DataType } from "./types";
 
-export const TypeMapper: {
+export const DataTypes: {
   [K in DataType["kind"]]: {
-    defaultValue: DataValue<Extract<DataType, { kind: K }>>;
     type: Extract<DataType, { kind: K }>;
+    hideFromDropdown?: boolean;
   };
 } = {
   unknown: {
-    defaultValue: undefined,
     type: { kind: "unknown" },
+    hideFromDropdown: true,
   },
   undefined: {
-    defaultValue: undefined,
     type: { kind: "undefined" },
   },
   string: {
-    defaultValue: "",
     type: { kind: "string" },
   },
   number: {
-    defaultValue: 0,
     type: { kind: "number" },
   },
   boolean: {
-    defaultValue: false,
     type: { kind: "boolean" },
   },
   array: {
-    defaultValue: [],
-    type: { kind: "array", elementType: { kind: "undefined" } },
+    type: { kind: "array", elementType: { kind: "unknown" } },
   },
   object: {
-    defaultValue: new Map(),
     type: { kind: "object", properties: {} },
   },
   union: {
-    defaultValue: undefined,
     type: { kind: "union", types: [{ kind: "undefined" }] },
   },
   operation: {
-    defaultValue: { parameters: [], statements: [] },
     type: {
       kind: "operation",
       parameters: [],
@@ -47,8 +39,6 @@ export const TypeMapper: {
     },
   },
   condition: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    defaultValue: undefined as any, // can't use createStatement() because of circular dependency
     type: {
       kind: "condition",
       type: { kind: "union", types: [{ kind: "undefined" }] },
