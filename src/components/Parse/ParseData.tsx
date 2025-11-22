@@ -2,7 +2,11 @@ import { Fragment } from "react";
 import { theme } from "../../lib/theme";
 import { ArrayType, ConditionType, IData, ObjectType } from "../../lib/types";
 import { ParseStatement } from "./ParseStatement";
-import { getConditionResult, isDataOfType } from "../../lib/utils";
+import {
+  getConditionResult,
+  inferTypeFromValue,
+  isDataOfType,
+} from "../../lib/utils";
 
 export function ParseData({
   data,
@@ -26,6 +30,15 @@ export function ParseData({
     return (
       <ParseData
         data={getConditionResult(data.value)}
+        showData={showData}
+        nest={nest}
+      />
+    );
+  }
+  if (isDataOfType(data, "union")) {
+    return (
+      <ParseData
+        data={{ ...data, type: inferTypeFromValue(data.value) }}
         showData={showData}
         nest={nest}
       />

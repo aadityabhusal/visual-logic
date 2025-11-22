@@ -1,11 +1,4 @@
-import {
-  IData,
-  IStatement,
-  NumberType,
-  StringType,
-  UndefinedType,
-  DataType,
-} from "../lib/types";
+import { IData, IStatement, DataType } from "../lib/types";
 import { ArrayInput } from "./Input/ArrayInput";
 import { ObjectInput } from "./Input/ObjectInput";
 import { BooleanInput } from "./Input/BooleanInput";
@@ -56,13 +49,12 @@ export function Data({
       isDataOfType(data, "union") ||
       isDataOfType(data, "condition"));
 
-  function handleUndefinedKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Backspace" && e.currentTarget.value.length === 0) {
-      handleChange({
-        ...data,
-        type: { kind: "undefined" },
-        value: undefined,
-      } as IData<UndefinedType>);
+  function handleBackspace(e: KeyboardEvent, remove?: boolean) {
+    if (e.target instanceof HTMLInputElement && e.target.value?.length === 0) {
+      handleChange(
+        { ...data, type: { kind: "undefined" }, value: undefined },
+        remove
+      );
     }
   }
 
@@ -78,6 +70,13 @@ export function Data({
         withSearch: showDropdownIcon,
         focusOnClick: showDropdownIcon,
       }}
+      hotkeys={[
+        [
+          "backspace",
+          (e) => handleBackspace(e, isDataOfType(data, "undefined")),
+          { preventDefault: false },
+        ],
+      ]}
       value={data.reference?.name || data.type.kind}
       isInputTarget={
         !!data.reference ||
@@ -120,9 +119,8 @@ export function Data({
               handleChange({
                 ...data,
                 value: _val ? Number(_val.slice(0, 16)) : "",
-              } as IData<NumberType>);
+              });
             }}
-            onKeyDown={handleUndefinedKeyDown}
           />
         ) : isDataOfType(data, "string") ? (
           <BaseInput
@@ -132,9 +130,8 @@ export function Data({
             value={data.value.toString()}
             onChange={(_val) => {
               onChange?.(_val);
-              handleChange({ ...data, value: _val } as IData<StringType>);
+              handleChange({ ...data, value: _val });
             }}
-            onKeyDown={handleUndefinedKeyDown}
             options={{ withQuotes: true }}
           />
         ) : isDataOfType(data, "condition") ? (
@@ -180,7 +177,7 @@ export function Data({
                 ...data,
                 type: DataTypes[transform.type as DataType["kind"]].type,
                 value: transform.value,
-              } as IData<StringType>);
+              });
             }}
           />
         )

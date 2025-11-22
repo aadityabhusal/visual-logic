@@ -9,7 +9,7 @@ import {
   FaSquareArrowUpRight,
 } from "react-icons/fa6";
 import { uiConfigStore, operationsStore } from "../lib/store";
-import { getHotkeyHandler } from "@mantine/hooks";
+import { getHotkeyHandler, HotkeyItem } from "@mantine/hooks";
 import { IData, IDropdownItem, IStatement } from "../lib/types";
 import { useSearchParams } from "react-router";
 import { isDataOfType } from "../lib/utils";
@@ -30,6 +30,7 @@ export function Dropdown({
   addOperationCall,
   children,
   options,
+  hotkeys,
   isInputTarget,
   reference,
   target,
@@ -47,6 +48,7 @@ export function Dropdown({
     withDropdownIcon?: boolean;
     focusOnClick?: boolean;
   };
+  hotkeys?: HotkeyItem[];
   isInputTarget?: boolean;
   reference?: IData["reference"];
   target: (value: IDropdownTargetProps) => ReactNode;
@@ -108,6 +110,12 @@ export function Dropdown({
     if (combobox.dropdownOpened) combobox.selectActiveOption();
   }, [combobox.dropdownOpened]);
 
+  useEffect(() => {
+    if (id === focusId && combobox.targetRef.current) {
+      combobox.targetRef.current.focus();
+    }
+  }, [id, focusId, combobox.targetRef]);
+
   return (
     <Combobox
       onOptionSubmit={(optionValue) => {
@@ -151,6 +159,7 @@ export function Dropdown({
                       ["meta+shift+z", () => redo()],
                       ["meta+z", () => undo()],
                       ["meta+y", () => redo()],
+                      ...(hotkeys ?? []),
                     ]),
                   }
                 : {}),

@@ -84,8 +84,6 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
           ))}
           {options?.disableDelete ? null : (
             <AddStatement
-              id={`${operation.id}_paramAddStatement`}
-              prevStatements={prevStatements}
               onSelect={(statement) => {
                 const parameters = [...operation.value.parameters];
                 const statements = [...operation.value.statements];
@@ -143,12 +141,6 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
           ))}
           {operation.value.statements.length ? null : (
             <AddStatement
-              id={`${operation.id}_addStatement`}
-              prevStatements={[
-                ...prevStatements,
-                ...operation.value.parameters,
-                ...operation.value.statements,
-              ]}
               onSelect={(statement) => {
                 handleChange({
                   ...operation,

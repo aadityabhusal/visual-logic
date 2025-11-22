@@ -155,7 +155,7 @@ export function Statement({
             <Popover.Target>
               <IconButton
                 icon={FaEquals}
-                className="mt-[5px]"
+                className="mt-[5px] hover:outline hover:outline-border"
                 title="Create variable"
                 onClick={() =>
                   !options?.disableNameToggle &&
@@ -177,8 +177,6 @@ export function Statement({
               {...hoverEvents}
             >
               <AddStatement
-                id={`${statement.id}_addStatement`}
-                prevStatements={[...prevStatements, statement]}
                 onSelect={(statement) => {
                   addStatement?.(statement, "after");
                   closeDropdown();

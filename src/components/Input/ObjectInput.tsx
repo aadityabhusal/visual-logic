@@ -83,8 +83,6 @@ export const ObjectInput = forwardRef<HTMLDivElement, ObjectInputProps>(
           );
         })}
         <AddStatement
-          id={`${data.id}_addStatement`}
-          prevStatements={prevStatements}
           onSelect={(value) => {
             if (!data.value.has("")) {
               const newMap = new Map(data.value);

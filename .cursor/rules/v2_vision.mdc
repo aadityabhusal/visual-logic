@@ -223,14 +223,14 @@ Auto-generate from visual flows:
 
 ## What to Avoid
 
-- ❌ **Node-based graph editors**—this is block-based, text-like
-- ❌ **Async/await syntax**—use promise chaining instead
-- ❌ **Traditional loops**—use functional array operations
-- ❌ **Try-catch blocks**—use error boundaries and promise `.catch()`
-- ❌ **Generics in type system**—unnecessary complexity for visual contexts
-- ❌ **Currying/partial application**—adds complexity without value for visual contexts
-- ❌ **Custom integration nodes**—leverage npm packages instead
-- ❌ **Imperative control flow**—maintain functional, expression-based paradigm
+- **Node-based graph editors**—this is block-based, text-like
+- **Async/await syntax**—use promise chaining instead
+- **Traditional loops**—use functional array operations
+- **Try-catch blocks**—use error boundaries and promise `.catch()`
+- **Generics in type system**—unnecessary complexity for visual contexts
+- **Currying/partial application**—adds complexity without value for visual contexts
+- **Custom integration nodes**—leverage npm packages instead
+- **Imperative control flow**—maintain functional, expression-based paradigm
 
 ## Development Priorities
 

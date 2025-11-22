@@ -30,7 +30,7 @@ export function FocusInfo() {
       </div>
       <div className="border-b p-1">
         <span className="text-type">Type: </span>
-        <span>{getTypeSignature(result?.type ?? { kind: "unknown" })}</span>
+        <span>{getTypeSignature(result?.type ?? { kind: "undefined" })}</span>
       </div>
       {result?.entityType === "data" ? (
         <div className="p-1">

@@ -45,6 +45,7 @@ export const operationsStore = create(
             parameters: [],
             result: { kind: "undefined" },
           },
+          value: { name: "main", parameters: [], statements: [] },
         }),
       ],
       addOperation: (operation) =>

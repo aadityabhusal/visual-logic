@@ -23,10 +23,10 @@ export const DataTypes: {
     type: { kind: "boolean" },
   },
   array: {
-    type: { kind: "array", elementType: { kind: "unknown" } },
+    type: { kind: "array", elementType: { kind: "undefined" } },
   },
   object: {
-    type: { kind: "object", properties: {} },
+    type: { kind: "object", properties: { key: { kind: "undefined" } } },
   },
   union: {
     type: { kind: "union", types: [{ kind: "undefined" }] },
