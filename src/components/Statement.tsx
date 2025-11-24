@@ -1,35 +1,33 @@
-import { FaEquals, FaArrowRightLong, FaArrowTurnUp } from "react-icons/fa6";
-import { IData, IMethod, IOperation, IStatement } from "../lib/types";
+import { FaArrowRightLong, FaArrowTurnUp, FaEquals } from "react-icons/fa6";
+import { IData, IStatement, OperationType } from "../lib/types";
 import { updateStatementMethods } from "../lib/update";
 import {
-  isSameType,
+  isTypeCompatible,
   getStatementResult,
-  getPreviousStatements,
   createVariableName,
+  isDataOfType,
 } from "../lib/utils";
-import { createMethod } from "../lib/methods";
+import { createOperationCall } from "../lib/methods";
 import { Data } from "./Data";
 import { BaseInput } from "./Input/BaseInput";
-import { Method } from "./Method";
-import { Operation } from "./Operation";
+import { OperationCall } from "./OperationCall";
 import { IconButton } from "../ui/IconButton";
 import { AddStatement } from "./AddStatement";
 import { useDisclosure } from "@mantine/hooks";
 import { Popover, useDelayedHover } from "@mantine/core";
-import { TypeMapper } from "../lib/data";
+import { DataTypes } from "../lib/data";
+import { useMemo } from "react";
 
 export function Statement({
   statement,
   handleStatement,
   prevStatements,
-  prevOperations,
   addStatement,
   options,
 }: {
   statement: IStatement;
   handleStatement: (statement: IStatement, remove?: boolean) => void;
   prevStatements: IStatement[];
-  prevOperations: IOperation[];
   addStatement?: (statement: IStatement, position: "before" | "after") => void;
   options?: {
     enableVariable?: boolean;
@@ -47,75 +45,88 @@ export function Statement({
     openDelay: 0,
     closeDelay: 150,
   });
-
   const PipeArrow =
-    statement.methods.length > 1 ? FaArrowTurnUp : FaArrowRightLong;
+    statement.operations.length > 1 ? FaArrowTurnUp : FaArrowRightLong;
 
-  function addMethod() {
-    let data = getStatementResult(statement);
+  const hoverEvents = useMemo(
+    () => ({
+      onMouseEnter: openDropdown,
+      onFocus: openDropdown,
+      onMouseLeave: closeDropdown,
+      onBlur: closeDropdown,
+    }),
+    [openDropdown, closeDropdown]
+  );
+
+  function addOperationCall() {
+    const data = getStatementResult(statement);
     if (data.entityType !== "data") return;
-    let method = createMethod({ data });
-    let methods = [...statement.methods, method];
+    const operation = createOperationCall({ data, prevStatements });
+    const operations = [...statement.operations, operation];
     handleStatement(
-      updateStatementMethods(
-        { ...statement, methods },
-        getPreviousStatements([...prevStatements, ...prevOperations])
-      )
+      updateStatementMethods({ ...statement, operations }, prevStatements)
     );
   }
 
   function handleData(data: IData, remove?: boolean) {
     if (remove) handleStatement(statement, remove);
     else {
-      let methods = [...statement.methods];
-      let statementData = statement.data as IData;
-      if (statementData.type !== data.type) methods = [];
+      let operations = [...statement.operations];
+      if (!isTypeCompatible(statement.data.type, data.type)) operations = [];
       handleStatement(
         updateStatementMethods(
-          { ...statement, data, methods },
-          getPreviousStatements([...prevStatements, ...prevOperations])
+          { ...statement, data, operations },
+          prevStatements
         )
       );
     }
   }
 
-  function handelOperation(operation: IOperation, remove?: boolean) {
-    let methods = operation.reference?.isCalled ? [...statement.methods] : [];
+  function handelOperation(operation: IData<OperationType>, remove?: boolean) {
     if (remove) handleStatement(statement, remove);
     else
       handleStatement(
         updateStatementMethods(
-          { ...statement, data: operation, methods },
-          getPreviousStatements([...prevStatements, ...prevOperations])
+          { ...statement, data: operation, operations: statement.operations },
+          prevStatements
         )
       );
   }
 
-  function handleMethod(method: IMethod, index: number, remove?: boolean) {
-    let methods = [...statement.methods];
+  function handleOperationCall(
+    operation: IData<OperationType>,
+    index: number,
+    remove?: boolean
+  ) {
+    // eslint-disable-next-line prefer-const
+    let operations = [...statement.operations];
     if (remove) {
-      let data = getStatementResult(statement, index);
-      if (!isSameType(method.result, data)) methods.splice(index);
-      else methods.splice(index, 1);
+      const data = getStatementResult(statement, index);
+      if (
+        !operation.value.result ||
+        !isTypeCompatible(operation.value.result.type, data.type)
+      ) {
+        operations.splice(index);
+      } else {
+        operations.splice(index, 1);
+      }
     } else {
-      if (!isSameType(method.result, methods[index].result))
-        methods.splice(index + 1);
-      methods[index] = method;
+      if (
+        !operation.value.result ||
+        !operations[index].value.result ||
+        !isTypeCompatible(
+          operation.value.result.type,
+          operations[index].value.result.type
+        )
+      ) {
+        operations.splice(index + 1);
+      }
+      operations[index] = operation;
     }
     handleStatement(
-      updateStatementMethods(
-        { ...statement, methods },
-        getPreviousStatements([...prevStatements, ...prevOperations])
-      )
+      updateStatementMethods({ ...statement, operations }, prevStatements)
     );
   }
-
-  const hoverEvents = {
-    onMouseEnter: openDropdown,
-    onFocus: openDropdown,
-    onMouseLeave: closeDropdown,
-    onBlur: closeDropdown,
-  };
 
   return (
     <div className="flex items-start gap-1">
@@ -126,12 +137,11 @@ export function Statement({
               value={statement.name || ""}
               className="text-variable"
               onChange={(value) => {
-                let name = value || statement.name || "";
+                const name = value || statement.name || "";
                 if (
                   [
-                    ...Object.keys(TypeMapper),
+                    ...Object.keys(DataTypes),
                     ...prevStatements.map((s) => s.name),
-                    ...prevOperations.map((s) => s.name),
                     "operation",
                   ].includes(name)
                 ) {
@@ -145,7 +155,7 @@ export function Statement({
             <Popover.Target>
               <IconButton
                 icon={FaEquals}
-                className="mt-[5px]"
+                className="mt-[5px] hover:outline hover:outline-border"
                 title="Create variable"
                 onClick={() =>
                   !options?.disableNameToggle &&
@@ -155,7 +165,7 @@ export function Statement({
                       ? undefined
                       : createVariableName({
                           prefix: "var",
-                          prev: [...prevStatements, ...prevOperations],
+                          prev: prevStatements,
                         }),
                   })
                 }
@@ -167,9 +177,6 @@ export function Statement({
               {...hoverEvents}
             >
               <AddStatement
-                id={`${statement.id}_addStatement`}
-                prevStatements={[...prevStatements, statement]}
-                prevOperations={prevOperations}
                 onSelect={(statement) => {
                   addStatement?.(statement, "after");
                   closeDropdown();
@@ -183,67 +190,48 @@ export function Statement({
       <div
         className={
           "flex items-start gap-0 " +
-          (statement.methods.length > 1 ? "flex-col" : "flex-row")
+          (statement.operations.length > 1 ? "flex-col" : "flex-row")
         }
       >
-        {statement.data.entityType === "data" ? (
-          <Data
-            data={statement.data}
-            disableDelete={options?.disableDelete}
-            addMethod={
-              !options?.disableMethods && statement.methods.length === 0
-                ? addMethod
-                : undefined
-            }
-            prevStatements={prevStatements}
-            prevOperations={prevOperations}
-            handleChange={
-              statement.data.entityType === "data"
-                ? handleData
-                : handelOperation
-            }
-          />
-        ) : (
-          <Operation
-            operation={statement.data}
-            handleChange={
-              statement.data.entityType === "operation"
-                ? handelOperation
-                : handleData
-            }
-            prevStatements={prevStatements}
-            prevOperations={prevOperations}
-            options={{ disableDelete: options?.disableDelete }}
-            addMethod={
-              !options?.disableMethods &&
-              statement.methods.length === 0 &&
-              statement.data.reference?.isCalled
-                ? addMethod
-                : undefined
-            }
-          />
-        )}
-        {statement.methods.map((method, i, methods) => {
-          let data = getStatementResult(statement, i, true);
+        <Data
+          data={statement.data}
+          disableDelete={options?.disableDelete}
+          addOperationCall={
+            !options?.disableMethods &&
+            statement.operations.length === 0 &&
+            !isDataOfType(statement.data, "operation")
+              ? addOperationCall
+              : undefined
+          }
+          prevStatements={prevStatements}
+          handleChange={
+            isDataOfType(statement.data, "operation")
+              ? handelOperation
+              : handleData
+          }
+        />
+        {statement.operations.map((operation, i, operationsList) => {
+          const data = getStatementResult(statement, i, true);
           if (data.entityType !== "data") return;
           return (
-            <div key={method.id} className="flex items-start gap-1 ml-1">
+            <div key={operation.id} className="flex items-start gap-1 ml-1">
               <PipeArrow
                 size={10}
                 className="text-disabled mt-1.5"
                 style={{
-                  transform: methods.length > 1 ? "rotate(90deg)" : "",
+                  transform: operationsList.length > 1 ? "rotate(90deg)" : "",
                 }}
               />
-              <Method
+              <OperationCall
                 data={data}
-                method={method}
-                handleMethod={(meth, remove) => handleMethod(meth, i, remove)}
+                operation={operation}
+                handleOperationCall={(op, remove) =>
+                  handleOperationCall(op, i, remove)
+                }
                 prevStatements={prevStatements}
-                prevOperations={prevOperations}
-                addMethod={
-                  !options?.disableMethods && i + 1 === methods.length
-                    ? addMethod
+                addOperationCall={
+                  !options?.disableMethods && i + 1 === operationsList.length
+                    ? addOperationCall
                     : undefined
                 }
               />

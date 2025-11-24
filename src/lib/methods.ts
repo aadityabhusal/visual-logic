@@ -1,104 +1,42 @@
 import { nanoid } from "nanoid";
-import { IData, IMethod, IOperation, IStatement, IType } from "./types";
+import {
+  IData,
+  IStatement,
+  DataType,
+  OperationType,
+  StringType,
+  ArrayType,
+  NumberType,
+  UnknownType,
+  ConditionType,
+  DataValue,
+} from "./types";
 import {
   createData,
-  createOperation,
   createStatement,
   createVariableName,
-  getOperationResult,
   getStatementResult,
-  isSameType,
+  isDataOfType,
+  isTypeCompatible,
 } from "./utils";
-import { updateStatements } from "./update";
 
-export type IMethodList = {
+export type OperationListItem = {
   name: string;
-  parameters: {
-    name?: string;
-    type?: keyof IType | "operation";
-    parameters?: IMethodList["parameters"];
-    isGeneric?: boolean;
-  }[];
-  handler(...args: IStatement["data"][]): IStatement["data"];
-};
+  parameters: OperationType["parameters"];
+  result: DataType;
+} & ( // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | { handler: (...args: IData<any>[]) => IData }
+  | { statements: IStatement[] }
+);
 
-const comparisonMethods: IMethodList[] = [
-  {
-    name: "eq",
-    parameters: [{}],
-    handler: (data: IData, p1: IData<typeof data.type>) =>
-      createData({ type: "boolean", value: data.value === p1.value }),
-  },
-  {
-    name: "neq",
-    parameters: [{}],
-    handler: (data: IData, p1: IData<typeof data.type>) =>
-      createData({ type: "boolean", value: data.value !== p1.value }),
-  },
-  {
-    name: "lt",
-    parameters: [{}],
-    handler: (data: IData, p1: IData<typeof data.type>) =>
-      createData({ type: "boolean", value: data.value < p1.value }),
-  },
-  {
-    name: "lte",
-    parameters: [{}],
-    handler: (data: IData, p1: IData<typeof data.type>) =>
-      createData({ type: "boolean", value: data.value <= p1.value }),
-  },
-  {
-    name: "gt",
-    parameters: [{}],
-    handler: (data: IData, p1: IData<typeof data.type>) =>
-      createData({ type: "boolean", value: data.value > p1.value }),
-  },
-  {
-    name: "gte",
-    parameters: [{}],
-    handler: (data: IData, p1: IData<typeof data.type>) =>
-      createData({ type: "boolean", value: data.value >= p1.value }),
-  },
-];
-
-const conditionalMethods: IMethodList[] = [
-  {
-    name: "and",
-    parameters: [{ type: "string", isGeneric: true }],
-    handler: (data: IData, p1: IData<typeof data.type>) =>
-      createData({
-        type: "boolean",
-        value: Boolean(data.value) && Boolean(p1.value),
-      }),
-  },
-  {
-    name: "or",
-    parameters: [{ type: "string", isGeneric: true }],
-    handler: (data: IData, p1: IData<typeof data.type>) =>
-      createData({
-        type: "boolean",
-        value: Boolean(data.value) || Boolean(p1.value),
-      }),
-  },
-  {
-    name: "then",
-    parameters: [
-      { type: "string", isGeneric: true },
-      { type: "string", isGeneric: true },
-    ],
-    handler: (data: IData, p1: IData, p2: IData) => {
-      return Boolean(data.value) ? p1 : p2;
-    },
-  },
-];
-
-const stringMethods: IMethodList[] = [
+export const builtInOperations: OperationListItem[] = [
   {
     name: "capitalize",
-    parameters: [],
-    handler: (data: IData<"string">) => {
+    parameters: [{ type: { kind: "string" } }],
+    result: { kind: "string" },
+    handler: (data: IData<StringType>) => {
       return createData({
-        type: "string",
+        type: { kind: "string" },
         value:
           (data.value[0]?.toUpperCase() || "") + (data.value?.slice(1) || ""),
       });
@@ -106,137 +44,52 @@ const stringMethods: IMethodList[] = [
   },
   {
     name: "concat",
-    parameters: [{ type: "string" }],
-    handler: (data: IData<"string">, p1: IData<"string">) => {
-      return createData({ type: "string", value: data.value.concat(p1.value) });
-    },
-  },
-  {
-    name: "includes",
-    parameters: [{ type: "string" }],
-    handler: (data: IData<"string">, p1: IData<"string">) => {
+    parameters: [{ type: { kind: "string" } }, { type: { kind: "string" } }],
+    result: { kind: "string" },
+    handler: (data: IData<StringType>, p1: IData<StringType>) => {
       return createData({
-        type: "boolean",
-        value: data.value.includes(p1.value),
+        type: { kind: "string" },
+        value: data.value.concat(p1.value),
       });
     },
   },
   {
     name: "length",
-    parameters: [],
-    handler: (data: IData<"string">) => {
-      return createData({ type: "number", value: data.value.length });
-    },
-  },
-  {
-    name: "slice",
-    parameters: [{ type: "number" }, { type: "number" }],
-    handler: (
-      data: IData<"string">,
-      p1: IData<"number">,
-      p2: IData<"number">
-    ) => {
+    parameters: [{ type: { kind: "string" } }],
+    result: { kind: "number" },
+    handler: (data: IData<StringType>) => {
       return createData({
-        type: "string",
-        value: data.value.slice(p1.value, p2.value),
+        type: { kind: "number" },
+        value: data.value.length,
       });
     },
   },
-  {
-    name: "split",
-    parameters: [{ type: "string" }],
-    handler: (data: IData<"string">, p1: IData<"string">) => {
-      return createData({
-        type: "array",
-        value: data.value.split(p1.value).map((item) =>
-          createStatement({
-            data: createData({ type: "string", value: item }),
-          })
-        ),
-      });
-    },
-  },
-  {
-    name: "toNumber",
-    parameters: [],
-    handler: (data: IData<"string">) => {
-      return createData({ type: "number", value: Number(data.value) || 0 });
-    },
-  },
-  {
-    name: "toUpperCase",
-    parameters: [],
-    handler: (data: IData<"string">) => {
-      return createData({ type: "string", value: data.value.toUpperCase() });
-    },
-  },
-  {
-    name: "toLowerCase",
-    parameters: [],
-    handler: (data: IData<"string">) => {
-      return createData({ type: "string", value: data.value.toLowerCase() });
-    },
-  },
-];
-
-const numberMethods: IMethodList[] = [
   {
     name: "add",
-    parameters: [{ type: "number" }],
-    handler: (data: IData<"number">, p1: IData<"number">) => {
-      return createData({ type: "number", value: data.value + p1.value });
-    },
-  },
-  {
-    name: "subtract",
-    parameters: [{ type: "number" }],
-    handler: (data: IData<"number">, p1: IData<"number">) => {
-      return createData({ type: "number", value: data.value - p1.value });
-    },
-  },
-  {
-    name: "multiply",
-    parameters: [{ type: "number" }],
-    handler: (data: IData<"number">, p1: IData<"number">) => {
-      return createData({ type: "number", value: data.value * p1.value });
-    },
-  },
-  {
-    name: "divide",
-    parameters: [{ type: "number" }],
-    handler: (data: IData<"number">, p1: IData<"number">) => {
-      return createData({ type: "number", value: data.value / p1.value });
-    },
-  },
-  {
-    name: "power",
-    parameters: [{ type: "number" }],
-    handler: (data: IData<"number">, p1: IData<"number">) => {
+    parameters: [{ type: { kind: "number" } }, { type: { kind: "number" } }],
+    result: { kind: "number" },
+    handler: (data: IData<NumberType>, p1: IData<NumberType>) => {
       return createData({
-        type: "number",
-        value: Math.pow(data.value, p1.value),
+        type: { kind: "number" },
+        value: data.value + p1.value,
       });
-    },
-  },
-  {
-    name: "mod",
-    parameters: [{ type: "number" }],
-    handler: (data: IData<"number">, p1: IData<"number">) => {
-      return createData({ type: "number", value: data.value % p1.value });
     },
   },
   {
     name: "range",
-    parameters: [{ type: "number" }],
-    handler: (data: IData<"number">, p1: IData<"number">) => {
-      let rev = data.value > p1.value;
-      let [start, end] = rev ? [p1.value, data.value] : [data.value, p1.value];
+    parameters: [{ type: { kind: "number" } }, { type: { kind: "number" } }],
+    result: { kind: "array", elementType: { kind: "number" } },
+    handler: (data: IData<NumberType>, p1: IData<NumberType>) => {
+      const rev = data.value > p1.value;
+      const [start, end] = rev
+        ? [p1.value, data.value]
+        : [data.value, p1.value];
       return createData({
-        type: "array",
+        type: { kind: "array", elementType: { kind: "number" } },
         value: Array.from(Array(end - start).keys()).map((value) =>
           createStatement({
             data: createData({
-              type: "number",
+              type: { kind: "number" },
               value: rev ? end - value : start + value,
             }),
           })
@@ -245,317 +98,322 @@ const numberMethods: IMethodList[] = [
     },
   },
   {
-    name: "toString",
-    parameters: [],
-    handler: (data: IData<"number">) => {
-      return createData({ type: "string", value: String(data.value) });
-    },
-  },
-];
-
-const booleanMethods: IMethodList[] = [
-  {
-    name: "toString",
-    parameters: [],
-    handler: (data: IData<"boolean">) => {
-      return createData({ type: "string", value: String(data.value) });
-    },
-  },
-];
-
-const arrayMethods: IMethodList[] = [
-  {
-    name: "at",
-    parameters: [{ type: "number" }],
-    handler: (data: IData<"array">, p1: IData<"number">) => {
-      let item = data.value.at(p1.value);
-      if (!item) return createData({ type: "string", value: "" });
-      let value = getStatementResult(item) as IData;
-      return createData({ type: value.type, value: value.value });
-    },
-  },
-  {
-    name: "concat",
-    parameters: [{ type: "array" }],
-    handler: (data: IData<"array">, p1: IData<"array">) => {
-      return createData({ type: "array", value: [...data.value, ...p1.value] });
-    },
-  },
-  {
-    name: "includes",
-    parameters: [{ type: "string" }],
-    handler: (data: IData<"array">, p1: IData<"string">) => {
-      return createData({
-        type: "boolean",
-        value: data.value
-          .map((item) => (getStatementResult(item) as IData).value)
-          .includes(p1.value),
-      });
-    },
-  },
-  {
-    name: "length",
-    parameters: [],
-    handler: (data: IData<"array">) => {
-      return createData({ type: "number", value: data.value.length });
-    },
-  },
-  {
-    name: "slice",
-    parameters: [{ type: "number" }, { type: "number" }],
-    handler: (
-      data: IData<"array">,
-      p1: IData<"number">,
-      p2: IData<"number">
-    ) => {
-      return createData({
-        type: "array",
-        value: data.value.slice(p1.value, p2.value),
-      });
-    },
-  },
-  {
-    name: "toString",
-    parameters: [],
-    handler: (data: IData<"array">) => {
-      return createData({
-        type: "string",
-        value: data.value
-          .map((item) => {
-            let result = getStatementResult(item);
-            return result.entityType === "data" ? result.value : "";
-          })
-          .toString(),
-      });
-    },
-  },
-  {
-    name: "map",
-    parameters: [
-      {
-        type: "operation",
-        parameters: [
-          { name: "item", type: "string", isGeneric: true },
-          { name: "index", type: "number" },
-          { name: "arr", type: "array" },
-        ],
-      },
-    ],
-    handler: (data: IData<"array">, operation: IOperation) => {
-      let value = mapArrayParameters(data, operation);
-      return createData({
-        type: "array",
-        value: value.map((data) => createStatement({ data })),
-      });
-    },
-  },
-  {
-    name: "filter",
-    parameters: [
-      {
-        type: "operation",
-        parameters: [
-          { name: "item", type: "string", isGeneric: true },
-          { name: "index", type: "number" },
-          { name: "arr", type: "array" },
-        ],
-      },
-    ],
-    handler: (data: IData<"array">, operation: IOperation) => {
-      let value = mapArrayParameters(data, operation);
-      return createData({
-        type: "array",
-        value: data.value.filter((_, i) => {
-          let val = value[i];
-          return val.entityType === "data" ? val.value : true;
-        }),
-      });
-    },
-  },
-  {
     name: "find",
     parameters: [
       {
-        type: "operation",
-        parameters: [
-          { name: "item", type: "string", isGeneric: true },
-          { name: "index", type: "number" },
-          { name: "arr", type: "array" },
-        ],
+        type: {
+          kind: "array",
+          elementType: {
+            kind: "union",
+            types: [{ kind: "string" }, { kind: "undefined" }],
+          },
+        },
+      },
+      {
+        type: {
+          kind: "operation",
+          parameters: [
+            { name: "item", type: { kind: "string" } },
+            { name: "index", type: { kind: "number" } },
+            {
+              name: "arr",
+              type: { kind: "array", elementType: { kind: "string" } },
+            },
+          ],
+          result: { kind: "string" },
+        },
       },
     ],
-    handler: (data: IData<"array">, operation: IOperation) => {
-      let value = mapArrayParameters(data, operation);
-      let foundData = data.value.find((_, i) => {
-        let val = value[i];
+    result: { kind: "string" },
+    handler: (data: IData<ArrayType>, operation: IData<OperationType>) => {
+      const value = mapArrayParameters(data, operation);
+      const foundData = data.value.find((_, i) => {
+        const val = value[i];
         return val.entityType === "data" ? val.value : true;
       })?.data as IData;
       return createData({
-        type: foundData?.type || "string",
+        type: foundData?.type || { kind: "string" },
         value: foundData?.value || "",
       });
     },
   },
-];
-
-const objectMethods: IMethodList[] = [
   {
-    name: "get",
-    parameters: [{ type: "string" }],
-    handler(data: IData<"object">, p1: IData<"string">) {
-      let item = data.value.get(p1.value);
-      if (!item) return createData({ type: "string", value: "" });
-      let value = getStatementResult(item) as IData;
+    name: "getCurrentTime",
+    parameters: [],
+    result: { kind: "string" },
+    handler: () => {
       return createData({
-        type: value.type,
-        value: value.value,
+        type: { kind: "string" },
+        value: new Date().toISOString(),
       });
     },
   },
   {
-    name: "length",
-    parameters: [],
-    handler: (data: IData<"object">) => {
-      return createData({ type: "number", value: data.value.size });
-    },
-  },
-  {
-    name: "has",
-    parameters: [{ type: "string" }],
-    handler(data: IData<"object">, p1: IData<"string">) {
+    name: "equals",
+    parameters: [{ type: { kind: "unknown" } }, { type: { kind: "unknown" } }],
+    result: { kind: "boolean" },
+    handler: (data: IData<UnknownType>, p1: IData<UnknownType>) => {
       return createData({
-        type: "boolean",
-        value: data.value.has(p1.value),
-      });
-    },
-  },
-  {
-    name: "keys",
-    parameters: [],
-    handler(data: IData<"object">) {
-      return createData({
-        type: "array",
-        value: [...data.value.keys()].map((item) =>
-          createStatement({
-            data: createData({ type: "string", value: item }),
-          })
-        ),
-      });
-    },
-  },
-  {
-    name: "values",
-    parameters: [],
-    handler(data: IData<"object">) {
-      return createData({
-        type: "array",
-        value: [...data.value.values()].map((item) => {
-          let itemResult = getStatementResult(item) as IData;
-          return createStatement({
-            data: createData({
-              type: itemResult.type,
-              value: itemResult.value,
-            }),
-          });
-        }),
+        type: { kind: "boolean" },
+        value: JSON.stringify(data.value) === JSON.stringify(p1.value),
       });
     },
   },
 ];
 
-export const methodsList: Record<keyof IType, IMethodList[]> = {
-  string: stringMethods.concat(comparisonMethods, conditionalMethods),
-  number: numberMethods.concat(comparisonMethods, conditionalMethods),
-  boolean: booleanMethods.concat(comparisonMethods, conditionalMethods),
-  array: arrayMethods.concat(conditionalMethods),
-  object: objectMethods.concat(conditionalMethods),
-};
+function mapArrayParameters(
+  data: IData<ArrayType>,
+  operation: IData<OperationType>
+): IData[] {
+  return data.value.map((item, index) => {
+    // Get the actual data for this array item
+    const itemData = getStatementResult(item);
 
-function mapArrayParameters(data: IData<"array">, operation: IOperation) {
-  return data.value.map((item, index, itemList) => {
-    let itemResult = (getStatementResult(item) as IData).value;
-    let paramsList = [itemResult, index, itemList];
-    let newParams = operation.parameters.map((param, i) => ({
-      ...param,
-      data: { ...param.data, value: paramsList[i] },
-    }));
-    let updatedStatements = updateStatements({
-      statements: [...newParams, ...operation.statements],
-      previous: operation.closure,
-    });
-    return getOperationResult({
-      ...operation,
-      parameters: updatedStatements.slice(0, operation.parameters.length),
-      statements: updatedStatements.slice(operation.parameters.length),
-    });
-  });
-}
+    // Create parameter values: [item, index, array]
+    const paramValues = [
+      itemData,
+      createData({ type: { kind: "number" }, value: index }),
+      data,
+    ];
 
-function createParamData(
-  item: IMethodList["parameters"][0],
-  data: IData
-): IStatement["data"] {
-  return item.type === "operation"
-    ? createOperation({
-        parameters: item.parameters?.reduce((prev, item) => {
-          prev.push(
-            createStatement({
-              name: item.name ?? createVariableName({ prefix: "param", prev }),
-              data: createParamData(item, data),
-            })
-          );
-          return prev;
-        }, [] as IStatement[]),
-        isGeneric: item.isGeneric,
-      })
-    : createData({ type: item.type || data.type, isGeneric: item.isGeneric });
-}
+    const foundOp = builtInOperations.find(
+      (op) => op.name === operation.value.name
+    );
 
-export function getFilteredMethods(data: IData) {
-  return methodsList[data.type].filter((item) => {
-    let parameters = item.parameters.map((p) => createParamData(p, data));
+    if (foundOp) {
+      return executeOperation(foundOp, paramValues[0], paramValues.slice(1));
+    }
+
     return (
-      data.isGeneric ||
-      (isSameType(data, item.handler(data, ...parameters)) &&
-        parameters.every((p) => !p.isGeneric))
+      operation.value.result || createData({ type: { kind: "undefined" } })
     );
   });
 }
 
-export function createMethod({
+type ExecutionContext = {
+  parameters: Map<string, IData>;
+  statements: Map<string, IData>;
+};
+
+function buildExecutionContext(
+  operation: OperationListItem,
+  data: IData,
+  parameters: IData[]
+): ExecutionContext {
+  const context = { parameters: new Map(), statements: new Map() };
+
+  // Map first parameter to the data being operated on
+  if (operation.parameters[0]?.name) {
+    context.parameters.set(operation.parameters[0].name, data);
+  }
+
+  // Map remaining parameters to provided arguments
+  operation.parameters.slice(1).forEach((param, index) => {
+    if (param.name && parameters[index]) {
+      context.parameters.set(param.name, parameters[index]);
+    }
+  });
+
+  return context;
+}
+
+function executeCondition(
+  condition: DataValue<ConditionType>,
+  context: ExecutionContext
+): IData {
+  const conditionResult = executeStatement(condition.condition, context);
+  const conditionValue = conditionResult.value;
+
+  const isTrue =
+    conditionValue === true ||
+    (typeof conditionValue === "string" && conditionValue.length > 0) ||
+    (typeof conditionValue === "number" && conditionValue !== 0);
+
+  return executeStatement(isTrue ? condition.true : condition.false, context);
+}
+
+function executeStatement(
+  statement: IStatement,
+  context: ExecutionContext
+): IData {
+  // Resolve base data (parameter reference, statement reference, or direct data)
+  let currentData = statement.data;
+
+  if (statement.data.reference?.name) {
+    const refName = statement.data.reference.name;
+    currentData =
+      context.parameters.get(refName) ||
+      context.statements.get(refName) ||
+      statement.data;
+  }
+
+  if (isDataOfType(currentData, "condition")) {
+    currentData = executeCondition(currentData.value, context);
+  }
+
+  // Apply operation chain to the resolved data
+  let result = currentData;
+
+  for (const operation of statement.operations) {
+    // Resolve operation parameters from context
+    const resolvedParams = operation.value.parameters.map((param) => {
+      if (param.data.reference?.name) {
+        return (
+          context.parameters.get(param.data.reference.name) ||
+          context.statements.get(param.data.reference.name) ||
+          getStatementResult(param)
+        );
+      }
+      return getStatementResult(param);
+    });
+
+    // Execute the operation
+    const foundOp = builtInOperations.find(
+      (op) => op.name === operation.value.name
+    );
+
+    if (foundOp && "handler" in foundOp) {
+      result = foundOp.handler(result, ...resolvedParams);
+    } else if (operation.value.result) {
+      result = operation.value.result;
+    }
+  }
+
+  return result;
+}
+
+export function executeOperation(
+  operation: OperationListItem,
+  data: IData,
+  parameters: IData[]
+): IData {
+  if ("handler" in operation) return operation.handler(data, ...parameters);
+
+  if ("statements" in operation && operation.statements.length > 0) {
+    const context = buildExecutionContext(operation, data, parameters);
+    let lastResult: IData = createData({ type: { kind: "undefined" } });
+
+    for (const statement of operation.statements) {
+      lastResult = executeStatement(statement, context);
+      if (statement.name) context.statements.set(statement.name, lastResult);
+    }
+
+    return lastResult;
+  }
+
+  return createData({ type: { kind: "undefined" } });
+}
+
+function createParamData(
+  item: OperationListItem["parameters"][0],
+  data: IData
+): IStatement["data"] {
+  if (item.type.kind !== "operation") {
+    return createData({ type: item.type || data.type, isGeneric: false });
+  }
+
+  const parameters = item.type.parameters.reduce((prev, paramSpec) => {
+    prev.push(
+      createStatement({
+        name: paramSpec.name ?? createVariableName({ prefix: "param", prev }),
+        data: createParamData({ type: paramSpec.type }, data),
+      })
+    );
+    return prev;
+  }, [] as IStatement[]);
+
+  return createData({
+    type: {
+      kind: "operation",
+      parameters: parameters.map((p) => ({ name: p.name, type: p.data.type })),
+      result: { kind: "undefined" },
+    },
+    value: { parameters: parameters, statements: [] },
+  });
+}
+
+export function getFilteredOperations(
+  data: IData,
+  prevStatements: IStatement[]
+) {
+  const builtInOps = builtInOperations.filter((operation) =>
+    isTypeCompatible(
+      operation.parameters[0]?.type || { kind: "undefined" },
+      data.type
+    )
+  );
+
+  const userDefinedOps = prevStatements
+    .filter(
+      (statement) =>
+        statement.name &&
+        isDataOfType(statement.data, "operation") &&
+        isTypeCompatible(
+          statement.data.type.parameters[0]?.type || { kind: "undefined" },
+          data.type
+        )
+    )
+    .map((statement) => {
+      const operation = statement.data as IData<OperationType>;
+      return {
+        name: statement.name!,
+        parameters: operation.type.parameters,
+        statements: operation.value.statements,
+        result: operation.type.result,
+      };
+    });
+
+  return [...builtInOps, ...userDefinedOps];
+}
+
+export function createOperationCall({
   data,
   name,
   prevParams,
+  prevStatements = [],
 }: {
   data: IData;
   name?: string;
   prevParams?: IStatement[];
-}): IMethod {
-  let methods = getFilteredMethods(data);
-  let methodByName = methods.find((method) => method.name === name);
-  let newMethod = methodByName || methods[0];
+  prevStatements?: IStatement[];
+}): IData<OperationType> {
+  const operations = getFilteredOperations(data, prevStatements);
+  const operationByName = operations.find(
+    (operation) => operation.name === name
+  );
+  const newOperation = operationByName || operations[0];
 
-  let parameters = newMethod.parameters.map((item, index) => {
+  const parameters = newOperation.parameters.slice(1).map((item, index) => {
     const newParam = createStatement({ data: createParamData(item, data) });
     const prevParam = prevParams?.[index];
     if (
       prevParam &&
-      isSameType(newParam.data, prevParam.data) &&
-      isSameType(newParam.data, getStatementResult(prevParam))
+      isTypeCompatible(newParam.data.type, prevParam.data.type) &&
+      isTypeCompatible(newParam.data.type, getStatementResult(prevParam).type)
     ) {
       return prevParam;
     }
     return newParam;
   });
-  let result = newMethod.handler(
+  const result = executeOperation(
+    newOperation,
     data,
-    ...parameters.map((p) => getStatementResult(p))
+    parameters.map((p) => getStatementResult(p))
   );
+
   return {
     id: nanoid(),
-    entityType: "method",
-    name: newMethod.name,
-    parameters,
-    result: { ...result, isGeneric: data.isGeneric },
-  } as IMethod;
+    entityType: "data",
+    type: {
+      kind: "operation",
+      parameters: newOperation.parameters,
+      result: newOperation.result,
+    },
+    value: {
+      name: newOperation.name,
+      parameters,
+      statements: [],
+      result: { ...result, isGeneric: data.isGeneric },
+    },
+  };
 }

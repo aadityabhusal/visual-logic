@@ -1,6 +1,33 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-white: #fafafa;
+  --color-reserved: #569cd6;
+  --color-variable: #4fc1ff;
+  --color-type: #4ec9b0;
+  --color-property: #9cdcfe;
+  --color-string: #ce9178;
+  --color-number: #b5cea8;
+  --color-boolean: #569cd6;
+  --color-array: #fafafa;
+  --color-object: #fafafa;
+  --color-method: #dcdcaa;
+  --color-border: #444444;
+  --color-disabled: #7f8c8d;
+  --color-error: #c7254e;
+
+  --color-editor: #1e1e1e;
+  --color-dropdown-default: #252526;
+  --color-dropdown-hover: #2a2d2e;
+  --color-dropdown-scrollbar: #464647;
+  --color-dropdown-selected: #04395e;
+}
+
+@layer base {
+  * {
+    border-color: #444444;
+  }
+}
 
 html,
 body {

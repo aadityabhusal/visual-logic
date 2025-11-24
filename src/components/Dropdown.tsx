@@ -9,9 +9,16 @@ import {
   FaSquareArrowUpRight,
 } from "react-icons/fa6";
 import { uiConfigStore, operationsStore } from "../lib/store";
-import { getHotkeyHandler } from "@mantine/hooks";
-import { IDropdownItem, IReference, IStatement } from "../lib/types";
+import { getHotkeyHandler, HotkeyItem } from "@mantine/hooks";
+import { IData, IDropdownItem, IStatement } from "../lib/types";
 import { useSearchParams } from "react-router";
+import { isDataOfType } from "../lib/utils";
+
+export interface IDropdownTargetProps
+  extends Omit<HTMLAttributes<HTMLElement>, "onChange" | "defaultValue"> {
+  value?: string;
+  onChange?: (value: string) => void;
+}
 
 export function Dropdown({
   id,
@@ -20,9 +27,10 @@ export function Dropdown({
   result,
   items,
   handleDelete,
-  addMethod,
+  addOperationCall,
   children,
   options,
+  hotkeys,
   isInputTarget,
   reference,
   target,
@@ -33,27 +41,23 @@ export function Dropdown({
   result?: IStatement["data"];
   items?: IDropdownItem[];
   handleDelete?: () => void;
-  addMethod?: () => void;
+  addOperationCall?: () => void;
   children?: ReactNode;
   options?: {
     withSearch?: boolean;
     withDropdownIcon?: boolean;
     focusOnClick?: boolean;
   };
+  hotkeys?: HotkeyItem[];
   isInputTarget?: boolean;
-  reference?: IReference;
-  target: (
-    value: Omit<HTMLAttributes<HTMLElement>, "onChange" | "defaultValue"> & {
-      value?: string;
-      onChange?: (value: string) => void;
-    }
-  ) => ReactNode;
+  reference?: IData["reference"];
+  target: (value: IDropdownTargetProps) => ReactNode;
 }) {
   const [, setSearchParams] = useSearchParams();
   const { undo, redo } = operationsStore.temporal.getState();
   const { highlightOperation, focusId, setUiConfig } = uiConfigStore();
   const forceDisplayBorder =
-    highlightOperation && data?.entityType === "operation";
+    highlightOperation && isDataOfType(data, "operation");
   const [isHovered, setHovered] = useState(false);
   const isFocused = focusId === id;
   const [search, setSearch] = useState("");
@@ -78,7 +82,7 @@ export function Dropdown({
       <Combobox.Option
         value={option.value}
         key={option.value}
-        className={`flex items-center justify-between gap-4 data-[combobox-selected]:bg-dropdown-hover data-[combobox-active]:bg-dropdown-selected hover:bg-dropdown-hover`}
+        className={`flex items-center justify-between gap-4 data-combobox-selected:bg-dropdown-hover data-combobox-active:bg-dropdown-selected hover:bg-dropdown-hover`}
         active={option.value === value}
       >
         <span className="text-sm max-w-32 truncate">
@@ -94,6 +98,7 @@ export function Dropdown({
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (value) setSearch(options?.withSearch ? "" : value);
   }, [value, options?.withSearch]);
 
@@ -104,6 +109,12 @@ export function Dropdown({
   useEffect(() => {
     if (combobox.dropdownOpened) combobox.selectActiveOption();
   }, [combobox.dropdownOpened]);
+
+  useEffect(() => {
+    if (id === focusId && combobox.targetRef.current) {
+      combobox.targetRef.current.focus();
+    }
+  }, [id, focusId, combobox.targetRef]);
 
   return (
     <Combobox
@@ -124,7 +135,7 @@ export function Dropdown({
           className={
             "flex items-start relative p-px" +
             (forceDisplayBorder || isFocused || isHovered
-              ? " outline outline-1 outline-border"
+              ? " outline outline-border"
               : "")
           }
           onMouseOver={(e) => {
@@ -148,6 +159,7 @@ export function Dropdown({
                       ["meta+shift+z", () => redo()],
                       ["meta+z", () => undo()],
                       ["meta+y", () => redo()],
+                      ...(hotkeys ?? []),
                     ]),
                   }
                 : {}),
@@ -164,7 +176,7 @@ export function Dropdown({
                 setUiConfig({ focusId: id, result, showPopup: true }),
             })}
           </Combobox.EventsTarget>
-          {data?.entityType === "operation" && reference && (
+          {isDataOfType(data, "operation") && reference && (
             <IconButton
               tabIndex={-1}
               size={8}
@@ -189,7 +201,7 @@ export function Dropdown({
               title="Delete"
             />
           )}
-          {addMethod && (
+          {addOperationCall && (
             <IconButton
               size={12}
               title="Add method"
@@ -197,7 +209,7 @@ export function Dropdown({
               icon={FaCirclePlus}
               onClick={() => {
                 combobox?.closeDropdown();
-                addMethod();
+                addOperationCall();
               }}
               hidden={!isFocused && !isHovered}
             />

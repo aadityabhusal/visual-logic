@@ -14,9 +14,9 @@ import {
   HeadlessMantineProvider,
   Tooltip,
 } from "@mantine/core";
-import { IOperation } from "./lib/types";
 import { FocusInfo } from "./components/FocusInfo";
 import { useSearchParams } from "react-router";
+import { createStatement } from "./lib/utils";
 
 const theme = createTheme({
   scale: 1,
@@ -28,7 +28,7 @@ const theme = createTheme({
     }),
     ActionIcon: ActionIcon.extend({
       classNames: {
-        root: "focus:outline focus:outline-1 focus:outline-white hover:opacity-90 disabled:text-disabled",
+        root: "focus:outline focus:outline-white hover:opacity-90 disabled:text-disabled",
       },
     }),
   },
@@ -64,13 +64,18 @@ function App() {
             {currentOperation ? (
               <Operation
                 operation={currentOperation}
-                handleChange={(operation: IOperation) =>
+                handleChange={(operation) =>
                   setOperation(updateOperations(operations, operation))
                 }
-                prevStatements={[]}
-                prevOperations={operations.filter(
-                  (operation) => operation.id !== currentOperation.id
-                )}
+                prevStatements={operations
+                  .filter((operation) => operation.id !== currentOperation.id)
+                  .map((operation) =>
+                    createStatement({
+                      data: operation,
+                      name: operation.value.name,
+                      id: operation.id,
+                    })
+                  )}
                 options={{ isTopLevel: true, disableDropdown: true }}
               />
             ) : (

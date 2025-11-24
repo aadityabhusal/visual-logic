@@ -13,7 +13,7 @@ export const IconButton = forwardRef<
     icon: IconType;
     size?: number;
   }
->(({ icon: Icon, size, children, title, ...props }, ref) => {
+>(({ icon: Icon, size, children: _children, title, ...props }, ref) => {
   const iconNode = (
     <ActionIcon size={size} ref={ref} {...props}>
       <Icon style={{ width: size, height: size }} />

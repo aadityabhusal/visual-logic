@@ -1,45 +1,39 @@
 import { nanoid } from "nanoid";
-import { TypeMapper } from "./data";
-import { methodsList } from "./methods";
-import { IData, IOperation, IStatement, IType, IDropdownItem } from "./types";
-import { updateStatements } from "./update";
+import { DataTypes } from "./data";
+import {
+  IData,
+  IStatement,
+  DataType,
+  IDropdownItem,
+  DataValue,
+  OperationType,
+  ConditionType,
+} from "./types";
 
-export function createData<T extends keyof IType>(
+export function createData<T extends DataType>(
   props: Partial<IData<T>>
 ): IData<T> {
-  const type = (props.type || "string") as T;
+  const type = (props.type || { kind: "undefined" }) as T;
   return {
     id: props.id ?? nanoid(),
     entityType: "data",
     type,
-    value: props.value || TypeMapper[type].defaultValue,
+    value: props.value ?? createDefaultValue(type),
     isGeneric: props.isGeneric,
     reference: props.reference,
   };
 }
 
-export function createOperation(props?: Partial<IOperation>): IOperation {
-  return {
-    id: props?.id ?? nanoid(),
-    isGeneric: props?.isGeneric,
-    entityType: "operation",
-    name: props?.name,
-    parameters: props?.parameters || [],
-    statements: props?.statements || [],
-    closure: props?.closure || [],
-    reference: props?.reference,
-  };
-}
-
 export function createStatement(props?: Partial<IStatement>): IStatement {
-  let newData = props?.data || createData({ type: "string", isGeneric: true });
-  let newId = props?.id || nanoid();
+  const newData =
+    props?.data || createData({ type: { kind: "undefined" }, isGeneric: true });
+  const newId = props?.id || nanoid();
   return {
     id: newId,
     name: props?.name,
     entityType: "statement",
     data: newData,
-    methods: props?.methods || [],
+    operations: props?.operations || [],
   };
 }
 
@@ -49,7 +43,7 @@ export function createVariableName({
   indexOffset = 0,
 }: {
   prefix: string;
-  prev: (IStatement | IOperation | string)[];
+  prev: (IStatement | string)[];
   indexOffset?: number;
 }) {
   const index = prev
@@ -62,124 +56,295 @@ export function createVariableName({
   return `${prefix}${index || ""}`;
 }
 
-export function isSameType(
-  first: IStatement["data"],
-  second: IStatement["data"]
-): boolean {
-  if (first.entityType === "operation" && second.entityType === "operation") {
+export function isTypeCompatible(first: DataType, second: DataType): boolean {
+  if (first.kind === "operation" && second.kind === "operation") {
     if (first.parameters.length !== second.parameters.length) return false;
+    if (!isTypeCompatible(first.result, second.result)) return false;
     return first.parameters.every((firstParam, index) =>
-      isSameType(firstParam.data, second.parameters[index].data)
+      isTypeCompatible(firstParam.type, second.parameters[index].type)
     );
-  } else if (first.entityType === "operation") {
-    if (!first.reference?.isCalled) return false;
-    return isSameType(getOperationResult(first), second);
-  } else if (second.entityType === "operation") {
-    if (!second.reference?.isCalled) return false;
-    return isSameType(first, getOperationResult(second));
-  } else {
-    return first.type === second.type;
+  }
+
+  if (first.kind === "array" && second.kind === "array") {
+    return isTypeCompatible(first.elementType, second.elementType);
+  }
+
+  if (first.kind === "object" && second.kind === "object") {
+    const firstKeys = Object.keys(first.properties);
+    const secondKeys = Object.keys(second.properties);
+    if (firstKeys.length !== secondKeys.length) return false;
+    return secondKeys.every(
+      (key) =>
+        first.properties[key] &&
+        isTypeCompatible(first.properties[key], second.properties[key])
+    );
+  }
+
+  if (first.kind === "union" && second.kind === "union") {
+    if (first.types.length !== second.types.length) return false;
+    // Bi-directional check to maintain order-independence and avoid duplicate types
+    return (
+      first.types.every((firstType) =>
+        second.types.some((secondType) =>
+          isTypeCompatible(firstType, secondType)
+        )
+      ) &&
+      second.types.every((secondType) =>
+        first.types.some((firstType) => isTypeCompatible(firstType, secondType))
+      )
+    );
+  }
+
+  if (first.kind === "union") {
+    return first.types.some((t) => isTypeCompatible(t, second));
+  }
+
+  if (second.kind === "union") {
+    return second.types.some((t) => isTypeCompatible(first, t));
+  }
+
+  return first.kind === second.kind;
+}
+
+export function isDataOfType<K extends DataType["kind"]>(
+  data: IData<DataType> | undefined,
+  kind: K
+): data is IData<Extract<DataType, { kind: K }>> {
+  return data?.type.kind === kind;
+}
+
+export function inferTypeFromValue(value: unknown): DataType {
+  if (value === undefined) return { kind: "undefined" };
+  if (typeof value === "string") return { kind: "string" };
+  if (typeof value === "number") return { kind: "number" };
+  if (typeof value === "boolean") return { kind: "boolean" };
+  if (Array.isArray(value)) {
+    return { kind: "array", elementType: getArrayElementType(value) };
+  }
+  if (value instanceof Map) {
+    return { kind: "object", properties: getObjectPropertiesType(value) };
+  }
+  if (
+    value &&
+    typeof value === "object" &&
+    "parameters" in value &&
+    "statements" in value &&
+    Array.isArray(value.parameters) &&
+    Array.isArray(value.statements)
+  ) {
+    return getOperationType(value.parameters, value.statements);
+  }
+  if (
+    value &&
+    typeof value === "object" &&
+    "condition" in value &&
+    "true" in value &&
+    "false" in value
+  ) {
+    const trueType = getStatementResult(value.true as IStatement).type;
+    const falseType = getStatementResult(value.false as IStatement).type;
+    const types = isTypeCompatible(trueType, falseType)
+      ? [trueType]
+      : [trueType, falseType];
+    return { kind: "condition", type: { kind: "union", types } };
+  }
+
+  return { kind: "unknown" };
+}
+
+export function getTypeSignature(type: DataType, maxDepth: number = 4): string {
+  if (maxDepth <= 0) return "...";
+
+  switch (type.kind) {
+    case "undefined":
+    case "string":
+    case "number":
+    case "boolean":
+    case "unknown":
+      return type.kind;
+
+    case "array":
+      return `${getTypeSignature(type.elementType, maxDepth - 1)}[]`;
+
+    case "object": {
+      const maxEntries = 3;
+      const entries = Object.entries(type.properties).slice(0, maxEntries);
+      const props = entries
+        .map(([k, v]) => `${k}: ${getTypeSignature(v, maxDepth - 1)}`)
+        .join(", ");
+      return `{ ${props} ${entries.length > maxEntries ? ", ..." : ""} }`;
+    }
+
+    case "union":
+      return type.types
+        .map((t) => getTypeSignature(t, maxDepth - 1))
+        .join(" | ");
+
+    case "operation": {
+      const params = type.parameters
+        .map(
+          (p) => `${p.name || "_"}: ${getTypeSignature(p.type, maxDepth - 1)}`
+        )
+        .join(", ");
+      return `(${params}) => ${getTypeSignature(type.result, maxDepth - 1)}`;
+    }
+
+    case "condition":
+      return getTypeSignature(type.type, maxDepth - 1);
+
+    default:
+      return "unknown";
   }
 }
 
-export function getClosureList(reference: IStatement | IOperation) {
-  const referenceData =
-    reference.entityType === "statement" ? reference.data : reference;
-
-  return referenceData.entityType === "operation"
-    ? referenceData.reference?.isCalled
-      ? referenceData.parameters.concat(referenceData.closure)
-      : referenceData.closure
-    : null;
-}
-
-export function getOperationResult(operation: IOperation) {
-  let lastStatement = operation.statements.slice(-1)[0];
-  return lastStatement
-    ? getStatementResult(lastStatement)
-    : createData({ type: "string" });
-}
-
+// TODO: Make use of the data type to create a better type for result e.g. a union type
 export function getStatementResult(
   statement: IStatement,
   index?: number,
   prevEntity?: boolean
-): IStatement["data"] {
-  let data = statement.data;
-  if (index) return statement.methods[index - 1]?.result;
-  let lastStatement = statement.methods[statement.methods.length - 1];
-  if (!prevEntity && lastStatement) return lastStatement.result;
-  return data.entityType === "operation" && data.reference?.isCalled
-    ? getOperationResult(data)
-    : data;
+): IData {
+  const data = statement.data;
+  if (index) {
+    const result = statement.operations[index - 1]?.value.result;
+    if (!result) return createData({ type: { kind: "undefined" } });
+    return result;
+  }
+  const lastOperation = statement.operations[statement.operations.length - 1];
+  if (!prevEntity && lastOperation) {
+    const result = lastOperation.value.result;
+    if (!result) return createData({ type: { kind: "undefined" } });
+    return result;
+  }
+  if (isDataOfType(data, "condition")) {
+    return data.value.result ?? getConditionResult(data.value);
+  }
+  return data;
+}
+
+export function getConditionResult(condition: DataValue<ConditionType>): IData {
+  const conditionResult = getStatementResult(condition.condition);
+  const conditionValue = conditionResult.value;
+  const isTrue =
+    conditionValue === true ||
+    (typeof conditionValue === "string" && conditionValue.length > 0) ||
+    (typeof conditionValue === "number" && conditionValue !== 0);
+  return getStatementResult(isTrue ? condition.true : condition.false);
 }
 
 export function resetParameters(
-  parameters: IOperation["parameters"],
-  argumentList?: IOperation["parameters"]
+  parameters: DataValue<OperationType>["parameters"],
+  argumentList?: DataValue<OperationType>["parameters"]
 ): IStatement[] {
   return parameters.map((param) => {
-    let argData = argumentList?.find((item) => item.id === param.id)?.data;
-    let paramData = { ...param.data, isGeneric: argData?.isGeneric };
-    if (paramData.entityType === "data") {
-      let argValue = argData?.entityType === "data" ? argData.value : undefined;
+    const argData = argumentList?.find((item) => item.id === param.id)?.data;
+    let paramData = { ...param.data, isGeneric: argData?.isGeneric } as IData;
+    if (isDataOfType(paramData, "operation")) {
+      const argParams = isDataOfType(argData, "operation")
+        ? argData.value.parameters
+        : undefined;
+      const params = resetParameters(paramData.value.parameters, argParams);
       paramData = {
         ...paramData,
         id: nanoid(),
-        value: argValue || TypeMapper[paramData.type].defaultValue,
+        type: getOperationType(params, paramData.value.statements),
+        value: {
+          ...paramData.value,
+          parameters: params,
+        },
       };
     } else {
-      let argParams =
-        argData?.entityType === "operation" ? argData.parameters : undefined;
       paramData = {
         ...paramData,
         id: nanoid(),
-        parameters: resetParameters(paramData.parameters, argParams),
+        value: argData?.value || createDefaultValue(paramData.type),
       };
     }
     return { ...param, id: nanoid(), data: paramData };
   });
 }
 
-export function getPreviousStatements(previous: (IStatement | IOperation)[]) {
-  return previous.map((item) =>
-    item.entityType === "operation"
-      ? createStatement({ id: item.id, name: item.name, data: item })
-      : item
-  );
+export function jsonParseReviver(_: string, value: unknown) {
+  if (
+    value &&
+    typeof value === "object" &&
+    "_map_" in value &&
+    Array.isArray(value._map_)
+  ) {
+    return new Map(value._map_);
+  }
+  return value;
 }
 
-export function jsonParseReviver(_: string, data: IData) {
-  return data.type === "object"
-    ? { ...data, value: new Map(data.value as []) }
-    : data;
+export function jsonStringifyReplacer(_: string, value: IData["value"]) {
+  return value instanceof Map ? { _map_: Array.from(value.entries()) } : value;
 }
 
 export const getLocalStorage = (key: string) => {
   try {
     return JSON.parse(localStorage.getItem(key) || "", jsonParseReviver);
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 };
 
-export const setLocalStorage = (key: string, value: any) => {
-  function replacer(_: string, value: IData["value"]) {
-    return value instanceof Map ? Array.from(value.entries()) : value;
-  }
-  localStorage.setItem(key, JSON.stringify(value, replacer));
+export const setLocalStorage = (key: string, value: unknown) => {
+  localStorage.setItem(key, JSON.stringify(value, jsonStringifyReplacer));
 };
+
+export function getArrayElementType(elements: IStatement[]): DataType {
+  if (elements.length === 0) return { kind: "unknown" };
+  const firstType = elements[0].data.type;
+  const allSameType = elements.every((element) => {
+    return isTypeCompatible(element.data.type, firstType);
+  });
+  if (allSameType) return firstType;
+
+  const unionTypes = elements.reduce((acc, element) => {
+    const elementType = element.data.type;
+    const exists = acc.some((t) => isTypeCompatible(t, elementType));
+    if (!exists) acc.push(elementType);
+    return acc;
+  }, [] as DataType[]);
+  return { kind: "union", types: unionTypes };
+}
+
+export function getObjectPropertiesType(entries: Map<string, IStatement>): {
+  [key: string]: DataType;
+} {
+  const properties: { [key: string]: DataType } = {};
+  entries.forEach((statement, key) => {
+    properties[key] = statement.data.type;
+  });
+
+  return properties;
+}
+
+export function getOperationType(
+  parameters: IStatement[],
+  statements: IStatement[]
+): OperationType {
+  const parameterTypes = parameters.map((param) => ({
+    name: param.name,
+    type: param.data.type,
+  }));
+
+  let resultType: DataType = { kind: "undefined" };
+  if (statements.length > 0) {
+    const lastStatement = statements[statements.length - 1];
+    resultType = getStatementResult(lastStatement).type;
+  }
+
+  return { kind: "operation", parameters: parameterTypes, result: resultType };
+}
 
 export function getDataDropdownList({
   data,
   onSelect,
   prevStatements,
-  prevOperations,
 }: {
   data: IStatement["data"];
   onSelect: (operation: IStatement["data"], remove?: boolean) => void;
   prevStatements: IStatement[];
-  prevOperations: IOperation[];
 }) {
   function selectData(dataOption: IData, reference: IStatement) {
     onSelect({
@@ -192,93 +357,120 @@ export function getDataDropdownList({
     });
   }
 
-  function selectOperations(
-    operation: IOperation,
-    reference: IStatement | IOperation
-  ) {
-    const parameters = resetParameters(operation.parameters);
-    const closure = getClosureList(reference) || [];
-    const statements = updateStatements({
-      statements: operation.statements,
-      previous: [
-        ...prevOperations,
-        ...prevStatements,
-        ...closure,
-        ...parameters,
-      ],
-    });
-
-    onSelect({
-      ...operation,
-      isGeneric: data.isGeneric,
-      id: data.id,
-      parameters,
-      closure,
-      statements,
-      reference: reference.name
-        ? { id: reference.id, name: reference.name }
-        : undefined,
-    });
-  }
-
   return [
-    ...(Object.keys(TypeMapper) as (keyof IType)[]).reduce((acc, type) => {
-      if (data.isGeneric || (data.reference && type === (data as IData).type)) {
+    ...(Object.keys(DataTypes) as DataType["kind"][]).reduce((acc, kind) => {
+      if (DataTypes[kind].hideFromDropdown) return acc;
+      if (
+        data.isGeneric ||
+        (data.reference && kind === (data as IData).type.kind)
+      ) {
         acc.push({
           entityType: "data",
-          value: type,
+          value: kind,
           onClick: () => {
             onSelect(
-              createData({ id: data.id, type, isGeneric: data.isGeneric })
+              createData({
+                id: data.id,
+                type: DataTypes[kind].type,
+                isGeneric: data.isGeneric,
+              })
             );
           },
         });
       }
       return acc;
     }, [] as IDropdownItem[]),
-    ...(data.isGeneric || (data.reference && data.entityType === "operation")
-      ? ([
-          {
-            entityType: "operation",
-            value: "operation",
-            onClick: () => {
-              const parameters =
-                data.entityType === "operation" ? data.parameters : [];
-              onSelect(
-                createOperation({
-                  id: data.id,
-                  isGeneric: data.isGeneric,
-                  parameters,
-                })
-              );
-            },
-          },
-        ] as IDropdownItem[])
-      : []),
     ...prevStatements.flatMap((statement) => {
       const result = getStatementResult(statement);
-      if ((!data.isGeneric && !isSameType(result, data)) || !statement.name)
+      if (
+        (!data.isGeneric && !isTypeCompatible(result.type, data.type)) ||
+        !statement.name
+      )
         return [];
       return {
         secondaryLabel:
-          result.entityType === "data" ? result.type : "operation",
+          result.entityType === "data" ? result.type.kind : "operation",
         value: statement.name,
         entityType: "data",
-        onClick: () =>
-          result.entityType === "operation"
-            ? selectOperations(result, statement)
-            : selectData(result, statement),
-      } as IDropdownItem;
-    }),
-    ...prevOperations.flatMap((operation) => {
-      let result = getStatementResult(createStatement({ data: operation }));
-      if (!data.isGeneric && !isSameType(result, data)) return [];
-      return {
-        value: operation.name,
-        entityType: "operation",
-        secondaryLabel: "operation",
-        onClick: () => selectOperations(operation, operation),
+        onClick: () => selectData(result, statement),
       } as IDropdownItem;
     }),
   ];
+}
+
+function createStatementFromType(type: DataType, name?: string) {
+  const value = createDefaultValue(type);
+  const data = createData({ type, value, isGeneric: true });
+  return createStatement({ data, name });
+}
+
+export function createDefaultValue<T extends DataType>(type: T): DataValue<T> {
+  switch (type.kind) {
+    case "string":
+      return "" as DataValue<T>;
+    case "number":
+      return 0 as DataValue<T>;
+    case "boolean":
+      return false as DataValue<T>;
+    case "undefined":
+      return undefined as DataValue<T>;
+    case "unknown":
+      return undefined as DataValue<T>;
+
+    case "array": {
+      if (type.elementType.kind === "unknown") return [] as DataValue<T>;
+      if (type.elementType.kind === "union") {
+        return type.elementType.types.map((type) =>
+          createStatementFromType(type)
+        ) as DataValue<T>;
+      }
+      return [createStatementFromType(type.elementType)] as DataValue<T>;
+    }
+
+    case "object": {
+      const map = new Map<string, IStatement>();
+      for (const [key, propType] of Object.entries(type.properties)) {
+        map.set(key, createStatementFromType(propType));
+      }
+      return map as DataValue<T>;
+    }
+
+    case "union": {
+      // Use first type's default (could be enhanced to pick "most specific")
+      return createDefaultValue(type.types[0]) as DataValue<T>;
+    }
+
+    case "operation": {
+      return {
+        parameters: type.parameters.map((param) =>
+          createStatementFromType(param.type, param.name)
+        ),
+        statements: [],
+        result: undefined,
+      } as DataValue<T>;
+    }
+
+    case "condition": {
+      const createStatement = (): IStatement => ({
+        id: nanoid(),
+        entityType: "statement",
+        operations: [],
+        data: createData({
+          type: { kind: "undefined" },
+          value: undefined,
+          isGeneric: true,
+        }),
+      });
+
+      return {
+        condition: createStatement(),
+        true: createStatement(),
+        false: createStatement(),
+        result: createStatement().data,
+      } as DataValue<T>;
+    }
+
+    default:
+      return undefined as DataValue<T>;
+  }
 }

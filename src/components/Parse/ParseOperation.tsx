@@ -1,12 +1,12 @@
 import { Fragment } from "react";
-import { IOperation } from "../../lib/types";
 import { ParseStatement } from "./ParseStatement";
+import { IData, OperationType } from "../../lib/types";
 
 export function ParseOperation({
   operation,
   nest = 0,
 }: {
-  operation: IOperation;
+  operation: IData<OperationType>;
   nest?: number;
 }) {
   function getTabs(level: number) {
@@ -14,28 +14,14 @@ export function ParseOperation({
     return [...Array(level)].map((_) => "\t").join("");
   }
   return operation.reference ? (
-    <>
-      <span className="text-variable">{operation.reference.name}</span>
-      {operation.reference.isCalled && (
-        <>
-          {"("}
-          {operation.parameters?.map((item, i, paramList) => (
-            <Fragment key={item.id}>
-              <ParseStatement statement={item} nest={nest} />
-              {i + 1 < paramList.length && <span>,</span>}
-            </Fragment>
-          ))}
-          {")"}
-        </>
-      )}
-    </>
+    <span className="text-variable">{operation.reference.name}</span>
   ) : (
     <>
       <span>
         <span className="text-reserved">function</span>{" "}
-        <span className="text-variable">{operation.name}</span>
+        <span className="text-variable">{operation.value.name}</span>
         {`(`}
-        {operation.parameters.map((parameter, i, arr) => (
+        {operation.value.parameters.map((parameter, i, arr) => (
           <Fragment key={i}>
             <span className="text-variable">{parameter.name}</span>
             {i + 1 < arr.length && <span>{","}</span>}
@@ -44,7 +30,7 @@ export function ParseOperation({
         <span>{`) {\n`}</span>
       </span>
       <span>
-        {operation.statements.map((statement, i, statements) => (
+        {operation.value.statements.map((statement, i, statements) => (
           <span key={i}>
             {getTabs(nest + 1)}
             {i + 1 === statements.length ? (

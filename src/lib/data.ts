@@ -1,22 +1,48 @@
-import { IType } from "./types";
+import { DataType } from "./types";
 
-export const TypeMapper: {
-  [T in keyof IType]: { defaultValue: IType[T] };
+export const DataTypes: {
+  [K in DataType["kind"]]: {
+    type: Extract<DataType, { kind: K }>;
+    hideFromDropdown?: boolean;
+  };
 } = {
+  unknown: {
+    type: { kind: "unknown" },
+    hideFromDropdown: true,
+  },
+  undefined: {
+    type: { kind: "undefined" },
+  },
   string: {
-    defaultValue: "",
+    type: { kind: "string" },
   },
   number: {
-    defaultValue: 0,
+    type: { kind: "number" },
   },
   boolean: {
-    defaultValue: false,
+    type: { kind: "boolean" },
   },
   array: {
-    defaultValue: [],
+    type: { kind: "array", elementType: { kind: "undefined" } },
   },
   object: {
-    defaultValue: new Map(),
+    type: { kind: "object", properties: { key: { kind: "undefined" } } },
+  },
+  union: {
+    type: { kind: "union", types: [{ kind: "undefined" }] },
+  },
+  operation: {
+    type: {
+      kind: "operation",
+      parameters: [],
+      result: { kind: "undefined" },
+    },
+  },
+  condition: {
+    type: {
+      kind: "condition",
+      type: { kind: "union", types: [{ kind: "undefined" }] },
+    },
   },
 };
 

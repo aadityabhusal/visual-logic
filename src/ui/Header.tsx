@@ -9,16 +9,16 @@ import {
 import { uiConfigStore, operationsStore } from "../lib/store";
 import { IconButton } from "./IconButton";
 import { useClipboard, useTimeout } from "@mantine/hooks";
-import { IOperation } from "../lib/types";
 import { updateOperations } from "../lib/update";
 import { jsonParseReviver } from "../lib/utils";
 import { useState } from "react";
-import { IOperationSchema } from "../lib/schemas";
+import { IData, OperationType } from "../lib/types";
+import { IDataSchema } from "../lib/schemas";
 
 export function Header({
   currentOperation,
 }: {
-  currentOperation?: IOperation;
+  currentOperation?: IData<OperationType>;
 }) {
   const setUiConfig = uiConfigStore().setUiConfig;
   const { undo, redo, pastStates, futureStates } =
@@ -53,16 +53,19 @@ export function Header({
             try {
               const copied = await navigator.clipboard.readText();
               const parsedOperation = JSON.parse(copied, jsonParseReviver);
-              const validatedOperation =
-                IOperationSchema.safeParse(parsedOperation);
+              const validatedOperation = IDataSchema.safeParse(parsedOperation);
               if (validatedOperation.error) {
                 throw new Error(validatedOperation.error.message);
+              }
+              // Ensure it's an operation type
+              if (parsedOperation.type?.kind !== "operation") {
+                throw new Error("Pasted data is not an operation");
               }
               setOperation(
                 updateOperations(operations, {
                   ...parsedOperation,
                   id: currentOperation?.id,
-                  name: currentOperation?.name,
+                  name: currentOperation?.value.name,
                 })
               );
               setIsOperationPasted(true);
