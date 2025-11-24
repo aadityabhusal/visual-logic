@@ -8,7 +8,7 @@ import {
   FaCircleXmark,
   FaSquareArrowUpRight,
 } from "react-icons/fa6";
-import { uiConfigStore, operationsStore } from "../lib/store";
+import { uiConfigStore } from "../lib/store";
 import { getHotkeyHandler, HotkeyItem } from "@mantine/hooks";
 import { IData, IDropdownItem, IStatement } from "../lib/types";
 import { useSearchParams } from "react-router";
@@ -54,19 +54,18 @@ export function Dropdown({
   target: (value: IDropdownTargetProps) => ReactNode;
 }) {
   const [, setSearchParams] = useSearchParams();
-  const { undo, redo } = operationsStore.temporal.getState();
-  const { highlightOperation, focusId, setUiConfig } = uiConfigStore();
+  const { highlightOperation, navigation, setUiConfig } = uiConfigStore();
   const forceDisplayBorder =
     highlightOperation && isDataOfType(data, "operation");
   const [isHovered, setHovered] = useState(false);
-  const isFocused = focusId === id;
+  const isFocused = navigation?.id === id;
   const [search, setSearch] = useState("");
   const combobox = useCombobox({
     loop: true,
     onDropdownClose: () => {
       handleSearch(options?.withSearch ? "" : value || "");
       combobox.resetSelectedOption();
-      setUiConfig((p) => ({ ...p, focusId: undefined, result }));
+      setUiConfig((p) => ({ ...p, navigation: undefined, result }));
     },
     onDropdownOpen: () => options?.withSearch && combobox.focusSearchInput(),
   });
@@ -111,10 +110,20 @@ export function Dropdown({
   }, [combobox.dropdownOpened]);
 
   useEffect(() => {
-    if (id === focusId && combobox.targetRef.current) {
-      combobox.targetRef.current.focus();
+    const input = combobox.targetRef.current;
+    if (
+      isFocused &&
+      input instanceof HTMLInputElement &&
+      input !== document.activeElement
+    ) {
+      input.focus();
+      const caretPosition =
+        navigation.direction === "right" ? 0 : input.value.length;
+      if (input.type === "text") {
+        input.setSelectionRange(caretPosition, caretPosition);
+      }
     }
-  }, [id, focusId, combobox.targetRef]);
+  }, [isFocused, combobox.targetRef, navigation?.direction]);
 
   return (
     <Combobox
@@ -156,24 +165,19 @@ export function Dropdown({
                     onBlur: () => combobox?.closeDropdown(),
                     onKeyDown: getHotkeyHandler([
                       ["ctrl+space", () => combobox.openDropdown()],
-                      ["meta+shift+z", () => redo()],
-                      ["meta+z", () => undo()],
-                      ["meta+y", () => redo()],
                       ...(hotkeys ?? []),
                     ]),
                   }
                 : {}),
               onClick: (e) => {
                 e.stopPropagation();
-                if (options?.focusOnClick) {
-                  if (e.target === e.currentTarget) {
-                    setUiConfig({ focusId: id, result, showPopup: true });
-                    combobox?.openDropdown();
-                  }
-                } else combobox?.openDropdown();
+                if (options?.focusOnClick && e.target === e.currentTarget) {
+                  setUiConfig({ navigation: { id }, result, showPopup: true });
+                }
+                combobox?.openDropdown();
               },
               onFocus: () =>
-                setUiConfig({ focusId: id, result, showPopup: true }),
+                setUiConfig({ navigation: { id }, result, showPopup: true }),
             })}
           </Combobox.EventsTarget>
           {isDataOfType(data, "operation") && reference && (
@@ -220,7 +224,7 @@ export function Dropdown({
               className="absolute -bottom-1.5 -right-1 text-border bg-white rounded-full z-10"
               icon={FaCircleChevronDown}
               onClick={() => {
-                setUiConfig({ focusId: id, result, showPopup: true });
+                setUiConfig({ navigation: { id }, result, showPopup: true });
                 combobox?.openDropdown();
               }}
               hidden={!isFocused && !isHovered}

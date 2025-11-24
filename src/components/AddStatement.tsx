@@ -25,7 +25,7 @@ export function AddStatement({
             type: { kind: "undefined" },
             isGeneric: true,
           });
-          setUiConfig({ focusId: data.id });
+          setUiConfig({ navigation: { id: data.id } });
           onSelect(createStatement({ data }));
         }}
         {...iconProps}

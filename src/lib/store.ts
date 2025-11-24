@@ -7,6 +7,7 @@ import { createWithEqualityFn } from "zustand/traditional";
 import { shallow } from "zustand/shallow";
 import { openDB } from "idb";
 import { createData, jsonParseReviver, jsonStringifyReplacer } from "./utils";
+import { NavigationDirection } from "./navigation";
 
 export interface IStore {
   operations: IData<OperationType>[];
@@ -57,13 +58,14 @@ export const operationsStore = create(
 );
 
 type SetUIConfig = Partial<Omit<IUiConfig, "setUiConfig">>;
-type IUiConfig = Partial<{
+export type IUiConfig = Partial<{
   [key in (typeof preferenceOptions)[number]["id"]]: boolean;
 }> & {
   hideSidebar?: boolean;
   focusId?: string;
   result?: IStatement["data"];
   showPopup?: boolean;
+  navigation?: { id?: string; direction?: NavigationDirection };
   setUiConfig: (
     change: SetUIConfig | ((change: SetUIConfig) => SetUIConfig)
   ) => void;

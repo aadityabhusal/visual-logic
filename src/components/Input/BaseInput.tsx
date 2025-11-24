@@ -50,15 +50,7 @@ export const BaseInput = forwardRef<
             textWidth >= MAX_WIDTH ? "truncate" : "",
           ].join(" ")}
           style={{ width: textWidth, ...props.style }}
-          onClick={(e) => {
-            if (
-              e.target instanceof HTMLInputElement &&
-              e.target.selectionStart === e.target.selectionEnd
-            ) {
-              e.target.select();
-            }
-            props.onClick?.(e);
-          }}
+          onClick={props.onClick}
         />
       </div>
     );
