@@ -17,6 +17,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { Popover, useDelayedHover } from "@mantine/core";
 import { DataTypes } from "../lib/data";
 import { useMemo } from "react";
+import { uiConfigStore } from "@/lib/store";
 
 export function Statement({
   statement,
@@ -37,6 +38,7 @@ export function Statement({
   };
 }) {
   const hasName = statement.name !== undefined;
+  const { setUiConfig } = uiConfigStore();
 
   const [hoverOpened, { open, close }] = useDisclosure(false);
   const { openDropdown, closeDropdown } = useDelayedHover({
@@ -66,6 +68,7 @@ export function Statement({
     handleStatement(
       updateStatementMethods({ ...statement, operations }, prevStatements)
     );
+    setUiConfig({ navigation: { id: operation.id, direction: "right" } });
   }
 
   function handleData(data: IData, remove?: boolean) {

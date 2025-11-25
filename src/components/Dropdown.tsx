@@ -65,7 +65,7 @@ export function Dropdown({
     onDropdownClose: () => {
       handleSearch(options?.withSearch ? "" : value || "");
       combobox.resetSelectedOption();
-      setUiConfig((p) => ({ ...p, navigation: undefined, result }));
+      setUiConfig((p) => ({ ...p, navigation: { id }, result }));
     },
     onDropdownOpen: () => options?.withSearch && combobox.focusSearchInput(),
   });
@@ -117,13 +117,19 @@ export function Dropdown({
       input !== document.activeElement
     ) {
       input.focus();
-      const caretPosition =
-        navigation.direction === "right" ? 0 : input.value.length;
+      let caretPosition = 0;
+      if (
+        (navigation.direction === "right" && navigation.modifier) ||
+        (navigation.direction === "left" && !navigation.modifier)
+      ) {
+        caretPosition = input.value.length;
+      }
+
       if (input.type === "text") {
         input.setSelectionRange(caretPosition, caretPosition);
       }
     }
-  }, [isFocused, combobox.targetRef, navigation?.direction]);
+  }, [isFocused, combobox.targetRef, navigation]);
 
   return (
     <Combobox
@@ -156,7 +162,9 @@ export function Dropdown({
             setHovered(false);
           }}
         >
-          <Combobox.EventsTarget>
+          <Combobox.EventsTarget
+            withKeyboardNavigation={combobox.dropdownOpened}
+          >
             {target({
               ...(isInputTarget
                 ? {
@@ -172,7 +180,11 @@ export function Dropdown({
               onClick: (e) => {
                 e.stopPropagation();
                 if (options?.focusOnClick && e.target === e.currentTarget) {
-                  setUiConfig({ navigation: { id }, result, showPopup: true });
+                  setUiConfig({
+                    navigation: { id, disable: true },
+                    result,
+                    showPopup: true,
+                  });
                 }
                 combobox?.openDropdown();
               },
@@ -224,7 +236,11 @@ export function Dropdown({
               className="absolute -bottom-1.5 -right-1 text-border bg-white rounded-full z-10"
               icon={FaCircleChevronDown}
               onClick={() => {
-                setUiConfig({ navigation: { id }, result, showPopup: true });
+                setUiConfig({
+                  navigation: { id, disable: true },
+                  result,
+                  showPopup: true,
+                });
                 combobox?.openDropdown();
               }}
               hidden={!isFocused && !isHovered}

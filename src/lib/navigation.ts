@@ -13,17 +13,22 @@ type NavigationEntity = {
 function shouldFocusInInput(
   event: KeyboardEvent,
   direction: NavigationDirection,
-  modifier?: NavigationModifier
+  modifier?: NavigationModifier,
+  disable?: boolean
 ) {
+  const upDownKey = direction === "up" || direction === "down";
   const input = document.activeElement;
   if (!(input instanceof HTMLInputElement)) return false;
-  if (direction === "up" || direction === "down") return true;
-  if (modifier) return event.preventDefault(), input.blur(), false;
+  if ((upDownKey && !disable) || modifier === "mod") {
+    return event.preventDefault(), input.blur(), false;
+  }
 
-  const cursorPos = input.selectionStart || 0;
+  const start = input.selectionStart ?? 0;
+  if (start !== (input.selectionEnd ?? 0)) return true;
+
   const isAtBoundary =
-    direction === "left" ? cursorPos === 0 : cursorPos === input.value.length;
-  if (!isAtBoundary) return true;
+    direction === "left" ? start === 0 : start === input.value.length;
+  if (!isAtBoundary || upDownKey) return true;
 
   return event.preventDefault(), input.blur(), false;
 }
@@ -43,12 +48,17 @@ export function handleNavigation({
   entities: NavigationEntity[];
   modifier?: NavigationModifier;
 }): void {
-  if (!navigation?.id || shouldFocusInInput(event, direction, modifier)) return;
+  if (
+    !navigation ||
+    shouldFocusInInput(event, direction, modifier, navigation.disable)
+  ) {
+    return;
+  }
 
   let targetEntity: NavigationEntity | undefined;
   const delta = direction === "left" || direction === "up" ? -1 : 1;
-  const index = entities.findIndex((e) => e.entity.id === navigation.id);
-  if (index === -1) return;
+  let index = entities.findIndex((e) => e.entity.id === navigation.id);
+  if (index === -1 && direction === "left") index = entities.length;
 
   if (direction === "left" || direction === "right") {
     if (modifier === "mod") {
@@ -75,7 +85,12 @@ export function handleNavigation({
   if (targetEntity) {
     setUiConfig((prev) => ({
       ...prev,
-      navigation: { ...prev.navigation, id: targetEntity.entity.id, direction },
+      navigation: {
+        ...prev.navigation,
+        id: targetEntity.entity.id,
+        direction,
+        modifier,
+      },
     }));
   }
 }
