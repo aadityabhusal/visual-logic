@@ -9,7 +9,7 @@ import {
   FaSquareArrowUpRight,
 } from "react-icons/fa6";
 import { uiConfigStore } from "../lib/store";
-import { getHotkeyHandler, HotkeyItem } from "@mantine/hooks";
+import { getHotkeyHandler, HotkeyItem, useHotkeys } from "@mantine/hooks";
 import { IData, IDropdownItem, IStatement } from "../lib/types";
 import { useSearchParams } from "react-router";
 import { isDataOfType } from "../lib/utils";
@@ -67,7 +67,14 @@ export function Dropdown({
       combobox.resetSelectedOption();
       setUiConfig((p) => ({ ...p, navigation: { id }, result }));
     },
-    onDropdownOpen: () => options?.withSearch && combobox.focusSearchInput(),
+    onDropdownOpen: () => {
+      if (options?.withSearch) combobox.focusSearchInput();
+      setUiConfig({
+        navigation: { id, disable: true },
+        result,
+        showPopup: true,
+      });
+    },
   });
 
   const dropdownOptions = items
@@ -95,6 +102,14 @@ export function Dropdown({
     if (!combobox.dropdownOpened) combobox.openDropdown();
     setSearch(val);
   }
+
+  useHotkeys(
+    ["backspace", "alt+backspace"].map((key) => [
+      key,
+      () => isFocused && !isInputTarget && handleDelete?.(),
+      { preventDefault: false },
+    ])
+  );
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -147,12 +162,12 @@ export function Dropdown({
     >
       <Combobox.DropdownTarget>
         <div
-          className={
-            "flex items-start relative p-px" +
-            (forceDisplayBorder || isFocused || isHovered
-              ? " outline outline-border"
-              : "")
-          }
+          className={[
+            "flex items-start relative p-px",
+            forceDisplayBorder || isFocused || isHovered
+              ? "outline outline-border"
+              : "",
+          ].join(" ")}
           onMouseOver={(e) => {
             e.stopPropagation();
             setHovered(true);
@@ -173,18 +188,22 @@ export function Dropdown({
                     onBlur: () => combobox?.closeDropdown(),
                     onKeyDown: getHotkeyHandler([
                       ["ctrl+space", () => combobox.openDropdown()],
+                      ...(["backspace", "alt+backspace"].map((key) => [
+                        key,
+                        (e) => {
+                          if (!(e.target instanceof HTMLInputElement)) return;
+                          if (!e.target.value.length) handleDelete?.();
+                        },
+                        { preventDefault: false },
+                      ]) as HotkeyItem[]),
                       ...(hotkeys ?? []),
                     ]),
                   }
                 : {}),
               onClick: (e) => {
                 e.stopPropagation();
-                if (options?.focusOnClick && e.target === e.currentTarget) {
-                  setUiConfig({
-                    navigation: { id, disable: true },
-                    result,
-                    showPopup: true,
-                  });
+                if (options?.focusOnClick && e.target !== e.currentTarget) {
+                  return;
                 }
                 combobox?.openDropdown();
               },
@@ -236,11 +255,6 @@ export function Dropdown({
               className="absolute -bottom-1.5 -right-1 text-border bg-white rounded-full z-10"
               icon={FaCircleChevronDown}
               onClick={() => {
-                setUiConfig({
-                  navigation: { id, disable: true },
-                  result,
-                  showPopup: true,
-                });
                 combobox?.openDropdown();
               }}
               hidden={!isFocused && !isHovered}

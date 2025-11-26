@@ -51,6 +51,7 @@ export const ArrayInput = forwardRef<HTMLDivElement, ArrayInputProps>(
           );
         })}
         <AddStatement
+          id={data.id}
           onSelect={(value) => {
             const newVal = [...data.value, value];
             handleData({

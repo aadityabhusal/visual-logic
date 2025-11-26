@@ -6,20 +6,27 @@ import { ComponentPropsWithoutRef } from "react";
 import { uiConfigStore } from "@/lib/store";
 
 export function AddStatement({
+  id,
   onSelect,
   iconProps,
 }: {
+  id: string;
   onSelect: (statement: IStatement) => void;
   iconProps?: Partial<ComponentPropsWithoutRef<typeof IconButton>>;
 }) {
-  const { setUiConfig } = uiConfigStore();
+  const { navigation, setUiConfig } = uiConfigStore();
+  const isFocused = navigation?.id === `${id}_add`;
 
   return (
     <div className="w-max">
       <IconButton
         icon={FaPlus}
         size={14}
-        className="mt-1 bg-editor hover:outline hover:outline-border"
+        ref={(elem) => isFocused && elem?.focus()}
+        className={[
+          "mt-1 bg-editor hover:outline hover:outline-border",
+          isFocused ? "outline outline-border" : "",
+        ].join(" ")}
         onClick={() => {
           const data = createData({
             type: { kind: "undefined" },

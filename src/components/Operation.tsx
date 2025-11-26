@@ -11,6 +11,7 @@ export interface OperationInputProps extends HTMLAttributes<HTMLDivElement> {
   prevStatements: IStatement[];
   options?: {
     disableDelete?: boolean;
+    disablaAddParameter?: boolean;
     disableDropdown?: boolean;
     isTopLevel?: boolean;
   };
@@ -51,6 +52,46 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
       });
     }
 
+    function addStatement(
+      statement: IStatement,
+      position: "before" | "after",
+      index: number
+    ) {
+      const _index = position === "before" ? index : index + 1;
+      handleChange({
+        ...operation,
+        value: {
+          ...operation.value,
+          statements: [
+            ...operation.value.statements.slice(0, _index),
+            statement,
+            ...operation.value.statements.slice(_index),
+          ],
+        },
+      });
+    }
+
+    function addParameter(statement: IStatement) {
+      const parameters = [...operation.value.parameters];
+      const statements = [...operation.value.statements];
+      const newParameter = {
+        ...statement,
+        name: createVariableName({
+          prefix: "param",
+          prev: [...parameters, ...prevStatements],
+        }),
+      };
+      const updatedParameters = [...parameters, newParameter];
+      handleChange({
+        ...operation,
+        type: getOperationType(updatedParameters, statements),
+        value: {
+          ...operation.value,
+          parameters: updatedParameters,
+        },
+      });
+    }
+
     return (
       <div
         {...props}
@@ -78,32 +119,15 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
                   disableNameToggle: true,
                 }}
                 prevStatements={[]}
+                addStatement={addParameter}
               />
               {i + 1 < paramList.length && <span>,</span>}
             </Fragment>
           ))}
-          {options?.disableDelete ? null : (
+          {options?.disablaAddParameter ? null : (
             <AddStatement
-              onSelect={(statement) => {
-                const parameters = [...operation.value.parameters];
-                const statements = [...operation.value.statements];
-                const newParameter = {
-                  ...statement,
-                  name: createVariableName({
-                    prefix: "param",
-                    prev: [...parameters, ...prevStatements],
-                  }),
-                };
-                const updatedParameters = [...parameters, newParameter];
-                handleChange({
-                  ...operation,
-                  type: getOperationType(updatedParameters, statements),
-                  value: {
-                    ...operation.value,
-                    parameters: updatedParameters,
-                  },
-                });
-              }}
+              id={`${operation.id}_parameter`}
+              onSelect={addParameter}
               iconProps={{ title: "Add parameter" }}
             />
           )}
@@ -123,36 +147,19 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
                 ...operation.value.parameters,
                 ...operation.value.statements.slice(0, i),
               ]}
-              addStatement={(statement, position) => {
-                const index = position === "before" ? i : i + 1;
-                handleChange({
-                  ...operation,
-                  value: {
-                    ...operation.value,
-                    statements: [
-                      ...operation.value.statements.slice(0, index),
-                      statement,
-                      ...operation.value.statements.slice(index),
-                    ],
-                  },
-                });
-              }}
+              addStatement={(statement, position) =>
+                addStatement(statement, position, i)
+              }
             />
           ))}
-          {operation.value.statements.length ? null : (
-            <AddStatement
-              onSelect={(statement) => {
-                handleChange({
-                  ...operation,
-                  value: {
-                    ...operation.value,
-                    statements: [...operation.value.statements, statement],
-                  },
-                });
-              }}
-              iconProps={{ title: "Add statement" }}
-            />
-          )}
+          <AddStatement
+            id={`${operation.id}_statement`}
+            onSelect={(statement) => {
+              const lastStatement = operation.value.statements.length - 1;
+              addStatement(statement, "after", lastStatement);
+            }}
+            iconProps={{ title: "Add statement" }}
+          />
         </div>
       </div>
     );

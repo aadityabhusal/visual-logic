@@ -3,6 +3,7 @@ import {
   ActionIconProps,
   PolymorphicComponentProps,
   Tooltip,
+  TooltipProps,
 } from "@mantine/core";
 import { forwardRef } from "react";
 import { IconType } from "react-icons";
@@ -12,6 +13,7 @@ export const IconButton = forwardRef<
   PolymorphicComponentProps<"button", ActionIconProps> & {
     icon: IconType;
     size?: number;
+    position?: TooltipProps["position"];
   }
 >(({ icon: Icon, size, children: _children, title, ...props }, ref) => {
   const iconNode = (
@@ -19,8 +21,12 @@ export const IconButton = forwardRef<
       <Icon style={{ width: size, height: size }} />
     </ActionIcon>
   );
-  if (title === undefined) return iconNode;
-  return <Tooltip label={title}>{iconNode}</Tooltip>;
+  if (title === undefined || props.disabled) return iconNode;
+  return (
+    <Tooltip label={title} position={props.position}>
+      {iconNode}
+    </Tooltip>
+  );
 });
 
 IconButton.displayName = "IconButton";
