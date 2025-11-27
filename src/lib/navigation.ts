@@ -11,6 +11,7 @@ import {
   createStatement,
   inferTypeFromValue,
   isDataOfType,
+  isTextInput,
 } from "./utils";
 
 export type NavigationDirection = "left" | "right" | "up" | "down";
@@ -28,24 +29,26 @@ function shouldFocusInInput(
   disable?: boolean
 ) {
   const upDownKey = direction === "up" || direction === "down";
-  const input = document.activeElement;
-  if (!(input instanceof HTMLInputElement) || input.type !== "text") {
+  const textInput = isTextInput(document.activeElement);
+  if (!textInput) {
     if (disable) return true;
-    if (input instanceof HTMLButtonElement) input.blur();
+    if (document.activeElement instanceof HTMLButtonElement) {
+      document.activeElement.blur();
+    }
     return false;
   }
   if ((upDownKey && !disable) || modifier === "mod") {
-    return event.preventDefault(), input.blur(), false;
+    return event.preventDefault(), textInput.blur(), false;
   }
 
-  const start = input.selectionStart ?? 0;
-  if (start !== (input.selectionEnd ?? 0)) return true;
+  const start = textInput.selectionStart ?? 0;
+  if (start !== (textInput.selectionEnd ?? 0)) return true;
 
   const isAtBoundary =
-    direction === "left" ? start === 0 : start === input.value.length;
+    direction === "left" ? start === 0 : start === textInput.value.length;
   if (!isAtBoundary || upDownKey) return true;
 
-  return event.preventDefault(), input.blur(), false;
+  return event.preventDefault(), textInput.blur(), false;
 }
 
 function isSameIndex(

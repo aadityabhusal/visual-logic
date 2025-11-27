@@ -101,13 +101,10 @@ export function Data({
             {...props}
             type="number"
             className="text-number"
-            value={data.value.toString()}
-            onChange={(_val) => {
-              onChange?.(_val);
-              handleChange({
-                ...data,
-                value: _val ? Number(_val.slice(0, 16)) : "",
-              });
+            value={data.value}
+            onChange={(val) => {
+              onChange?.(val.toString());
+              handleChange({ ...data, value: val });
             }}
           />
         ) : isDataOfType(data, "string") ? (
@@ -115,10 +112,10 @@ export function Data({
             {...props}
             type="text"
             className="text-string"
-            value={data.value.toString()}
-            onChange={(_val) => {
-              onChange?.(_val);
-              handleChange({ ...data, value: _val });
+            value={data.value}
+            onChange={(val) => {
+              onChange?.(val);
+              handleChange({ ...data, value: val });
             }}
             options={{ withQuotes: true }}
           />

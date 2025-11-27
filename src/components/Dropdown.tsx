@@ -12,7 +12,7 @@ import { uiConfigStore } from "../lib/store";
 import { getHotkeyHandler, HotkeyItem, useHotkeys } from "@mantine/hooks";
 import { IData, IDropdownItem, IStatement } from "../lib/types";
 import { useSearchParams } from "react-router";
-import { isDataOfType } from "../lib/utils";
+import { isDataOfType, isTextInput } from "../lib/utils";
 
 export interface IDropdownTargetProps
   extends Omit<HTMLAttributes<HTMLElement>, "onChange" | "defaultValue"> {
@@ -104,11 +104,25 @@ export function Dropdown({
   }
 
   useHotkeys(
-    ["backspace", "alt+backspace"].map((key) => [
-      key,
-      () => isFocused && !isInputTarget && handleDelete?.(),
-      { preventDefault: false },
-    ])
+    isFocused
+      ? [
+          ...(["backspace", "alt+backspace"].map((key) => [
+            key,
+            () => {
+              const textInput = isTextInput(combobox.targetRef.current);
+              if (textInput && textInput.value) return;
+              handleDelete?.();
+            },
+            { preventDefault: !isTextInput(combobox.targetRef.current)?.value },
+          ]) as HotkeyItem[]),
+          ...(["alt+=", "alt+≠"].map((key) => [
+            key,
+            () => addOperationCall?.(),
+            { preventDefault: true },
+          ]) as HotkeyItem[]),
+        ]
+      : [],
+    []
   );
 
   useEffect(() => {
@@ -125,24 +139,20 @@ export function Dropdown({
   }, [combobox.dropdownOpened]);
 
   useEffect(() => {
-    const input = combobox.targetRef.current;
-    if (
-      isFocused &&
-      input instanceof HTMLInputElement &&
-      input !== document.activeElement
-    ) {
-      input.focus();
+    if (isFocused && combobox.targetRef.current instanceof HTMLInputElement) {
+      combobox.targetRef.current.focus();
+    }
+
+    const textInput = isTextInput(combobox.targetRef.current);
+    if (isFocused && textInput && textInput !== document.activeElement) {
       let caretPosition = 0;
       if (
         (navigation.direction === "right" && navigation.modifier) ||
         (navigation.direction === "left" && !navigation.modifier)
       ) {
-        caretPosition = input.value.length;
+        caretPosition = textInput.value.length;
       }
-
-      if (input.type === "text") {
-        input.setSelectionRange(caretPosition, caretPosition);
-      }
+      textInput.setSelectionRange(caretPosition, caretPosition);
     }
   }, [isFocused, combobox.targetRef, navigation]);
 
@@ -188,14 +198,6 @@ export function Dropdown({
                     onBlur: () => combobox?.closeDropdown(),
                     onKeyDown: getHotkeyHandler([
                       ["ctrl+space", () => combobox.openDropdown()],
-                      ...(["backspace", "alt+backspace"].map((key) => [
-                        key,
-                        (e) => {
-                          if (!(e.target instanceof HTMLInputElement)) return;
-                          if (!e.target.value.length) handleDelete?.();
-                        },
-                        { preventDefault: false },
-                      ]) as HotkeyItem[]),
                       ...(hotkeys ?? []),
                     ]),
                   }
