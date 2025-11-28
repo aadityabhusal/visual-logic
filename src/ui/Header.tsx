@@ -9,8 +9,7 @@ import {
 import { uiConfigStore, operationsStore } from "../lib/store";
 import { IconButton } from "./IconButton";
 import { useClipboard, useTimeout } from "@mantine/hooks";
-import { updateOperations } from "../lib/update";
-import { jsonParseReviver } from "../lib/utils";
+import { jsonParseReviver, jsonStringifyReplacer } from "../lib/utils";
 import { useState } from "react";
 import { IData, OperationType } from "../lib/types";
 import { IDataSchema } from "../lib/schemas";
@@ -23,7 +22,7 @@ export function Header({
   const setUiConfig = uiConfigStore().setUiConfig;
   const { undo, redo, pastStates, futureStates } =
     operationsStore.temporal.getState();
-  const { operations, setOperation } = operationsStore();
+  const { setOperation } = operationsStore();
   const clipboard = useClipboard({ timeout: 500 });
   const [isOperationPasted, setIsOperationPasted] = useState(false);
   const pasteAnimation = useTimeout(() => setIsOperationPasted(false), 500);
@@ -41,7 +40,11 @@ export function Header({
           title="Copy"
           icon={clipboard.copied ? FaCheck : FaRegCopy}
           size={16}
-          onClick={() => clipboard.copy(JSON.stringify(currentOperation))}
+          onClick={() =>
+            clipboard.copy(
+              JSON.stringify(currentOperation, jsonStringifyReplacer)
+            )
+          }
           disabled={!currentOperation}
           className={!currentOperation ? "cursor-not-allowed" : ""}
         />
@@ -61,13 +64,11 @@ export function Header({
               if (parsedOperation.type?.kind !== "operation") {
                 throw new Error("Pasted data is not an operation");
               }
-              setOperation(
-                updateOperations(operations, {
-                  ...parsedOperation,
-                  id: currentOperation?.id,
-                  name: currentOperation?.value.name,
-                })
-              );
+              setOperation({
+                ...parsedOperation,
+                id: currentOperation?.id,
+                name: currentOperation?.value.name,
+              });
               setIsOperationPasted(true);
               pasteAnimation.start();
             } catch (error) {

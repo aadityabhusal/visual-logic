@@ -1,9 +1,9 @@
-import { forwardRef, HTMLAttributes, useMemo } from "react";
+import { forwardRef, HTMLAttributes, useMemo, useState } from "react";
 import { UnionType, IData, IStatement, DataType } from "../../lib/types";
-import { Data } from "../Data";
 import {
   createData,
   createDefaultValue,
+  createStatement,
   getTypeSignature,
   inferTypeFromValue,
   isTypeCompatible,
@@ -12,6 +12,8 @@ import { FaChevronDown, FaX } from "react-icons/fa6";
 import { DataTypes } from "@/lib/data";
 import { Menu, Tooltip } from "@mantine/core";
 import { IconButton } from "@/ui/IconButton";
+import { Statement } from "../Statement";
+import { uiConfigStore } from "@/lib/store";
 
 export interface UnionInputProps extends HTMLAttributes<HTMLDivElement> {
   data: IData<UnionType>;
@@ -21,6 +23,10 @@ export interface UnionInputProps extends HTMLAttributes<HTMLDivElement> {
 
 export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
   ({ data, handleData, prevStatements, ...props }, ref) => {
+    const { navigation, setUiConfig } = uiConfigStore();
+    const [menuOpened, setMenuOpened] = useState(false);
+    const isFocused = navigation?.id === `${data.id}_options`;
+
     const activeTypeIndex = useMemo(() => {
       const valueType = inferTypeFromValue(data.value);
       const index = data.type.types.findIndex((t) =>
@@ -29,13 +35,15 @@ export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
       return index >= 0 ? index : 0;
     }, [data.type.types, data.value]);
 
-    const activeData = useMemo(
+    const activeStatement = useMemo(
       () =>
-        createData({
-          id: data.id,
-          type: data.type.types[activeTypeIndex],
-          value: data.value,
-          isGeneric: data.isGeneric,
+        createStatement({
+          data: createData({
+            id: `${data.id}_data`,
+            type: data.type.types[activeTypeIndex],
+            value: data.value,
+            isGeneric: data.isGeneric,
+          }),
         }),
       [data.id, data.type.types, data.value, data.isGeneric, activeTypeIndex]
     );
@@ -72,7 +80,8 @@ export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
 
     // Remove a type from the union
     function handleTypeRemove(index: number) {
-      const newTypes = data.type.types.filter((_, i) => i !== index);
+      let newTypes = data.type.types.filter((_, i) => i !== index);
+      if (newTypes.length === 0) newTypes = [{ kind: "undefined" }];
 
       // If removing the active type, switch to first type
       const wasActive = index === activeTypeIndex;
@@ -94,28 +103,50 @@ export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
         ref={ref}
         className={["flex items-start gap-1", props?.className].join(" ")}
       >
-        <Data
-          data={activeData}
-          handleChange={handleActiveTypeChange}
+        <Statement
+          statement={activeStatement}
+          handleStatement={(statement, remove) => {
+            if (remove) handleTypeRemove(activeTypeIndex);
+            else handleActiveTypeChange(statement.data);
+          }}
           prevStatements={prevStatements}
-          // TODO: this is hiding parameters for operation in union type
-          disableDelete={true}
+          // TODO: disableDelete is hiding parameters for operation in union type
+          options={{ disableMethods: true }}
         />
         <Menu
           width={200}
           position="bottom-start"
           withinPortal={false}
           classNames={{ dropdown: "absolute bg-editor border" }}
+          opened={menuOpened}
+          onChange={(opened) => {
+            setUiConfig(() => ({
+              navigation: { id: `${data.id}_options`, disable: opened },
+            }));
+            setMenuOpened(opened);
+          }}
         >
           <Menu.Target>
             <IconButton
+              ref={(elem) => {
+                if (isFocused) {
+                  if (menuOpened) elem?.blur();
+                  else elem?.focus();
+                }
+              }}
               icon={FaChevronDown}
               size={14}
-              className="mt-1 hover:outline hover:outline-border"
+              className={[
+                "mt-1 hover:outline hover:outline-border",
+                isFocused ? "outline outline-border" : "",
+              ].join(" ")}
               title="Show union types"
             />
           </Menu.Target>
-          <Menu.Dropdown classNames={{ dropdown: "flex flex-col" }}>
+          <Menu.Dropdown
+            classNames={{ dropdown: "flex flex-col" }}
+            onMouseOver={(e) => e.stopPropagation()}
+          >
             {data.type.types.map((type, i) => (
               <Menu.Item
                 key={i}

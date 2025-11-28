@@ -1,5 +1,5 @@
 import { Combobox, useCombobox } from "@mantine/core";
-import { HTMLAttributes, ReactNode, useEffect, useState } from "react";
+import { HTMLAttributes, ReactNode, useEffect, useMemo, useState } from "react";
 import { BaseInput } from "./Input/BaseInput";
 import { IconButton } from "../ui/IconButton";
 import {
@@ -8,11 +8,13 @@ import {
   FaCircleXmark,
   FaSquareArrowUpRight,
 } from "react-icons/fa6";
-import { uiConfigStore, operationsStore } from "../lib/store";
-import { getHotkeyHandler, HotkeyItem } from "@mantine/hooks";
+import { operationsStore, uiConfigStore } from "../lib/store";
+import { getHotkeyHandler, HotkeyItem, useHotkeys } from "@mantine/hooks";
 import { IData, IDropdownItem, IStatement } from "../lib/types";
 import { useSearchParams } from "react-router";
-import { isDataOfType } from "../lib/utils";
+import { isDataOfType, isTextInput } from "../lib/utils";
+import { getNextIdAfterDelete, getOperationEntities } from "@/lib/navigation";
+import { useCustomHotkeys } from "@/hooks/useNavigation";
 
 export interface IDropdownTargetProps
   extends Omit<HTMLAttributes<HTMLElement>, "onChange" | "defaultValue"> {
@@ -53,49 +55,98 @@ export function Dropdown({
   reference?: IData["reference"];
   target: (value: IDropdownTargetProps) => ReactNode;
 }) {
-  const [, setSearchParams] = useSearchParams();
-  const { undo, redo } = operationsStore.temporal.getState();
-  const { highlightOperation, focusId, setUiConfig } = uiConfigStore();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { highlightOperation, navigation, setUiConfig } = uiConfigStore();
   const forceDisplayBorder =
     highlightOperation && isDataOfType(data, "operation");
   const [isHovered, setHovered] = useState(false);
-  const isFocused = focusId === id;
+  const isFocused = navigation?.id === id;
   const [search, setSearch] = useState("");
   const combobox = useCombobox({
     loop: true,
     onDropdownClose: () => {
       handleSearch(options?.withSearch ? "" : value || "");
       combobox.resetSelectedOption();
-      setUiConfig((p) => ({ ...p, focusId: undefined, result }));
+      setUiConfig((p) => ({ ...p, navigation: { id }, result }));
     },
-    onDropdownOpen: () => options?.withSearch && combobox.focusSearchInput(),
+    onDropdownOpen: () => {
+      if (options?.withSearch) combobox.focusSearchInput();
+      setUiConfig({
+        navigation: { id, disable: true },
+        result,
+        showPopup: true,
+      });
+    },
   });
+  const customHotKeys = useCustomHotkeys();
 
-  const dropdownOptions = items
-    ?.filter(
-      (option) =>
-        search === value ||
-        option.label?.toLowerCase().includes(search.toLowerCase().trim()) ||
-        option.value.toLowerCase().includes(search.toLowerCase().trim())
-    )
-    ?.map((option) => (
-      <Combobox.Option
-        value={option.value}
-        key={option.value}
-        className={`flex items-center justify-between gap-4 data-combobox-selected:bg-dropdown-hover data-combobox-active:bg-dropdown-selected hover:bg-dropdown-hover`}
-        active={option.value === value}
-      >
-        <span className="text-sm max-w-32 truncate">
-          {option.label || option.value}
-        </span>
-        <span className="text-xs">{option.secondaryLabel}</span>
-      </Combobox.Option>
-    ));
+  const dropdownOptions = useMemo(
+    () =>
+      items
+        ?.filter(
+          (option) =>
+            search === value ||
+            option.label?.toLowerCase().includes(search.toLowerCase().trim()) ||
+            option.value.toLowerCase().includes(search.toLowerCase().trim())
+        )
+        ?.map((option) => (
+          <Combobox.Option
+            value={option.value}
+            key={option.value}
+            className={`flex items-center justify-between gap-4 data-combobox-selected:bg-dropdown-hover data-combobox-active:bg-dropdown-selected hover:bg-dropdown-hover`}
+            active={option.value === value}
+          >
+            <span className="text-sm max-w-32 truncate">
+              {option.label || option.value}
+            </span>
+            <span className="text-xs">{option.secondaryLabel}</span>
+          </Combobox.Option>
+        )),
+    [items, search, value]
+  );
 
   function handleSearch(val: string) {
     if (!combobox.dropdownOpened) combobox.openDropdown();
     setSearch(val);
   }
+
+  useHotkeys(
+    isFocused
+      ? [
+          ...(["backspace", "alt+backspace"].map((key) => [
+            key,
+            () => {
+              const textInput = isTextInput(combobox.targetRef.current);
+              if ((textInput && textInput.value) || !handleDelete) return;
+              handleDelete();
+              textInput?.blur();
+              setUiConfig((p) => {
+                const operations = operationsStore.getState().operations;
+                const operation = operations.find(
+                  (op) => op.id === searchParams.get("operationId")
+                );
+                if (!operation) return p;
+                const newEntities = getOperationEntities(operation);
+                const oldEntities = p.navigationEntities || [];
+                return {
+                  navigationEntities: newEntities,
+                  navigation: {
+                    id: getNextIdAfterDelete(newEntities, oldEntities, id),
+                  },
+                };
+              });
+            },
+            { preventDefault: isInputTarget ? !search : false },
+          ]) as HotkeyItem[]),
+          ...(["alt+=", "alt+≠"].map((key) => [
+            key,
+            () => addOperationCall?.(),
+            { preventDefault: true },
+          ]) as HotkeyItem[]),
+        ]
+      : [],
+    []
+  );
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -111,10 +162,22 @@ export function Dropdown({
   }, [combobox.dropdownOpened]);
 
   useEffect(() => {
-    if (id === focusId && combobox.targetRef.current) {
+    if (isFocused && combobox.targetRef.current instanceof HTMLInputElement) {
       combobox.targetRef.current.focus();
     }
-  }, [id, focusId, combobox.targetRef]);
+
+    const textInput = isTextInput(combobox.targetRef.current);
+    if (isFocused && textInput && textInput !== document.activeElement) {
+      let caretPosition = 0;
+      if (
+        (navigation.direction === "right" && navigation.modifier) ||
+        (navigation.direction === "left" && !navigation.modifier)
+      ) {
+        caretPosition = textInput.value.length;
+      }
+      textInput.setSelectionRange(caretPosition, caretPosition);
+    }
+  }, [isFocused, combobox.targetRef, navigation]);
 
   return (
     <Combobox
@@ -132,12 +195,12 @@ export function Dropdown({
     >
       <Combobox.DropdownTarget>
         <div
-          className={
-            "flex items-start relative p-px" +
-            (forceDisplayBorder || isFocused || isHovered
-              ? " outline outline-border"
-              : "")
-          }
+          className={[
+            "flex items-start relative p-px",
+            forceDisplayBorder || isFocused || isHovered
+              ? "outline outline-border"
+              : "",
+          ].join(" ")}
           onMouseOver={(e) => {
             e.stopPropagation();
             setHovered(true);
@@ -147,7 +210,9 @@ export function Dropdown({
             setHovered(false);
           }}
         >
-          <Combobox.EventsTarget>
+          <Combobox.EventsTarget
+            withKeyboardNavigation={combobox.dropdownOpened}
+          >
             {target({
               ...(isInputTarget
                 ? {
@@ -156,24 +221,20 @@ export function Dropdown({
                     onBlur: () => combobox?.closeDropdown(),
                     onKeyDown: getHotkeyHandler([
                       ["ctrl+space", () => combobox.openDropdown()],
-                      ["meta+shift+z", () => redo()],
-                      ["meta+z", () => undo()],
-                      ["meta+y", () => redo()],
+                      ...customHotKeys,
                       ...(hotkeys ?? []),
                     ]),
                   }
                 : {}),
               onClick: (e) => {
                 e.stopPropagation();
-                if (options?.focusOnClick) {
-                  if (e.target === e.currentTarget) {
-                    setUiConfig({ focusId: id, result, showPopup: true });
-                    combobox?.openDropdown();
-                  }
-                } else combobox?.openDropdown();
+                if (options?.focusOnClick && e.target !== e.currentTarget) {
+                  return;
+                }
+                combobox?.openDropdown();
               },
               onFocus: () =>
-                setUiConfig({ focusId: id, result, showPopup: true }),
+                setUiConfig({ navigation: { id }, result, showPopup: true }),
             })}
           </Combobox.EventsTarget>
           {isDataOfType(data, "operation") && reference && (
@@ -220,7 +281,6 @@ export function Dropdown({
               className="absolute -bottom-1.5 -right-1 text-border bg-white rounded-full z-10"
               icon={FaCircleChevronDown}
               onClick={() => {
-                setUiConfig({ focusId: id, result, showPopup: true });
                 combobox?.openDropdown();
               }}
               hidden={!isFocused && !isHovered}

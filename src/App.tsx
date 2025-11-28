@@ -4,8 +4,7 @@ import { uiConfigStore, operationsStore } from "./lib/store";
 import { Header } from "./ui/Header";
 import { Sidebar } from "./ui/Sidebar";
 import { NoteText } from "./ui/NoteText";
-import { updateOperations } from "./lib/update";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { visitCount } from "./lib/services";
 import { useHotkeys } from "@mantine/hooks";
 import {
@@ -17,6 +16,8 @@ import {
 import { FocusInfo } from "./components/FocusInfo";
 import { useSearchParams } from "react-router";
 import { createStatement } from "./lib/utils";
+import { useCustomHotkeys } from "./hooks/useNavigation";
+import { getOperationEntities } from "./lib/navigation";
 
 const theme = createTheme({
   scale: 1,
@@ -37,18 +38,21 @@ const theme = createTheme({
 function App() {
   const [searchParams] = useSearchParams();
   const { operations, setOperation } = operationsStore();
-  const { displayCode, hideSidebar } = uiConfigStore();
-  const { undo, redo } = operationsStore.temporal.getState();
-
-  const currentOperation = operations.find(
-    (operation) => operation.id === searchParams.get("operationId")
+  const { displayCode, hideSidebar, setUiConfig } = uiConfigStore();
+  const currentOperation = useMemo(
+    () => operations.find((op) => op.id === searchParams.get("operationId")),
+    [operations, searchParams]
   );
 
-  useHotkeys([
-    ["meta+shift+z", () => redo()],
-    ["meta+z", () => undo()],
-    ["meta+y", () => redo()],
-  ]);
+  useHotkeys(useCustomHotkeys());
+
+  useEffect(() => {
+    if (currentOperation) {
+      setUiConfig({
+        navigationEntities: getOperationEntities(currentOperation),
+      });
+    }
+  }, [currentOperation, setUiConfig]);
 
   useEffect(() => {
     if (window.location.hostname !== "localhost") visitCount();
@@ -64,9 +68,7 @@ function App() {
             {currentOperation ? (
               <Operation
                 operation={currentOperation}
-                handleChange={(operation) =>
-                  setOperation(updateOperations(operations, operation))
-                }
+                handleChange={setOperation}
                 prevStatements={operations
                   .filter((operation) => operation.id !== currentOperation.id)
                   .map((operation) =>

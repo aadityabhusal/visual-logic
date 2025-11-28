@@ -49,15 +49,6 @@ export function Data({
       isDataOfType(data, "union") ||
       isDataOfType(data, "condition"));
 
-  function handleBackspace(e: KeyboardEvent, remove?: boolean) {
-    if (e.target instanceof HTMLInputElement && e.target.value?.length === 0) {
-      handleChange(
-        { ...data, type: { kind: "undefined" }, value: undefined },
-        remove
-      );
-    }
-  }
-
   return (
     <Dropdown
       id={data.id}
@@ -70,13 +61,6 @@ export function Data({
         withSearch: showDropdownIcon,
         focusOnClick: showDropdownIcon,
       }}
-      hotkeys={[
-        [
-          "backspace",
-          (e) => handleBackspace(e, isDataOfType(data, "undefined")),
-          { preventDefault: false },
-        ],
-      ]}
       value={data.reference?.name || data.type.kind}
       isInputTarget={
         !!data.reference ||
@@ -107,19 +91,20 @@ export function Data({
             onClick={props.onClick}
           />
         ) : isDataOfType(data, "boolean") ? (
-          <BooleanInput data={data} handleData={handleChange} />
+          <BooleanInput
+            data={data}
+            handleData={handleChange}
+            onClick={props.onClick}
+          />
         ) : isDataOfType(data, "number") ? (
           <BaseInput
             {...props}
             type="number"
             className="text-number"
-            value={data.value.toString()}
-            onChange={(_val) => {
-              onChange?.(_val);
-              handleChange({
-                ...data,
-                value: _val ? Number(_val.slice(0, 16)) : "",
-              });
+            value={data.value}
+            onChange={(val) => {
+              onChange?.(val.toString());
+              handleChange({ ...data, value: val });
             }}
           />
         ) : isDataOfType(data, "string") ? (
@@ -127,10 +112,10 @@ export function Data({
             {...props}
             type="text"
             className="text-string"
-            value={data.value.toString()}
-            onChange={(_val) => {
-              onChange?.(_val);
-              handleChange({ ...data, value: _val });
+            value={data.value}
+            onChange={(val) => {
+              onChange?.(val);
+              handleChange({ ...data, value: val });
             }}
             options={{ withQuotes: true }}
           />

@@ -1,68 +1,89 @@
+import {
+  NumberInput,
+  NumberInputProps,
+  TextInput,
+  TextInputProps,
+} from "@mantine/core";
 import { useUncontrolled } from "@mantine/hooks";
-import { forwardRef, InputHTMLAttributes, useState } from "react";
+import { forwardRef, useState } from "react";
 
-export const BaseInput = forwardRef<
-  HTMLInputElement,
-  Omit<
-    InputHTMLAttributes<HTMLInputElement>,
-    "value" | "defaultValue" | "onChange"
-  > & {
-    value?: string;
-    defaultValue?: string;
-    containerClassName?: string;
-    onChange?: (change: string) => void;
-    options?: { withQuotes?: boolean };
-  }
->(
-  (
-    { value, defaultValue, onChange, containerClassName, options, ...props },
-    ref
-  ) => {
-    const MAX_WIDTH = 160;
-    const [textWidth, setTextWidth] = useState(0);
-    const [inputValue, setInputValue] = useUncontrolled({
-      value,
-      defaultValue,
-      onChange,
-    });
+interface BaseInputProps<T extends string | number>
+  extends Omit<
+    TextInputProps & NumberInputProps,
+    "value" | "onChange" | "type" | "defaultValue"
+  > {
+  value?: T;
+  onChange?: (change: T) => void;
+  defaultValue?: T;
+  type?: "text" | "number";
+  containerClassName?: string;
+  options?: { withQuotes?: boolean };
+}
 
-    return (
+function BaseInputInner<T extends string | number>(
+  { type, ...props }: BaseInputProps<T>,
+  ref: React.ForwardedRef<HTMLInputElement>
+) {
+  const MAX_WIDTH = 160;
+  const [textWidth, setTextWidth] = useState(0);
+  const [inputValue, setInputValue] = useUncontrolled({
+    value: props.value,
+    defaultValue: props.defaultValue,
+    onChange: props.onChange,
+  });
+
+  const commonProps = {
+    value: inputValue,
+    classNames: {
+      input: [
+        "number-input outline-none bg-inherit border-none p-0",
+        props.className,
+        textWidth >= MAX_WIDTH ? "truncate" : "",
+      ].join(" "),
+    },
+    styles: { input: { width: textWidth, ...props.styles } },
+    onClick: props.onClick,
+    ...props,
+  } as typeof props;
+
+  return (
+    <div
+      className={`relative flex flex-col py-0 ${
+        props.options?.withQuotes ? "px-[7px] input-quotes" : "px-0"
+      } ${props.containerClassName}`}
+    >
       <div
-        className={`relative flex flex-col py-0 ${
-          options?.withQuotes ? "px-[7px] input-quotes" : "px-0"
-        } ${containerClassName}`}
+        className="self-start h-0 overflow-hidden whitespace-pre max-w-40"
+        ref={(elem) => setTextWidth(elem?.clientWidth || 14)}
       >
-        <div
-          className="self-start h-0 overflow-hidden whitespace-pre max-w-40"
-          ref={(elem) => setTextWidth(elem?.clientWidth || 14)}
-        >
-          {inputValue}
-        </div>
-        <input
-          ref={ref}
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          placeholder={props.type === "number" ? "0" : "..."}
-          {...props}
-          className={[
-            "number-input outline-none bg-inherit border-none p-0",
-            props.className,
-            textWidth >= MAX_WIDTH ? "truncate" : "",
-          ].join(" ")}
-          style={{ width: textWidth, ...props.style }}
-          onClick={(e) => {
-            if (
-              e.target instanceof HTMLInputElement &&
-              e.target.selectionStart === e.target.selectionEnd
-            ) {
-              e.target.select();
-            }
-            props.onClick?.(e);
-          }}
-        />
+        {inputValue}
       </div>
-    );
-  }
-);
+      {type === "number" ? (
+        <NumberInput
+          {...commonProps}
+          ref={ref}
+          onChange={(value) => setInputValue(value as T)}
+          placeholder={"0"}
+          withKeyboardEvents={false}
+          hideControls
+        />
+      ) : (
+        <TextInput
+          {...commonProps}
+          type="text"
+          ref={ref}
+          onChange={(e) => setInputValue(e.target.value as T)}
+          placeholder={"..."}
+        />
+      )}
+    </div>
+  );
+}
 
-BaseInput.displayName = "BaseInput";
+export const BaseInput = forwardRef(BaseInputInner) as <
+  T extends string | number
+>(
+  props: BaseInputProps<T> & { ref?: React.ForwardedRef<HTMLInputElement> }
+) => React.ReactElement | null;
+
+// BaseInput.displayName = "BaseInput";

@@ -13,10 +13,12 @@ import { BaseInput } from "./Input/BaseInput";
 import { OperationCall } from "./OperationCall";
 import { IconButton } from "../ui/IconButton";
 import { AddStatement } from "./AddStatement";
-import { useDisclosure } from "@mantine/hooks";
+import { getHotkeyHandler, useDisclosure } from "@mantine/hooks";
 import { Popover, useDelayedHover } from "@mantine/core";
 import { DataTypes } from "../lib/data";
 import { useMemo } from "react";
+import { uiConfigStore } from "@/lib/store";
+import { useCustomHotkeys } from "@/hooks/useNavigation";
 
 export function Statement({
   statement,
@@ -37,7 +39,8 @@ export function Statement({
   };
 }) {
   const hasName = statement.name !== undefined;
-
+  const { navigation, setUiConfig } = uiConfigStore();
+  const customHotKeys = useCustomHotkeys();
   const [hoverOpened, { open, close }] = useDisclosure(false);
   const { openDropdown, closeDropdown } = useDelayedHover({
     open,
@@ -47,6 +50,9 @@ export function Statement({
   });
   const PipeArrow =
     statement.operations.length > 1 ? FaArrowTurnUp : FaArrowRightLong;
+
+  const isEqualsFocused = navigation?.id === `${statement.id}_equals`;
+  const isNameFocused = navigation?.id === `${statement.id}_name`;
 
   const hoverEvents = useMemo(
     () => ({
@@ -66,6 +72,7 @@ export function Statement({
     handleStatement(
       updateStatementMethods({ ...statement, operations }, prevStatements)
     );
+    setUiConfig({ navigation: { id: operation.id, direction: "right" } });
   }
 
   function handleData(data: IData, remove?: boolean) {
@@ -134,8 +141,12 @@ export function Statement({
         <div className="flex items-center gap-1 mr-1 [&>svg]:cursor-pointer [&>svg]:shrink-0">
           {hasName ? (
             <BaseInput
+              ref={(elem) => isNameFocused && elem?.focus()}
               value={statement.name || ""}
-              className="text-variable"
+              className={[
+                "text-variable",
+                isNameFocused ? "outline outline-border" : "",
+              ].join(" ")}
               onChange={(value) => {
                 const name = value || statement.name || "";
                 if (
@@ -149,16 +160,32 @@ export function Statement({
                 }
                 handleStatement({ ...statement, name });
               }}
+              onFocus={() =>
+                setUiConfig(() => ({
+                  navigation: { id: `${statement.id}_name` },
+                }))
+              }
+              onKeyDown={getHotkeyHandler(customHotKeys)}
             />
           ) : null}
-          <Popover opened={hoverOpened} offset={-2} withinPortal={false}>
+          <Popover
+            opened={hoverOpened || navigation?.id === `${statement.id}_add`}
+            offset={4}
+            position="left"
+            withinPortal={false}
+          >
             <Popover.Target>
               <IconButton
+                ref={(elem) => isEqualsFocused && elem?.focus()}
                 icon={FaEquals}
-                className="mt-[5px] hover:outline hover:outline-border"
+                position="right"
+                className={[
+                  "mt-[5px] hover:outline hover:outline-border",
+                  isEqualsFocused ? "outline outline-border" : "",
+                ].join(" ")}
+                disabled={options?.disableNameToggle}
                 title="Create variable"
-                onClick={() =>
-                  !options?.disableNameToggle &&
+                onClick={() => {
                   handleStatement({
                     ...statement,
                     name: hasName
@@ -167,8 +194,11 @@ export function Statement({
                           prefix: "var",
                           prev: prevStatements,
                         }),
-                  })
-                }
+                  });
+                  setUiConfig(() => ({
+                    navigation: { id: `${statement.id}_name` },
+                  }));
+                }}
                 {...hoverEvents}
               />
             </Popover.Target>
@@ -177,11 +207,12 @@ export function Statement({
               {...hoverEvents}
             >
               <AddStatement
+                id={statement.id}
                 onSelect={(statement) => {
-                  addStatement?.(statement, "after");
+                  addStatement?.(statement, "before");
                   closeDropdown();
                 }}
-                iconProps={{ title: "Add statement below" }}
+                iconProps={{ title: "Add before" }}
               />
             </Popover.Dropdown>
           </Popover>

@@ -1,6 +1,5 @@
 import { FaGear, FaPlus, FaX } from "react-icons/fa6";
 import { uiConfigStore, operationsStore } from "../lib/store";
-import { updateOperations } from "../lib/update";
 import { createData, createVariableName } from "../lib/utils";
 import { NoteText } from "./NoteText";
 import { IconButton } from "./IconButton";
@@ -68,7 +67,7 @@ export function Sidebar() {
               size={10}
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();
-                setOperation(updateOperations(operations, item, true));
+                setOperation(item, true);
               }}
             />
           </li>

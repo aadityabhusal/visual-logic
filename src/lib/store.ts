@@ -7,11 +7,17 @@ import { createWithEqualityFn } from "zustand/traditional";
 import { shallow } from "zustand/shallow";
 import { openDB } from "idb";
 import { createData, jsonParseReviver, jsonStringifyReplacer } from "./utils";
+import {
+  NavigationDirection,
+  NavigationEntity,
+  NavigationModifier,
+} from "./navigation";
+import { updateOperations } from "./update";
 
 export interface IStore {
   operations: IData<OperationType>[];
   addOperation: (operation: IData<OperationType>) => void;
-  setOperation: (operations: IData<OperationType>[]) => void;
+  setOperation: (operation: IData<OperationType>, remove?: boolean) => void;
 }
 
 const IDbStore = openDB("logicFlow", 1, {
@@ -50,20 +56,30 @@ export const operationsStore = create(
       ],
       addOperation: (operation) =>
         set((state) => ({ operations: [...state.operations, operation] })),
-      setOperation: (operations) => set(() => ({ operations })),
+      setOperation: (operation, remove) => {
+        set((s) => ({
+          operations: updateOperations(s.operations, operation, remove),
+        }));
+      },
     })),
     { name: "operations", storage: createIDbStorage("operations") }
   )
 );
 
 type SetUIConfig = Partial<Omit<IUiConfig, "setUiConfig">>;
-type IUiConfig = Partial<{
+export type IUiConfig = Partial<{
   [key in (typeof preferenceOptions)[number]["id"]]: boolean;
 }> & {
   hideSidebar?: boolean;
-  focusId?: string;
   result?: IStatement["data"];
   showPopup?: boolean;
+  navigationEntities?: NavigationEntity[];
+  navigation?: {
+    id?: string;
+    direction?: NavigationDirection;
+    modifier?: NavigationModifier;
+    disable?: boolean;
+  };
   setUiConfig: (
     change: SetUIConfig | ((change: SetUIConfig) => SetUIConfig)
   ) => void;

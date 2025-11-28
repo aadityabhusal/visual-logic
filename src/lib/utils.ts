@@ -474,3 +474,9 @@ export function createDefaultValue<T extends DataType>(type: T): DataValue<T> {
       return undefined as DataValue<T>;
   }
 }
+
+export function isTextInput(element: Element | null) {
+  if (element instanceof HTMLInputElement && element.type === "text") {
+    return element;
+  }
+}
