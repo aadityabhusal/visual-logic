@@ -147,8 +147,14 @@ export const IDataSchema: z.ZodType<IData> = z
             z.object({
               parameters: z.array(IStatementSchema),
               statements: z.array(IStatementSchema),
-              return: IDataSchema.optional(),
+              result: IDataSchema.optional(),
               name: z.string().optional(),
+            }),
+            z.object({
+              condition: IStatementSchema,
+              true: IStatementSchema,
+              false: IStatementSchema,
+              result: IDataSchema.optional(),
             }),
           ]);
         },
@@ -159,7 +165,7 @@ export const IDataSchema: z.ZodType<IData> = z
           return z.object({
             parameters: z.array(IStatementSchema),
             statements: z.array(IStatementSchema),
-            return: IDataSchema.optional(),
+            result: IDataSchema.optional(),
             name: z.string().optional(),
           });
         },

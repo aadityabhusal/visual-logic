@@ -18,8 +18,10 @@ export type NavigationDirection = "left" | "right" | "up" | "down";
 export type NavigationModifier = "alt" | "mod";
 export type NavigationEntity = {
   id: string;
-  parentIndex: [operation: number, statement: number];
   depth: number;
+  operationId: string;
+  statementIndex: number;
+  statementId?: string;
 };
 
 function shouldFocusInInput(
@@ -51,11 +53,24 @@ function shouldFocusInInput(
   return event.preventDefault(), textInput.blur(), false;
 }
 
-function isSameIndex(
-  indexA: NavigationEntity["parentIndex"],
-  indexB?: NavigationEntity["parentIndex"]
-) {
-  return indexA[0] === indexB?.[0] && indexA[1] === indexB?.[1];
+export function getNextIdAfterDelete(
+  newEntities: NavigationEntity[],
+  entities: NavigationEntity[],
+  id?: string
+): string {
+  const itemIndex = entities.findIndex((e) => e.id === id);
+  if (itemIndex === -1) return newEntities[newEntities.length - 1]?.id;
+  const statementLastIndex = newEntities.findLastIndex(
+    (e) => e.statementId === entities[itemIndex].statementId
+  );
+  if (statementLastIndex !== -1) return newEntities[itemIndex - 1].id;
+  const lastItem = newEntities.findLast(
+    (e) =>
+      e.operationId === entities[itemIndex].operationId &&
+      e.statementIndex < entities[itemIndex].statementIndex
+  );
+  if (lastItem) return lastItem.id;
+  return newEntities[newEntities.length - 1]?.id;
 }
 
 export function handleNavigation({
@@ -82,25 +97,37 @@ export function handleNavigation({
 
   let targetEntity: NavigationEntity | undefined;
   const delta = direction === "left" || direction === "up" ? -1 : 1;
+  const findEntity = delta === -1 ? entities.find : entities.findLast;
   let itemIndex = entities.findIndex((entity) => entity.id === navigation.id);
   if (itemIndex === -1 && direction === "left") itemIndex = entities.length;
 
   if (direction === "left" || direction === "right") {
     if (modifier === "mod") {
-      const statementEntities = entities.filter((e) =>
-        isSameIndex(e.parentIndex, entities[itemIndex].parentIndex)
+      targetEntity = findEntity.bind(entities)(
+        (e) => e.statementId === entities[itemIndex].statementId
       );
-      targetEntity =
-        statementEntities[delta === -1 ? 0 : statementEntities.length - 1];
+    } else if (modifier === "alt") {
+      const altFind = delta === -1 ? entities.findLast : entities.find;
+      targetEntity = altFind.bind(entities)(
+        (e, i) =>
+          e.operationId === entities[itemIndex].operationId &&
+          (delta === -1 ? i < itemIndex : i > itemIndex)
+      );
     } else {
       targetEntity = entities[itemIndex + delta];
     }
   } else if (direction === "up" || direction === "down") {
     if (modifier === "mod") {
       targetEntity = entities[delta === -1 ? 0 : entities.length - 1];
+    } else if (modifier === "alt") {
+      targetEntity = findEntity.bind(entities)(
+        (e) => e.operationId === entities[itemIndex].operationId
+      );
     } else {
       targetEntity = entities.find(
-        (e) => e.parentIndex[1] === entities[itemIndex].parentIndex[1] + delta
+        (e) =>
+          e.operationId === entities[itemIndex].operationId &&
+          e.statementIndex === entities[itemIndex].statementIndex + delta
       );
     }
   }
@@ -108,6 +135,7 @@ export function handleNavigation({
   if (targetEntity) {
     setUiConfig((p) => ({
       ...p,
+      navigationEntities: entities,
       navigation: {
         id: targetEntity.id,
         direction,
@@ -119,66 +147,81 @@ export function handleNavigation({
 
 export function getOperationEntities(
   operation: IData<OperationType>,
-  depth = 0,
-  operationIndex = 0
+  depth = 0
 ): NavigationEntity[] {
   const parameterEntities = operation.value.parameters.flatMap((item) =>
-    getStatementEntities(item, depth, [operationIndex, 0])
+    getStatementEntities(item, depth, {
+      operationId: operation.id,
+      statementId: `${operation.id}_parameters`,
+      statementIndex: 0,
+    })
   );
   const statementEntities = operation.value.statements.flatMap((statement, i) =>
-    getStatementEntities(statement, depth, [operationIndex, i + 1], true)
+    getStatementEntities(
+      statement,
+      depth,
+      {
+        operationId: operation.id,
+        statementId: statement.id,
+        statementIndex: i + 1,
+      },
+      true
+    )
   );
   const statementIndex = operation.value.statements.length + 1;
-  const parentIndex = [operationIndex, statementIndex] as [number, number];
   return [
     ...parameterEntities,
     {
       id: `${operation.id}_parameter_add`,
       depth,
-      parentIndex: [operationIndex, 0],
+      operationId: operation.id,
+      statementId: `${operation.id}_parameters`,
+      statementIndex: 0,
     },
     ...statementEntities,
-    { id: `${operation.id}_statement_add`, depth, parentIndex },
+    {
+      id: `${operation.id}_statement_add`,
+      depth,
+      operationId: operation.id,
+      statementIndex,
+    },
   ];
 }
 
 function getStatementEntities(
   statement: IStatement,
   depth: number,
-  parentIndex: NavigationEntity["parentIndex"],
+  parent: { operationId: string; statementId: string; statementIndex: number },
   allowVariable?: boolean
 ): NavigationEntity[] {
   const entities: NavigationEntity[] = [];
   if (statement.name) {
-    entities.push({ id: `${statement.id}_name`, depth, parentIndex });
+    entities.push({ id: `${statement.id}_name`, depth, ...parent });
   }
   if (allowVariable) {
-    entities.push({ id: `${statement.id}_add`, depth, parentIndex });
-    entities.push({ id: `${statement.id}_equals`, depth, parentIndex });
+    entities.push({ id: `${statement.id}_add`, depth, ...parent });
+    entities.push({ id: `${statement.id}_equals`, depth, ...parent });
   }
   const dataId = statement.data.id;
-  entities.push({ id: dataId, depth, parentIndex });
+  entities.push({ id: dataId, depth, ...parent });
 
   if (isDataOfType(statement.data, "array")) {
     statement.data.value.forEach((arrayItem) => {
-      entities.push(...getStatementEntities(arrayItem, depth + 1, parentIndex));
+      entities.push(...getStatementEntities(arrayItem, depth + 1, parent));
     });
-    entities.push({ id: `${dataId}_add`, depth: depth + 1, parentIndex });
+    entities.push({ id: `${dataId}_add`, depth: depth + 1, ...parent });
   } else if (isDataOfType(statement.data, "object")) {
-    statement.data.value.forEach((objectValue) => {
-      entities.push(
-        ...getStatementEntities(objectValue, depth + 1, parentIndex)
-      );
+    statement.data.value.forEach((property) => {
+      entities.push({ id: `${property.id}_name`, depth: depth + 1, ...parent });
+      entities.push(...getStatementEntities(property, depth + 1, parent));
     });
-    entities.push({ id: `${dataId}_add`, depth: depth + 1, parentIndex });
+    entities.push({ id: `${dataId}_add`, depth: depth + 1, ...parent });
   } else if (isDataOfType(statement.data, "operation")) {
-    entities.push(
-      ...getOperationEntities(statement.data, depth + 1, parentIndex[0] + 1)
-    );
+    entities.push(...getOperationEntities(statement.data, depth + 1));
   } else if (isDataOfType(statement.data, "condition")) {
     (["condition", "true", "false"] as const).forEach((item) => {
       const branch = (statement.data.value as DataValue<ConditionType>)[item];
-      entities.push(...getStatementEntities(branch, depth + 1, parentIndex));
+      entities.push(...getStatementEntities(branch, depth + 1, parent));
     });
   } else if (isDataOfType(statement.data, "union")) {
     const valueType = inferTypeFromValue(statement.data.value);
@@ -189,17 +232,15 @@ function getStatementEntities(
         value: statement.data.value,
       }),
     });
-    entities.push(
-      ...getStatementEntities(dataStatement, depth + 1, parentIndex)
-    );
-    entities.push({ id: `${dataId}_options`, depth: depth + 1, parentIndex });
+    entities.push(...getStatementEntities(dataStatement, depth + 1, parent));
+    entities.push({ id: `${dataId}_options`, depth: depth + 1, ...parent });
   }
 
   statement.operations.forEach((operation) => {
-    entities.push({ id: operation.id, depth, parentIndex });
+    entities.push({ id: operation.id, depth, ...parent });
 
     operation.value.parameters.forEach((param) => {
-      entities.push(...getStatementEntities(param, depth + 1, parentIndex));
+      entities.push(...getStatementEntities(param, depth + 1, parent));
     });
   });
 

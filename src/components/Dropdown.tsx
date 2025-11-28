@@ -1,5 +1,5 @@
 import { Combobox, useCombobox } from "@mantine/core";
-import { HTMLAttributes, ReactNode, useEffect, useState } from "react";
+import { HTMLAttributes, ReactNode, useEffect, useMemo, useState } from "react";
 import { BaseInput } from "./Input/BaseInput";
 import { IconButton } from "../ui/IconButton";
 import {
@@ -8,11 +8,13 @@ import {
   FaCircleXmark,
   FaSquareArrowUpRight,
 } from "react-icons/fa6";
-import { uiConfigStore } from "../lib/store";
+import { operationsStore, uiConfigStore } from "../lib/store";
 import { getHotkeyHandler, HotkeyItem, useHotkeys } from "@mantine/hooks";
 import { IData, IDropdownItem, IStatement } from "../lib/types";
 import { useSearchParams } from "react-router";
 import { isDataOfType, isTextInput } from "../lib/utils";
+import { getNextIdAfterDelete, getOperationEntities } from "@/lib/navigation";
+import { useCustomHotkeys } from "@/hooks/useNavigation";
 
 export interface IDropdownTargetProps
   extends Omit<HTMLAttributes<HTMLElement>, "onChange" | "defaultValue"> {
@@ -53,7 +55,7 @@ export function Dropdown({
   reference?: IData["reference"];
   target: (value: IDropdownTargetProps) => ReactNode;
 }) {
-  const [, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { highlightOperation, navigation, setUiConfig } = uiConfigStore();
   const forceDisplayBorder =
     highlightOperation && isDataOfType(data, "operation");
@@ -76,27 +78,32 @@ export function Dropdown({
       });
     },
   });
+  const customHotKeys = useCustomHotkeys();
 
-  const dropdownOptions = items
-    ?.filter(
-      (option) =>
-        search === value ||
-        option.label?.toLowerCase().includes(search.toLowerCase().trim()) ||
-        option.value.toLowerCase().includes(search.toLowerCase().trim())
-    )
-    ?.map((option) => (
-      <Combobox.Option
-        value={option.value}
-        key={option.value}
-        className={`flex items-center justify-between gap-4 data-combobox-selected:bg-dropdown-hover data-combobox-active:bg-dropdown-selected hover:bg-dropdown-hover`}
-        active={option.value === value}
-      >
-        <span className="text-sm max-w-32 truncate">
-          {option.label || option.value}
-        </span>
-        <span className="text-xs">{option.secondaryLabel}</span>
-      </Combobox.Option>
-    ));
+  const dropdownOptions = useMemo(
+    () =>
+      items
+        ?.filter(
+          (option) =>
+            search === value ||
+            option.label?.toLowerCase().includes(search.toLowerCase().trim()) ||
+            option.value.toLowerCase().includes(search.toLowerCase().trim())
+        )
+        ?.map((option) => (
+          <Combobox.Option
+            value={option.value}
+            key={option.value}
+            className={`flex items-center justify-between gap-4 data-combobox-selected:bg-dropdown-hover data-combobox-active:bg-dropdown-selected hover:bg-dropdown-hover`}
+            active={option.value === value}
+          >
+            <span className="text-sm max-w-32 truncate">
+              {option.label || option.value}
+            </span>
+            <span className="text-xs">{option.secondaryLabel}</span>
+          </Combobox.Option>
+        )),
+    [items, search, value]
+  );
 
   function handleSearch(val: string) {
     if (!combobox.dropdownOpened) combobox.openDropdown();
@@ -110,10 +117,26 @@ export function Dropdown({
             key,
             () => {
               const textInput = isTextInput(combobox.targetRef.current);
-              if (textInput && textInput.value) return;
-              handleDelete?.();
+              if ((textInput && textInput.value) || !handleDelete) return;
+              handleDelete();
+              textInput?.blur();
+              setUiConfig((p) => {
+                const operations = operationsStore.getState().operations;
+                const operation = operations.find(
+                  (op) => op.id === searchParams.get("operationId")
+                );
+                if (!operation) return p;
+                const newEntities = getOperationEntities(operation);
+                const oldEntities = p.navigationEntities || [];
+                return {
+                  navigationEntities: newEntities,
+                  navigation: {
+                    id: getNextIdAfterDelete(newEntities, oldEntities, id),
+                  },
+                };
+              });
             },
-            { preventDefault: !isTextInput(combobox.targetRef.current)?.value },
+            { preventDefault: isInputTarget ? !search : false },
           ]) as HotkeyItem[]),
           ...(["alt+=", "alt+≠"].map((key) => [
             key,
@@ -198,6 +221,7 @@ export function Dropdown({
                     onBlur: () => combobox?.closeDropdown(),
                     onKeyDown: getHotkeyHandler([
                       ["ctrl+space", () => combobox.openDropdown()],
+                      ...customHotKeys,
                       ...(hotkeys ?? []),
                     ]),
                   }

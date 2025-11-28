@@ -4,6 +4,9 @@ import { BaseInput } from "./BaseInput";
 import { AddStatement } from "../AddStatement";
 import { forwardRef, HTMLAttributes } from "react";
 import { createVariableName, getObjectPropertiesType } from "../../lib/utils";
+import { uiConfigStore } from "@/lib/store";
+import { useCustomHotkeys } from "@/hooks/useNavigation";
+import { getHotkeyHandler } from "@mantine/hooks";
 
 export interface ObjectInputProps extends HTMLAttributes<HTMLDivElement> {
   data: IData<ObjectType>;
@@ -13,6 +16,8 @@ export interface ObjectInputProps extends HTMLAttributes<HTMLDivElement> {
 export const ObjectInput = forwardRef<HTMLDivElement, ObjectInputProps>(
   ({ data, handleData, prevStatements, ...props }, ref) => {
     const isMultiline = data.value.size > 2;
+    const { navigation } = uiConfigStore();
+    const customHotKeys = useCustomHotkeys();
 
     function handleUpdate(
       dataArray: [string, IStatement][],
@@ -60,15 +65,21 @@ export const ObjectInput = forwardRef<HTMLDivElement, ObjectInputProps>(
       >
         <span>{"{"}</span>
         {Array.from(data.value).map(([key, value], i, arr) => {
+          const isNameFocused = navigation?.id === `${value.id}_name`;
           return (
             <div
               key={i}
               style={{ display: "flex", marginLeft: isMultiline ? 8 : 0 }}
             >
               <BaseInput
-                className="text-property"
+                ref={(elem) => isNameFocused && elem?.focus()}
+                className={[
+                  "text-property",
+                  isNameFocused ? "outline outline-border" : "",
+                ].join(" ")}
                 value={key}
                 onChange={(value) => handleKeyUpdate(arr, i, value)}
+                onKeyDown={getHotkeyHandler(customHotKeys)}
               />
               <span style={{ marginRight: 4 }}>:</span>
               <Statement

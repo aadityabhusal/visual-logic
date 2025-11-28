@@ -5,16 +5,18 @@ import {
   NavigationModifier,
 } from "@/lib/navigation";
 import { operationsStore, uiConfigStore } from "@/lib/store";
-import { IData, OperationType } from "@/lib/types";
 import { HotkeyItem } from "@mantine/hooks";
 import { useMemo } from "react";
+import { useSearchParams } from "react-router";
 
-export function useCustomHotkeys({
-  currentOperation,
-}: {
-  currentOperation?: IData<OperationType>;
-}): HotkeyItem[] {
+export function useCustomHotkeys(): HotkeyItem[] {
   const { undo, redo } = operationsStore.temporal.getState();
+  const [searchParams] = useSearchParams();
+  const { operations } = operationsStore();
+  const currentOperation = useMemo(
+    () => operations.find((op) => op.id === searchParams.get("operationId")),
+    [operations, searchParams]
+  );
   const { navigation, setUiConfig } = uiConfigStore();
   const entities = useMemo(
     () => currentOperation && getOperationEntities(currentOperation),

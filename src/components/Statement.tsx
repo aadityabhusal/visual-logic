@@ -13,11 +13,12 @@ import { BaseInput } from "./Input/BaseInput";
 import { OperationCall } from "./OperationCall";
 import { IconButton } from "../ui/IconButton";
 import { AddStatement } from "./AddStatement";
-import { useDisclosure } from "@mantine/hooks";
+import { getHotkeyHandler, useDisclosure } from "@mantine/hooks";
 import { Popover, useDelayedHover } from "@mantine/core";
 import { DataTypes } from "../lib/data";
 import { useMemo } from "react";
 import { uiConfigStore } from "@/lib/store";
+import { useCustomHotkeys } from "@/hooks/useNavigation";
 
 export function Statement({
   statement,
@@ -39,7 +40,7 @@ export function Statement({
 }) {
   const hasName = statement.name !== undefined;
   const { navigation, setUiConfig } = uiConfigStore();
-
+  const customHotKeys = useCustomHotkeys();
   const [hoverOpened, { open, close }] = useDisclosure(false);
   const { openDropdown, closeDropdown } = useDelayedHover({
     open,
@@ -144,7 +145,7 @@ export function Statement({
               value={statement.name || ""}
               className={[
                 "text-variable",
-                isNameFocused ? "border border-solid outline-border" : "",
+                isNameFocused ? "outline outline-border" : "",
               ].join(" ")}
               onChange={(value) => {
                 const name = value || statement.name || "";
@@ -164,6 +165,7 @@ export function Statement({
                   navigation: { id: `${statement.id}_name` },
                 }))
               }
+              onKeyDown={getHotkeyHandler(customHotKeys)}
             />
           ) : null}
           <Popover
