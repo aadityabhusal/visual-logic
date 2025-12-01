@@ -1,5 +1,5 @@
 import { forwardRef, HTMLAttributes, useMemo, useState } from "react";
-import { UnionType, IData, IStatement, DataType } from "../../lib/types";
+import { UnionType, IData, DataType, Context } from "../../lib/types";
 import {
   createData,
   createDefaultValue,
@@ -18,11 +18,11 @@ import { uiConfigStore } from "@/lib/store";
 export interface UnionInputProps extends HTMLAttributes<HTMLDivElement> {
   data: IData<UnionType>;
   handleData: (data: IData<UnionType>) => void;
-  prevStatements: IStatement[];
+  context: Context;
 }
 
 export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
-  ({ data, handleData, prevStatements, ...props }, ref) => {
+  ({ data, handleData, context, ...props }, ref) => {
     const { navigation, setUiConfig } = uiConfigStore();
     const [menuOpened, setMenuOpened] = useState(false);
     const isFocused = navigation?.id === `${data.id}_options`;
@@ -109,7 +109,7 @@ export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
             if (remove) handleTypeRemove(activeTypeIndex);
             else handleActiveTypeChange(statement.data);
           }}
-          prevStatements={prevStatements}
+          context={context}
           // TODO: disableDelete is hiding parameters for operation in union type
           options={{ disableMethods: true }}
         />

@@ -1,4 +1,4 @@
-import { IData, IStatement, OperationType } from "../lib/types";
+import { Context, IData, IStatement, OperationType } from "../lib/types";
 import { Statement } from "./Statement";
 import { Dropdown } from "./Dropdown";
 import {
@@ -14,7 +14,7 @@ export function OperationCall({
   operation,
   handleOperationCall,
   addOperationCall,
-  prevStatements,
+  context,
 }: {
   data: IData;
   operation: IData<OperationType>;
@@ -23,7 +23,7 @@ export function OperationCall({
     remove?: boolean
   ) => void;
   addOperationCall?: () => void;
-  prevStatements: IStatement[];
+  context: Context;
 }) {
   function handleDropdown(name: string) {
     if (operation.value.name === name) return;
@@ -31,8 +31,8 @@ export function OperationCall({
       createOperationCall({
         data,
         name,
-        prevParams: operation.value.parameters,
-        prevStatements,
+        parameters: operation.value.parameters,
+        context,
       })
     );
   }
@@ -42,7 +42,7 @@ export function OperationCall({
     let parameters = [...operation.value.parameters];
     parameters[index] = item;
 
-    const foundOperation = getFilteredOperations(data, prevStatements).find(
+    const foundOperation = getFilteredOperations(data, context).find(
       (op) => op.name === operation.value.name
     );
 
@@ -79,13 +79,14 @@ export function OperationCall({
     <Dropdown
       id={operation.id}
       result={operation.value.result}
-      items={getFilteredOperations(data, prevStatements).map((item) => ({
+      items={getFilteredOperations(data, context).map((item) => ({
         label: item.name,
         value: item.name,
         color: "method",
         entityType: "method",
         onClick: () => handleDropdown(item.name),
       }))}
+      context={context}
       value={operation.value.name}
       addOperationCall={addOperationCall}
       handleDelete={() => handleOperationCall(operation, true)}
@@ -99,7 +100,7 @@ export function OperationCall({
             statement={item}
             handleStatement={(val) => val && handleParameter(val, i)}
             options={{ disableDelete: true }}
-            prevStatements={prevStatements}
+            context={context}
           />
           {i < arr.length - 1 ? <span>{", "}</span> : null}
         </span>

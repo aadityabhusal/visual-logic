@@ -1,4 +1,4 @@
-import { IData, IStatement, ObjectType } from "../../lib/types";
+import { Context, IData, IStatement, ObjectType } from "../../lib/types";
 import { Statement } from "../Statement";
 import { BaseInput } from "./BaseInput";
 import { AddStatement } from "../AddStatement";
@@ -11,10 +11,10 @@ import { getHotkeyHandler } from "@mantine/hooks";
 export interface ObjectInputProps extends HTMLAttributes<HTMLDivElement> {
   data: IData<ObjectType>;
   handleData: (data: IData<ObjectType>) => void;
-  prevStatements: IStatement[];
+  context: Context;
 }
 export const ObjectInput = forwardRef<HTMLDivElement, ObjectInputProps>(
-  ({ data, handleData, prevStatements, ...props }, ref) => {
+  ({ data, handleData, context, ...props }, ref) => {
     const isMultiline = data.value.size > 2;
     const { navigation } = uiConfigStore();
     const customHotKeys = useCustomHotkeys();
@@ -87,7 +87,7 @@ export const ObjectInput = forwardRef<HTMLDivElement, ObjectInputProps>(
                 handleStatement={(val, remove) =>
                   handleUpdate(arr, i, val, remove)
                 }
-                prevStatements={prevStatements}
+                context={context}
               />
               {i < arr.length - 1 ? <span>{","}</span> : null}
             </div>
@@ -116,6 +116,7 @@ export const ObjectInput = forwardRef<HTMLDivElement, ObjectInputProps>(
             }
           }}
           iconProps={{ title: "Add object item" }}
+          context={context}
         />
         <span>{"}"}</span>
       </div>

@@ -1,5 +1,5 @@
 import { getFilteredOperations, executeOperation } from "./methods";
-import { IStatement, IData, OperationType } from "./types";
+import { IStatement, IData, OperationType, Context } from "./types";
 import {
   createData,
   createStatement,
@@ -13,7 +13,7 @@ import {
 
 export function updateStatementMethods(
   statement: IStatement,
-  previous: IStatement[] = []
+  context: Context
 ): IStatement {
   const updatedOperations = statement.operations.reduce(
     (previousOperations, currentOperation, index) => {
@@ -31,7 +31,7 @@ export function updateStatementMethods(
         });
       });
 
-      const foundOperation = getFilteredOperations(data, previous).find(
+      const foundOperation = getFilteredOperations(data, context).find(
         (operation) => operation.name === currentOperation.value.name
       );
       const currentResult = currentOperation.value.result;
@@ -55,7 +55,7 @@ export function updateStatementMethods(
 
 function getReferenceData(
   data: IData,
-  previous: IStatement[],
+  context: Context,
   reference?: IStatement
 ): IData {
   const currentReference = data.reference;
@@ -84,27 +84,27 @@ function getReferenceData(
       referenceResult?.entityType === "data"
         ? referenceResult?.value
         : Array.isArray(data.value)
-        ? updateStatements({ statements: data.value, previous })
+        ? updateStatements({ statements: data.value, context })
         : data.value instanceof Map
         ? new Map(
             [...data.value.entries()].map(([name, value]) => [
               name,
-              updateStatements({ statements: [value], previous })[0],
+              updateStatements({ statements: [value], context })[0],
             ])
           )
         : isDataOfType(data, "condition")
         ? (() => {
             const condition = updateStatements({
               statements: [data.value.condition],
-              previous,
+              context,
             })[0];
             const _true = updateStatements({
               statements: [data.value.true],
-              previous,
+              context,
             })[0];
             const _false = updateStatements({
               statements: [data.value.false],
-              previous,
+              context,
             })[0];
             const result = getConditionResult({
               condition,
@@ -120,7 +120,7 @@ function getReferenceData(
 
 export function getReferenceOperation(
   operation: IData<OperationType>,
-  previous: IStatement[],
+  context: Context,
   reference?: IStatement
 ): IData<OperationType> {
   const currentReference = operation.reference;
@@ -174,14 +174,22 @@ export function getReferenceOperation(
           argument = { ...argument, data: parameter.data };
         }
       }
-      return updateStatements({ statements: [argument], previous })[0];
+      return updateStatements({ statements: [argument], context })[0];
     }
     return { ...parameter, data: { ...parameter.data, isGeneric: false } };
   });
 
   const updatedStatements = updateStatements({
     statements: statementList,
-    previous: [...previous, /* ...closure, */ ...updatedParameters],
+    context: {
+      ...context,
+      variables: {
+        ...updatedParameters.reduce((acc, param) => {
+          if (param.name) acc[param.name] = param;
+          return acc;
+        }, context.variables),
+      },
+    },
   });
 
   const finalParameters = isTypeChanged
@@ -206,20 +214,22 @@ export function getReferenceOperation(
 
 export function updateStatementReference(
   currentStatement: IStatement,
-  previous: IStatement[]
+  context: Context
 ): IStatement {
   const currentReference = currentStatement.data.reference;
-  const reference = previous.find((item) => item.id === currentReference?.id);
+  const reference = Object.values(context.variables).find(
+    (item) => item.id === currentReference?.id
+  );
 
   return {
     ...currentStatement,
     data: isDataOfType(currentStatement.data, "operation")
-      ? getReferenceOperation(currentStatement.data, previous, reference)
-      : getReferenceData(currentStatement.data, previous, reference),
+      ? getReferenceOperation(currentStatement.data, context, reference)
+      : getReferenceData(currentStatement.data, context, reference),
     operations: currentStatement.operations.map((operation) => {
       const updatedParameters = updateStatements({
         statements: operation.value.parameters,
-        previous,
+        context,
       });
       // For operation calls, preserve the result type from the definition
       // Only update parameter types
@@ -245,12 +255,12 @@ export function updateStatements({
   statements,
   changedStatement,
   removeStatement,
-  previous = [],
+  context,
 }: {
   statements: IStatement[];
   changedStatement?: IStatement;
   removeStatement?: boolean;
-  previous?: IStatement[];
+  context: Context;
 }): IStatement[] {
   let currentIndexFound = false;
   return statements.reduce((prevStatements, currentStatement) => {
@@ -263,12 +273,18 @@ export function updateStatements({
     if (changedStatement && !currentIndexFound)
       return [...prevStatements, currentStatement];
 
-    const previousList = [...previous, ...prevStatements];
+    const _context = {
+      ...context,
+      variables: prevStatements.reduce((acc, stmt) => {
+        if (stmt.name) acc[stmt.name] = stmt;
+        return acc;
+      }, context.variables),
+    };
     return [
       ...prevStatements,
       updateStatementMethods(
-        updateStatementReference(currentStatement, previousList),
-        previousList
+        updateStatementReference(currentStatement, _context),
+        _context
       ),
     ];
   }, [] as IStatement[]);
@@ -294,13 +310,17 @@ export function updateOperations(
         ...currentOperation.value.parameters,
         ...currentOperation.value.statements,
       ],
-      previous: prevOperations.map((operation) =>
-        createStatement({
-          data: operation,
-          name: operation.value.name,
-          id: operation.id,
-        })
-      ),
+      context: {
+        variables: prevOperations.reduce((acc, operation) => {
+          const statement = createStatement({
+            data: operation,
+            name: operation.value.name,
+            id: operation.id,
+          });
+          if (statement.name) acc[statement.name] = statement;
+          return acc;
+        }, {} as { [key: string]: IStatement }),
+      },
     });
     const parameterLength = currentOperation.value.parameters.length;
     const parameters = updatedStatements.slice(0, parameterLength);

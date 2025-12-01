@@ -18,6 +18,7 @@ import { useSearchParams } from "react-router";
 import { createStatement } from "./lib/utils";
 import { useCustomHotkeys } from "./hooks/useNavigation";
 import { getOperationEntities } from "./lib/navigation";
+import { Context } from "./lib/types";
 
 const theme = createTheme({
   scale: 1,
@@ -69,15 +70,20 @@ function App() {
               <Operation
                 operation={currentOperation}
                 handleChange={setOperation}
-                prevStatements={operations
-                  .filter((operation) => operation.id !== currentOperation.id)
-                  .map((operation) =>
-                    createStatement({
-                      data: operation,
-                      name: operation.value.name,
-                      id: operation.id,
-                    })
-                  )}
+                context={{
+                  variables: operations
+                    .filter((op) => op.id !== currentOperation.id)
+                    .reduce((acc, operation) => {
+                      if (operation.value.name) {
+                        acc[operation.value.name] = createStatement({
+                          data: operation,
+                          name: operation.value.name,
+                          id: operation.id,
+                        });
+                      }
+                      return acc;
+                    }, {} as Context["variables"]),
+                }}
                 options={{ isTopLevel: true, disableDropdown: true }}
               />
             ) : (

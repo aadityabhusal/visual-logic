@@ -1,4 +1,4 @@
-import { IData, IStatement, DataType } from "../lib/types";
+import { IData, IStatement, DataType, Context } from "../lib/types";
 import { ArrayInput } from "./Input/ArrayInput";
 import { ObjectInput } from "./Input/ObjectInput";
 import { BooleanInput } from "./Input/BooleanInput";
@@ -21,7 +21,7 @@ interface IProps {
   disableDelete?: boolean;
   addOperationCall?: () => void;
   handleChange(item: IStatement["data"], remove?: boolean): void;
-  prevStatements: IStatement[];
+  context: Context;
 }
 
 export function Data({
@@ -29,16 +29,11 @@ export function Data({
   disableDelete,
   addOperationCall,
   handleChange,
-  prevStatements,
+  context,
 }: IProps) {
   const dropdownItems = useMemo(
-    () =>
-      getDataDropdownList({
-        data,
-        onSelect: handleChange,
-        prevStatements,
-      }),
-    [data, handleChange, prevStatements]
+    () => getDataDropdownList({ data, onSelect: handleChange, context }),
+    [data, handleChange, context]
   );
 
   const showDropdownIcon =
@@ -61,6 +56,7 @@ export function Data({
         withSearch: showDropdownIcon,
         focusOnClick: showDropdownIcon,
       }}
+      context={context}
       value={data.reference?.name || data.type.kind}
       isInputTarget={
         !!data.reference ||
@@ -73,21 +69,21 @@ export function Data({
           <Operation
             operation={data}
             handleChange={handleChange}
-            prevStatements={prevStatements}
+            context={context}
             options={{ disableDelete: disableDelete }}
           />
         ) : isDataOfType(data, "array") ? (
           <ArrayInput
             data={data}
             handleData={handleChange}
-            prevStatements={prevStatements}
+            context={context}
             onClick={props.onClick}
           />
         ) : isDataOfType(data, "object") ? (
           <ObjectInput
             data={data}
             handleData={handleChange}
-            prevStatements={prevStatements}
+            context={context}
             onClick={props.onClick}
           />
         ) : isDataOfType(data, "boolean") ? (
@@ -123,14 +119,14 @@ export function Data({
           <ConditionInput
             data={data}
             handleData={handleChange}
-            prevStatements={prevStatements}
+            context={context}
             onClick={props.onClick}
           />
         ) : isDataOfType(data, "union") ? (
           <UnionInput
             data={data}
             handleData={handleChange}
-            prevStatements={prevStatements}
+            context={context}
             onClick={props.onClick}
           />
         ) : (

@@ -8,6 +8,7 @@ import {
   DataValue,
   OperationType,
   ConditionType,
+  Context,
 } from "./types";
 
 export function createData<T extends DataType>(
@@ -340,11 +341,11 @@ export function getOperationType(
 export function getDataDropdownList({
   data,
   onSelect,
-  prevStatements,
+  context,
 }: {
   data: IStatement["data"];
   onSelect: (operation: IStatement["data"], remove?: boolean) => void;
-  prevStatements: IStatement[];
+  context: Context;
 }) {
   function selectData(dataOption: IData, reference: IStatement) {
     onSelect({
@@ -380,7 +381,7 @@ export function getDataDropdownList({
       }
       return acc;
     }, [] as IDropdownItem[]),
-    ...prevStatements.flatMap((statement) => {
+    ...Object.values(context.variables).flatMap((statement) => {
       const result = getStatementResult(statement);
       if (
         (!data.isGeneric && !isTypeCompatible(result.type, data.type)) ||

@@ -10,6 +10,7 @@ import {
   UnknownType,
   ConditionType,
   DataValue,
+  Context,
 } from "./types";
 import {
   createData,
@@ -332,10 +333,7 @@ function createParamData(
   });
 }
 
-export function getFilteredOperations(
-  data: IData,
-  prevStatements: IStatement[]
-) {
+export function getFilteredOperations(data: IData, context: Context) {
   const builtInOps = builtInOperations.filter((operation) =>
     isTypeCompatible(
       operation.parameters[0]?.type || { kind: "undefined" },
@@ -343,7 +341,7 @@ export function getFilteredOperations(
     )
   );
 
-  const userDefinedOps = prevStatements
+  const userDefinedOps = Object.values(context.variables)
     .filter(
       (statement) =>
         statement.name &&
@@ -369,23 +367,23 @@ export function getFilteredOperations(
 export function createOperationCall({
   data,
   name,
-  prevParams,
-  prevStatements = [],
+  parameters,
+  context,
 }: {
   data: IData;
   name?: string;
-  prevParams?: IStatement[];
-  prevStatements?: IStatement[];
+  parameters?: IStatement[];
+  context: Context;
 }): IData<OperationType> {
-  const operations = getFilteredOperations(data, prevStatements);
+  const operations = getFilteredOperations(data, context);
   const operationByName = operations.find(
     (operation) => operation.name === name
   );
   const newOperation = operationByName || operations[0];
 
-  const parameters = newOperation.parameters.slice(1).map((item, index) => {
+  const newParameters = newOperation.parameters.slice(1).map((item, index) => {
     const newParam = createStatement({ data: createParamData(item, data) });
-    const prevParam = prevParams?.[index];
+    const prevParam = parameters?.[index];
     if (
       prevParam &&
       isTypeCompatible(newParam.data.type, prevParam.data.type) &&
@@ -398,7 +396,7 @@ export function createOperationCall({
   const result = executeOperation(
     newOperation,
     data,
-    parameters.map((p) => getStatementResult(p))
+    newParameters.map((p) => getStatementResult(p))
   );
 
   return {
@@ -411,7 +409,7 @@ export function createOperationCall({
     },
     value: {
       name: newOperation.name,
-      parameters,
+      parameters: newParameters,
       statements: [],
       result: { ...result, isGeneric: data.isGeneric },
     },

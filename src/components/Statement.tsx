@@ -1,5 +1,5 @@
 import { FaArrowRightLong, FaArrowTurnUp, FaEquals } from "react-icons/fa6";
-import { IData, IStatement, OperationType } from "../lib/types";
+import { Context, IData, IStatement, OperationType } from "../lib/types";
 import { updateStatementMethods } from "../lib/update";
 import {
   isTypeCompatible,
@@ -23,14 +23,14 @@ import { useCustomHotkeys } from "@/hooks/useNavigation";
 export function Statement({
   statement,
   handleStatement,
-  prevStatements,
+  context,
   addStatement,
   options,
 }: {
   statement: IStatement;
   handleStatement: (statement: IStatement, remove?: boolean) => void;
-  prevStatements: IStatement[];
   addStatement?: (statement: IStatement, position: "before" | "after") => void;
+  context: Context;
   options?: {
     enableVariable?: boolean;
     disableNameToggle?: boolean;
@@ -67,10 +67,10 @@ export function Statement({
   function addOperationCall() {
     const data = getStatementResult(statement);
     if (data.entityType !== "data") return;
-    const operation = createOperationCall({ data, prevStatements });
+    const operation = createOperationCall({ data, context });
     const operations = [...statement.operations, operation];
     handleStatement(
-      updateStatementMethods({ ...statement, operations }, prevStatements)
+      updateStatementMethods({ ...statement, operations }, context)
     );
     setUiConfig({ navigation: { id: operation.id, direction: "right" } });
   }
@@ -81,10 +81,7 @@ export function Statement({
       let operations = [...statement.operations];
       if (!isTypeCompatible(statement.data.type, data.type)) operations = [];
       handleStatement(
-        updateStatementMethods(
-          { ...statement, data, operations },
-          prevStatements
-        )
+        updateStatementMethods({ ...statement, data, operations }, context)
       );
     }
   }
@@ -95,7 +92,7 @@ export function Statement({
       handleStatement(
         updateStatementMethods(
           { ...statement, data: operation, operations: statement.operations },
-          prevStatements
+          context
         )
       );
   }
@@ -131,7 +128,7 @@ export function Statement({
       operations[index] = operation;
     }
     handleStatement(
-      updateStatementMethods({ ...statement, operations }, prevStatements)
+      updateStatementMethods({ ...statement, operations }, context)
     );
   }
 
@@ -152,7 +149,7 @@ export function Statement({
                 if (
                   [
                     ...Object.keys(DataTypes),
-                    ...prevStatements.map((s) => s.name),
+                    ...Object.keys(context.variables),
                     "operation",
                   ].includes(name)
                 ) {
@@ -192,7 +189,7 @@ export function Statement({
                       ? undefined
                       : createVariableName({
                           prefix: "var",
-                          prev: prevStatements,
+                          prev: Object.keys(context.variables),
                         }),
                   });
                   setUiConfig(() => ({
@@ -213,6 +210,8 @@ export function Statement({
                   closeDropdown();
                 }}
                 iconProps={{ title: "Add before" }}
+                className="bg-editor"
+                context={context}
               />
             </Popover.Dropdown>
           </Popover>
@@ -234,7 +233,7 @@ export function Statement({
               ? addOperationCall
               : undefined
           }
-          prevStatements={prevStatements}
+          context={context}
           handleChange={
             isDataOfType(statement.data, "operation")
               ? handelOperation
@@ -245,7 +244,7 @@ export function Statement({
           const data = getStatementResult(statement, i, true);
           if (data.entityType !== "data") return;
           return (
-            <div key={operation.id} className="flex items-start gap-1 ml-1">
+            <div key={operation.id} className="flex items-start gap-1 ml-2">
               <PipeArrow
                 size={10}
                 className="text-disabled mt-1.5"
@@ -259,7 +258,7 @@ export function Statement({
                 handleOperationCall={(op, remove) =>
                   handleOperationCall(op, i, remove)
                 }
-                prevStatements={prevStatements}
+                context={context}
                 addOperationCall={
                   !options?.disableMethods && i + 1 === operationsList.length
                     ? addOperationCall

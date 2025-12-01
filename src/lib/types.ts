@@ -89,3 +89,7 @@ export interface IDropdownItem {
   entityType: "data" | "method" | "operation";
   onClick?: () => void;
 }
+
+export type Context = {
+  variables: { [keys: string]: IStatement };
+};

@@ -1,16 +1,16 @@
 import { forwardRef, HTMLAttributes } from "react";
-import { ConditionType, IData, IStatement } from "../../lib/types";
+import { ConditionType, Context, IData, IStatement } from "../../lib/types";
 import { getConditionResult, getStatementResult } from "../../lib/utils";
 import { Statement } from "../Statement";
 
 export interface ConditionInputProps extends HTMLAttributes<HTMLDivElement> {
   data: IData<ConditionType>;
   handleData: (data: IData<ConditionType>) => void;
-  prevStatements: IStatement[];
+  context: Context;
 }
 
 export const ConditionInput = forwardRef<HTMLDivElement, ConditionInputProps>(
-  ({ data, handleData, prevStatements, ...props }, ref) => {
+  ({ data, handleData, context, ...props }, ref) => {
     function handleUpdate(
       key: "condition" | "true" | "false",
       val: IStatement
@@ -42,7 +42,7 @@ export const ConditionInput = forwardRef<HTMLDivElement, ConditionInputProps>(
         <Statement
           statement={data.value.condition}
           handleStatement={(val) => handleUpdate("condition", val)}
-          prevStatements={prevStatements}
+          context={context}
           options={{ disableDelete: true }}
         />
         <span>{"?"}</span>
@@ -50,13 +50,13 @@ export const ConditionInput = forwardRef<HTMLDivElement, ConditionInputProps>(
           statement={data.value.true}
           handleStatement={(val) => handleUpdate("true", val)}
           options={{ disableDelete: true }}
-          prevStatements={prevStatements}
+          context={context}
         />
         <span>{":"}</span>
         <Statement
           statement={data.value.false}
           handleStatement={(val) => handleUpdate("false", val)}
-          prevStatements={prevStatements}
+          context={context}
           options={{ disableDelete: true }}
         />
       </div>

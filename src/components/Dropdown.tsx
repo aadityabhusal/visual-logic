@@ -10,7 +10,7 @@ import {
 } from "react-icons/fa6";
 import { operationsStore, uiConfigStore } from "../lib/store";
 import { getHotkeyHandler, HotkeyItem, useHotkeys } from "@mantine/hooks";
-import { IData, IDropdownItem, IStatement } from "../lib/types";
+import { Context, IData, IDropdownItem, IStatement } from "../lib/types";
 import { useSearchParams } from "react-router";
 import { isDataOfType, isTextInput } from "../lib/utils";
 import { getNextIdAfterDelete, getOperationEntities } from "@/lib/navigation";
@@ -54,6 +54,7 @@ export function Dropdown({
   isInputTarget?: boolean;
   reference?: IData["reference"];
   target: (value: IDropdownTargetProps) => ReactNode;
+  context: Context;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const { highlightOperation, navigation, setUiConfig } = uiConfigStore();
