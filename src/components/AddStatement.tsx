@@ -34,7 +34,7 @@ export function AddStatement({
         onClick={() => {
           const data = createData({
             type: { kind: "undefined" },
-            isGeneric: true,
+            isTypeEditable: true,
           });
           setUiConfig({ navigation: { id: data.id } });
           onSelect(createStatement({ data }));

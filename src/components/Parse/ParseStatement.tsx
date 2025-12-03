@@ -13,7 +13,7 @@ export function ParseStatement({
   nest?: number;
 }) {
   if (showData) {
-    let result = getStatementResult(statement);
+    const result = getStatementResult(statement);
     return isDataOfType(result, "operation") ? (
       <ParseOperation operation={result} nest={nest + 1} />
     ) : (
@@ -21,7 +21,7 @@ export function ParseStatement({
     );
   }
 
-  let dataNode = isDataOfType(statement.data, "operation") ? (
+  const dataNode = isDataOfType(statement.data, "operation") ? (
     <ParseOperation operation={statement.data} nest={nest + 1} />
   ) : (
     <ParseData data={statement.data} showData={showData} nest={nest + 1} />

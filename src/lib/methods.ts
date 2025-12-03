@@ -8,9 +8,9 @@ import {
   ArrayType,
   NumberType,
   UnknownType,
-  ConditionType,
-  DataValue,
   Context,
+  BooleanType,
+  ObjectType,
 } from "./types";
 import {
   createData,
@@ -20,17 +20,134 @@ import {
   isDataOfType,
   isTypeCompatible,
 } from "./utils";
+import { executeOperation } from "./execution";
 
+export type Parameter = {
+  type: DataType;
+  name?: string;
+  isTypeEditable?: boolean;
+};
 export type OperationListItem = {
   name: string;
-  parameters: OperationType["parameters"];
-  result: DataType;
+  parameters: ((data: IData) => Parameter[]) | Parameter[];
+  result: ((data: IData) => DataType) | DataType;
+  isResultTypeFixed?: boolean; // Show error when type mismatches in the UI
 } & ( // eslint-disable-next-line @typescript-eslint/no-explicit-any
   | { handler: (...args: IData<any>[]) => IData }
   | { statements: IStatement[] }
 );
 
-export const builtInOperations: OperationListItem[] = [
+const unknownOperations: OperationListItem[] = [
+  {
+    name: "equals",
+    parameters: (data) => [
+      { type: { kind: "unknown" } },
+      { type: data.type, isTypeEditable: true },
+    ],
+    result: { kind: "boolean" },
+    handler: (data: IData, p1: IData) => {
+      return createData({
+        type: { kind: "boolean" },
+        value: JSON.stringify(data.value) === JSON.stringify(p1.value),
+      });
+    },
+  },
+  {
+    name: "toString",
+    parameters: [{ type: { kind: "unknown" } }],
+    result: { kind: "string" },
+    handler: (data: IData<StringType>) => {
+      return createData({
+        type: { kind: "string" },
+        value: String(data.value),
+      });
+    },
+  },
+  {
+    name: "typeof",
+    parameters: [
+      { type: { kind: "unknown" } },
+      { type: { kind: "undefined" }, isTypeEditable: true },
+    ],
+    result: { kind: "boolean" },
+    handler: (data: IData<UnknownType>, typeData: IData) => {
+      return createData({
+        type: { kind: "boolean" },
+        value: isTypeCompatible(data.type, typeData.type),
+      });
+    },
+  },
+];
+
+const undefinedOperations: OperationListItem[] = [
+  {
+    name: "getCurrentTime",
+    parameters: [{ type: { kind: "undefined" } }],
+    result: { kind: "string" },
+    handler: () => {
+      return createData({
+        type: { kind: "string" },
+        value: new Date().toISOString(),
+      });
+    },
+  },
+];
+
+const booleanOperations: OperationListItem[] = [
+  {
+    name: "and",
+    parameters: [
+      { type: { kind: "boolean" } },
+      { type: { kind: "undefined" }, isTypeEditable: true },
+    ],
+    result: { kind: "boolean" },
+    handler: (data: IData<BooleanType>, p1: IData) => {
+      return createData({
+        type: { kind: "boolean" },
+        value: Boolean(data.value) && Boolean(p1.value),
+      });
+    },
+  },
+  {
+    name: "or",
+    parameters: [
+      { type: { kind: "boolean" } },
+      { type: { kind: "undefined" }, isTypeEditable: true },
+    ],
+    result: { kind: "boolean" },
+    handler: (data: IData<UnknownType>, p1: IData) => {
+      return createData({
+        type: { kind: "boolean" },
+        value: Boolean(data.value) || Boolean(p1.value),
+      });
+    },
+  },
+  {
+    name: "not",
+    parameters: [{ type: { kind: "boolean" } }],
+    result: { kind: "boolean" },
+    handler: (data: IData<BooleanType>) => {
+      return createData({ type: { kind: "boolean" }, value: !data.value });
+    },
+  },
+  {
+    name: "thenElse",
+    parameters: [
+      { type: { kind: "boolean" } },
+      { type: { kind: "undefined" }, isTypeEditable: true },
+      { type: { kind: "undefined" }, isTypeEditable: true },
+    ],
+    result: { kind: "unknown" },
+    handler: (data: IData<BooleanType>, p1: IData, p2: IData) => {
+      return createData({
+        type: { kind: "unknown" },
+        value: data.value ? p1.value : p2.value,
+      });
+    },
+  },
+];
+
+const stringOperations: OperationListItem[] = [
   {
     name: "capitalize",
     parameters: [{ type: { kind: "string" } }],
@@ -55,6 +172,17 @@ export const builtInOperations: OperationListItem[] = [
     },
   },
   {
+    name: "includes",
+    parameters: [{ type: { kind: "string" } }, { type: { kind: "string" } }],
+    result: { kind: "boolean" },
+    handler: (data: IData<StringType>, p1: IData<StringType>) => {
+      return createData({
+        type: { kind: "boolean" },
+        value: data.value.includes(p1.value),
+      });
+    },
+  },
+  {
     name: "length",
     parameters: [{ type: { kind: "string" } }],
     result: { kind: "number" },
@@ -66,6 +194,43 @@ export const builtInOperations: OperationListItem[] = [
     },
   },
   {
+    name: "slice",
+    parameters: [
+      { type: { kind: "string" } },
+      { type: { kind: "number" } },
+      { type: { kind: "number" } },
+    ],
+    result: { kind: "string" },
+    handler: (
+      data: IData<StringType>,
+      p1: IData<NumberType>,
+      p2: IData<NumberType>
+    ) => {
+      return createData({
+        type: { kind: "string" },
+        value: data.value.slice(p1.value, p2.value),
+      });
+    },
+  },
+  {
+    name: "split",
+    parameters: [{ type: { kind: "string" } }, { type: { kind: "string" } }],
+    result: { kind: "array", elementType: { kind: "string" } },
+    handler: (data: IData<StringType>, p1: IData<StringType>) => {
+      return createData({
+        type: { kind: "array", elementType: { kind: "string" } },
+        value: data.value.split(p1.value).map((item) =>
+          createStatement({
+            data: createData({ type: { kind: "string" }, value: item }),
+          })
+        ),
+      });
+    },
+  },
+];
+
+const numberOperations: OperationListItem[] = [
+  {
     name: "add",
     parameters: [{ type: { kind: "number" } }, { type: { kind: "number" } }],
     result: { kind: "number" },
@@ -75,6 +240,89 @@ export const builtInOperations: OperationListItem[] = [
         value: data.value + p1.value,
       });
     },
+  },
+  {
+    name: "subtract",
+    parameters: [{ type: { kind: "number" } }, { type: { kind: "number" } }],
+    result: { kind: "number" },
+    handler: (data: IData<NumberType>, p1: IData<NumberType>) => {
+      return createData({
+        type: { kind: "number" },
+        value: data.value - p1.value,
+      });
+    },
+  },
+  {
+    name: "multiply",
+    parameters: [{ type: { kind: "number" } }, { type: { kind: "number" } }],
+    result: { kind: "number" },
+    handler: (data: IData<NumberType>, p1: IData<NumberType>) => {
+      return createData({
+        type: { kind: "number" },
+        value: data.value * p1.value,
+      });
+    },
+  },
+  {
+    name: "divide",
+    parameters: [{ type: { kind: "number" } }, { type: { kind: "number" } }],
+    result: { kind: "number" },
+    handler: (data: IData<NumberType>, p1: IData<NumberType>) => {
+      return createData({
+        type: { kind: "number" },
+        value: data.value / p1.value,
+      });
+    },
+  },
+  {
+    name: "power",
+    parameters: [{ type: { kind: "number" } }, { type: { kind: "number" } }],
+    result: { kind: "number" },
+    handler: (data: IData<NumberType>, p1: IData<NumberType>) => {
+      return createData({
+        type: { kind: "number" },
+        value: Math.pow(data.value, p1.value),
+      });
+    },
+  },
+  {
+    name: "mod",
+    parameters: [{ type: { kind: "number" } }, { type: { kind: "number" } }],
+    result: { kind: "number" },
+    handler: (data: IData<NumberType>, p1: IData<NumberType>) => {
+      return createData({
+        type: { kind: "number" },
+        value: data.value % p1.value,
+      });
+    },
+  },
+  {
+    name: "lt",
+    parameters: [{ type: { kind: "number" } }, { type: { kind: "number" } }],
+    result: { kind: "boolean" },
+    handler: (data: IData<NumberType>, p1: IData<typeof data.type>) =>
+      createData({ type: { kind: "boolean" }, value: data.value < p1.value }),
+  },
+  {
+    name: "lte",
+    parameters: [{ type: { kind: "number" } }, { type: { kind: "number" } }],
+    result: { kind: "boolean" },
+    handler: (data: IData<NumberType>, p1: IData<typeof data.type>) =>
+      createData({ type: { kind: "boolean" }, value: data.value <= p1.value }),
+  },
+  {
+    name: "gt",
+    parameters: [{ type: { kind: "number" } }, { type: { kind: "number" } }],
+    result: { kind: "boolean" },
+    handler: (data: IData<NumberType>, p1: IData<typeof data.type>) =>
+      createData({ type: { kind: "boolean" }, value: data.value > p1.value }),
+  },
+  {
+    name: "gte",
+    parameters: [{ type: { kind: "number" } }, { type: { kind: "number" } }],
+    result: { kind: "boolean" },
+    handler: (data: IData<NumberType>, p1: IData<typeof data.type>) =>
+      createData({ type: { kind: "boolean" }, value: data.value >= p1.value }),
   },
   {
     name: "range",
@@ -98,33 +346,84 @@ export const builtInOperations: OperationListItem[] = [
       });
     },
   },
+];
+
+export const arrayOperations: OperationListItem[] = [
   {
-    name: "find",
-    parameters: [
+    name: "at",
+    parameters: (data) => [
       {
         type: {
           kind: "array",
-          elementType: {
-            kind: "union",
-            types: [{ kind: "string" }, { kind: "undefined" }],
+          elementType: (data.type as ArrayType).elementType ?? {
+            kind: "undefined",
           },
         },
       },
-      {
-        type: {
-          kind: "operation",
-          parameters: [
-            { name: "item", type: { kind: "string" } },
-            { name: "index", type: { kind: "number" } },
-            {
-              name: "arr",
-              type: { kind: "array", elementType: { kind: "string" } },
-            },
-          ],
-          result: { kind: "string" },
-        },
-      },
+      { type: { kind: "number" } },
     ],
+    result: (data) => (data.type as ArrayType).elementType,
+    handler: (data: IData<ArrayType>, p1: IData<NumberType>) => {
+      const item = data.value.at(p1.value);
+      if (!item) return createData({ type: { kind: "undefined" } });
+      const value = getStatementResult(item) as IData;
+      return createData({ type: value.type, value: value.value });
+    },
+  },
+  {
+    name: "map",
+    parameters: (data) => {
+      const elementType = (data.type as ArrayType).elementType ?? {
+        kind: "undefined",
+      };
+      return [
+        { type: { kind: "array", elementType } },
+        {
+          type: {
+            kind: "operation",
+            parameters: [
+              { name: "item", type: elementType },
+              { name: "index", type: { kind: "number" } },
+              { name: "arr", type: { kind: "array", elementType } },
+            ],
+            result: { kind: "string" },
+          },
+        },
+      ];
+    },
+    result: (data) => data.type,
+    handler: (data: IData<ArrayType>, operation: IData<OperationType>) => {
+      const value = mapArrayParameters(data, operation);
+      return createData({
+        type: {
+          kind: "array",
+          elementType: { kind: "union", types: value.map((item) => item.type) },
+        },
+        value: value.map((data) => createStatement({ data })),
+      });
+    },
+  },
+  {
+    name: "find",
+    parameters: (data) => {
+      const elementType = (data.type as ArrayType).elementType ?? {
+        kind: "undefined",
+      };
+      return [
+        { type: { kind: "array", elementType } },
+        {
+          type: {
+            kind: "operation",
+            parameters: [
+              { name: "item", type: elementType },
+              { name: "index", type: { kind: "number" } },
+              { name: "arr", type: { kind: "array", elementType } },
+            ],
+            result: { kind: "string" },
+          },
+        },
+      ];
+    },
     result: { kind: "string" },
     handler: (data: IData<ArrayType>, operation: IData<OperationType>) => {
       const value = mapArrayParameters(data, operation);
@@ -138,28 +437,110 @@ export const builtInOperations: OperationListItem[] = [
       });
     },
   },
+];
+
+export const objectOperations: OperationListItem[] = [
   {
-    name: "getCurrentTime",
-    parameters: [],
-    result: { kind: "string" },
-    handler: () => {
-      return createData({
-        type: { kind: "string" },
-        value: new Date().toISOString(),
-      });
+    name: "get",
+    parameters: (data) => [
+      {
+        type: {
+          kind: "object",
+          properties: (data.type as ObjectType).properties ?? {},
+        },
+      },
+      { type: { kind: "string" } },
+    ],
+    result: { kind: "undefined" },
+    handler(data: IData<ObjectType>, p1: IData<StringType>) {
+      const item = data.value.get(p1.value);
+      if (!item) return createData({ type: { kind: "undefined" } });
+      const value = getStatementResult(item) as IData;
+      return createData({ type: value.type, value: value.value });
     },
   },
   {
-    name: "equals",
-    parameters: [{ type: { kind: "unknown" } }, { type: { kind: "unknown" } }],
+    name: "has",
+    parameters: (data) => [
+      {
+        type: {
+          kind: "object",
+          properties: (data.type as ObjectType).properties ?? {},
+        },
+      },
+      { type: { kind: "string" } },
+    ],
     result: { kind: "boolean" },
-    handler: (data: IData<UnknownType>, p1: IData<UnknownType>) => {
+    handler(data: IData<ObjectType>, p1: IData<StringType>) {
       return createData({
         type: { kind: "boolean" },
-        value: JSON.stringify(data.value) === JSON.stringify(p1.value),
+        value: data.value.has(p1.value),
       });
     },
   },
+  {
+    name: "keys",
+    parameters: (data) => [
+      {
+        type: {
+          kind: "object",
+          properties: (data.type as ObjectType).properties ?? {},
+        },
+      },
+    ],
+    result: { kind: "array", elementType: { kind: "string" } },
+    handler(data: IData<ObjectType>) {
+      return createData({
+        type: { kind: "array", elementType: { kind: "string" } },
+        value: [...data.value.keys()].map((item) =>
+          createStatement({
+            data: createData({ type: { kind: "string" }, value: item }),
+          })
+        ),
+      });
+    },
+  },
+  {
+    name: "values",
+    parameters: (data) => [
+      {
+        type: {
+          kind: "object",
+          properties: (data.type as ObjectType).properties ?? {},
+        },
+      },
+    ],
+    result: { kind: "undefined" },
+    handler(data: IData<ObjectType>) {
+      return createData({
+        type: {
+          kind: "array",
+          elementType: {
+            kind: "union",
+            types: Object.values(data.type.properties),
+          },
+        },
+        value: [...data.value.values()].map((item) => {
+          const itemResult = getStatementResult(item) as IData;
+          return createStatement({
+            data: createData({
+              type: itemResult.type,
+              value: itemResult.value,
+            }),
+          });
+        }),
+      });
+    },
+  },
+];
+
+export const builtInOperations: OperationListItem[] = [
+  ...undefinedOperations,
+  ...stringOperations,
+  ...numberOperations,
+  ...booleanOperations,
+  ...arrayOperations,
+  ...unknownOperations,
 ];
 
 function mapArrayParameters(
@@ -191,126 +572,12 @@ function mapArrayParameters(
   });
 }
 
-type ExecutionContext = {
-  parameters: Map<string, IData>;
-  statements: Map<string, IData>;
-};
-
-function buildExecutionContext(
-  operation: OperationListItem,
-  data: IData,
-  parameters: IData[]
-): ExecutionContext {
-  const context = { parameters: new Map(), statements: new Map() };
-
-  // Map first parameter to the data being operated on
-  if (operation.parameters[0]?.name) {
-    context.parameters.set(operation.parameters[0].name, data);
-  }
-
-  // Map remaining parameters to provided arguments
-  operation.parameters.slice(1).forEach((param, index) => {
-    if (param.name && parameters[index]) {
-      context.parameters.set(param.name, parameters[index]);
-    }
-  });
-
-  return context;
-}
-
-function executeCondition(
-  condition: DataValue<ConditionType>,
-  context: ExecutionContext
-): IData {
-  const conditionResult = executeStatement(condition.condition, context);
-  const conditionValue = conditionResult.value;
-
-  const isTrue =
-    conditionValue === true ||
-    (typeof conditionValue === "string" && conditionValue.length > 0) ||
-    (typeof conditionValue === "number" && conditionValue !== 0);
-
-  return executeStatement(isTrue ? condition.true : condition.false, context);
-}
-
-function executeStatement(
-  statement: IStatement,
-  context: ExecutionContext
-): IData {
-  // Resolve base data (parameter reference, statement reference, or direct data)
-  let currentData = statement.data;
-
-  if (statement.data.reference?.name) {
-    const refName = statement.data.reference.name;
-    currentData =
-      context.parameters.get(refName) ||
-      context.statements.get(refName) ||
-      statement.data;
-  }
-
-  if (isDataOfType(currentData, "condition")) {
-    currentData = executeCondition(currentData.value, context);
-  }
-
-  // Apply operation chain to the resolved data
-  let result = currentData;
-
-  for (const operation of statement.operations) {
-    // Resolve operation parameters from context
-    const resolvedParams = operation.value.parameters.map((param) => {
-      if (param.data.reference?.name) {
-        return (
-          context.parameters.get(param.data.reference.name) ||
-          context.statements.get(param.data.reference.name) ||
-          getStatementResult(param)
-        );
-      }
-      return getStatementResult(param);
-    });
-
-    // Execute the operation
-    const foundOp = builtInOperations.find(
-      (op) => op.name === operation.value.name
-    );
-
-    if (foundOp && "handler" in foundOp) {
-      result = foundOp.handler(result, ...resolvedParams);
-    } else if (operation.value.result) {
-      result = operation.value.result;
-    }
-  }
-
-  return result;
-}
-
-export function executeOperation(
-  operation: OperationListItem,
-  data: IData,
-  parameters: IData[]
-): IData {
-  if ("handler" in operation) return operation.handler(data, ...parameters);
-
-  if ("statements" in operation && operation.statements.length > 0) {
-    const context = buildExecutionContext(operation, data, parameters);
-    let lastResult: IData = createData({ type: { kind: "undefined" } });
-
-    for (const statement of operation.statements) {
-      lastResult = executeStatement(statement, context);
-      if (statement.name) context.statements.set(statement.name, lastResult);
-    }
-
-    return lastResult;
-  }
-
-  return createData({ type: { kind: "undefined" } });
-}
-
-function createParamData(
-  item: OperationListItem["parameters"][0],
-  data: IData
-): IStatement["data"] {
+function createParamData(item: Parameter, data: IData): IStatement["data"] {
   if (item.type.kind !== "operation") {
-    return createData({ type: item.type || data.type, isGeneric: false });
+    return createData({
+      type: item.type || data.type,
+      isTypeEditable: item.isTypeEditable,
+    });
   }
 
   const parameters = item.type.parameters.reduce((prev, paramSpec) => {
@@ -334,12 +601,16 @@ function createParamData(
 }
 
 export function getFilteredOperations(data: IData, context: Context) {
-  const builtInOps = builtInOperations.filter((operation) =>
-    isTypeCompatible(
-      operation.parameters[0]?.type || { kind: "undefined" },
-      data.type
-    )
-  );
+  const builtInOps = builtInOperations.filter((operation) => {
+    const parameters =
+      typeof operation.parameters === "function"
+        ? operation.parameters(data)
+        : operation.parameters;
+    const firstParam = parameters[0]?.type ?? { kind: "undefined" };
+    return (
+      data.type.kind === "unknown" || isTypeCompatible(firstParam, data.type)
+    );
+  });
 
   const userDefinedOps = Object.values(context.variables)
     .filter(
@@ -380,8 +651,11 @@ export function createOperationCall({
     (operation) => operation.name === name
   );
   const newOperation = operationByName || operations[0];
-
-  const newParameters = newOperation.parameters.slice(1).map((item, index) => {
+  const operataionParameters =
+    typeof newOperation.parameters === "function"
+      ? newOperation.parameters(data)
+      : newOperation.parameters;
+  const newParameters = operataionParameters.slice(1).map((item, index) => {
     const newParam = createStatement({ data: createParamData(item, data) });
     const prevParam = parameters?.[index];
     if (
@@ -404,14 +678,14 @@ export function createOperationCall({
     entityType: "data",
     type: {
       kind: "operation",
-      parameters: newOperation.parameters,
-      result: newOperation.result,
+      parameters: operataionParameters,
+      result: result.type,
     },
     value: {
       name: newOperation.name,
       parameters: newParameters,
       statements: [],
-      result: { ...result, isGeneric: data.isGeneric },
+      result: { ...result, isTypeEditable: data.isTypeEditable },
     },
   };
 }

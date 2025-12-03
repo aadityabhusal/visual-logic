@@ -1,4 +1,5 @@
-import { getFilteredOperations, executeOperation } from "./methods";
+import { executeOperation } from "./execution";
+import { getFilteredOperations } from "./methods";
 import { IStatement, IData, OperationType, Context } from "./types";
 import {
   createData,
@@ -11,7 +12,7 @@ import {
   getConditionResult,
 } from "./utils";
 
-export function updateStatementMethods(
+export function updateOperationCalls(
   statement: IStatement,
   context: Context
 ): IStatement {
@@ -39,7 +40,7 @@ export function updateStatementMethods(
         ? {
             ...executeOperation(foundOperation, data, parameters),
             ...(currentResult && { id: currentResult?.id }),
-            isGeneric: data.isGeneric,
+            isGeneric: data.isTypeEditable,
           }
         : currentResult;
 
@@ -71,7 +72,7 @@ function getReferenceData(
 
   const { id: _id, ...newData } = createData({
     type: data.type,
-    isGeneric: data.isGeneric,
+    isTypeEditable: data.isTypeEditable,
   });
 
   return {
@@ -176,7 +177,7 @@ export function getReferenceOperation(
       }
       return updateStatements({ statements: [argument], context })[0];
     }
-    return { ...parameter, data: { ...parameter.data, isGeneric: false } };
+    return { ...parameter, data: { ...parameter.data, isTypeEditable: false } };
   });
 
   const updatedStatements = updateStatements({
@@ -282,7 +283,7 @@ export function updateStatements({
     };
     return [
       ...prevStatements,
-      updateStatementMethods(
+      updateOperationCalls(
         updateStatementReference(currentStatement, _context),
         _context
       ),

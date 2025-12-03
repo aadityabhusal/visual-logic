@@ -42,10 +42,16 @@ export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
             id: `${data.id}_data`,
             type: data.type.types[activeTypeIndex],
             value: data.value,
-            isGeneric: data.isGeneric,
+            isTypeEditable: data.isTypeEditable,
           }),
         }),
-      [data.id, data.type.types, data.value, data.isGeneric, activeTypeIndex]
+      [
+        data.id,
+        data.type.types,
+        data.value,
+        data.isTypeEditable,
+        activeTypeIndex,
+      ]
     );
 
     function handleTypeAdd(newType: DataType) {
@@ -111,7 +117,7 @@ export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
           }}
           context={context}
           // TODO: disableDelete is hiding parameters for operation in union type
-          options={{ disableMethods: true }}
+          options={{ disableOperationCall: true }}
         />
         <Menu
           width={200}
@@ -175,44 +181,46 @@ export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
                 </Tooltip>
               </Menu.Item>
             ))}
-            <Menu.Sub>
-              <Menu.Sub.Target>
-                <Menu.Sub.Item
-                  classNames={{
-                    item: [
-                      "flex items-center justify-between",
-                      menuItemClassNames,
-                    ].join(" "),
-                    itemSection: "size-4 -rotate-90",
-                  }}
-                >
-                  Add
-                </Menu.Sub.Item>
-              </Menu.Sub.Target>
-              <Menu.Sub.Dropdown classNames={{ dropdown: "flex flex-col" }}>
-                {Object.entries(DataTypes)
-                  .filter(
-                    ([type, value]) =>
-                      !value.hideFromDropdown &&
-                      !["union"].includes(type) &&
-                      // This is only for default types, if user updates a complex type, the default type options will be shown
-                      !data.type.types.some((t) =>
-                        isTypeCompatible(t, value.type)
-                      )
-                  )
-                  .map(([name, { type }]) => (
-                    <Menu.Item
-                      classNames={{
-                        item: ["text-left", menuItemClassNames].join(" "),
-                      }}
-                      key={name}
-                      onClick={() => handleTypeAdd(type)}
-                    >
-                      {name}
-                    </Menu.Item>
-                  ))}
-              </Menu.Sub.Dropdown>
-            </Menu.Sub>
+            {data.isTypeEditable ? (
+              <Menu.Sub>
+                <Menu.Sub.Target>
+                  <Menu.Sub.Item
+                    classNames={{
+                      item: [
+                        "flex items-center justify-between",
+                        menuItemClassNames,
+                      ].join(" "),
+                      itemSection: "size-4 -rotate-90",
+                    }}
+                  >
+                    Add
+                  </Menu.Sub.Item>
+                </Menu.Sub.Target>
+                <Menu.Sub.Dropdown classNames={{ dropdown: "flex flex-col" }}>
+                  {Object.entries(DataTypes)
+                    .filter(
+                      ([type, value]) =>
+                        !value.hideFromDropdown &&
+                        !["union"].includes(type) &&
+                        // This is only for default types, if user updates a complex type, the default type options will be shown
+                        !data.type.types.some((t) =>
+                          isTypeCompatible(t, value.type)
+                        )
+                    )
+                    .map(([name, { type }]) => (
+                      <Menu.Item
+                        classNames={{
+                          item: ["text-left", menuItemClassNames].join(" "),
+                        }}
+                        key={name}
+                        onClick={() => handleTypeAdd(type)}
+                      >
+                        {name}
+                      </Menu.Item>
+                    ))}
+                </Menu.Sub.Dropdown>
+              </Menu.Sub>
+            ) : null}
           </Menu.Dropdown>
         </Menu>
       </div>

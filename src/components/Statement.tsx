@@ -1,6 +1,6 @@
 import { FaArrowRightLong, FaArrowTurnUp, FaEquals } from "react-icons/fa6";
 import { Context, IData, IStatement, OperationType } from "../lib/types";
-import { updateStatementMethods } from "../lib/update";
+import { updateOperationCalls } from "../lib/update";
 import {
   isTypeCompatible,
   getStatementResult,
@@ -35,7 +35,7 @@ export function Statement({
     enableVariable?: boolean;
     disableNameToggle?: boolean;
     disableDelete?: boolean;
-    disableMethods?: boolean;
+    disableOperationCall?: boolean;
   };
 }) {
   const hasName = statement.name !== undefined;
@@ -70,7 +70,7 @@ export function Statement({
     const operation = createOperationCall({ data, context });
     const operations = [...statement.operations, operation];
     handleStatement(
-      updateStatementMethods({ ...statement, operations }, context)
+      updateOperationCalls({ ...statement, operations }, context)
     );
     setUiConfig({ navigation: { id: operation.id, direction: "right" } });
   }
@@ -81,7 +81,7 @@ export function Statement({
       let operations = [...statement.operations];
       if (!isTypeCompatible(statement.data.type, data.type)) operations = [];
       handleStatement(
-        updateStatementMethods({ ...statement, data, operations }, context)
+        updateOperationCalls({ ...statement, data, operations }, context)
       );
     }
   }
@@ -90,7 +90,7 @@ export function Statement({
     if (remove) handleStatement(statement, remove);
     else
       handleStatement(
-        updateStatementMethods(
+        updateOperationCalls(
           { ...statement, data: operation, operations: statement.operations },
           context
         )
@@ -128,7 +128,7 @@ export function Statement({
       operations[index] = operation;
     }
     handleStatement(
-      updateStatementMethods({ ...statement, operations }, context)
+      updateOperationCalls({ ...statement, operations }, context)
     );
   }
 
@@ -227,7 +227,7 @@ export function Statement({
           data={statement.data}
           disableDelete={options?.disableDelete}
           addOperationCall={
-            !options?.disableMethods &&
+            !options?.disableOperationCall &&
             statement.operations.length === 0 &&
             !isDataOfType(statement.data, "operation")
               ? addOperationCall
@@ -260,7 +260,8 @@ export function Statement({
                 }
                 context={context}
                 addOperationCall={
-                  !options?.disableMethods && i + 1 === operationsList.length
+                  !options?.disableOperationCall &&
+                  i + 1 === operationsList.length
                     ? addOperationCall
                     : undefined
                 }

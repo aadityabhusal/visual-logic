@@ -11,7 +11,7 @@ export type ObjectType = {
 export type UnionType = { kind: "union"; types: DataType[] };
 export type OperationType = {
   kind: "operation";
-  parameters: { name?: string; type: DataType }[];
+  parameters: { type: DataType; name?: string }[];
   result: DataType;
 };
 export type ConditionType = { kind: "condition"; type: UnionType };
@@ -70,7 +70,7 @@ export interface IData<T extends DataType = DataType> {
   entityType: "data";
   type: T;
   value: DataValue<T>;
-  isGeneric?: boolean;
+  isTypeEditable?: boolean;
   reference?: { id: string; name: string };
 }
 
@@ -86,7 +86,7 @@ export interface IDropdownItem {
   label?: string;
   secondaryLabel?: string;
   value: string;
-  entityType: "data" | "method" | "operation";
+  entityType: "data" | "operationCall";
   onClick?: () => void;
 }
 

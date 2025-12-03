@@ -204,7 +204,7 @@ export const IDropdownItemSchema: z.ZodType<IDropdownItem> = z.object({
   label: z.string().optional(),
   secondaryLabel: z.string().optional(),
   value: z.string(),
-  entityType: z.enum(["data", "method", "operation"]),
+  entityType: z.enum(["data", "operationCall"]),
   onClick: z.function().optional(),
 });
 

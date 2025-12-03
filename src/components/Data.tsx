@@ -136,7 +136,7 @@ export function Data({
             type="text"
             className="text-border"
             value={data.value?.toString() || ""}
-            disabled={!data.isGeneric}
+            disabled={!data.isTypeEditable}
             onChange={(_val) => {
               const transform = isNumberLike(_val)
                 ? { type: "number", value: Number(_val.slice(0, 16)) }

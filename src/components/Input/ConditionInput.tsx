@@ -1,6 +1,11 @@
 import { forwardRef, HTMLAttributes } from "react";
 import { ConditionType, Context, IData, IStatement } from "../../lib/types";
-import { getConditionResult, getStatementResult } from "../../lib/utils";
+import {
+  getConditionResult,
+  getStatementResult,
+  detectTypeof,
+  narrowUIContext,
+} from "../../lib/utils";
 import { Statement } from "../Statement";
 
 export interface ConditionInputProps extends HTMLAttributes<HTMLDivElement> {
@@ -29,6 +34,7 @@ export const ConditionInput = forwardRef<HTMLDivElement, ConditionInputProps>(
         value: { ...value, result: getConditionResult(value) },
       });
     }
+    const typeChecks = detectTypeof(data.value.condition);
 
     return (
       <div
@@ -50,13 +56,21 @@ export const ConditionInput = forwardRef<HTMLDivElement, ConditionInputProps>(
           statement={data.value.true}
           handleStatement={(val) => handleUpdate("true", val)}
           options={{ disableDelete: true }}
-          context={context}
+          context={
+            typeChecks.length > 0
+              ? narrowUIContext(context, typeChecks, true)
+              : context
+          }
         />
         <span>{":"}</span>
         <Statement
           statement={data.value.false}
           handleStatement={(val) => handleUpdate("false", val)}
-          context={context}
+          context={
+            typeChecks.length > 0
+              ? narrowUIContext(context, typeChecks, false)
+              : context
+          }
           options={{ disableDelete: true }}
         />
       </div>

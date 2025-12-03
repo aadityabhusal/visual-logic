@@ -109,6 +109,7 @@ export function Dropdown({
   function handleSearch(val: string) {
     if (!combobox.dropdownOpened) combobox.openDropdown();
     setSearch(val);
+    setUiConfig({ result });
   }
 
   useHotkeys(
@@ -163,12 +164,15 @@ export function Dropdown({
   }, [combobox.dropdownOpened]);
 
   useEffect(() => {
-    if (isFocused && combobox.targetRef.current instanceof HTMLInputElement) {
+    if (!isFocused) return;
+    if (combobox.targetRef.current instanceof HTMLInputElement) {
       combobox.targetRef.current.focus();
+    } else {
+      setUiConfig({ result });
     }
 
     const textInput = isTextInput(combobox.targetRef.current);
-    if (isFocused && textInput && textInput !== document.activeElement) {
+    if (textInput && textInput !== document.activeElement) {
       let caretPosition = 0;
       if (
         (navigation.direction === "right" && navigation.modifier) ||
@@ -178,7 +182,7 @@ export function Dropdown({
       }
       textInput.setSelectionRange(caretPosition, caretPosition);
     }
-  }, [isFocused, combobox.targetRef, navigation]);
+  }, [isFocused, combobox.targetRef, navigation, setUiConfig, result]);
 
   return (
     <Combobox
@@ -266,7 +270,7 @@ export function Dropdown({
           {addOperationCall && (
             <IconButton
               size={12}
-              title="Add method"
+              title="Add operation call"
               className="absolute top-1.5 -right-2 text-border bg-white rounded-full z-10"
               icon={FaCirclePlus}
               onClick={() => {

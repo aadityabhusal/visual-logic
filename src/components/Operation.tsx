@@ -115,7 +115,7 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
                 options={{
                   enableVariable: true,
                   disableDelete: options?.disableDelete,
-                  disableMethods: true,
+                  disableOperationCall: true,
                   disableNameToggle: true,
                 }}
                 context={{ variables: {}, narrowing: context.narrowing }}

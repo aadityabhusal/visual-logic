@@ -4,8 +4,8 @@ import { Dropdown } from "./Dropdown";
 import {
   createOperationCall as createOperationCall,
   getFilteredOperations,
-  executeOperation,
 } from "../lib/methods";
+import { executeOperation } from "@/lib/execution";
 import { getStatementResult } from "../lib/utils";
 import { BaseInput } from "./Input/BaseInput";
 
@@ -69,7 +69,7 @@ export function OperationCall({
         result: result && {
           ...result,
           id: (operation.value.result || result).id,
-          isGeneric: data.isGeneric,
+          isTypeEditable: data.isTypeEditable,
         },
       },
     });
@@ -83,7 +83,7 @@ export function OperationCall({
         label: item.name,
         value: item.name,
         color: "method",
-        entityType: "method",
+        entityType: "operationCall",
         onClick: () => handleDropdown(item.name),
       }))}
       context={context}

@@ -9,6 +9,7 @@ import {
   OperationType,
   ConditionType,
   Context,
+  ExecutionContext,
 } from "./types";
 
 export function createData<T extends DataType>(
@@ -20,14 +21,15 @@ export function createData<T extends DataType>(
     entityType: "data",
     type,
     value: props.value ?? createDefaultValue(type),
-    isGeneric: props.isGeneric,
+    isTypeEditable: props.isTypeEditable,
     reference: props.reference,
   };
 }
 
 export function createStatement(props?: Partial<IStatement>): IStatement {
   const newData =
-    props?.data || createData({ type: { kind: "undefined" }, isGeneric: true });
+    props?.data ||
+    createData({ type: { kind: "undefined" }, isTypeEditable: true });
   const newId = props?.id || nanoid();
   return {
     id: newId,
@@ -224,12 +226,9 @@ export function getStatementResult(
 
 export function getConditionResult(condition: DataValue<ConditionType>): IData {
   const conditionResult = getStatementResult(condition.condition);
-  const conditionValue = conditionResult.value;
-  const isTrue =
-    conditionValue === true ||
-    (typeof conditionValue === "string" && conditionValue.length > 0) ||
-    (typeof conditionValue === "number" && conditionValue !== 0);
-  return getStatementResult(isTrue ? condition.true : condition.false);
+  return getStatementResult(
+    conditionResult.value ? condition.true : condition.false
+  );
 }
 
 export function resetParameters(
@@ -238,7 +237,7 @@ export function resetParameters(
 ): IStatement[] {
   return parameters.map((param) => {
     const argData = argumentList?.find((item) => item.id === param.id)?.data;
-    let paramData = { ...param.data, isGeneric: argData?.isGeneric } as IData;
+    let paramData = { ...param.data, isTypeEditable: argData?.isTypeEditable };
     if (isDataOfType(paramData, "operation")) {
       const argParams = isDataOfType(argData, "operation")
         ? argData.value.parameters
@@ -351,7 +350,7 @@ export function getDataDropdownList({
     onSelect({
       ...dataOption,
       id: data.id,
-      isGeneric: data.isGeneric,
+      isTypeEditable: data.isTypeEditable,
       reference: reference.name
         ? { id: reference.id, name: reference.name }
         : undefined,
@@ -362,7 +361,7 @@ export function getDataDropdownList({
     ...(Object.keys(DataTypes) as DataType["kind"][]).reduce((acc, kind) => {
       if (DataTypes[kind].hideFromDropdown) return acc;
       if (
-        data.isGeneric ||
+        data.isTypeEditable ||
         (data.reference && kind === (data as IData).type.kind)
       ) {
         acc.push({
@@ -373,7 +372,7 @@ export function getDataDropdownList({
               createData({
                 id: data.id,
                 type: DataTypes[kind].type,
-                isGeneric: data.isGeneric,
+                isTypeEditable: data.isTypeEditable,
               })
             );
           },
@@ -384,7 +383,7 @@ export function getDataDropdownList({
     ...Object.values(context.variables).flatMap((statement) => {
       const result = getStatementResult(statement);
       if (
-        (!data.isGeneric && !isTypeCompatible(result.type, data.type)) ||
+        (!data.isTypeEditable && !isTypeCompatible(result.type, data.type)) ||
         !statement.name
       )
         return [];
@@ -401,7 +400,7 @@ export function getDataDropdownList({
 
 function createStatementFromType(type: DataType, name?: string) {
   const value = createDefaultValue(type);
-  const data = createData({ type, value, isGeneric: true });
+  const data = createData({ type, value, isTypeEditable: true });
   return createStatement({ data, name });
 }
 
@@ -459,7 +458,7 @@ export function createDefaultValue<T extends DataType>(type: T): DataValue<T> {
         data: createData({
           type: { kind: "undefined" },
           value: undefined,
-          isGeneric: true,
+          isTypeEditable: true,
         }),
       });
 
