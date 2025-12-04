@@ -45,7 +45,7 @@ function App() {
     [operations, searchParams]
   );
 
-  useHotkeys(useCustomHotkeys());
+  useHotkeys(useCustomHotkeys(), []);
 
   useEffect(() => {
     if (currentOperation) {

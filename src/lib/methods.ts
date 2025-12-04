@@ -40,10 +40,7 @@ export type OperationListItem = {
 const unknownOperations: OperationListItem[] = [
   {
     name: "equals",
-    parameters: (data) => [
-      { type: { kind: "unknown" } },
-      { type: data.type, isTypeEditable: true },
-    ],
+    parameters: (data) => [{ type: { kind: "unknown" } }, { type: data.type }],
     result: { kind: "boolean" },
     handler: (data: IData, p1: IData) => {
       return createData({
@@ -534,12 +531,43 @@ export const objectOperations: OperationListItem[] = [
   },
 ];
 
+const operationOperations: OperationListItem[] = [
+  {
+    name: "call",
+    parameters: (data) => [
+      {
+        type: {
+          kind: "operation",
+          parameters: [{ type: { kind: "string" } }],
+          result: { kind: "string" },
+        },
+      },
+      ...(isDataOfType(data, "operation") ? data.type.parameters : []),
+    ],
+    result: { kind: "undefined" },
+    handler: (data: IData<OperationType>, ...p: IData[]) => {
+      return executeOperation(
+        {
+          name: "call",
+          parameters: data.type.parameters,
+          statements: data.value.statements,
+          result: data.type.result,
+        },
+        p[0],
+        p.slice(1)
+      );
+    },
+  },
+];
+
 export const builtInOperations: OperationListItem[] = [
   ...undefinedOperations,
   ...stringOperations,
   ...numberOperations,
   ...booleanOperations,
   ...arrayOperations,
+  ...objectOperations,
+  ...operationOperations,
   ...unknownOperations,
 ];
 
@@ -602,13 +630,10 @@ function createParamData(item: Parameter, data: IData): IStatement["data"] {
 
 export function getFilteredOperations(data: IData, context: Context) {
   const builtInOps = builtInOperations.filter((operation) => {
-    const parameters =
-      typeof operation.parameters === "function"
-        ? operation.parameters(data)
-        : operation.parameters;
-    const firstParam = parameters[0]?.type ?? { kind: "undefined" };
+    const operationParameters = getOperationListItemParameters(operation, data);
+    const firstParam = operationParameters[0]?.type ?? { kind: "undefined" };
     return (
-      data.type.kind === "unknown" || isTypeCompatible(firstParam, data.type)
+      firstParam.kind === "unknown" || isTypeCompatible(firstParam, data.type)
     );
   });
 
@@ -651,10 +676,10 @@ export function createOperationCall({
     (operation) => operation.name === name
   );
   const newOperation = operationByName || operations[0];
-  const operataionParameters =
-    typeof newOperation.parameters === "function"
-      ? newOperation.parameters(data)
-      : newOperation.parameters;
+  const operataionParameters = getOperationListItemParameters(
+    newOperation,
+    data
+  );
   const newParameters = operataionParameters.slice(1).map((item, index) => {
     const newParam = createStatement({ data: createParamData(item, data) });
     const prevParam = parameters?.[index];
@@ -688,4 +713,13 @@ export function createOperationCall({
       result: { ...result, isTypeEditable: data.isTypeEditable },
     },
   };
+}
+
+export function getOperationListItemParameters(
+  operationListItem: OperationListItem,
+  data: IData
+) {
+  return typeof operationListItem.parameters === "function"
+    ? operationListItem.parameters(data)
+    : operationListItem.parameters;
 }

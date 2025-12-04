@@ -14,7 +14,6 @@ import { Context, IData, IDropdownItem, IStatement } from "../lib/types";
 import { useSearchParams } from "react-router";
 import { isDataOfType, isTextInput } from "../lib/utils";
 import { getNextIdAfterDelete, getOperationEntities } from "@/lib/navigation";
-import { useCustomHotkeys } from "@/hooks/useNavigation";
 
 export interface IDropdownTargetProps
   extends Omit<HTMLAttributes<HTMLElement>, "onChange" | "defaultValue"> {
@@ -79,7 +78,6 @@ export function Dropdown({
       });
     },
   });
-  const customHotKeys = useCustomHotkeys();
 
   const dropdownOptions = useMemo(
     () =>
@@ -226,7 +224,6 @@ export function Dropdown({
                     onBlur: () => combobox?.closeDropdown(),
                     onKeyDown: getHotkeyHandler([
                       ["ctrl+space", () => combobox.openDropdown()],
-                      ...customHotKeys,
                       ...(hotkeys ?? []),
                     ]),
                   }

@@ -1,10 +1,7 @@
 import { Context, IData, IStatement, OperationType } from "../lib/types";
 import { Statement } from "./Statement";
 import { Dropdown } from "./Dropdown";
-import {
-  createOperationCall as createOperationCall,
-  getFilteredOperations,
-} from "../lib/methods";
+import { createOperationCall, getFilteredOperations } from "../lib/methods";
 import { executeOperation } from "@/lib/execution";
 import { getStatementResult } from "../lib/utils";
 import { BaseInput } from "./Input/BaseInput";

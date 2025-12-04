@@ -1,4 +1,8 @@
-import { builtInOperations, OperationListItem } from "./methods";
+import {
+  builtInOperations,
+  getOperationListItemParameters,
+  OperationListItem,
+} from "./methods";
 import {
   IData,
   IStatement,
@@ -6,13 +10,7 @@ import {
   DataValue,
   ExecutionContext,
 } from "./types";
-import {
-  createData,
-  getStatementResult,
-  isDataOfType,
-  detectTypeof,
-  narrowExecutionContext,
-} from "./utils";
+import { createData, getStatementResult, isDataOfType } from "./utils";
 
 function buildExecutionContext(
   operation: OperationListItem,
@@ -20,14 +18,17 @@ function buildExecutionContext(
   parameters: IData[]
 ): ExecutionContext {
   const context = { parameters: new Map(), statements: new Map() };
-
+  const operationListItemParams = getOperationListItemParameters(
+    operation,
+    data
+  );
   // Map first parameter to the data being operated on
-  if (operation.parameters[0]?.name) {
-    context.parameters.set(operation.parameters[0].name, data);
+  if (operationListItemParams[0]?.name) {
+    context.parameters.set(operationListItemParams[0].name, data);
   }
 
   // Map remaining parameters to provided arguments
-  operation.parameters.slice(1).forEach((param, index) => {
+  operationListItemParams.slice(1).forEach((param, index) => {
     if (param.name && parameters[index]) {
       context.parameters.set(param.name, parameters[index]);
     }
@@ -41,21 +42,10 @@ function executeCondition(
   context: ExecutionContext
 ): IData {
   const conditionResult = executeStatement(condition.condition, context);
-  const isTrue = !!conditionResult.value;
-  const typeChecks = detectTypeof(condition.condition);
-
-  if (typeChecks.length > 0) {
-    // Create narrowed contexts for true and false branches
-    const trueContext = narrowExecutionContext(context, typeChecks, true);
-    const falseContext = narrowExecutionContext(context, typeChecks, false);
-
-    return executeStatement(
-      isTrue ? condition.true : condition.false,
-      isTrue ? trueContext : falseContext
-    );
-  }
-
-  return executeStatement(isTrue ? condition.true : condition.false, context);
+  return executeStatement(
+    conditionResult.value ? condition.true : condition.false,
+    context
+  );
 }
 
 function executeStatement(

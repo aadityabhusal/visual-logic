@@ -7,7 +7,7 @@ import {
   createVariableName,
   isDataOfType,
 } from "../lib/utils";
-import { createOperationCall } from "../lib/methods";
+import { createOperationCall, getFilteredOperations } from "../lib/methods";
 import { Data } from "./Data";
 import { BaseInput } from "./Input/BaseInput";
 import { OperationCall } from "./OperationCall";
@@ -229,7 +229,7 @@ export function Statement({
           addOperationCall={
             !options?.disableOperationCall &&
             statement.operations.length === 0 &&
-            !isDataOfType(statement.data, "operation")
+            getFilteredOperations(statement.data, context).length
               ? addOperationCall
               : undefined
           }
@@ -261,7 +261,8 @@ export function Statement({
                 context={context}
                 addOperationCall={
                   !options?.disableOperationCall &&
-                  i + 1 === operationsList.length
+                  i + 1 === operationsList.length &&
+                  getFilteredOperations(data, context).length
                     ? addOperationCall
                     : undefined
                 }
