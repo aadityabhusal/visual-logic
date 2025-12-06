@@ -3,7 +3,6 @@ import { getFilteredOperations } from "./methods";
 import { IStatement, IData, OperationType, Context } from "./types";
 import {
   createData,
-  createStatement,
   getStatementResult,
   isDataOfType,
   isTypeCompatible,
@@ -57,18 +56,17 @@ export function updateOperationCalls(
 function getReferenceData(
   data: IData,
   context: Context,
-  reference?: IStatement
+  reference?: { name: string; data: IData }
 ): IData {
   const currentReference = data.reference;
-  const referenceResult = reference && getStatementResult(reference);
 
   const isTypeChanged =
     reference &&
-    (referenceResult?.entityType !== "data" ||
-      !isTypeCompatible(data.type, referenceResult?.type));
+    (reference?.data.entityType !== "data" ||
+      !isTypeCompatible(data.type, reference?.data.type));
   const isReferenceRemoved =
     currentReference?.id &&
-    (!reference?.name || referenceResult?.entityType !== "data");
+    (!reference?.name || reference?.data.entityType !== "data");
 
   const { id: _id, ...newData } = createData({
     type: data.type,
@@ -82,8 +80,8 @@ function getReferenceData(
         ? { ...currentReference, name: reference?.name }
         : undefined,
     value:
-      referenceResult?.entityType === "data"
-        ? referenceResult?.value
+      reference?.data.entityType === "data"
+        ? reference?.data.value
         : Array.isArray(data.value)
         ? updateStatements({ statements: data.value, context })
         : data.value instanceof Map
@@ -122,13 +120,12 @@ function getReferenceData(
 export function getReferenceOperation(
   operation: IData<OperationType>,
   context: Context,
-  reference?: IStatement
+  reference?: { name: string; data: IData }
 ): IData<OperationType> {
   const currentReference = operation.reference;
-  const referenceResult = reference && getStatementResult(reference);
   const isReferenceRemoved =
     currentReference?.id &&
-    (!reference?.name || isDataOfType(referenceResult, "operation"));
+    (!reference?.name || isDataOfType(reference.data, "operation"));
   const isTypeChanged = reference
     ? !isTypeCompatible(operation.type, reference.data.type)
     : true;
@@ -137,9 +134,9 @@ export function getReferenceOperation(
   let statementList = operation.value.statements;
   // TODO: handle closure with execution context
   // let closure = operation.closure;
-  if (reference && isDataOfType(referenceResult, "operation")) {
-    parameterList = referenceResult.value.parameters;
-    statementList = referenceResult.value.statements;
+  if (reference && isDataOfType(reference.data, "operation")) {
+    parameterList = reference.data.value.parameters;
+    statementList = reference.data.value.statements;
     // closure = getClosureList(reference) || closure;
   }
 
@@ -186,7 +183,7 @@ export function getReferenceOperation(
       ...context,
       variables: {
         ...updatedParameters.reduce((acc, param) => {
-          if (param.name) acc[param.name] = param;
+          if (param.name) acc[param.name] = getStatementResult(param);
           return acc;
         }, context.variables),
       },
@@ -218,9 +215,12 @@ export function updateStatementReference(
   context: Context
 ): IStatement {
   const currentReference = currentStatement.data.reference;
-  const reference = Object.values(context.variables).find(
-    (item) => item.id === currentReference?.id
+  const foundReference = Object.entries(context.variables).find(
+    ([, item]) => item.reference?.id === currentReference?.id
   );
+  const reference = foundReference
+    ? { name: foundReference[0], data: foundReference[1] }
+    : undefined;
 
   return {
     ...currentStatement,
@@ -264,6 +264,10 @@ export function updateStatements({
   context: Context;
 }): IStatement[] {
   let currentIndexFound = false;
+  const foundRef = Object.entries(context.variables).find(
+    ([, item]) => item.reference?.id === changedStatement?.id
+  );
+  if (foundRef) delete context.variables[foundRef[0]];
   return statements.reduce((prevStatements, currentStatement) => {
     if (currentStatement.id === changedStatement?.id) {
       currentIndexFound = true;
@@ -277,7 +281,7 @@ export function updateStatements({
     const _context = {
       ...context,
       variables: prevStatements.reduce((acc, stmt) => {
-        if (stmt.name) acc[stmt.name] = stmt;
+        if (stmt.name) acc[stmt.name] = getStatementResult(stmt);
         return acc;
       }, context.variables),
     };
@@ -313,14 +317,9 @@ export function updateOperations(
       ],
       context: {
         variables: prevOperations.reduce((acc, operation) => {
-          const statement = createStatement({
-            data: operation,
-            name: operation.value.name,
-            id: operation.id,
-          });
-          if (statement.name) acc[statement.name] = statement;
+          if (operation.value.name) acc[operation.value.name] = operation;
           return acc;
-        }, {} as { [key: string]: IStatement }),
+        }, {} as Context["variables"]),
       },
     });
     const parameterLength = currentOperation.value.parameters.length;

@@ -6,6 +6,7 @@ import {
   getStatementResult,
   createVariableName,
   isDataOfType,
+  applyTypeNarrowing,
 } from "../lib/utils";
 import { createOperationCall, getFilteredOperations } from "../lib/methods";
 import { Data } from "./Data";
@@ -19,6 +20,7 @@ import { DataTypes } from "../lib/data";
 import { useMemo } from "react";
 import { uiConfigStore } from "@/lib/store";
 import { useCustomHotkeys } from "@/hooks/useNavigation";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 export function Statement({
   statement,
@@ -223,53 +225,73 @@ export function Statement({
           (statement.operations.length > 1 ? "flex-col" : "flex-row")
         }
       >
-        <Data
-          data={statement.data}
-          disableDelete={options?.disableDelete}
-          addOperationCall={
-            !options?.disableOperationCall &&
-            statement.operations.length === 0 &&
-            getFilteredOperations(statement.data, context).length
-              ? addOperationCall
-              : undefined
-          }
-          context={context}
-          handleChange={
-            isDataOfType(statement.data, "operation")
-              ? handelOperation
-              : handleData
-          }
-        />
-        {statement.operations.map((operation, i, operationsList) => {
-          const data = getStatementResult(statement, i, true);
-          if (data.entityType !== "data") return;
-          return (
-            <div key={operation.id} className="flex items-start gap-1 ml-2">
-              <PipeArrow
-                size={10}
-                className="text-disabled mt-1.5"
-                style={{
-                  transform: operationsList.length > 1 ? "rotate(90deg)" : "",
-                }}
-              />
-              <OperationCall
-                data={data}
-                operation={operation}
-                handleOperationCall={(op, remove) =>
-                  handleOperationCall(op, i, remove)
-                }
-                context={context}
-                addOperationCall={
-                  !options?.disableOperationCall &&
-                  i + 1 === operationsList.length &&
-                  getFilteredOperations(data, context).length
-                    ? addOperationCall
-                    : undefined
-                }
-              />
-            </div>
-          );
-        })}
+        <ErrorBoundary displayError={true}>
+          <Data
+            data={statement.data}
+            disableDelete={options?.disableDelete}
+            addOperationCall={
+              !options?.disableOperationCall &&
+              statement.operations.length === 0 &&
+              getFilteredOperations(statement.data, context).length
+                ? addOperationCall
+                : undefined
+            }
+            context={context}
+            handleChange={
+              isDataOfType(statement.data, "operation")
+                ? handelOperation
+                : handleData
+            }
+          />
+        </ErrorBoundary>
+        {(() => {
+          let narrowedTypes: Context["variables"] = {};
+          return statement.operations.map((operation, i, operationsList) => {
+            const data = getStatementResult(statement, i, true);
+
+            narrowedTypes = applyTypeNarrowing(
+              context.variables,
+              narrowedTypes,
+              data,
+              operation
+            );
+
+            const updatedContext = {
+              ...context,
+              variables: { ...context.variables, ...narrowedTypes },
+            };
+
+            return (
+              <div key={operation.id} className="flex items-start gap-1 ml-2">
+                <PipeArrow
+                  size={10}
+                  className="text-disabled mt-1.5"
+                  style={{
+                    transform: operationsList.length > 1 ? "rotate(90deg)" : "",
+                  }}
+                />
+                <ErrorBoundary displayError={true}>
+                  <OperationCall
+                    data={data}
+                    operation={operation}
+                    handleOperationCall={(op, remove) =>
+                      handleOperationCall(op, i, remove)
+                    }
+                    context={context}
+                    narrowedTypes={narrowedTypes}
+                    addOperationCall={
+                      !options?.disableOperationCall &&
+                      i + 1 === operationsList.length &&
+                      getFilteredOperations(data, updatedContext).length
+                        ? addOperationCall
+                        : undefined
+                    }
+                  />
+                </ErrorBoundary>
+              </div>
+            );
+          });
+        })()}
       </div>
     </div>
   );

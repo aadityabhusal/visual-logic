@@ -3,14 +3,13 @@ import {
   getOperationListItemParameters,
   OperationListItem,
 } from "./methods";
-import {
-  IData,
-  IStatement,
-  ConditionType,
-  DataValue,
-  ExecutionContext,
-} from "./types";
+import { IData, IStatement, ConditionType, DataValue } from "./types";
 import { createData, getStatementResult, isDataOfType } from "./utils";
+
+export type ExecutionContext = {
+  parameters: Map<string, IData>;
+  statements: Map<string, IData>;
+};
 
 function buildExecutionContext(
   operation: OperationListItem,
@@ -55,7 +54,7 @@ function executeStatement(
   // Resolve base data (parameter reference, statement reference, or direct data)
   let currentData = statement.data;
 
-  if (statement.data.reference?.name) {
+  if (statement.data.reference) {
     const refName = statement.data.reference.name;
     currentData =
       context.parameters.get(refName) ||
@@ -73,7 +72,7 @@ function executeStatement(
   for (const operation of statement.operations) {
     // Resolve operation parameters from context
     const resolvedParams = operation.value.parameters.map((param) => {
-      if (param.data.reference?.name) {
+      if (param.data.reference) {
         return (
           context.parameters.get(param.data.reference.name) ||
           context.statements.get(param.data.reference.name) ||

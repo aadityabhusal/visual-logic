@@ -1,7 +1,11 @@
 import { Fragment, forwardRef, HTMLAttributes } from "react";
 import { Context, IData, IStatement, OperationType } from "../lib/types";
 import { updateStatements } from "../lib/update";
-import { createVariableName, getOperationType } from "../lib/utils";
+import {
+  createVariableName,
+  getOperationType,
+  getStatementResult,
+} from "../lib/utils";
 import { Statement } from "./Statement";
 import { AddStatement } from "./AddStatement";
 
@@ -118,7 +122,7 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
                   disableOperationCall: true,
                   disableNameToggle: true,
                 }}
-                context={{ variables: {}, narrowing: context.narrowing }}
+                context={{ variables: {} }}
                 addStatement={addParameter}
               />
               {i + 1 < paramList.length && <span>,</span>}
@@ -150,10 +154,9 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
                 variables: operation.value.parameters
                   .concat(operation.value.statements.slice(0, i))
                   .reduce((acc, param) => {
-                    if (param.name) acc[param.name] = param;
+                    if (param.name) acc[param.name] = getStatementResult(param);
                     return acc;
                   }, context.variables),
-                narrowing: context.narrowing,
               }}
             />
           ))}

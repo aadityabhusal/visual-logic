@@ -348,15 +348,8 @@ const numberOperations: OperationListItem[] = [
 export const arrayOperations: OperationListItem[] = [
   {
     name: "at",
-    parameters: (data) => [
-      {
-        type: {
-          kind: "array",
-          elementType: (data.type as ArrayType).elementType ?? {
-            kind: "undefined",
-          },
-        },
-      },
+    parameters: [
+      { type: { kind: "array", elementType: { kind: "unknown" } } },
       { type: { kind: "number" } },
     ],
     result: (data) => (data.type as ArrayType).elementType,
@@ -374,7 +367,7 @@ export const arrayOperations: OperationListItem[] = [
         kind: "undefined",
       };
       return [
-        { type: { kind: "array", elementType } },
+        { type: { kind: "array", elementType: { kind: "unknown" } } },
         {
           type: {
             kind: "operation",
@@ -407,7 +400,7 @@ export const arrayOperations: OperationListItem[] = [
         kind: "undefined",
       };
       return [
-        { type: { kind: "array", elementType } },
+        { type: { kind: "array", elementType: { kind: "unknown" } } },
         {
           type: {
             kind: "operation",
@@ -439,13 +432,8 @@ export const arrayOperations: OperationListItem[] = [
 export const objectOperations: OperationListItem[] = [
   {
     name: "get",
-    parameters: (data) => [
-      {
-        type: {
-          kind: "object",
-          properties: (data.type as ObjectType).properties ?? {},
-        },
-      },
+    parameters: [
+      { type: { kind: "object", properties: {} } },
       { type: { kind: "string" } },
     ],
     result: { kind: "undefined" },
@@ -458,13 +446,8 @@ export const objectOperations: OperationListItem[] = [
   },
   {
     name: "has",
-    parameters: (data) => [
-      {
-        type: {
-          kind: "object",
-          properties: (data.type as ObjectType).properties ?? {},
-        },
-      },
+    parameters: [
+      { type: { kind: "object", properties: {} } },
       { type: { kind: "string" } },
     ],
     result: { kind: "boolean" },
@@ -477,14 +460,7 @@ export const objectOperations: OperationListItem[] = [
   },
   {
     name: "keys",
-    parameters: (data) => [
-      {
-        type: {
-          kind: "object",
-          properties: (data.type as ObjectType).properties ?? {},
-        },
-      },
-    ],
+    parameters: [{ type: { kind: "object", properties: {} } }],
     result: { kind: "array", elementType: { kind: "string" } },
     handler(data: IData<ObjectType>) {
       return createData({
@@ -499,14 +475,7 @@ export const objectOperations: OperationListItem[] = [
   },
   {
     name: "values",
-    parameters: (data) => [
-      {
-        type: {
-          kind: "object",
-          properties: (data.type as ObjectType).properties ?? {},
-        },
-      },
-    ],
+    parameters: [{ type: { kind: "object", properties: {} } }],
     result: { kind: "undefined" },
     handler(data: IData<ObjectType>) {
       return createData({
@@ -547,12 +516,7 @@ const operationOperations: OperationListItem[] = [
     result: { kind: "undefined" },
     handler: (data: IData<OperationType>, ...p: IData[]) => {
       return executeOperation(
-        {
-          name: "call",
-          parameters: data.type.parameters,
-          statements: data.value.statements,
-          result: data.type.result,
-        },
+        operationToListItem("call", data),
         p[0],
         p.slice(1)
       );
@@ -600,6 +564,15 @@ function mapArrayParameters(
   });
 }
 
+function operationToListItem(name: string, operation: IData<OperationType>) {
+  return {
+    name: name ?? operation.value.name,
+    parameters: operation.type.parameters,
+    statements: operation.value.statements,
+    result: operation.type.result,
+  } as OperationListItem;
+}
+
 function createParamData(item: Parameter, data: IData): IStatement["data"] {
   if (item.type.kind !== "operation") {
     return createData({
@@ -632,30 +605,20 @@ export function getFilteredOperations(data: IData, context: Context) {
   const builtInOps = builtInOperations.filter((operation) => {
     const operationParameters = getOperationListItemParameters(operation, data);
     const firstParam = operationParameters[0]?.type ?? { kind: "undefined" };
-    return (
-      firstParam.kind === "unknown" || isTypeCompatible(firstParam, data.type)
-    );
+    return firstParam.kind === "unknown" || firstParam.kind === data.type.kind;
   });
 
-  const userDefinedOps = Object.values(context.variables)
-    .filter(
-      (statement) =>
-        statement.name &&
-        isDataOfType(statement.data, "operation") &&
-        isTypeCompatible(
-          statement.data.type.parameters[0]?.type || { kind: "undefined" },
-          data.type
-        )
-    )
-    .map((statement) => {
-      const operation = statement.data as IData<OperationType>;
-      return {
-        name: statement.name!,
-        parameters: operation.type.parameters,
-        statements: operation.value.statements,
-        result: operation.type.result,
-      };
-    });
+  const userDefinedOps = Object.entries(context.variables)
+    .filter(([name, data]) => {
+      if (!name || !isDataOfType(data, "operation")) return;
+      const firstParam = data.type.parameters[0]?.type ?? { kind: "undefined" };
+      return (
+        firstParam.kind === "unknown" || firstParam.kind === data.type.kind
+      );
+    })
+    .map(([name, data]) =>
+      operationToListItem(name, data as IData<OperationType>)
+    );
 
   return [...builtInOps, ...userDefinedOps];
 }
@@ -676,11 +639,11 @@ export function createOperationCall({
     (operation) => operation.name === name
   );
   const newOperation = operationByName || operations[0];
-  const operataionParameters = getOperationListItemParameters(
+  const operationParameters = getOperationListItemParameters(
     newOperation,
     data
   );
-  const newParameters = operataionParameters.slice(1).map((item, index) => {
+  const newParameters = operationParameters.slice(1).map((item, index) => {
     const newParam = createStatement({ data: createParamData(item, data) });
     const prevParam = parameters?.[index];
     if (
@@ -703,7 +666,7 @@ export function createOperationCall({
     entityType: "data",
     type: {
       kind: "operation",
-      parameters: operataionParameters,
+      parameters: operationParameters,
       result: result.type,
     },
     value: {

@@ -15,7 +15,6 @@ import {
 } from "@mantine/core";
 import { FocusInfo } from "./components/FocusInfo";
 import { useSearchParams } from "react-router";
-import { createStatement } from "./lib/utils";
 import { useCustomHotkeys } from "./hooks/useNavigation";
 import { getOperationEntities } from "./lib/navigation";
 import { Context } from "./lib/types";
@@ -73,14 +72,12 @@ function App() {
                 context={{
                   variables: operations
                     .filter((op) => op.id !== currentOperation.id)
-                    .reduce((acc, operation) => {
-                      if (operation.value.name) {
-                        acc[operation.value.name] = createStatement({
-                          data: operation,
-                          name: operation.value.name,
-                          id: operation.id,
-                        });
-                      }
+                    .reduce((acc, op) => {
+                      if (!op.value.name) return acc;
+                      acc[op.value.name] = {
+                        ...op,
+                        reference: { id: op.id, name: op.value.name },
+                      };
                       return acc;
                     }, {} as Context["variables"]),
                 }}

@@ -41,7 +41,7 @@ Build an expressive, recursive type system supporting:
 - Complex types (array with item types, objects with property types, tuples)
 - Advanced types (union, literal, promise, date, undefined, any, file)
 - **Operation types** with parameter and return type signatures
-- Discriminated unions for type narrowing
+- Type narrowing based on the usage of 'typof' operation
 - Skip generics—use concrete union types instead (e.g., `Array<string|number>`)
 
 ### Operations as First-Class Data
@@ -107,10 +107,10 @@ From imported packages, generate operations:
 
 Implement **ternary operator-style components** for conditional logic:
 
-- Keeps conditionals as expressions that return values
-- Enables type narrowing (especially with discriminated unions)
-- Maintains expression-based paradigm
-- Visually cleaner than if-else blocks
+- No if-else blocks or ternary operators, instead create a 'thenElse' operation
+- 'thenElse' will have 'operation' type as paramter for each branch
+- Implement type narrowing based on how 'typeof' is used in previous operation calls
+- The operation call after 'typeof', should have the type-narrowed data in their context
 
 ### Iteration
 

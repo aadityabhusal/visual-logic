@@ -3,7 +3,7 @@ import { Statement } from "./Statement";
 import { Dropdown } from "./Dropdown";
 import { createOperationCall, getFilteredOperations } from "../lib/methods";
 import { executeOperation } from "@/lib/execution";
-import { getStatementResult } from "../lib/utils";
+import { excludeType, getStatementResult } from "../lib/utils";
 import { BaseInput } from "./Input/BaseInput";
 
 export function OperationCall({
@@ -12,6 +12,7 @@ export function OperationCall({
   handleOperationCall,
   addOperationCall,
   context,
+  narrowedTypes,
 }: {
   data: IData;
   operation: IData<OperationType>;
@@ -21,6 +22,7 @@ export function OperationCall({
   ) => void;
   addOperationCall?: () => void;
   context: Context;
+  narrowedTypes: Context["variables"];
 }) {
   function handleDropdown(name: string) {
     if (operation.value.name === name) return;
@@ -72,6 +74,15 @@ export function OperationCall({
     });
   }
 
+  function getElseContext() {
+    return Object.entries(narrowedTypes).reduce((acc, [key, value]) => {
+      const variable = context.variables[key];
+      const excludedType = excludeType(variable.type, value.type);
+      acc[key] = { ...variable, type: excludedType };
+      return acc;
+    }, structuredClone(context.variables));
+  }
+
   return (
     <Dropdown
       id={operation.id}
@@ -97,7 +108,13 @@ export function OperationCall({
             statement={item}
             handleStatement={(val) => val && handleParameter(val, i)}
             options={{ disableDelete: true }}
-            context={context}
+            context={{
+              ...context,
+              variables:
+                operation.value.name === "thenElse" && i === 1
+                  ? getElseContext()
+                  : { ...context.variables, ...narrowedTypes },
+            }}
           />
           {i < arr.length - 1 ? <span>{", "}</span> : null}
         </span>

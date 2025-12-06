@@ -91,5 +91,5 @@ export interface IDropdownItem {
 }
 
 export type Context = {
-  variables: { [keys: string]: IStatement };
+  variables: Record<string, IData>;
 };
