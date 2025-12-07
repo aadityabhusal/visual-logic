@@ -82,7 +82,7 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
         ...statement,
         name: createVariableName({
           prefix: "param",
-          prev: [...parameters, ...Object.keys(context.variables)],
+          prev: [...parameters, ...context.variables.keys()],
         }),
       };
       const updatedParameters = [...parameters, newParameter];
@@ -122,7 +122,10 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
                   disableOperationCall: true,
                   disableNameToggle: true,
                 }}
-                context={{ variables: {} }}
+                context={{
+                  variables: new Map(),
+                  currentStatementId: parameter.id,
+                }}
                 addStatement={addParameter}
               />
               {i + 1 < paramList.length && <span>,</span>}
@@ -133,7 +136,7 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
               id={`${operation.id}_parameter`}
               onSelect={addParameter}
               iconProps={{ title: "Add parameter" }}
-              context={{ variables: {} }}
+              context={{ variables: new Map() }}
             />
           )}
           <span>{")"}</span>
@@ -151,12 +154,15 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
                 addStatement(statement, position, i)
               }
               context={{
+                currentStatementId: statement.id,
                 variables: operation.value.parameters
                   .concat(operation.value.statements.slice(0, i))
                   .reduce((acc, param) => {
-                    if (param.name) acc[param.name] = getStatementResult(param);
+                    if (param.name) {
+                      acc.set(param.name, getStatementResult(param));
+                    }
                     return acc;
-                  }, context.variables),
+                  }, structuredClone(context.variables)),
               }}
             />
           ))}
@@ -167,7 +173,7 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
               addStatement(statement, "after", lastStatement);
             }}
             iconProps={{ title: "Add statement" }}
-            context={{ variables: {} }}
+            context={{ variables: new Map() }}
           />
         </div>
       </div>

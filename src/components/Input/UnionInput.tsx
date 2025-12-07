@@ -215,7 +215,12 @@ export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
                         key={name}
                         onClick={() => handleTypeAdd(type)}
                       >
-                        {name}
+                        <Tooltip
+                          label={getTypeSignature(type)}
+                          position="right"
+                        >
+                          <span className="text-left">{name}</span>
+                        </Tooltip>
                       </Menu.Item>
                     ))}
                 </Menu.Sub.Dropdown>

@@ -70,16 +70,22 @@ function App() {
                 operation={currentOperation}
                 handleChange={setOperation}
                 context={{
-                  variables: operations
-                    .filter((op) => op.id !== currentOperation.id)
-                    .reduce((acc, op) => {
-                      if (!op.value.name) return acc;
-                      acc[op.value.name] = {
-                        ...op,
-                        reference: { id: op.id, name: op.value.name },
-                      };
+                  variables: operations.reduce((acc, operation) => {
+                    if (
+                      !operation.value.name ||
+                      operation.id === currentOperation.id
+                    ) {
                       return acc;
-                    }, {} as Context["variables"]),
+                    }
+                    acc.set(operation.value.name, {
+                      ...operation,
+                      reference: {
+                        id: operation.id,
+                        name: operation.value.name,
+                      },
+                    });
+                    return acc;
+                  }, new Map() as Context["variables"]),
                 }}
                 options={{ isTopLevel: true, disableDropdown: true }}
               />

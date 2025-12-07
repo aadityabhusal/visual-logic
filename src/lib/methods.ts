@@ -17,6 +17,7 @@ import {
   createStatement,
   createVariableName,
   getStatementResult,
+  inferTypeFromValue,
   isDataOfType,
   isTypeCompatible,
 } from "./utils";
@@ -62,15 +63,18 @@ const unknownOperations: OperationListItem[] = [
   },
   {
     name: "typeof",
-    parameters: [
-      { type: { kind: "unknown" } },
-      { type: { kind: "undefined" }, isTypeEditable: true },
+    parameters: (data) => [
+      { type: { kind: "union", types: [] } },
+      { type: data.type },
     ],
     result: { kind: "boolean" },
     handler: (data: IData<UnknownType>, typeData: IData) => {
       return createData({
         type: { kind: "boolean" },
-        value: isTypeCompatible(data.type, typeData.type),
+        value: isTypeCompatible(
+          inferTypeFromValue(data.type),
+          inferTypeFromValue(typeData.value)
+        ),
       });
     },
   },
@@ -601,24 +605,27 @@ function createParamData(item: Parameter, data: IData): IStatement["data"] {
   });
 }
 
-export function getFilteredOperations(data: IData, context: Context) {
+export function getFilteredOperations(
+  data: IData,
+  variables: Context["variables"]
+) {
   const builtInOps = builtInOperations.filter((operation) => {
     const operationParameters = getOperationListItemParameters(operation, data);
     const firstParam = operationParameters[0]?.type ?? { kind: "undefined" };
     return firstParam.kind === "unknown" || firstParam.kind === data.type.kind;
   });
 
-  const userDefinedOps = Object.entries(context.variables)
-    .filter(([name, data]) => {
-      if (!name || !isDataOfType(data, "operation")) return;
-      const firstParam = data.type.parameters[0]?.type ?? { kind: "undefined" };
-      return (
-        firstParam.kind === "unknown" || firstParam.kind === data.type.kind
-      );
-    })
-    .map(([name, data]) =>
-      operationToListItem(name, data as IData<OperationType>)
-    );
+  const userDefinedOps = variables.entries().reduce((acc, [name, variable]) => {
+    if (!name || !isDataOfType(variable, "operation")) return acc;
+    const firstParam = variable.type.parameters[0]?.type ?? {
+      kind: "undefined",
+    };
+    if (firstParam.kind !== "unknown" && firstParam.kind !== data.type.kind) {
+      return acc;
+    }
+    acc.push(operationToListItem(name, variable));
+    return acc;
+  }, [] as OperationListItem[]);
 
   return [...builtInOps, ...userDefinedOps];
 }
@@ -634,7 +641,7 @@ export function createOperationCall({
   parameters?: IStatement[];
   context: Context;
 }): IData<OperationType> {
-  const operations = getFilteredOperations(data, context);
+  const operations = getFilteredOperations(data, context.variables);
   const operationByName = operations.find(
     (operation) => operation.name === name
   );

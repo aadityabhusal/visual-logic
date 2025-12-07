@@ -4,8 +4,8 @@ import {
   TextInput,
   TextInputProps,
 } from "@mantine/core";
-import { useDebouncedCallback } from "@mantine/hooks";
-import { forwardRef, useEffect, useState } from "react";
+import { useUncontrolled } from "@mantine/hooks";
+import { forwardRef, useState } from "react";
 
 interface BaseInputProps<T extends string | number>
   extends Omit<
@@ -21,27 +21,16 @@ interface BaseInputProps<T extends string | number>
 }
 
 function BaseInputInner<T extends string | number>(
-  { value, type, ...props }: BaseInputProps<T>,
+  { value, type, onChange, defaultValue, ...props }: BaseInputProps<T>,
   ref: React.ForwardedRef<HTMLInputElement>
 ) {
   const MAX_WIDTH = 160;
   const [textWidth, setTextWidth] = useState(0);
-
-  const [inputValue, setInputValue] = useState(value);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (value) setInputValue(value);
-  }, [value]);
-
-  const debouncedOnChange = useDebouncedCallback((newValue: T) => {
-    props.onChange?.(newValue);
-  }, 500);
-
-  const handleChange = (newValue: T) => {
-    setInputValue(newValue);
-    debouncedOnChange(newValue);
-  };
+  const [inputValue, setInputValue] = useUncontrolled({
+    value,
+    defaultValue,
+    onChange,
+  });
 
   const commonProps = {
     value: inputValue,
@@ -73,7 +62,7 @@ function BaseInputInner<T extends string | number>(
         <NumberInput
           {...commonProps}
           ref={ref}
-          onChange={(value) => handleChange(value as T)}
+          onChange={(value) => setInputValue(value as T)}
           placeholder={"0"}
           withKeyboardEvents={false}
           hideControls
@@ -83,7 +72,7 @@ function BaseInputInner<T extends string | number>(
           {...commonProps}
           type="text"
           ref={ref}
-          onChange={(e) => handleChange(e.target.value as T)}
+          onChange={(e) => setInputValue(e.target.value as T)}
           placeholder={"..."}
         />
       )}
@@ -96,5 +85,3 @@ export const BaseInput = forwardRef(BaseInputInner) as <
 >(
   props: BaseInputProps<T> & { ref?: React.ForwardedRef<HTMLInputElement> }
 ) => React.ReactElement | null;
-
-// BaseInput.displayName = "BaseInput";

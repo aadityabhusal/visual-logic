@@ -3,8 +3,9 @@ import { Statement } from "./Statement";
 import { Dropdown } from "./Dropdown";
 import { createOperationCall, getFilteredOperations } from "../lib/methods";
 import { executeOperation } from "@/lib/execution";
-import { excludeType, getStatementResult } from "../lib/utils";
+import { inverseType, getStatementResult } from "../lib/utils";
 import { BaseInput } from "./Input/BaseInput";
+import { useMemo } from "react";
 
 export function OperationCall({
   data,
@@ -24,6 +25,15 @@ export function OperationCall({
   context: Context;
   narrowedTypes: Context["variables"];
 }) {
+  const updatedVariables = useMemo(
+    () => new Map([...context.variables, ...narrowedTypes]),
+    [context.variables, narrowedTypes]
+  );
+  const filteredOperations = useMemo(
+    () => getFilteredOperations(data, updatedVariables),
+    [data, updatedVariables]
+  );
+
   function handleDropdown(name: string) {
     if (operation.value.name === name) return;
     handleOperationCall(
@@ -41,7 +51,7 @@ export function OperationCall({
     let parameters = [...operation.value.parameters];
     parameters[index] = item;
 
-    const foundOperation = getFilteredOperations(data, context).find(
+    const foundOperation = filteredOperations.find(
       (op) => op.name === operation.value.name
     );
 
@@ -75,10 +85,11 @@ export function OperationCall({
   }
 
   function getElseContext() {
-    return Object.entries(narrowedTypes).reduce((acc, [key, value]) => {
-      const variable = context.variables[key];
-      const excludedType = excludeType(variable.type, value.type);
-      acc[key] = { ...variable, type: excludedType };
+    return narrowedTypes.entries().reduce((acc, [key, value]) => {
+      const variable = context.variables.get(key);
+      if (!variable) return acc;
+      const excludedType = inverseType(variable.type, value.type);
+      acc.set(key, { ...variable, type: excludedType });
       return acc;
     }, structuredClone(context.variables));
   }
@@ -87,7 +98,7 @@ export function OperationCall({
     <Dropdown
       id={operation.id}
       result={operation.value.result}
-      items={getFilteredOperations(data, context).map((item) => ({
+      items={filteredOperations.map((item) => ({
         label: item.name,
         value: item.name,
         color: "method",
@@ -96,7 +107,9 @@ export function OperationCall({
       }))}
       context={context}
       value={operation.value.name}
-      addOperationCall={addOperationCall}
+      addOperationCall={
+        filteredOperations.length ? addOperationCall : undefined
+      }
       handleDelete={() => handleOperationCall(operation, true)}
       isInputTarget
       target={(props) => <BaseInput {...props} className="text-method" />}
@@ -113,7 +126,7 @@ export function OperationCall({
               variables:
                 operation.value.name === "thenElse" && i === 1
                   ? getElseContext()
-                  : { ...context.variables, ...narrowedTypes },
+                  : updatedVariables,
             }}
           />
           {i < arr.length - 1 ? <span>{", "}</span> : null}

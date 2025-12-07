@@ -31,15 +31,16 @@ export function updateOperationCalls(
         });
       });
 
-      const foundOperation = getFilteredOperations(data, context).find(
-        (operation) => operation.name === currentOperation.value.name
-      );
+      const foundOperation = getFilteredOperations(
+        data,
+        context.variables
+      ).find((operation) => operation.name === currentOperation.value.name);
       const currentResult = currentOperation.value.result;
       const result = foundOperation
         ? {
             ...executeOperation(foundOperation, data, parameters),
             ...(currentResult && { id: currentResult?.id }),
-            isGeneric: data.isTypeEditable,
+            isTypeEditable: data.isTypeEditable,
           }
         : currentResult;
 
@@ -125,7 +126,7 @@ export function getReferenceOperation(
   const currentReference = operation.reference;
   const isReferenceRemoved =
     currentReference?.id &&
-    (!reference?.name || isDataOfType(reference.data, "operation"));
+    (!reference?.name || !isDataOfType(reference.data, "operation"));
   const isTypeChanged = reference
     ? !isTypeCompatible(operation.type, reference.data.type)
     : true;
@@ -181,12 +182,10 @@ export function getReferenceOperation(
     statements: statementList,
     context: {
       ...context,
-      variables: {
-        ...updatedParameters.reduce((acc, param) => {
-          if (param.name) acc[param.name] = getStatementResult(param);
-          return acc;
-        }, context.variables),
-      },
+      variables: updatedParameters.reduce((acc, param) => {
+        if (param.name) acc.set(param.name, getStatementResult(param));
+        return acc;
+      }, structuredClone(context.variables)),
     },
   });
 
@@ -215,9 +214,9 @@ export function updateStatementReference(
   context: Context
 ): IStatement {
   const currentReference = currentStatement.data.reference;
-  const foundReference = Object.entries(context.variables).find(
-    ([, item]) => item.reference?.id === currentReference?.id
-  );
+  const foundReference = context.variables
+    .entries()
+    .find(([, item]) => item.reference?.id === currentReference?.id);
   const reference = foundReference
     ? { name: foundReference[0], data: foundReference[1] }
     : undefined;
@@ -264,10 +263,6 @@ export function updateStatements({
   context: Context;
 }): IStatement[] {
   let currentIndexFound = false;
-  const foundRef = Object.entries(context.variables).find(
-    ([, item]) => item.reference?.id === changedStatement?.id
-  );
-  if (foundRef) delete context.variables[foundRef[0]];
   return statements.reduce((prevStatements, currentStatement) => {
     if (currentStatement.id === changedStatement?.id) {
       currentIndexFound = true;
@@ -279,11 +274,11 @@ export function updateStatements({
       return [...prevStatements, currentStatement];
 
     const _context = {
-      ...context,
+      currentStatementId: currentStatement.id,
       variables: prevStatements.reduce((acc, stmt) => {
-        if (stmt.name) acc[stmt.name] = getStatementResult(stmt);
+        if (stmt.name) acc.set(stmt.name, getStatementResult(stmt));
         return acc;
-      }, context.variables),
+      }, new Map([...context.variables].filter(([, item]) => item.reference?.id !== changedStatement?.id))),
     };
     return [
       ...prevStatements,
@@ -317,9 +312,9 @@ export function updateOperations(
       ],
       context: {
         variables: prevOperations.reduce((acc, operation) => {
-          if (operation.value.name) acc[operation.value.name] = operation;
+          if (operation.value.name) acc.set(operation.value.name, operation);
           return acc;
-        }, {} as Context["variables"]),
+        }, new Map() as Context["variables"]),
       },
     });
     const parameterLength = currentOperation.value.parameters.length;

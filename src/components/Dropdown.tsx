@@ -1,4 +1,4 @@
-import { Combobox, useCombobox } from "@mantine/core";
+import { Combobox, Tooltip, useCombobox } from "@mantine/core";
 import { HTMLAttributes, ReactNode, useEffect, useMemo, useState } from "react";
 import { BaseInput } from "./Input/BaseInput";
 import { IconButton } from "../ui/IconButton";
@@ -12,7 +12,7 @@ import { operationsStore, uiConfigStore } from "../lib/store";
 import { getHotkeyHandler, HotkeyItem, useHotkeys } from "@mantine/hooks";
 import { Context, IData, IDropdownItem, IStatement } from "../lib/types";
 import { useSearchParams } from "react-router";
-import { isDataOfType, isTextInput } from "../lib/utils";
+import { getTypeSignature, isDataOfType, isTextInput } from "../lib/utils";
 import { getNextIdAfterDelete, getOperationEntities } from "@/lib/navigation";
 
 export interface IDropdownTargetProps
@@ -98,7 +98,18 @@ export function Dropdown({
             <span className="text-sm max-w-32 truncate">
               {option.label || option.value}
             </span>
-            <span className="text-xs">{option.secondaryLabel}</span>
+            <Tooltip
+              position="right"
+              label={
+                <span className="text-xs">
+                  {option.variableType
+                    ? getTypeSignature(option.variableType)
+                    : null}
+                </span>
+              }
+            >
+              <span className="text-xs">{option.secondaryLabel}</span>
+            </Tooltip>
           </Combobox.Option>
         )),
     [items, search, value]

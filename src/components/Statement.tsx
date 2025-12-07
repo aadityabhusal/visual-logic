@@ -17,7 +17,7 @@ import { AddStatement } from "./AddStatement";
 import { getHotkeyHandler, useDisclosure } from "@mantine/hooks";
 import { Popover, useDelayedHover } from "@mantine/core";
 import { DataTypes } from "../lib/data";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { uiConfigStore } from "@/lib/store";
 import { useCustomHotkeys } from "@/hooks/useNavigation";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -151,7 +151,7 @@ export function Statement({
                 if (
                   [
                     ...Object.keys(DataTypes),
-                    ...Object.keys(context.variables),
+                    ...context.variables.keys(),
                     "operation",
                   ].includes(name)
                 ) {
@@ -191,7 +191,7 @@ export function Statement({
                       ? undefined
                       : createVariableName({
                           prefix: "var",
-                          prev: Object.keys(context.variables),
+                          prev: [...context.variables.keys()],
                         }),
                   });
                   setUiConfig(() => ({
@@ -225,14 +225,17 @@ export function Statement({
           (statement.operations.length > 1 ? "flex-col" : "flex-row")
         }
       >
-        <ErrorBoundary displayError={true}>
+        <ErrorBoundary
+          displayError={true}
+          onRemove={() => handleStatement(statement, true)}
+        >
           <Data
             data={statement.data}
             disableDelete={options?.disableDelete}
             addOperationCall={
               !options?.disableOperationCall &&
               statement.operations.length === 0 &&
-              getFilteredOperations(statement.data, context).length
+              getFilteredOperations(statement.data, context.variables).length
                 ? addOperationCall
                 : undefined
             }
@@ -244,54 +247,54 @@ export function Statement({
             }
           />
         </ErrorBoundary>
-        {(() => {
-          let narrowedTypes: Context["variables"] = {};
-          return statement.operations.map((operation, i, operationsList) => {
-            const data = getStatementResult(statement, i, true);
+        {
+          statement.operations.reduce(
+            (acc, operation, i, operationsList) => {
+              const data = getStatementResult(statement, i, true);
+              acc.narrowedTypes = applyTypeNarrowing(
+                context.variables,
+                acc.narrowedTypes,
+                data,
+                operation
+              );
 
-            narrowedTypes = applyTypeNarrowing(
-              context.variables,
-              narrowedTypes,
-              data,
-              operation
-            );
-
-            const updatedContext = {
-              ...context,
-              variables: { ...context.variables, ...narrowedTypes },
-            };
-
-            return (
-              <div key={operation.id} className="flex items-start gap-1 ml-2">
-                <PipeArrow
-                  size={10}
-                  className="text-disabled mt-1.5"
-                  style={{
-                    transform: operationsList.length > 1 ? "rotate(90deg)" : "",
-                  }}
-                />
-                <ErrorBoundary displayError={true}>
-                  <OperationCall
-                    data={data}
-                    operation={operation}
-                    handleOperationCall={(op, remove) =>
-                      handleOperationCall(op, i, remove)
-                    }
-                    context={context}
-                    narrowedTypes={narrowedTypes}
-                    addOperationCall={
-                      !options?.disableOperationCall &&
-                      i + 1 === operationsList.length &&
-                      getFilteredOperations(data, updatedContext).length
-                        ? addOperationCall
-                        : undefined
-                    }
+              acc.elements.push(
+                <div key={operation.id} className="flex items-start gap-1 ml-2">
+                  <PipeArrow
+                    size={10}
+                    className="text-disabled mt-1.5"
+                    style={{
+                      transform:
+                        operationsList.length > 1 ? "rotate(90deg)" : "",
+                    }}
                   />
-                </ErrorBoundary>
-              </div>
-            );
-          });
-        })()}
+                  <ErrorBoundary
+                    displayError={true}
+                    onRemove={() => handleOperationCall(operation, i, true)}
+                  >
+                    <OperationCall
+                      data={data}
+                      operation={operation}
+                      handleOperationCall={(op, remove) =>
+                        handleOperationCall(op, i, remove)
+                      }
+                      context={context}
+                      narrowedTypes={acc.narrowedTypes}
+                      addOperationCall={
+                        !options?.disableOperationCall &&
+                        i + 1 === operationsList.length
+                          ? addOperationCall
+                          : undefined
+                      }
+                    />
+                  </ErrorBoundary>
+                </div>
+              );
+              return acc;
+            },
+            { elements: [] as ReactNode[], narrowedTypes: new Map() }
+          ).elements
+        }
       </div>
     </div>
   );

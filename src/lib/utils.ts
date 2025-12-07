@@ -115,23 +115,7 @@ export function isDataOfType<K extends DataType["kind"]>(
   return data?.type.kind === kind;
 }
 
-function narrowType(originalType: DataType, targetType: DataType): DataType {
-  if (originalType.kind === "union") {
-    const narrowedTypes = originalType.types.filter((t) =>
-      isTypeCompatible(t, targetType)
-    );
-    if (narrowedTypes.length === 0) return targetType;
-    if (narrowedTypes.length === 1) return narrowedTypes[0];
-    return { kind: "union", types: narrowedTypes };
-  }
-  if (isTypeCompatible(originalType, targetType)) {
-    return targetType;
-  }
-
-  return originalType;
-}
-
-export function excludeType(
+export function inverseType(
   originalType: DataType,
   excludedType: DataType
 ): DataType {
@@ -146,6 +130,22 @@ export function excludeType(
   return originalType;
 }
 
+function narrowType(
+  originalType: DataType,
+  targetType: DataType
+): DataType | undefined {
+  if (originalType.kind === "unknown") return targetType;
+  if (originalType.kind === "union") {
+    const narrowedTypes = originalType.types.filter((t) =>
+      isTypeCompatible(t, targetType)
+    );
+    if (narrowedTypes.length === 0) return undefined;
+    if (narrowedTypes.length === 1) return narrowedTypes[0];
+    return { kind: "union", types: narrowedTypes };
+  }
+  return originalType;
+}
+
 export function applyTypeNarrowing(
   originalTypes: Context["variables"],
   narrowedTypes: Context["variables"],
@@ -156,34 +156,60 @@ export function applyTypeNarrowing(
   const param = operation.value.parameters[0];
   let narrowedType: DataType | undefined;
   let referenceName: string | undefined;
-  if (operation.value.name === "typeof" && param && data.reference) {
+
+  if (
+    (operation.value.name === "typeof" || operation.value.name === "equals") &&
+    param &&
+    data.reference
+  ) {
     referenceName = data.reference.name;
-    const reference = originalTypes[referenceName];
-    narrowedType = narrowType(reference.type, param.data.type);
+    const reference = originalTypes.get(referenceName);
+    if (reference) {
+      narrowedType = narrowType(
+        reference.type,
+        inferTypeFromValue(param.data.value)
+      );
+    }
   }
   if (operation.value.name === "or" && param.data.reference) {
     const orType = applyTypeNarrowing(
       originalTypes,
-      narrowedTypes,
+      new Map(originalTypes),
       param.data,
       param.operations[0]
     );
     referenceName = param.data.reference.name;
-    narrowedType = {
-      kind: "union",
-      types: [
-        narrowedTypes[param.data.reference.name].type,
-        orType[param.data.reference.name].type,
-      ],
-    };
+    const types = [
+      narrowedTypes.get(param.data.reference.name)?.type,
+      orType.get(param.data.reference.name)?.type,
+    ].filter(Boolean) as DataType[];
+
+    if (types.length > 0) {
+      narrowedType = types.length === 1 ? types[0] : { kind: "union", types };
+    }
   }
 
-  if (narrowedType && referenceName) {
-    return {
-      ...narrowedTypes,
-      [referenceName]: { ...originalTypes[referenceName], type: narrowedType },
-    } as Context["variables"];
+  if (operation.value.name === "and" && param.data.reference) {
+    const andType = applyTypeNarrowing(
+      narrowedTypes,
+      new Map(narrowedTypes),
+      param.data,
+      param.operations[0]
+    );
+    referenceName = param.data.reference.name;
+    narrowedType = andType.get(param.data.reference.name)?.type;
   }
+
+  if (referenceName) {
+    if (!narrowedType) narrowedTypes.delete(referenceName);
+    else if (narrowedType) {
+      narrowedTypes.set(referenceName, {
+        ...originalTypes.get(referenceName)!,
+        type: narrowedType,
+      });
+    }
+  }
+
   return narrowedTypes;
 }
 
@@ -442,20 +468,19 @@ export function getDataDropdownList({
       }
       return acc;
     }, [] as IDropdownItem[]),
-    ...Object.entries(context.variables).flatMap(([name, data]) => {
-      if (
-        (!data.isTypeEditable && !isTypeCompatible(data.type, data.type)) ||
-        !name
-      )
-        return [];
-      return {
-        secondaryLabel:
-          data.entityType === "data" ? data.type.kind : "operation",
+    ...context.variables.entries().reduce((acc, [name, variable]) => {
+      if (!data.isTypeEditable && !isTypeCompatible(variable.type, data.type)) {
+        return acc;
+      }
+      acc.push({
         value: name,
+        secondaryLabel: variable.type.kind,
+        variableType: variable.type,
         entityType: "data",
-        onClick: () => onSelect(data),
-      } as IDropdownItem;
-    }),
+        onClick: () => onSelect(variable),
+      });
+      return acc;
+    }, [] as IDropdownItem[]),
   ];
 }
 

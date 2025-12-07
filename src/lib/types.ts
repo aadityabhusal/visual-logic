@@ -84,12 +84,14 @@ export interface IStatement {
 
 export interface IDropdownItem {
   label?: string;
-  secondaryLabel?: string;
   value: string;
+  secondaryLabel?: string;
+  variableType?: DataType;
   entityType: "data" | "operationCall";
   onClick?: () => void;
 }
 
 export type Context = {
-  variables: Record<string, IData>;
+  variables: Map<string, IData>;
+  currentStatementId?: string;
 };

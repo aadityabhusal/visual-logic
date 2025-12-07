@@ -96,7 +96,7 @@ export const IDataSchema: z.ZodType<IData> = z
   .object({
     id: z.string(),
     entityType: z.literal("data"),
-    isGeneric: z.boolean().optional(),
+    isTypeEditable: z.boolean().optional(),
     reference: z.object({ id: z.string(), name: z.string() }).optional(),
   })
   .and(

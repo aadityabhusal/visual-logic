@@ -1,8 +1,11 @@
+import { IconButton } from "@/ui/IconButton";
 import React, { ReactNode } from "react";
+import { FaCircleXmark } from "react-icons/fa6";
 
 export class ErrorBoundary extends React.Component<{
   displayError?: boolean;
   children?: ReactNode;
+  onRemove?: () => void;
 }> {
   state = { errorMessage: "" };
 
@@ -12,7 +15,20 @@ export class ErrorBoundary extends React.Component<{
 
   render() {
     if (this.state.errorMessage && this.props.displayError) {
-      return <div className="text-error">{this.state.errorMessage}</div>;
+      return (
+        <div className="flex items-start gap-1 outline outline-border relative">
+          <span className="text-error">{this.state.errorMessage}</span>
+          {this.props.onRemove && (
+            <IconButton
+              className="absolute -top-1.5 -right-1 text-border bg-white rounded-full"
+              icon={FaCircleXmark}
+              title="Remove"
+              size={12}
+              onClick={this.props.onRemove}
+            />
+          )}
+        </div>
+      );
     }
     return this.props.children;
   }
