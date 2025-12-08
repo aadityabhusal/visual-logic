@@ -11,14 +11,16 @@ export type ObjectType = {
 export type UnionType = { kind: "union"; types: DataType[] };
 export type OperationType = {
   kind: "operation";
-  parameters: { name?: string; type: DataType }[];
+  parameters: { type: DataType; name?: string }[];
   result: DataType;
 };
-export type ConditionType = { kind: "condition"; type: UnionType };
+export type ConditionType = { kind: "condition"; type: DataType };
 export type UnknownType = { kind: "unknown" };
+export type NeverType = { kind: "never" };
 
 export type DataType =
   | UnknownType
+  | NeverType
   | UndefinedType
   | StringType
   | NumberType
@@ -31,6 +33,8 @@ export type DataType =
 
 type BaseDataValue<T extends DataType> = T extends UnknownType
   ? unknown
+  : T extends NeverType
+  ? never
   : T extends UndefinedType
   ? undefined
   : T extends StringType
@@ -70,7 +74,7 @@ export interface IData<T extends DataType = DataType> {
   entityType: "data";
   type: T;
   value: DataValue<T>;
-  isGeneric?: boolean;
+  isTypeEditable?: boolean;
   reference?: { id: string; name: string };
 }
 
@@ -84,8 +88,14 @@ export interface IStatement {
 
 export interface IDropdownItem {
   label?: string;
-  secondaryLabel?: string;
   value: string;
-  entityType: "data" | "method" | "operation";
+  secondaryLabel?: string;
+  variableType?: DataType;
+  entityType: "data" | "operationCall";
   onClick?: () => void;
 }
+
+export type Context = {
+  variables: Map<string, IData>;
+  currentStatementId?: string;
+};

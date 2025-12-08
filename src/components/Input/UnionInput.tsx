@@ -1,5 +1,5 @@
 import { forwardRef, HTMLAttributes, useMemo, useState } from "react";
-import { UnionType, IData, IStatement, DataType } from "../../lib/types";
+import { UnionType, IData, DataType, Context } from "../../lib/types";
 import {
   createData,
   createDefaultValue,
@@ -7,6 +7,7 @@ import {
   getTypeSignature,
   inferTypeFromValue,
   isTypeCompatible,
+  resolveUnionType,
 } from "../../lib/utils";
 import { FaChevronDown, FaX } from "react-icons/fa6";
 import { DataTypes } from "@/lib/data";
@@ -18,11 +19,11 @@ import { uiConfigStore } from "@/lib/store";
 export interface UnionInputProps extends HTMLAttributes<HTMLDivElement> {
   data: IData<UnionType>;
   handleData: (data: IData<UnionType>) => void;
-  prevStatements: IStatement[];
+  context: Context;
 }
 
 export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
-  ({ data, handleData, prevStatements, ...props }, ref) => {
+  ({ data, handleData, context, ...props }, ref) => {
     const { navigation, setUiConfig } = uiConfigStore();
     const [menuOpened, setMenuOpened] = useState(false);
     const isFocused = navigation?.id === `${data.id}_options`;
@@ -42,33 +43,33 @@ export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
             id: `${data.id}_data`,
             type: data.type.types[activeTypeIndex],
             value: data.value,
-            isGeneric: data.isGeneric,
+            isTypeEditable: data.isTypeEditable,
           }),
         }),
-      [data.id, data.type.types, data.value, data.isGeneric, activeTypeIndex]
+      [
+        data.id,
+        data.type.types,
+        data.value,
+        data.isTypeEditable,
+        activeTypeIndex,
+      ]
     );
 
     function handleTypeAdd(newType: DataType) {
       handleData({
         ...data,
-        type: { kind: "union", types: [...data.type.types, newType] },
+        type: resolveUnionType([...data.type.types, newType], true),
         value: createDefaultValue(newType),
       });
     }
 
     function handleActiveTypeChange(newData: IData) {
-      // eslint-disable-next-line prefer-const
-      let updatedTypes = [...data.type.types];
+      const updatedTypes = [...data.type.types];
       updatedTypes[activeTypeIndex] = newData.type;
-
-      const uniqueTypes = updatedTypes.filter(
-        (type, index, self) =>
-          index === self.findIndex((t) => isTypeCompatible(t, type))
-      );
 
       handleData({
         ...data,
-        type: { kind: "union", types: uniqueTypes },
+        type: resolveUnionType(updatedTypes, true),
         value: newData.value,
       });
     }
@@ -89,7 +90,7 @@ export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
 
       handleData({
         ...data,
-        type: { kind: "union", types: newTypes },
+        type: resolveUnionType(newTypes, true),
         value: newValue,
       });
     }
@@ -109,9 +110,9 @@ export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
             if (remove) handleTypeRemove(activeTypeIndex);
             else handleActiveTypeChange(statement.data);
           }}
-          prevStatements={prevStatements}
+          context={context}
           // TODO: disableDelete is hiding parameters for operation in union type
-          options={{ disableMethods: true }}
+          options={{ disableOperationCall: true }}
         />
         <Menu
           width={200}
@@ -175,44 +176,51 @@ export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
                 </Tooltip>
               </Menu.Item>
             ))}
-            <Menu.Sub>
-              <Menu.Sub.Target>
-                <Menu.Sub.Item
-                  classNames={{
-                    item: [
-                      "flex items-center justify-between",
-                      menuItemClassNames,
-                    ].join(" "),
-                    itemSection: "size-4 -rotate-90",
-                  }}
-                >
-                  Add
-                </Menu.Sub.Item>
-              </Menu.Sub.Target>
-              <Menu.Sub.Dropdown classNames={{ dropdown: "flex flex-col" }}>
-                {Object.entries(DataTypes)
-                  .filter(
-                    ([type, value]) =>
-                      !value.hideFromDropdown &&
-                      !["union"].includes(type) &&
-                      // This is only for default types, if user updates a complex type, the default type options will be shown
-                      !data.type.types.some((t) =>
-                        isTypeCompatible(t, value.type)
-                      )
-                  )
-                  .map(([name, { type }]) => (
-                    <Menu.Item
-                      classNames={{
-                        item: ["text-left", menuItemClassNames].join(" "),
-                      }}
-                      key={name}
-                      onClick={() => handleTypeAdd(type)}
-                    >
-                      {name}
-                    </Menu.Item>
-                  ))}
-              </Menu.Sub.Dropdown>
-            </Menu.Sub>
+            {data.isTypeEditable ? (
+              <Menu.Sub>
+                <Menu.Sub.Target>
+                  <Menu.Sub.Item
+                    classNames={{
+                      item: [
+                        "flex items-center justify-between",
+                        menuItemClassNames,
+                      ].join(" "),
+                      itemSection: "size-4 -rotate-90",
+                    }}
+                  >
+                    Add
+                  </Menu.Sub.Item>
+                </Menu.Sub.Target>
+                <Menu.Sub.Dropdown classNames={{ dropdown: "flex flex-col" }}>
+                  {Object.entries(DataTypes)
+                    .filter(
+                      ([type, value]) =>
+                        !value.hideFromDropdown &&
+                        !["union"].includes(type) &&
+                        // This is only for default types, if user updates a complex type, the default type options will be shown
+                        !data.type.types.some((t) =>
+                          isTypeCompatible(t, value.type)
+                        )
+                    )
+                    .map(([name, { type }]) => (
+                      <Menu.Item
+                        classNames={{
+                          item: ["text-left", menuItemClassNames].join(" "),
+                        }}
+                        key={name}
+                        onClick={() => handleTypeAdd(type)}
+                      >
+                        <Tooltip
+                          label={getTypeSignature(type)}
+                          position="right"
+                        >
+                          <span className="text-left">{name}</span>
+                        </Tooltip>
+                      </Menu.Item>
+                    ))}
+                </Menu.Sub.Dropdown>
+              </Menu.Sub>
+            ) : null}
           </Menu.Dropdown>
         </Menu>
       </div>

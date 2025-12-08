@@ -1,14 +1,18 @@
 import { Fragment, forwardRef, HTMLAttributes } from "react";
-import { IData, IStatement, OperationType } from "../lib/types";
+import { Context, IData, IStatement, OperationType } from "../lib/types";
 import { updateStatements } from "../lib/update";
-import { createVariableName, getOperationType } from "../lib/utils";
+import {
+  createVariableName,
+  getOperationType,
+  getStatementResult,
+} from "../lib/utils";
 import { Statement } from "./Statement";
 import { AddStatement } from "./AddStatement";
 
 export interface OperationInputProps extends HTMLAttributes<HTMLDivElement> {
   operation: IData<OperationType>;
   handleChange: (data: IData<OperationType>, remove?: boolean) => void;
-  prevStatements: IStatement[];
+  context: Context;
   options?: {
     disableDelete?: boolean;
     disablaAddParameter?: boolean;
@@ -18,7 +22,7 @@ export interface OperationInputProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
-  ({ operation, handleChange, prevStatements, options, ...props }, ref) => {
+  ({ operation, handleChange, context, options, ...props }, ref) => {
     function handleStatement({
       statement,
       remove,
@@ -33,7 +37,7 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
           ...operation.value.parameters,
           ...operation.value.statements,
         ],
-        previous: prevStatements,
+        context,
         changedStatement: statement,
         removeStatement: remove,
       });
@@ -78,7 +82,7 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
         ...statement,
         name: createVariableName({
           prefix: "param",
-          prev: [...parameters, ...prevStatements],
+          prev: [...parameters, ...context.variables.keys()],
         }),
       };
       const updatedParameters = [...parameters, newParameter];
@@ -115,10 +119,13 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
                 options={{
                   enableVariable: true,
                   disableDelete: options?.disableDelete,
-                  disableMethods: true,
+                  disableOperationCall: true,
                   disableNameToggle: true,
                 }}
-                prevStatements={[]}
+                context={{
+                  variables: new Map(),
+                  currentStatementId: parameter.id,
+                }}
                 addStatement={addParameter}
               />
               {i + 1 < paramList.length && <span>,</span>}
@@ -129,6 +136,7 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
               id={`${operation.id}_parameter`}
               onSelect={addParameter}
               iconProps={{ title: "Add parameter" }}
+              context={{ variables: new Map() }}
             />
           )}
           <span>{")"}</span>
@@ -142,14 +150,20 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
               handleStatement={(statement, remove) =>
                 handleStatement({ statement, remove })
               }
-              prevStatements={[
-                ...prevStatements,
-                ...operation.value.parameters,
-                ...operation.value.statements.slice(0, i),
-              ]}
               addStatement={(statement, position) =>
                 addStatement(statement, position, i)
               }
+              context={{
+                currentStatementId: statement.id,
+                variables: operation.value.parameters
+                  .concat(operation.value.statements.slice(0, i))
+                  .reduce((acc, param) => {
+                    if (param.name) {
+                      acc.set(param.name, getStatementResult(param));
+                    }
+                    return acc;
+                  }, new Map(context.variables)),
+              }}
             />
           ))}
           <AddStatement
@@ -159,6 +173,7 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
               addStatement(statement, "after", lastStatement);
             }}
             iconProps={{ title: "Add statement" }}
+            context={{ variables: new Map() }}
           />
         </div>
       </div>

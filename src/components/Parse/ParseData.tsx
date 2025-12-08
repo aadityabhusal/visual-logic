@@ -17,8 +17,8 @@ export function ParseData({
   showData?: boolean;
   nest?: number;
 }) {
-  if (!showData && data.reference?.name) {
-    return <span className="text-variable">{data.reference?.name}</span>;
+  if (!showData && data.reference) {
+    return <span className="text-variable">{data.reference.name}</span>;
   }
   if (isDataOfType(data, "array")) {
     return <ParseArray data={data} showData={showData} nest={nest} />;

@@ -1,4 +1,4 @@
-import { ArrayType, IData, IStatement } from "../../lib/types";
+import { ArrayType, Context, IData, IStatement } from "../../lib/types";
 import { Statement } from "../Statement";
 import { AddStatement } from "../AddStatement";
 import { forwardRef, HTMLAttributes } from "react";
@@ -7,11 +7,11 @@ import { getArrayElementType } from "../../lib/utils";
 export interface ArrayInputProps extends HTMLAttributes<HTMLDivElement> {
   data: IData<ArrayType>;
   handleData: (data: IData<ArrayType>) => void;
-  prevStatements: IStatement[];
+  context: Context;
 }
 
 export const ArrayInput = forwardRef<HTMLDivElement, ArrayInputProps>(
-  ({ data, handleData, prevStatements, ...props }, ref) => {
+  ({ data, handleData, context, ...props }, ref) => {
     const isMultiline = data.value.length > 3;
 
     function handleUpdate(result: IStatement, index: number, remove?: boolean) {
@@ -44,7 +44,7 @@ export const ArrayInput = forwardRef<HTMLDivElement, ArrayInputProps>(
               <Statement
                 statement={item}
                 handleStatement={(val, remove) => handleUpdate(val, i, remove)}
-                prevStatements={prevStatements}
+                context={context}
               />
               {i < arr.length - 1 ? <span>{","}</span> : null}
             </div>
@@ -61,6 +61,7 @@ export const ArrayInput = forwardRef<HTMLDivElement, ArrayInputProps>(
             });
           }}
           iconProps={{ title: "Add array item" }}
+          context={context}
         />
         <span>{"]"}</span>
       </div>

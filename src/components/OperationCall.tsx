@@ -1,20 +1,19 @@
-import { IData, IStatement, OperationType } from "../lib/types";
+import { Context, IData, IStatement, OperationType } from "../lib/types";
 import { Statement } from "./Statement";
 import { Dropdown } from "./Dropdown";
-import {
-  createOperationCall as createOperationCall,
-  getFilteredOperations,
-  executeOperation,
-} from "../lib/methods";
-import { getStatementResult } from "../lib/utils";
+import { createOperationCall, getFilteredOperations } from "../lib/methods";
+import { executeOperation } from "@/lib/execution";
+import { getStatementResult, getInverseTypes } from "../lib/utils";
 import { BaseInput } from "./Input/BaseInput";
+import { useMemo } from "react";
 
 export function OperationCall({
   data,
   operation,
   handleOperationCall,
   addOperationCall,
-  prevStatements,
+  context,
+  narrowedTypes,
 }: {
   data: IData;
   operation: IData<OperationType>;
@@ -23,16 +22,33 @@ export function OperationCall({
     remove?: boolean
   ) => void;
   addOperationCall?: () => void;
-  prevStatements: IStatement[];
+  context: Context;
+  narrowedTypes: Context["variables"];
 }) {
+  const updatedVariables = useMemo(
+    () =>
+      operation.value.name === "or"
+        ? context.variables
+        : narrowedTypes.entries().reduce((acc, [key, value]) => {
+            if (value.type.kind === "never") acc.delete(key);
+            else acc.set(key, value);
+            return acc;
+          }, new Map(context.variables)),
+    [context.variables, narrowedTypes, operation.value.name]
+  );
+  const filteredOperations = useMemo(
+    () => getFilteredOperations(data, updatedVariables),
+    [data, updatedVariables]
+  );
+
   function handleDropdown(name: string) {
     if (operation.value.name === name) return;
     handleOperationCall(
       createOperationCall({
         data,
         name,
-        prevParams: operation.value.parameters,
-        prevStatements,
+        parameters: operation.value.parameters,
+        context,
       })
     );
   }
@@ -42,7 +58,7 @@ export function OperationCall({
     let parameters = [...operation.value.parameters];
     parameters[index] = item;
 
-    const foundOperation = getFilteredOperations(data, prevStatements).find(
+    const foundOperation = filteredOperations.find(
       (op) => op.name === operation.value.name
     );
 
@@ -69,7 +85,7 @@ export function OperationCall({
         result: result && {
           ...result,
           id: (operation.value.result || result).id,
-          isGeneric: data.isGeneric,
+          isTypeEditable: data.isTypeEditable,
         },
       },
     });
@@ -79,15 +95,18 @@ export function OperationCall({
     <Dropdown
       id={operation.id}
       result={operation.value.result}
-      items={getFilteredOperations(data, prevStatements).map((item) => ({
+      items={filteredOperations.map((item) => ({
         label: item.name,
         value: item.name,
         color: "method",
-        entityType: "method",
+        entityType: "operationCall",
         onClick: () => handleDropdown(item.name),
       }))}
+      context={context}
       value={operation.value.name}
-      addOperationCall={addOperationCall}
+      addOperationCall={
+        filteredOperations.length ? addOperationCall : undefined
+      }
       handleDelete={() => handleOperationCall(operation, true)}
       isInputTarget
       target={(props) => <BaseInput {...props} className="text-method" />}
@@ -99,7 +118,13 @@ export function OperationCall({
             statement={item}
             handleStatement={(val) => val && handleParameter(val, i)}
             options={{ disableDelete: true }}
-            prevStatements={prevStatements}
+            context={{
+              ...context,
+              variables:
+                operation.value.name === "thenElse" && i === 1
+                  ? getInverseTypes(context.variables, narrowedTypes)
+                  : updatedVariables,
+            }}
           />
           {i < arr.length - 1 ? <span>{", "}</span> : null}
         </span>

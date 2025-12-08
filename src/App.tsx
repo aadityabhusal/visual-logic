@@ -15,9 +15,9 @@ import {
 } from "@mantine/core";
 import { FocusInfo } from "./components/FocusInfo";
 import { useSearchParams } from "react-router";
-import { createStatement } from "./lib/utils";
 import { useCustomHotkeys } from "./hooks/useNavigation";
 import { getOperationEntities } from "./lib/navigation";
+import { Context } from "./lib/types";
 
 const theme = createTheme({
   scale: 1,
@@ -44,7 +44,7 @@ function App() {
     [operations, searchParams]
   );
 
-  useHotkeys(useCustomHotkeys());
+  useHotkeys(useCustomHotkeys(), []);
 
   useEffect(() => {
     if (currentOperation) {
@@ -69,15 +69,24 @@ function App() {
               <Operation
                 operation={currentOperation}
                 handleChange={setOperation}
-                prevStatements={operations
-                  .filter((operation) => operation.id !== currentOperation.id)
-                  .map((operation) =>
-                    createStatement({
-                      data: operation,
-                      name: operation.value.name,
-                      id: operation.id,
-                    })
-                  )}
+                context={{
+                  variables: operations.reduce((acc, operation) => {
+                    if (
+                      !operation.value.name ||
+                      operation.id === currentOperation.id
+                    ) {
+                      return acc;
+                    }
+                    acc.set(operation.value.name, {
+                      ...operation,
+                      reference: {
+                        id: operation.id,
+                        name: operation.value.name,
+                      },
+                    });
+                    return acc;
+                  }, new Map() as Context["variables"]),
+                }}
                 options={{ isTopLevel: true, disableDropdown: true }}
               />
             ) : (

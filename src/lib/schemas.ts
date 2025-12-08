@@ -14,6 +14,7 @@ import type {
   IStatement,
   IDropdownItem,
   UnknownType,
+  NeverType,
 } from "./types";
 
 /**
@@ -23,6 +24,11 @@ import type {
 const UnknownTypeSchema: z.ZodType<UnknownType> = z.object({
   kind: z.literal("unknown"),
 });
+
+const NeverTypeSchema: z.ZodType<NeverType> = z.object({
+  kind: z.literal("never"),
+});
+
 const UndefinedTypeSchema: z.ZodType<UndefinedType> = z.object({
   kind: z.literal("undefined"),
 });
@@ -81,6 +87,7 @@ const ConditionTypeSchema: z.ZodType<ConditionType> = z.object({
 
 export const DataTypeSchema: z.ZodType<DataType> = z.union([
   UnknownTypeSchema,
+  NeverTypeSchema,
   UndefinedTypeSchema,
   StringTypeSchema,
   NumberTypeSchema,
@@ -96,7 +103,7 @@ export const IDataSchema: z.ZodType<IData> = z
   .object({
     id: z.string(),
     entityType: z.literal("data"),
-    isGeneric: z.boolean().optional(),
+    isTypeEditable: z.boolean().optional(),
     reference: z.object({ id: z.string(), name: z.string() }).optional(),
   })
   .and(
@@ -105,6 +112,10 @@ export const IDataSchema: z.ZodType<IData> = z
       z.object({
         type: UnknownTypeSchema,
         value: z.unknown(),
+      }),
+      z.object({
+        type: NeverTypeSchema,
+        value: z.never(),
       }),
       z.object({
         type: UndefinedTypeSchema,
@@ -204,7 +215,7 @@ export const IDropdownItemSchema: z.ZodType<IDropdownItem> = z.object({
   label: z.string().optional(),
   secondaryLabel: z.string().optional(),
   value: z.string(),
-  entityType: z.enum(["data", "method", "operation"]),
+  entityType: z.enum(["data", "operationCall"]),
   onClick: z.function().optional(),
 });
 

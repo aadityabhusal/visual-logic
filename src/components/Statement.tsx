@@ -1,13 +1,14 @@
 import { FaArrowRightLong, FaArrowTurnUp, FaEquals } from "react-icons/fa6";
-import { IData, IStatement, OperationType } from "../lib/types";
-import { updateStatementMethods } from "../lib/update";
+import { Context, IData, IStatement, OperationType } from "../lib/types";
+import { updateOperationCalls } from "../lib/update";
 import {
   isTypeCompatible,
   getStatementResult,
   createVariableName,
   isDataOfType,
+  applyTypeNarrowing,
 } from "../lib/utils";
-import { createOperationCall } from "../lib/methods";
+import { createOperationCall, getFilteredOperations } from "../lib/methods";
 import { Data } from "./Data";
 import { BaseInput } from "./Input/BaseInput";
 import { OperationCall } from "./OperationCall";
@@ -16,26 +17,27 @@ import { AddStatement } from "./AddStatement";
 import { getHotkeyHandler, useDisclosure } from "@mantine/hooks";
 import { Popover, useDelayedHover } from "@mantine/core";
 import { DataTypes } from "../lib/data";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { uiConfigStore } from "@/lib/store";
 import { useCustomHotkeys } from "@/hooks/useNavigation";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 export function Statement({
   statement,
   handleStatement,
-  prevStatements,
+  context,
   addStatement,
   options,
 }: {
   statement: IStatement;
   handleStatement: (statement: IStatement, remove?: boolean) => void;
-  prevStatements: IStatement[];
   addStatement?: (statement: IStatement, position: "before" | "after") => void;
+  context: Context;
   options?: {
     enableVariable?: boolean;
     disableNameToggle?: boolean;
     disableDelete?: boolean;
-    disableMethods?: boolean;
+    disableOperationCall?: boolean;
   };
 }) {
   const hasName = statement.name !== undefined;
@@ -67,10 +69,10 @@ export function Statement({
   function addOperationCall() {
     const data = getStatementResult(statement);
     if (data.entityType !== "data") return;
-    const operation = createOperationCall({ data, prevStatements });
+    const operation = createOperationCall({ data, context });
     const operations = [...statement.operations, operation];
     handleStatement(
-      updateStatementMethods({ ...statement, operations }, prevStatements)
+      updateOperationCalls({ ...statement, operations }, context)
     );
     setUiConfig({ navigation: { id: operation.id, direction: "right" } });
   }
@@ -81,10 +83,7 @@ export function Statement({
       let operations = [...statement.operations];
       if (!isTypeCompatible(statement.data.type, data.type)) operations = [];
       handleStatement(
-        updateStatementMethods(
-          { ...statement, data, operations },
-          prevStatements
-        )
+        updateOperationCalls({ ...statement, data, operations }, context)
       );
     }
   }
@@ -93,9 +92,9 @@ export function Statement({
     if (remove) handleStatement(statement, remove);
     else
       handleStatement(
-        updateStatementMethods(
+        updateOperationCalls(
           { ...statement, data: operation, operations: statement.operations },
-          prevStatements
+          context
         )
       );
   }
@@ -131,7 +130,7 @@ export function Statement({
       operations[index] = operation;
     }
     handleStatement(
-      updateStatementMethods({ ...statement, operations }, prevStatements)
+      updateOperationCalls({ ...statement, operations }, context)
     );
   }
 
@@ -152,7 +151,7 @@ export function Statement({
                 if (
                   [
                     ...Object.keys(DataTypes),
-                    ...prevStatements.map((s) => s.name),
+                    ...context.variables.keys(),
                     "operation",
                   ].includes(name)
                 ) {
@@ -192,7 +191,7 @@ export function Statement({
                       ? undefined
                       : createVariableName({
                           prefix: "var",
-                          prev: prevStatements,
+                          prev: [...context.variables.keys()],
                         }),
                   });
                   setUiConfig(() => ({
@@ -213,6 +212,8 @@ export function Statement({
                   closeDropdown();
                 }}
                 iconProps={{ title: "Add before" }}
+                className="bg-editor"
+                context={context}
               />
             </Popover.Dropdown>
           </Popover>
@@ -224,51 +225,76 @@ export function Statement({
           (statement.operations.length > 1 ? "flex-col" : "flex-row")
         }
       >
-        <Data
-          data={statement.data}
-          disableDelete={options?.disableDelete}
-          addOperationCall={
-            !options?.disableMethods &&
-            statement.operations.length === 0 &&
-            !isDataOfType(statement.data, "operation")
-              ? addOperationCall
-              : undefined
-          }
-          prevStatements={prevStatements}
-          handleChange={
-            isDataOfType(statement.data, "operation")
-              ? handelOperation
-              : handleData
-          }
-        />
-        {statement.operations.map((operation, i, operationsList) => {
-          const data = getStatementResult(statement, i, true);
-          if (data.entityType !== "data") return;
-          return (
-            <div key={operation.id} className="flex items-start gap-1 ml-1">
-              <PipeArrow
-                size={10}
-                className="text-disabled mt-1.5"
-                style={{
-                  transform: operationsList.length > 1 ? "rotate(90deg)" : "",
-                }}
-              />
-              <OperationCall
-                data={data}
-                operation={operation}
-                handleOperationCall={(op, remove) =>
-                  handleOperationCall(op, i, remove)
-                }
-                prevStatements={prevStatements}
-                addOperationCall={
-                  !options?.disableMethods && i + 1 === operationsList.length
-                    ? addOperationCall
-                    : undefined
-                }
-              />
-            </div>
-          );
-        })}
+        <ErrorBoundary
+          displayError={true}
+          onRemove={() => handleStatement(statement, true)}
+        >
+          <Data
+            data={statement.data}
+            disableDelete={options?.disableDelete}
+            addOperationCall={
+              !options?.disableOperationCall &&
+              statement.operations.length === 0 &&
+              getFilteredOperations(statement.data, context.variables).length
+                ? addOperationCall
+                : undefined
+            }
+            context={context}
+            handleChange={
+              isDataOfType(statement.data, "operation")
+                ? handelOperation
+                : handleData
+            }
+          />
+        </ErrorBoundary>
+        {
+          statement.operations.reduce(
+            (acc, operation, i, operationsList) => {
+              const data = getStatementResult(statement, i, true);
+              acc.narrowedTypes = applyTypeNarrowing(
+                context.variables,
+                acc.narrowedTypes,
+                data,
+                operation
+              );
+
+              acc.elements.push(
+                <div key={operation.id} className="flex items-start gap-1 ml-2">
+                  <PipeArrow
+                    size={10}
+                    className="text-disabled mt-1.5"
+                    style={{
+                      transform:
+                        operationsList.length > 1 ? "rotate(90deg)" : "",
+                    }}
+                  />
+                  <ErrorBoundary
+                    displayError={true}
+                    onRemove={() => handleOperationCall(operation, i, true)}
+                  >
+                    <OperationCall
+                      data={data}
+                      operation={operation}
+                      handleOperationCall={(op, remove) =>
+                        handleOperationCall(op, i, remove)
+                      }
+                      context={context}
+                      narrowedTypes={acc.narrowedTypes}
+                      addOperationCall={
+                        !options?.disableOperationCall &&
+                        i + 1 === operationsList.length
+                          ? addOperationCall
+                          : undefined
+                      }
+                    />
+                  </ErrorBoundary>
+                </div>
+              );
+              return acc;
+            },
+            { elements: [] as ReactNode[], narrowedTypes: new Map() }
+          ).elements
+        }
       </div>
     </div>
   );

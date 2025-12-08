@@ -1,4 +1,4 @@
-import { Combobox, useCombobox } from "@mantine/core";
+import { Combobox, Tooltip, useCombobox } from "@mantine/core";
 import { HTMLAttributes, ReactNode, useEffect, useMemo, useState } from "react";
 import { BaseInput } from "./Input/BaseInput";
 import { IconButton } from "../ui/IconButton";
@@ -10,11 +10,10 @@ import {
 } from "react-icons/fa6";
 import { operationsStore, uiConfigStore } from "../lib/store";
 import { getHotkeyHandler, HotkeyItem, useHotkeys } from "@mantine/hooks";
-import { IData, IDropdownItem, IStatement } from "../lib/types";
+import { Context, IData, IDropdownItem, IStatement } from "../lib/types";
 import { useSearchParams } from "react-router";
-import { isDataOfType, isTextInput } from "../lib/utils";
+import { getTypeSignature, isDataOfType, isTextInput } from "../lib/utils";
 import { getNextIdAfterDelete, getOperationEntities } from "@/lib/navigation";
-import { useCustomHotkeys } from "@/hooks/useNavigation";
 
 export interface IDropdownTargetProps
   extends Omit<HTMLAttributes<HTMLElement>, "onChange" | "defaultValue"> {
@@ -54,6 +53,7 @@ export function Dropdown({
   isInputTarget?: boolean;
   reference?: IData["reference"];
   target: (value: IDropdownTargetProps) => ReactNode;
+  context: Context;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const { highlightOperation, navigation, setUiConfig } = uiConfigStore();
@@ -78,7 +78,6 @@ export function Dropdown({
       });
     },
   });
-  const customHotKeys = useCustomHotkeys();
 
   const dropdownOptions = useMemo(
     () =>
@@ -99,7 +98,18 @@ export function Dropdown({
             <span className="text-sm max-w-32 truncate">
               {option.label || option.value}
             </span>
-            <span className="text-xs">{option.secondaryLabel}</span>
+            <Tooltip
+              position="right"
+              label={
+                <span className="text-xs">
+                  {option.variableType
+                    ? getTypeSignature(option.variableType)
+                    : null}
+                </span>
+              }
+            >
+              <span className="text-xs">{option.secondaryLabel}</span>
+            </Tooltip>
           </Combobox.Option>
         )),
     [items, search, value]
@@ -108,6 +118,7 @@ export function Dropdown({
   function handleSearch(val: string) {
     if (!combobox.dropdownOpened) combobox.openDropdown();
     setSearch(val);
+    setUiConfig({ result });
   }
 
   useHotkeys(
@@ -162,12 +173,15 @@ export function Dropdown({
   }, [combobox.dropdownOpened]);
 
   useEffect(() => {
-    if (isFocused && combobox.targetRef.current instanceof HTMLInputElement) {
+    if (!isFocused) return;
+    if (combobox.targetRef.current instanceof HTMLInputElement) {
       combobox.targetRef.current.focus();
+    } else {
+      setUiConfig({ result });
     }
 
     const textInput = isTextInput(combobox.targetRef.current);
-    if (isFocused && textInput && textInput !== document.activeElement) {
+    if (textInput && textInput !== document.activeElement) {
       let caretPosition = 0;
       if (
         (navigation.direction === "right" && navigation.modifier) ||
@@ -177,7 +191,7 @@ export function Dropdown({
       }
       textInput.setSelectionRange(caretPosition, caretPosition);
     }
-  }, [isFocused, combobox.targetRef, navigation]);
+  }, [isFocused, combobox.targetRef, navigation, setUiConfig, result]);
 
   return (
     <Combobox
@@ -221,7 +235,6 @@ export function Dropdown({
                     onBlur: () => combobox?.closeDropdown(),
                     onKeyDown: getHotkeyHandler([
                       ["ctrl+space", () => combobox.openDropdown()],
-                      ...customHotKeys,
                       ...(hotkeys ?? []),
                     ]),
                   }
@@ -265,7 +278,7 @@ export function Dropdown({
           {addOperationCall && (
             <IconButton
               size={12}
-              title="Add method"
+              title="Add operation call"
               className="absolute top-1.5 -right-2 text-border bg-white rounded-full z-10"
               icon={FaCirclePlus}
               onClick={() => {

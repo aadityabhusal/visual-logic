@@ -21,15 +21,15 @@ interface BaseInputProps<T extends string | number>
 }
 
 function BaseInputInner<T extends string | number>(
-  { type, ...props }: BaseInputProps<T>,
+  { value, type, onChange, defaultValue, ...props }: BaseInputProps<T>,
   ref: React.ForwardedRef<HTMLInputElement>
 ) {
   const MAX_WIDTH = 160;
   const [textWidth, setTextWidth] = useState(0);
   const [inputValue, setInputValue] = useUncontrolled({
-    value: props.value,
-    defaultValue: props.defaultValue,
-    onChange: props.onChange,
+    value,
+    defaultValue,
+    onChange,
   });
 
   const commonProps = {
@@ -85,5 +85,3 @@ export const BaseInput = forwardRef(BaseInputInner) as <
 >(
   props: BaseInputProps<T> & { ref?: React.ForwardedRef<HTMLInputElement> }
 ) => React.ReactElement | null;
-
-// BaseInput.displayName = "BaseInput";

@@ -67,7 +67,10 @@ export function Header({
               setOperation({
                 ...parsedOperation,
                 id: currentOperation?.id,
-                name: currentOperation?.value.name,
+                value: {
+                  ...currentOperation?.value,
+                  name: currentOperation?.value.name,
+                },
               });
               setIsOperationPasted(true);
               pasteAnimation.start();
