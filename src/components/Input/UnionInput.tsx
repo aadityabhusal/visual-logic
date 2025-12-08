@@ -7,6 +7,7 @@ import {
   getTypeSignature,
   inferTypeFromValue,
   isTypeCompatible,
+  resolveUnionType,
 } from "../../lib/utils";
 import { FaChevronDown, FaX } from "react-icons/fa6";
 import { DataTypes } from "@/lib/data";
@@ -57,24 +58,18 @@ export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
     function handleTypeAdd(newType: DataType) {
       handleData({
         ...data,
-        type: { kind: "union", types: [...data.type.types, newType] },
+        type: resolveUnionType([...data.type.types, newType], true),
         value: createDefaultValue(newType),
       });
     }
 
     function handleActiveTypeChange(newData: IData) {
-      // eslint-disable-next-line prefer-const
-      let updatedTypes = [...data.type.types];
+      const updatedTypes = [...data.type.types];
       updatedTypes[activeTypeIndex] = newData.type;
-
-      const uniqueTypes = updatedTypes.filter(
-        (type, index, self) =>
-          index === self.findIndex((t) => isTypeCompatible(t, type))
-      );
 
       handleData({
         ...data,
-        type: { kind: "union", types: uniqueTypes },
+        type: resolveUnionType(updatedTypes, true),
         value: newData.value,
       });
     }
@@ -95,7 +90,7 @@ export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
 
       handleData({
         ...data,
-        type: { kind: "union", types: newTypes },
+        type: resolveUnionType(newTypes, true),
         value: newValue,
       });
     }

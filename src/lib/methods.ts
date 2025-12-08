@@ -20,6 +20,7 @@ import {
   inferTypeFromValue,
   isDataOfType,
   isTypeCompatible,
+  resolveUnionType,
 } from "./utils";
 import { executeOperation } from "./execution";
 
@@ -61,8 +62,12 @@ const unknownOperations: OperationListItem[] = [
       });
     },
   },
+  // TODO: add typeOf operation for unknown type here. Or maybe separate operations accepting 'unknown' and 'any' type.
+];
+
+const unionOperations: OperationListItem[] = [
   {
-    name: "typeof",
+    name: "typeOf",
     parameters: (data) => [
       { type: { kind: "union", types: [] } },
       { type: data.type },
@@ -72,7 +77,7 @@ const unknownOperations: OperationListItem[] = [
       return createData({
         type: { kind: "boolean" },
         value: isTypeCompatible(
-          inferTypeFromValue(data.type),
+          inferTypeFromValue(data.value),
           inferTypeFromValue(typeData.value)
         ),
       });
@@ -349,7 +354,7 @@ const numberOperations: OperationListItem[] = [
   },
 ];
 
-export const arrayOperations: OperationListItem[] = [
+const arrayOperations: OperationListItem[] = [
   {
     name: "at",
     parameters: [
@@ -362,6 +367,14 @@ export const arrayOperations: OperationListItem[] = [
       if (!item) return createData({ type: { kind: "undefined" } });
       const value = getStatementResult(item) as IData;
       return createData({ type: value.type, value: value.value });
+    },
+  },
+  {
+    name: "length",
+    parameters: [{ type: { kind: "array", elementType: { kind: "unknown" } } }],
+    result: { kind: "number" },
+    handler: (data: IData<ArrayType>) => {
+      return createData({ type: { kind: "number" }, value: data.value.length });
     },
   },
   {
@@ -391,7 +404,7 @@ export const arrayOperations: OperationListItem[] = [
       return createData({
         type: {
           kind: "array",
-          elementType: { kind: "union", types: value.map((item) => item.type) },
+          elementType: resolveUnionType(value.map((item) => item.type)),
         },
         value: value.map((data) => createStatement({ data })),
       });
@@ -418,7 +431,7 @@ export const arrayOperations: OperationListItem[] = [
         },
       ];
     },
-    result: { kind: "string" },
+    result: (data) => data.type,
     handler: (data: IData<ArrayType>, operation: IData<OperationType>) => {
       const value = mapArrayParameters(data, operation);
       const foundData = data.value.find((_, i) => {
@@ -433,7 +446,7 @@ export const arrayOperations: OperationListItem[] = [
   },
 ];
 
-export const objectOperations: OperationListItem[] = [
+const objectOperations: OperationListItem[] = [
   {
     name: "get",
     parameters: [
@@ -480,15 +493,18 @@ export const objectOperations: OperationListItem[] = [
   {
     name: "values",
     parameters: [{ type: { kind: "object", properties: {} } }],
-    result: { kind: "undefined" },
+    result: (data) =>
+      isDataOfType(data, "object")
+        ? {
+            kind: "array",
+            elementType: resolveUnionType(Object.values(data.type.properties)),
+          }
+        : { kind: "undefined" },
     handler(data: IData<ObjectType>) {
       return createData({
         type: {
           kind: "array",
-          elementType: {
-            kind: "union",
-            types: Object.values(data.type.properties),
-          },
+          elementType: resolveUnionType(Object.values(data.type.properties)),
         },
         value: [...data.value.values()].map((item) => {
           const itemResult = getStatementResult(item) as IData;
@@ -537,6 +553,7 @@ export const builtInOperations: OperationListItem[] = [
   ...objectOperations,
   ...operationOperations,
   ...unknownOperations,
+  ...unionOperations,
 ];
 
 function mapArrayParameters(
@@ -609,10 +626,16 @@ export function getFilteredOperations(
   data: IData,
   variables: Context["variables"]
 ) {
+  const supportsOperation = (data: DataType, firstParam: DataType) => {
+    if (data.kind === "never") return false;
+    return data.kind === "union" && firstParam.kind !== "union"
+      ? data.types.every((t) => t.kind === firstParam.kind)
+      : data.kind === firstParam.kind || firstParam.kind === "unknown";
+  };
   const builtInOps = builtInOperations.filter((operation) => {
     const operationParameters = getOperationListItemParameters(operation, data);
     const firstParam = operationParameters[0]?.type ?? { kind: "undefined" };
-    return firstParam.kind === "unknown" || firstParam.kind === data.type.kind;
+    return supportsOperation(data.type, firstParam);
   });
 
   const userDefinedOps = variables.entries().reduce((acc, [name, variable]) => {
@@ -620,10 +643,9 @@ export function getFilteredOperations(
     const firstParam = variable.type.parameters[0]?.type ?? {
       kind: "undefined",
     };
-    if (firstParam.kind !== "unknown" && firstParam.kind !== data.type.kind) {
-      return acc;
+    if (supportsOperation(data.type, firstParam)) {
+      acc.push(operationToListItem(name, variable));
     }
-    acc.push(operationToListItem(name, variable));
     return acc;
   }, [] as OperationListItem[]);
 

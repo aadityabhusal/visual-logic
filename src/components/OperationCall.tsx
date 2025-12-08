@@ -3,7 +3,7 @@ import { Statement } from "./Statement";
 import { Dropdown } from "./Dropdown";
 import { createOperationCall, getFilteredOperations } from "../lib/methods";
 import { executeOperation } from "@/lib/execution";
-import { inverseType, getStatementResult } from "../lib/utils";
+import { getStatementResult, getInverseTypes } from "../lib/utils";
 import { BaseInput } from "./Input/BaseInput";
 import { useMemo } from "react";
 
@@ -26,8 +26,15 @@ export function OperationCall({
   narrowedTypes: Context["variables"];
 }) {
   const updatedVariables = useMemo(
-    () => new Map([...context.variables, ...narrowedTypes]),
-    [context.variables, narrowedTypes]
+    () =>
+      operation.value.name === "or"
+        ? context.variables
+        : narrowedTypes.entries().reduce((acc, [key, value]) => {
+            if (value.type.kind === "never") acc.delete(key);
+            else acc.set(key, value);
+            return acc;
+          }, new Map(context.variables)),
+    [context.variables, narrowedTypes, operation.value.name]
   );
   const filteredOperations = useMemo(
     () => getFilteredOperations(data, updatedVariables),
@@ -84,16 +91,6 @@ export function OperationCall({
     });
   }
 
-  function getElseContext() {
-    return narrowedTypes.entries().reduce((acc, [key, value]) => {
-      const variable = context.variables.get(key);
-      if (!variable) return acc;
-      const excludedType = inverseType(variable.type, value.type);
-      acc.set(key, { ...variable, type: excludedType });
-      return acc;
-    }, structuredClone(context.variables));
-  }
-
   return (
     <Dropdown
       id={operation.id}
@@ -125,7 +122,7 @@ export function OperationCall({
               ...context,
               variables:
                 operation.value.name === "thenElse" && i === 1
-                  ? getElseContext()
+                  ? getInverseTypes(context.variables, narrowedTypes)
                   : updatedVariables,
             }}
           />

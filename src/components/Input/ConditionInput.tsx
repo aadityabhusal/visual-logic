@@ -1,6 +1,11 @@
 import { forwardRef, HTMLAttributes } from "react";
 import { ConditionType, Context, IData, IStatement } from "../../lib/types";
-import { getConditionResult, getStatementResult } from "../../lib/utils";
+import {
+  getConditionResult,
+  getStatementResult,
+  isTypeCompatible,
+  resolveUnionType,
+} from "../../lib/utils";
 import { Statement } from "../Statement";
 
 export interface ConditionInputProps extends HTMLAttributes<HTMLDivElement> {
@@ -16,16 +21,16 @@ export const ConditionInput = forwardRef<HTMLDivElement, ConditionInputProps>(
       val: IStatement
     ) {
       const value = { ...data.value, [key]: val };
-      const types =
-        key === "true"
-          ? [getStatementResult(value.true).type, data.type.type.types[1]]
-          : key === "false"
-          ? [data.type.type.types[0], getStatementResult(value.false).type]
-          : data.type.type.types;
-
+      const trueType = getStatementResult(value.true).type;
+      const falseType = getStatementResult(value.false).type;
+      const unionType = resolveUnionType(
+        isTypeCompatible(trueType, falseType)
+          ? [trueType]
+          : [trueType, falseType]
+      );
       handleData({
         ...data,
-        type: { kind: "condition", type: { kind: "union", types: types } },
+        type: { kind: "condition", type: unionType },
         value: { ...value, result: getConditionResult(value) },
       });
     }

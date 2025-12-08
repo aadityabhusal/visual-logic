@@ -162,7 +162,7 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
                       acc.set(param.name, getStatementResult(param));
                     }
                     return acc;
-                  }, structuredClone(context.variables)),
+                  }, new Map(context.variables)),
               }}
             />
           ))}

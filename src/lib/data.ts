@@ -10,6 +10,10 @@ export const DataTypes: {
     type: { kind: "unknown" },
     hideFromDropdown: true,
   },
+  never: {
+    type: { kind: "never" },
+    hideFromDropdown: true,
+  },
   undefined: {
     type: { kind: "undefined" },
   },

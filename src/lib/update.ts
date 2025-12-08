@@ -185,7 +185,7 @@ export function getReferenceOperation(
       variables: updatedParameters.reduce((acc, param) => {
         if (param.name) acc.set(param.name, getStatementResult(param));
         return acc;
-      }, structuredClone(context.variables)),
+      }, new Map(context.variables)),
     },
   });
 

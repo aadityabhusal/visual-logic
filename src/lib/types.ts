@@ -14,11 +14,13 @@ export type OperationType = {
   parameters: { type: DataType; name?: string }[];
   result: DataType;
 };
-export type ConditionType = { kind: "condition"; type: UnionType };
+export type ConditionType = { kind: "condition"; type: DataType };
 export type UnknownType = { kind: "unknown" };
+export type NeverType = { kind: "never" };
 
 export type DataType =
   | UnknownType
+  | NeverType
   | UndefinedType
   | StringType
   | NumberType
@@ -31,6 +33,8 @@ export type DataType =
 
 type BaseDataValue<T extends DataType> = T extends UnknownType
   ? unknown
+  : T extends NeverType
+  ? never
   : T extends UndefinedType
   ? undefined
   : T extends StringType

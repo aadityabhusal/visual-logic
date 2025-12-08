@@ -14,6 +14,7 @@ import type {
   IStatement,
   IDropdownItem,
   UnknownType,
+  NeverType,
 } from "./types";
 
 /**
@@ -23,6 +24,11 @@ import type {
 const UnknownTypeSchema: z.ZodType<UnknownType> = z.object({
   kind: z.literal("unknown"),
 });
+
+const NeverTypeSchema: z.ZodType<NeverType> = z.object({
+  kind: z.literal("never"),
+});
+
 const UndefinedTypeSchema: z.ZodType<UndefinedType> = z.object({
   kind: z.literal("undefined"),
 });
@@ -81,6 +87,7 @@ const ConditionTypeSchema: z.ZodType<ConditionType> = z.object({
 
 export const DataTypeSchema: z.ZodType<DataType> = z.union([
   UnknownTypeSchema,
+  NeverTypeSchema,
   UndefinedTypeSchema,
   StringTypeSchema,
   NumberTypeSchema,
@@ -105,6 +112,10 @@ export const IDataSchema: z.ZodType<IData> = z
       z.object({
         type: UnknownTypeSchema,
         value: z.unknown(),
+      }),
+      z.object({
+        type: NeverTypeSchema,
+        value: z.never(),
       }),
       z.object({
         type: UndefinedTypeSchema,
