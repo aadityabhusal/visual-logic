@@ -1,4 +1,4 @@
-# Visual Logic
+# Logicflow
 
 Creating programming logic visually by chaining operations on data.
 

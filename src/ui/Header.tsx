@@ -34,7 +34,7 @@ export function Header({
         size={16}
         onClick={() => setUiConfig((p) => ({ hideSidebar: !p.hideSidebar }))}
       />
-      <h1 style={{ marginRight: "auto" }}>Visual Logic</h1>
+      <h1 style={{ marginRight: "auto" }}>Logicflow</h1>
       <div className="flex items-center gap-2">
         <IconButton
           title="Copy"

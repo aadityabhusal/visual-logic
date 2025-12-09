@@ -85,7 +85,7 @@ export function Sidebar() {
           <SiYoutube size={20} />
         </a>
         <a
-          href="https://github.com/aadityabhusal/visual-logic"
+          href="https://github.com/aadityabhusal/logicflow"
           target="_blank"
           rel="noreferrer"
           style={{ display: "flex", userSelect: "none" }}

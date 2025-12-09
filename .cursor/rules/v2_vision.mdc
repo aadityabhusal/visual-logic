@@ -1,13 +1,13 @@
 ---
-description: These rules give a top-level idea and direction while building feature for the next version of Visual Logic.
+description: These rules give a top-level idea and direction while building feature for the next version of Logicflow.
 alwaysApply: false
 ---
 
-# Visual Logic - Cursor Rules
+# Logicflow - Cursor Rules
 
 ## Core Philosophy
 
-Visual Logic is a block-based (not node-based) visual programming environment built on the principle that **programming is operations on data**. All features, patterns, and architectural decisions must align with this functional, data-transformation paradigm.
+Logicflow is a block-based (not node-based) visual programming environment built on the principle that **programming is operations on data**. All features, patterns, and architectural decisions must align with this functional, data-transformation paradigm.
 
 ### Key Principles
 
@@ -19,7 +19,7 @@ Visual Logic is a block-based (not node-based) visual programming environment bu
 
 ## Vision: Next Version
 
-The next version transforms Visual Logic from a simple logic builder into a **complete serverless function development platform** while maintaining its core simplicity and visual-first approach.
+The next version transforms Logicflow from a simple logic builder into a **complete serverless function development platform** while maintaining its core simplicity and visual-first approach.
 
 ### Target Capability
 
@@ -68,7 +68,7 @@ Build an expressive, recursive type system supporting:
 
 ## NPM Package Integration Strategy
 
-This is the **killer feature** that differentiates Visual Logic from other visual programming tools.
+This is the **killer feature** that differentiates Logicflow from other visual programming tools.
 
 ### Implementation Approach
 
@@ -253,4 +253,4 @@ When evaluating new features or approaches, ask:
 5. Can real-time execution show meaningful results?
 6. Does this add genuine capability or just complexity?
 
-Favor solutions that maintain simplicity while adding power. Visual Logic's strength is making programming more accessible to non-developers and no-code developers without sacrificing capability—every feature should serve this goal.
+Favor solutions that maintain simplicity while adding power. Logicflow's strength is making programming more accessible to non-developers and no-code developers without sacrificing capability—every feature should serve this goal.
