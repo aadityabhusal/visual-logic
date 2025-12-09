@@ -99,3 +99,23 @@ export type Context = {
   variables: Map<string, IData>;
   currentStatementId?: string;
 };
+
+export type Parameter = {
+  type: DataType;
+  name?: string;
+  isTypeEditable?: boolean;
+};
+export type OperationListItem = {
+  name: string;
+  parameters: ((data: IData) => Parameter[]) | Parameter[];
+  result: ((data: IData) => DataType) | DataType;
+  isResultTypeFixed?: boolean; // Show error when type mismatches in the UI
+} & ( // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | { handler: (...args: IData<any>[]) => IData }
+  | { statements: IStatement[] }
+);
+
+export type ExecutionContext = {
+  parameters: Map<string, IData>;
+  statements: Map<string, IData>;
+};

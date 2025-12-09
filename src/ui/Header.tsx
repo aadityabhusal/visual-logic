@@ -68,7 +68,7 @@ export function Header({
                 ...parsedOperation,
                 id: currentOperation?.id,
                 value: {
-                  ...currentOperation?.value,
+                  ...parsedOperation?.value,
                   name: currentOperation?.value.name,
                 },
               });
