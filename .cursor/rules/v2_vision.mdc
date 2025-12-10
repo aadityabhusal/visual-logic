@@ -19,11 +19,11 @@ Logicflow is a block-based (not node-based) visual programming environment built
 
 ## Vision: Next Version
 
-The next version transforms Logicflow from a simple logic builder into a **complete serverless function development platform** while maintaining its core simplicity and visual-first approach.
+The next version transforms Logicflow from a simple logic builder into a **complete serverless/edge function development platform** while maintaining its core simplicity and visual-first approach.
 
 ### Target Capability
 
-Users should be able to visually create production-ready serverless cloud functions with:
+Users should be able to visually create production-ready serverless/edge functions with:
 
 - Full TypeScript type safety
 - External service integrations via npm packages
@@ -143,14 +143,14 @@ Support `Promise.all` for parallel operations:
 Generate **production-ready TypeScript** with:
 
 - Proper import statements based on used packages
-- Platform-specific handler signatures (AWS Lambda, Google Cloud Functions, Azure Functions, etc.)
+- Platform-specific handler signatures for developer focused serverless/edge platforms like Supabase, Vercel, Cloudflare, Netlify etc.
 - Environment variable references
 - Infrastructure-as-code files (serverless.yml, SAM templates, Terraform)
 - Auto-generated package.json with dependencies
 
 ### Platform Adaptability
 
-Create templates for major serverless platforms:
+Create templates for developer focused serverless/edge platforms like Supabase, Vercel, Cloudflare, Netlify etc.:
 
 - Each platform's specific handler signature
 - Context object handling
@@ -190,7 +190,6 @@ Design for a **text-like linear structure**, not graph-based:
 Projects are collections of operations and configurations containing:
 
 - Multiple operations with dependency tracking
-- Shared custom types defined at project level
 - Project-level constants separate from environment variables
 - NPM package dependencies and imports
 - Platform deployment configurations
