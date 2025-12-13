@@ -120,18 +120,27 @@ export type ExecutionContext = {
   statements: Map<string, IData>;
 };
 
+export type NavigationDirection = "left" | "right" | "up" | "down";
+export type NavigationModifier = "alt" | "mod";
+export type INavigation = {
+  id?: string;
+  direction?: NavigationDirection;
+  modifier?: NavigationModifier;
+  disable?: boolean;
+};
+
 /* Project Types */
 
 export interface Project {
   id: string;
   name: string;
-  description?: string;
   version: string;
-  createdAt: string;
-  updatedAt: string;
-  userId?: string;
+  createdAt: number;
+  updatedAt?: number;
   files: ProjectFile[];
-  dependencies: Dependencies;
+  description?: string;
+  userId?: string;
+  dependencies?: Dependencies;
   deployment?: DeploymentConfig;
   repository?: { url: string; currentBranch?: string; lastCommit?: string };
 }
@@ -140,15 +149,14 @@ export type ProjectFile = {
   id: string;
   name: string;
   createdAt: number;
-  updatedAt: number;
-  path: string; // allows creating folders
-  tags: string[];
+  updatedAt?: number;
+  tags?: string[];
 } & (
   | {
       type: "operation";
-      content: IData<OperationType>;
-      tests: TestCase[];
-      documentation: string;
+      content: { type: OperationType; value: DataValue<OperationType> };
+      tests?: TestCase[];
+      documentation?: string;
     }
   | { type: "globals"; content: Record<string, IData> }
   | { type: "documentation"; content: string }
@@ -179,7 +187,7 @@ export interface Dependencies {
 }
 
 export type DeploymentConfig = {
-  trigger: (HttpTrigger | CronTrigger)[];
+  trigger: (HttpTrigger | CronTrigger)[]; // TODO: trigger should be the entrypoint file with 'request' as a parameter
   runtime: {
     type: "node" | "deno" | "edge";
     version: string;

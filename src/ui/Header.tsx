@@ -5,24 +5,29 @@ import {
   FaRegCopy,
   FaRegPaste,
   FaCheck,
+  FaHouse,
 } from "react-icons/fa6";
-import { uiConfigStore, operationsStore } from "../lib/store";
+import { uiConfigStore, useProjectStore } from "../lib/store";
 import { IconButton } from "./IconButton";
 import { useClipboard, useTimeout } from "@mantine/hooks";
 import { jsonParseReviver, jsonStringifyReplacer } from "../lib/utils";
 import { useState } from "react";
-import { IData, OperationType } from "../lib/types";
+import { IData, OperationType, Project } from "../lib/types";
 import { IDataSchema } from "../lib/schemas";
+import { Link } from "react-router";
+import { Tooltip } from "@mantine/core";
 
 export function Header({
+  currentProject,
   currentOperation,
 }: {
   currentOperation?: IData<OperationType>;
+  currentProject?: Project;
 }) {
   const setUiConfig = uiConfigStore().setUiConfig;
   const { undo, redo, pastStates, futureStates } =
-    operationsStore.temporal.getState();
-  const { setOperation } = operationsStore();
+    useProjectStore.temporal.getState();
+  const { updateFile } = useProjectStore();
   const clipboard = useClipboard({ timeout: 500 });
   const [isOperationPasted, setIsOperationPasted] = useState(false);
   const pasteAnimation = useTimeout(() => setIsOperationPasted(false), 500);
@@ -34,7 +39,17 @@ export function Header({
         size={16}
         onClick={() => setUiConfig((p) => ({ hideSidebar: !p.hideSidebar }))}
       />
-      <h1 style={{ marginRight: "auto" }}>Logicflow</h1>
+      <div className="flex items-center gap-2">
+        <Tooltip label="Dashboard">
+          <Link to="/" className="hover:underline">
+            <FaHouse size={20} />
+          </Link>
+        </Tooltip>
+        <span className="text-disabled text-2xl">/</span>
+        {currentProject && (
+          <span className="pt-0.5">{currentProject.name}</span>
+        )}
+      </div>
       <div className="flex items-center gap-2">
         <IconButton
           title="Copy"
@@ -54,6 +69,7 @@ export function Header({
           size={16}
           onClick={async () => {
             try {
+              if (!currentOperation) return;
               const copied = await navigator.clipboard.readText();
               const parsedOperation = JSON.parse(copied, jsonParseReviver);
               const validatedOperation = IDataSchema.safeParse(parsedOperation);
@@ -64,11 +80,10 @@ export function Header({
               if (parsedOperation.type?.kind !== "operation") {
                 throw new Error("Pasted data is not an operation");
               }
-              setOperation({
-                ...parsedOperation,
-                id: currentOperation?.id,
-                value: {
-                  ...parsedOperation?.value,
+              updateFile(currentOperation.id, {
+                content: {
+                  ...parsedOperation,
+                  id: currentOperation?.id,
                   name: currentOperation?.value.name,
                 },
               });

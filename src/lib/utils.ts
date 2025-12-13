@@ -11,6 +11,7 @@ import {
   Context,
   UnionType,
   Parameter,
+  ProjectFile,
 } from "./types";
 
 /* Create */
@@ -49,7 +50,7 @@ export function createVariableName({
   indexOffset = 0,
 }: {
   prefix: string;
-  prev: (IStatement | string)[];
+  prev: (IStatement | string | ProjectFile)[];
   indexOffset?: number;
 }) {
   const index = prev
@@ -176,6 +177,46 @@ export function createParamData(
   });
 }
 
+export function createProjectFile(
+  props: Partial<ProjectFile>,
+  prev: (string | ProjectFile)[] = []
+): ProjectFile {
+  const type = props.type || "operation";
+  return {
+    id: nanoid(),
+    name: props.name ?? createVariableName({ prefix: "operation", prev }),
+    createdAt: Date.now(),
+    tags: props.tags,
+    type: type,
+    ...(type === "operation"
+      ? (() => {
+          const type = DataTypes["operation"].type;
+          return {
+            content: props.content ?? { type, value: createDefaultValue(type) },
+          };
+        })()
+      : type === "globals"
+      ? { content: props ?? {} }
+      : type === "documentation"
+      ? { content: props.content ?? "" }
+      : type === "json"
+      ? { content: props.content ?? {} }
+      : {}),
+  } as ProjectFile;
+}
+
+export function createOperationFromFile(file?: ProjectFile) {
+  if (!file || !isFileOfType(file, "operation")) return undefined;
+  return {
+    id: file.id,
+    entityType: "data",
+    type: file.content.type,
+    value: file.content.value,
+    isTypeEditable: true,
+    reference: { id: file.id, name: file.name },
+  } as IData<OperationType>;
+}
+
 /* Types */
 
 export function isTypeCompatible(first: DataType, second: DataType): boolean {
@@ -233,6 +274,13 @@ export function isDataOfType<K extends DataType["kind"]>(
   kind: K
 ): data is IData<Extract<DataType, { kind: K }>> {
   return data?.type.kind === kind;
+}
+
+export function isFileOfType<T extends ProjectFile["type"]>(
+  file: ProjectFile | undefined,
+  type: T
+): file is Extract<ProjectFile, { type: T }> {
+  return file?.type === type;
 }
 
 export function getInverseTypes(
@@ -608,4 +656,16 @@ export function isTextInput(element: Element | null) {
   if (element instanceof HTMLInputElement && element.type === "text") {
     return element;
   }
+}
+
+export function handleSearchParams(
+  params: Record<string, string | number | null | undefined>,
+  replace?: boolean
+) {
+  const searchParams = new URLSearchParams(location.search);
+  Object.entries(params).map(([key, value]) => {
+    if (!value) searchParams.delete(key);
+    else searchParams.set(key, value.toString());
+  });
+  return [searchParams, { replace }] as const;
 }
