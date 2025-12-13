@@ -10,7 +10,11 @@ import {
   ConditionType,
   Context,
   UnionType,
+  Parameter,
+  ProjectFile,
 } from "./types";
+
+/* Create */
 
 export function createData<T extends DataType>(
   props: Partial<IData<T>>
@@ -46,7 +50,7 @@ export function createVariableName({
   indexOffset = 0,
 }: {
   prefix: string;
-  prev: (IStatement | string)[];
+  prev: (IStatement | string | ProjectFile)[];
   indexOffset?: number;
 }) {
   const index = prev
@@ -58,6 +62,162 @@ export function createVariableName({
     }, indexOffset);
   return `${prefix}${index || ""}`;
 }
+
+function createStatementFromType(type: DataType, name?: string) {
+  const value = createDefaultValue(type);
+  const data = createData({ type, value, isTypeEditable: true });
+  return createStatement({ data, name });
+}
+
+export function createDefaultValue<T extends DataType>(type: T): DataValue<T> {
+  switch (type.kind) {
+    case "never":
+      return undefined as DataValue<T>;
+    case "string":
+      return "" as DataValue<T>;
+    case "number":
+      return 0 as DataValue<T>;
+    case "boolean":
+      return false as DataValue<T>;
+    case "undefined":
+      return undefined as DataValue<T>;
+    case "unknown":
+      return undefined as DataValue<T>;
+
+    case "array": {
+      if (
+        type.elementType.kind === "unknown" ||
+        type.elementType.kind === "never"
+      )
+        return [] as DataValue<T>;
+      if (type.elementType.kind === "union") {
+        return type.elementType.types.map((type) =>
+          createStatementFromType(type)
+        ) as DataValue<T>;
+      }
+      return [createStatementFromType(type.elementType)] as DataValue<T>;
+    }
+
+    case "object": {
+      const map = new Map<string, IStatement>();
+      for (const [key, propType] of Object.entries(type.properties)) {
+        map.set(key, createStatementFromType(propType));
+      }
+      return map as DataValue<T>;
+    }
+
+    case "union": {
+      // Use first type's default (could be enhanced to pick "most specific")
+      return createDefaultValue(type.types[0]) as DataValue<T>;
+    }
+
+    case "operation": {
+      return {
+        parameters: type.parameters.map((param) =>
+          createStatementFromType(param.type, param.name)
+        ),
+        statements: [],
+        result: undefined,
+      } as DataValue<T>;
+    }
+
+    case "condition": {
+      const createStatement = (): IStatement => ({
+        id: nanoid(),
+        entityType: "statement",
+        operations: [],
+        data: createData({
+          type: { kind: "undefined" },
+          value: undefined,
+          isTypeEditable: true,
+        }),
+      });
+
+      return {
+        condition: createStatement(),
+        true: createStatement(),
+        false: createStatement(),
+        result: createStatement().data,
+      } as DataValue<T>;
+    }
+
+    default:
+      return undefined as DataValue<T>;
+  }
+}
+
+export function createParamData(
+  item: Parameter,
+  data: IData
+): IStatement["data"] {
+  if (item.type.kind !== "operation") {
+    return createData({
+      type: item.type || data.type,
+      isTypeEditable: item.isTypeEditable,
+    });
+  }
+
+  const parameters = item.type.parameters.reduce((prev, paramSpec) => {
+    prev.push(
+      createStatement({
+        name: paramSpec.name ?? createVariableName({ prefix: "param", prev }),
+        data: createParamData({ type: paramSpec.type }, data),
+      })
+    );
+    return prev;
+  }, [] as IStatement[]);
+
+  return createData({
+    type: {
+      kind: "operation",
+      parameters: parameters.map((p) => ({ name: p.name, type: p.data.type })),
+      result: { kind: "undefined" },
+    },
+    value: { parameters: parameters, statements: [] },
+  });
+}
+
+export function createProjectFile(
+  props: Partial<ProjectFile>,
+  prev: (string | ProjectFile)[] = []
+): ProjectFile {
+  const type = props.type || "operation";
+  return {
+    id: nanoid(),
+    name: props.name ?? createVariableName({ prefix: "operation", prev }),
+    createdAt: Date.now(),
+    tags: props.tags,
+    type: type,
+    ...(type === "operation"
+      ? (() => {
+          const type = DataTypes["operation"].type;
+          return {
+            content: props.content ?? { type, value: createDefaultValue(type) },
+          };
+        })()
+      : type === "globals"
+      ? { content: props ?? {} }
+      : type === "documentation"
+      ? { content: props.content ?? "" }
+      : type === "json"
+      ? { content: props.content ?? {} }
+      : {}),
+  } as ProjectFile;
+}
+
+export function createOperationFromFile(file?: ProjectFile) {
+  if (!file || !isFileOfType(file, "operation")) return undefined;
+  return {
+    id: file.id,
+    entityType: "data",
+    type: file.content.type,
+    value: file.content.value,
+    isTypeEditable: true,
+    reference: { id: file.id, name: file.name },
+  } as IData<OperationType>;
+}
+
+/* Types */
 
 export function isTypeCompatible(first: DataType, second: DataType): boolean {
   if (first.kind === "operation" && second.kind === "operation") {
@@ -114,6 +274,13 @@ export function isDataOfType<K extends DataType["kind"]>(
   kind: K
 ): data is IData<Extract<DataType, { kind: K }>> {
   return data?.type.kind === kind;
+}
+
+export function isFileOfType<T extends ProjectFile["type"]>(
+  file: ProjectFile | undefined,
+  type: T
+): file is Extract<ProjectFile, { type: T }> {
+  return file?.type === type;
 }
 
 export function getInverseTypes(
@@ -233,15 +400,8 @@ export function applyTypeNarrowing(
   return narrowedTypes;
 }
 
-// Overload signatures
-export function resolveUnionType(
-  types: DataType[],
-  forceUnion: true
-): UnionType;
-export function resolveUnionType(
-  types: DataType[],
-  forceUnion?: false
-): DataType;
+export function resolveUnionType(types: DataType[], union: true): UnionType;
+export function resolveUnionType(types: DataType[], union?: false): DataType;
 export function resolveUnionType(
   types: DataType[],
   forceUnion = false
@@ -266,16 +426,57 @@ export function resolveUnionType(
   return { kind: "union", types: sortedTypes };
 }
 
-export function inferTypeFromValue(value: unknown): DataType {
-  if (value === undefined) return { kind: "undefined" };
-  if (typeof value === "string") return { kind: "string" };
-  if (typeof value === "number") return { kind: "number" };
-  if (typeof value === "boolean") return { kind: "boolean" };
+function getArrayElementType(elements: IStatement[]): DataType {
+  if (elements.length === 0) return { kind: "unknown" };
+  const firstType = elements[0].data.type;
+  const allSameType = elements.every((element) => {
+    return isTypeCompatible(element.data.type, firstType);
+  });
+  if (allSameType) return firstType;
+
+  const unionTypes = elements.reduce((acc, element) => {
+    const elementType = element.data.type;
+    const exists = acc.some((t) => isTypeCompatible(t, elementType));
+    if (!exists) acc.push(elementType);
+    return acc;
+  }, [] as DataType[]);
+  return resolveUnionType(unionTypes);
+}
+
+function getOperationType(
+  parameters: IStatement[],
+  statements: IStatement[]
+): OperationType {
+  const parameterTypes = parameters.map((param) => ({
+    name: param.name,
+    type: param.data.type,
+  }));
+
+  let resultType: DataType = { kind: "undefined" };
+  if (statements.length > 0) {
+    const lastStatement = statements[statements.length - 1];
+    resultType = getStatementResult(lastStatement).type;
+  }
+
+  return { kind: "operation", parameters: parameterTypes, result: resultType };
+}
+
+export function inferTypeFromValue<T extends DataType>(value: DataValue<T>) {
+  if (value === undefined) return { kind: "undefined" } as T;
+  if (typeof value === "string") return { kind: "string" } as T;
+  if (typeof value === "number") return { kind: "number" } as T;
+  if (typeof value === "boolean") return { kind: "boolean" } as T;
   if (Array.isArray(value)) {
-    return { kind: "array", elementType: getArrayElementType(value) };
+    return { kind: "array", elementType: getArrayElementType(value) } as T;
   }
   if (value instanceof Map) {
-    return { kind: "object", properties: getObjectPropertiesType(value) };
+    return {
+      kind: "object",
+      properties: value.entries().reduce((acc, [key, statement]) => {
+        acc[key] = statement.data.type;
+        return acc;
+      }, {} as { [key: string]: DataType }),
+    } as T;
   }
   if (
     value &&
@@ -285,7 +486,7 @@ export function inferTypeFromValue(value: unknown): DataType {
     Array.isArray(value.parameters) &&
     Array.isArray(value.statements)
   ) {
-    return getOperationType(value.parameters, value.statements);
+    return getOperationType(value.parameters, value.statements) as T;
   }
   if (
     value &&
@@ -299,10 +500,9 @@ export function inferTypeFromValue(value: unknown): DataType {
     const unionType = resolveUnionType(
       isTypeCompatible(trueType, falseType) ? [trueType] : [trueType, falseType]
     );
-    return { kind: "condition", type: unionType };
+    return { kind: "condition", type: unionType } as T;
   }
-
-  return { kind: "unknown" };
+  return { kind: "unknown" } as T;
 }
 
 export function getTypeSignature(type: DataType, maxDepth: number = 4): string {
@@ -351,11 +551,13 @@ export function getTypeSignature(type: DataType, maxDepth: number = 4): string {
   }
 }
 
-// TODO: Make use of the data type to create a better type for result e.g. a union type
+/* Result */
+
 export function getStatementResult(
   statement: IStatement,
   index?: number,
   prevEntity?: boolean
+  // TODO: Make use of the data type to create a better type for result e.g. a union type
 ): IData {
   let result = statement.data;
   const lastOperation = statement.operations[statement.operations.length - 1];
@@ -384,111 +586,7 @@ export function getConditionResult(condition: DataValue<ConditionType>): IData {
   );
 }
 
-export function resetParameters(
-  parameters: DataValue<OperationType>["parameters"],
-  argumentList?: DataValue<OperationType>["parameters"]
-): IStatement[] {
-  return parameters.map((param) => {
-    const argData = argumentList?.find((item) => item.id === param.id)?.data;
-    let paramData = { ...param.data, isTypeEditable: argData?.isTypeEditable };
-    if (isDataOfType(paramData, "operation")) {
-      const argParams = isDataOfType(argData, "operation")
-        ? argData.value.parameters
-        : undefined;
-      const params = resetParameters(paramData.value.parameters, argParams);
-      paramData = {
-        ...paramData,
-        id: nanoid(),
-        type: getOperationType(params, paramData.value.statements),
-        value: {
-          ...paramData.value,
-          parameters: params,
-        },
-      };
-    } else {
-      paramData = {
-        ...paramData,
-        id: nanoid(),
-        value: argData?.value || createDefaultValue(paramData.type),
-      };
-    }
-    return { ...param, id: nanoid(), data: paramData };
-  });
-}
-
-export function jsonParseReviver(_: string, value: unknown) {
-  if (
-    value &&
-    typeof value === "object" &&
-    "_map_" in value &&
-    Array.isArray(value._map_)
-  ) {
-    return new Map(value._map_);
-  }
-  return value;
-}
-
-export function jsonStringifyReplacer(_: string, value: IData["value"]) {
-  return value instanceof Map ? { _map_: Array.from(value.entries()) } : value;
-}
-
-export const getLocalStorage = (key: string) => {
-  try {
-    return JSON.parse(localStorage.getItem(key) || "", jsonParseReviver);
-  } catch (_error) {
-    return null;
-  }
-};
-
-export const setLocalStorage = (key: string, value: unknown) => {
-  localStorage.setItem(key, JSON.stringify(value, jsonStringifyReplacer));
-};
-
-export function getArrayElementType(elements: IStatement[]): DataType {
-  if (elements.length === 0) return { kind: "unknown" };
-  const firstType = elements[0].data.type;
-  const allSameType = elements.every((element) => {
-    return isTypeCompatible(element.data.type, firstType);
-  });
-  if (allSameType) return firstType;
-
-  const unionTypes = elements.reduce((acc, element) => {
-    const elementType = element.data.type;
-    const exists = acc.some((t) => isTypeCompatible(t, elementType));
-    if (!exists) acc.push(elementType);
-    return acc;
-  }, [] as DataType[]);
-  return resolveUnionType(unionTypes);
-}
-
-export function getObjectPropertiesType(entries: Map<string, IStatement>): {
-  [key: string]: DataType;
-} {
-  const properties: { [key: string]: DataType } = {};
-  entries.forEach((statement, key) => {
-    properties[key] = statement.data.type;
-  });
-
-  return properties;
-}
-
-export function getOperationType(
-  parameters: IStatement[],
-  statements: IStatement[]
-): OperationType {
-  const parameterTypes = parameters.map((param) => ({
-    name: param.name,
-    type: param.data.type,
-  }));
-
-  let resultType: DataType = { kind: "undefined" };
-  if (statements.length > 0) {
-    const lastStatement = statements[statements.length - 1];
-    resultType = getStatementResult(lastStatement).type;
-  }
-
-  return { kind: "operation", parameters: parameterTypes, result: resultType };
-}
+/* Others */
 
 export function getDataDropdownList({
   data,
@@ -538,91 +636,36 @@ export function getDataDropdownList({
   ];
 }
 
-function createStatementFromType(type: DataType, name?: string) {
-  const value = createDefaultValue(type);
-  const data = createData({ type, value, isTypeEditable: true });
-  return createStatement({ data, name });
+export function jsonParseReviver(_: string, value: unknown) {
+  if (
+    value &&
+    typeof value === "object" &&
+    "_map_" in value &&
+    Array.isArray(value._map_)
+  ) {
+    return new Map(value._map_);
+  }
+  return value;
 }
 
-export function createDefaultValue<T extends DataType>(type: T): DataValue<T> {
-  switch (type.kind) {
-    case "never":
-      return undefined as DataValue<T>;
-    case "string":
-      return "" as DataValue<T>;
-    case "number":
-      return 0 as DataValue<T>;
-    case "boolean":
-      return false as DataValue<T>;
-    case "undefined":
-      return undefined as DataValue<T>;
-    case "unknown":
-      return undefined as DataValue<T>;
-
-    case "array": {
-      if (
-        type.elementType.kind === "unknown" ||
-        type.elementType.kind === "never"
-      )
-        return [] as DataValue<T>;
-      if (type.elementType.kind === "union") {
-        return type.elementType.types.map((type) =>
-          createStatementFromType(type)
-        ) as DataValue<T>;
-      }
-      return [createStatementFromType(type.elementType)] as DataValue<T>;
-    }
-
-    case "object": {
-      const map = new Map<string, IStatement>();
-      for (const [key, propType] of Object.entries(type.properties)) {
-        map.set(key, createStatementFromType(propType));
-      }
-      return map as DataValue<T>;
-    }
-
-    case "union": {
-      // Use first type's default (could be enhanced to pick "most specific")
-      return createDefaultValue(type.types[0]) as DataValue<T>;
-    }
-
-    case "operation": {
-      return {
-        parameters: type.parameters.map((param) =>
-          createStatementFromType(param.type, param.name)
-        ),
-        statements: [],
-        result: undefined,
-      } as DataValue<T>;
-    }
-
-    case "condition": {
-      const createStatement = (): IStatement => ({
-        id: nanoid(),
-        entityType: "statement",
-        operations: [],
-        data: createData({
-          type: { kind: "undefined" },
-          value: undefined,
-          isTypeEditable: true,
-        }),
-      });
-
-      return {
-        condition: createStatement(),
-        true: createStatement(),
-        false: createStatement(),
-        result: createStatement().data,
-      } as DataValue<T>;
-    }
-
-    default:
-      return undefined as DataValue<T>;
-  }
+export function jsonStringifyReplacer(_: string, value: IData["value"]) {
+  return value instanceof Map ? { _map_: Array.from(value.entries()) } : value;
 }
 
 export function isTextInput(element: Element | null) {
   if (element instanceof HTMLInputElement && element.type === "text") {
     return element;
   }
+}
+
+export function handleSearchParams(
+  params: Record<string, string | number | null | undefined>,
+  replace?: boolean
+) {
+  const searchParams = new URLSearchParams(location.search);
+  Object.entries(params).map(([key, value]) => {
+    if (!value) searchParams.delete(key);
+    else searchParams.set(key, value.toString());
+  });
+  return [searchParams, { replace }] as const;
 }

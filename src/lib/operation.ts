@@ -11,33 +11,19 @@ import {
   Context,
   BooleanType,
   ObjectType,
+  OperationListItem,
+  ExecutionContext,
 } from "./types";
 import {
   createData,
   createStatement,
-  createVariableName,
+  createParamData,
   getStatementResult,
   inferTypeFromValue,
   isDataOfType,
   isTypeCompatible,
   resolveUnionType,
 } from "./utils";
-import { executeOperation } from "./execution";
-
-export type Parameter = {
-  type: DataType;
-  name?: string;
-  isTypeEditable?: boolean;
-};
-export type OperationListItem = {
-  name: string;
-  parameters: ((data: IData) => Parameter[]) | Parameter[];
-  result: ((data: IData) => DataType) | DataType;
-  isResultTypeFixed?: boolean; // Show error when type mismatches in the UI
-} & ( // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  | { handler: (...args: IData<any>[]) => IData }
-  | { statements: IStatement[] }
-);
 
 const unknownOperations: OperationListItem[] = [
   {
@@ -561,29 +547,25 @@ function mapArrayParameters(
   operation: IData<OperationType>
 ): IData[] {
   return data.value.map((item, index) => {
-    // Get the actual data for this array item
     const itemData = getStatementResult(item);
-
-    // Create parameter values: [item, index, array]
     const paramValues = [
       itemData,
       createData({ type: { kind: "number" }, value: index }),
       data,
     ];
-
     const foundOp = builtInOperations.find(
       (op) => op.name === operation.value.name
     );
-
     if (foundOp) {
       return executeOperation(foundOp, paramValues[0], paramValues.slice(1));
     }
-
     return (
       operation.value.result || createData({ type: { kind: "undefined" } })
     );
   });
 }
+
+/* Operation List */
 
 function operationToListItem(name: string, operation: IData<OperationType>) {
   return {
@@ -592,34 +574,6 @@ function operationToListItem(name: string, operation: IData<OperationType>) {
     statements: operation.value.statements,
     result: operation.type.result,
   } as OperationListItem;
-}
-
-function createParamData(item: Parameter, data: IData): IStatement["data"] {
-  if (item.type.kind !== "operation") {
-    return createData({
-      type: item.type || data.type,
-      isTypeEditable: item.isTypeEditable,
-    });
-  }
-
-  const parameters = item.type.parameters.reduce((prev, paramSpec) => {
-    prev.push(
-      createStatement({
-        name: paramSpec.name ?? createVariableName({ prefix: "param", prev }),
-        data: createParamData({ type: paramSpec.type }, data),
-      })
-    );
-    return prev;
-  }, [] as IStatement[]);
-
-  return createData({
-    type: {
-      kind: "operation",
-      parameters: parameters.map((p) => ({ name: p.name, type: p.data.type })),
-      result: { kind: "undefined" },
-    },
-    value: { parameters: parameters, statements: [] },
-  });
 }
 
 export function getFilteredOperations(
@@ -650,6 +604,15 @@ export function getFilteredOperations(
   }, [] as OperationListItem[]);
 
   return [...builtInOps, ...userDefinedOps];
+}
+
+export function getOperationListItemParameters(
+  operationListItem: OperationListItem,
+  data: IData
+) {
+  return typeof operationListItem.parameters === "function"
+    ? operationListItem.parameters(data)
+    : operationListItem.parameters;
 }
 
 export function createOperationCall({
@@ -707,11 +670,88 @@ export function createOperationCall({
   };
 }
 
-export function getOperationListItemParameters(
-  operationListItem: OperationListItem,
-  data: IData
-) {
-  return typeof operationListItem.parameters === "function"
-    ? operationListItem.parameters(data)
-    : operationListItem.parameters;
+/* Execution */
+
+function buildExecutionContext(
+  operation: OperationListItem,
+  data: IData,
+  parameters: IData[]
+): ExecutionContext {
+  const context = { parameters: new Map(), statements: new Map() };
+  const operationListItemParams = getOperationListItemParameters(
+    operation,
+    data
+  );
+  if (operationListItemParams[0]?.name) {
+    context.parameters.set(operationListItemParams[0].name, data);
+  }
+  operationListItemParams.slice(1).forEach((param, index) => {
+    if (param.name && parameters[index]) {
+      context.parameters.set(param.name, parameters[index]);
+    }
+  });
+  return context;
+}
+
+function executeStatement(
+  statement: IStatement,
+  context: ExecutionContext
+): IData {
+  let currentData = statement.data;
+  if (statement.data.reference) {
+    const refName = statement.data.reference.name;
+    currentData =
+      context.parameters.get(refName) ||
+      context.statements.get(refName) ||
+      statement.data;
+  }
+  if (isDataOfType(currentData, "condition")) {
+    const conditionValue = currentData.value;
+    const conditionResult = executeStatement(conditionValue.condition, context);
+    currentData = executeStatement(
+      conditionResult.value ? conditionValue.true : conditionValue.false,
+      context
+    );
+  }
+  // Apply operation chain to the resolved data
+  let result = currentData;
+  for (const operation of statement.operations) {
+    const resolvedParams = operation.value.parameters.map((param) => {
+      if (param.data.reference) {
+        return (
+          context.parameters.get(param.data.reference.name) ||
+          context.statements.get(param.data.reference.name) ||
+          getStatementResult(param)
+        );
+      }
+      return getStatementResult(param);
+    });
+    const foundOp = builtInOperations.find(
+      (op) => op.name === operation.value.name
+    );
+    if (foundOp && "handler" in foundOp) {
+      result = foundOp.handler(result, ...resolvedParams);
+    } else if (operation.value.result) {
+      result = operation.value.result;
+    }
+  }
+  return result;
+}
+
+export function executeOperation(
+  operation: OperationListItem,
+  data: IData,
+  parameters: IData[]
+): IData {
+  if ("handler" in operation) return operation.handler(data, ...parameters);
+  if ("statements" in operation && operation.statements.length > 0) {
+    const context = buildExecutionContext(operation, data, parameters);
+    let lastResult: IData = createData({ type: { kind: "undefined" } });
+    for (const statement of operation.statements) {
+      lastResult = executeStatement(statement, context);
+      if (statement.name) context.statements.set(statement.name, lastResult);
+    }
+    return lastResult;
+  }
+  return createData({ type: { kind: "undefined" } });
 }

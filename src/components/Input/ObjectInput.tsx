@@ -3,7 +3,7 @@ import { Statement } from "../Statement";
 import { BaseInput } from "./BaseInput";
 import { AddStatement } from "../AddStatement";
 import { forwardRef, HTMLAttributes } from "react";
-import { createVariableName, getObjectPropertiesType } from "../../lib/utils";
+import { createVariableName, inferTypeFromValue } from "../../lib/utils";
 import { uiConfigStore } from "@/lib/store";
 import { useCustomHotkeys } from "@/hooks/useNavigation";
 import { getHotkeyHandler } from "@mantine/hooks";
@@ -28,10 +28,9 @@ export const ObjectInput = forwardRef<HTMLDivElement, ObjectInputProps>(
       if (remove) dataArray.splice(index, 1);
       else dataArray[index] = [dataArray[index][0], result];
       const newValue = new Map(dataArray);
-      const properties = getObjectPropertiesType(newValue);
       handleData({
         ...data,
-        type: { kind: "object", properties },
+        type: inferTypeFromValue<ObjectType>(newValue),
         value: newValue,
       });
     }
@@ -44,10 +43,9 @@ export const ObjectInput = forwardRef<HTMLDivElement, ObjectInputProps>(
       if (typeof value === "string" && !data.value.has(value)) {
         dataArray[index] = [value, dataArray[index][1]];
         const newValue = new Map(dataArray);
-        const properties = getObjectPropertiesType(newValue);
         handleData({
           ...data,
-          type: { kind: "object", properties },
+          type: inferTypeFromValue(newValue),
           value: newValue,
         });
       }
@@ -107,10 +105,7 @@ export const ObjectInput = forwardRef<HTMLDivElement, ObjectInputProps>(
               );
               handleData({
                 ...data,
-                type: {
-                  kind: "object",
-                  properties: getObjectPropertiesType(newMap),
-                },
+                type: inferTypeFromValue(newMap),
                 value: newMap,
               });
             }

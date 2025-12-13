@@ -8,11 +8,17 @@ import {
   FaCircleXmark,
   FaSquareArrowUpRight,
 } from "react-icons/fa6";
-import { operationsStore, uiConfigStore } from "../lib/store";
+import { useProjectStore, uiConfigStore } from "../lib/store";
 import { getHotkeyHandler, HotkeyItem, useHotkeys } from "@mantine/hooks";
 import { Context, IData, IDropdownItem, IStatement } from "../lib/types";
 import { useSearchParams } from "react-router";
-import { getTypeSignature, isDataOfType, isTextInput } from "../lib/utils";
+import {
+  createOperationFromFile,
+  getTypeSignature,
+  handleSearchParams,
+  isDataOfType,
+  isTextInput,
+} from "../lib/utils";
 import { getNextIdAfterDelete, getOperationEntities } from "@/lib/navigation";
 
 export interface IDropdownTargetProps
@@ -132,9 +138,10 @@ export function Dropdown({
               handleDelete();
               textInput?.blur();
               setUiConfig((p) => {
-                const operations = operationsStore.getState().operations;
-                const operation = operations.find(
-                  (op) => op.id === searchParams.get("operationId")
+                const operation = createOperationFromFile(
+                  useProjectStore
+                    .getState()
+                    .getFile(searchParams.get("operationId"))
                 );
                 if (!operation) return p;
                 const newEntities = getOperationEntities(operation);
@@ -256,7 +263,11 @@ export function Dropdown({
               size={8}
               className="absolute -top-1.5 right-2.5 text-white bg-border rounded-full z-10 p-0.5"
               icon={FaSquareArrowUpRight}
-              onClick={() => setSearchParams({ operationId: reference.id })}
+              onClick={() =>
+                setSearchParams(
+                  ...handleSearchParams({ operationId: reference.id }, true)
+                )
+              }
               hidden={!isFocused && !isHovered}
               title="Go to reference"
             />

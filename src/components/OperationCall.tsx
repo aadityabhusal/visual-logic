@@ -1,8 +1,11 @@
 import { Context, IData, IStatement, OperationType } from "../lib/types";
 import { Statement } from "./Statement";
 import { Dropdown } from "./Dropdown";
-import { createOperationCall, getFilteredOperations } from "../lib/methods";
-import { executeOperation } from "@/lib/execution";
+import {
+  createOperationCall,
+  executeOperation,
+  getFilteredOperations,
+} from "../lib/operation";
 import { getStatementResult, getInverseTypes } from "../lib/utils";
 import { BaseInput } from "./Input/BaseInput";
 import { useMemo } from "react";

@@ -8,7 +8,7 @@ import {
   isDataOfType,
   applyTypeNarrowing,
 } from "../lib/utils";
-import { createOperationCall, getFilteredOperations } from "../lib/methods";
+import { createOperationCall, getFilteredOperations } from "../lib/operation";
 import { Data } from "./Data";
 import { BaseInput } from "./Input/BaseInput";
 import { OperationCall } from "./OperationCall";

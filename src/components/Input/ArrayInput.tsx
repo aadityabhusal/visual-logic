@@ -2,7 +2,7 @@ import { ArrayType, Context, IData, IStatement } from "../../lib/types";
 import { Statement } from "../Statement";
 import { AddStatement } from "../AddStatement";
 import { forwardRef, HTMLAttributes } from "react";
-import { getArrayElementType } from "../../lib/utils";
+import { inferTypeFromValue } from "../../lib/utils";
 
 export interface ArrayInputProps extends HTMLAttributes<HTMLDivElement> {
   data: IData<ArrayType>;
@@ -15,13 +15,13 @@ export const ArrayInput = forwardRef<HTMLDivElement, ArrayInputProps>(
     const isMultiline = data.value.length > 3;
 
     function handleUpdate(result: IStatement, index: number, remove?: boolean) {
-      const resList = [...data.value];
-      if (remove) resList.splice(index, 1);
-      else resList[index] = result;
+      const newValue = [...data.value];
+      if (remove) newValue.splice(index, 1);
+      else newValue[index] = result;
       handleData({
         ...data,
-        type: { kind: "array", elementType: getArrayElementType(resList) },
-        value: resList,
+        type: inferTypeFromValue(newValue),
+        value: newValue,
       });
     }
     return (
@@ -56,7 +56,7 @@ export const ArrayInput = forwardRef<HTMLDivElement, ArrayInputProps>(
             const newVal = [...data.value, value];
             handleData({
               ...data,
-              type: { kind: "array", elementType: getArrayElementType(newVal) },
+              type: inferTypeFromValue(newVal),
               value: newVal,
             });
           }}

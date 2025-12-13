@@ -3,8 +3,8 @@ import { Context, IData, IStatement, OperationType } from "../lib/types";
 import { updateStatements } from "../lib/update";
 import {
   createVariableName,
-  getOperationType,
   getStatementResult,
+  inferTypeFromValue,
 } from "../lib/utils";
 import { Statement } from "./Statement";
 import { AddStatement } from "./AddStatement";
@@ -47,7 +47,10 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
 
       handleChange({
         ...operation,
-        type: getOperationType(updatedParameters, updatedStatementsList),
+        type: inferTypeFromValue({
+          parameters: updatedParameters,
+          statements: updatedStatementsList,
+        }),
         value: {
           ...operation.value,
           parameters: updatedParameters,
@@ -88,7 +91,10 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
       const updatedParameters = [...parameters, newParameter];
       handleChange({
         ...operation,
-        type: getOperationType(updatedParameters, statements),
+        type: inferTypeFromValue({
+          parameters: updatedParameters,
+          statements: statements,
+        }),
         value: {
           ...operation.value,
           parameters: updatedParameters,
