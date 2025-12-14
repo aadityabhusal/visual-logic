@@ -47,6 +47,7 @@ export const DataTypes: {
       kind: "condition",
       type: { kind: "union", types: [{ kind: "undefined" }] },
     },
+    hideFromDropdown: true,
   },
 };
 

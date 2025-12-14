@@ -99,3 +99,132 @@ export type Context = {
   variables: Map<string, IData>;
   currentStatementId?: string;
 };
+
+export type Parameter = {
+  type: DataType;
+  name?: string;
+  isTypeEditable?: boolean;
+};
+export type OperationListItem = {
+  name: string;
+  parameters: ((data: IData) => Parameter[]) | Parameter[];
+  isResultTypeFixed?: boolean; // Show error when type mismatches in the UI
+} & ( // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | { handler: (...args: IData<any>[]) => IData }
+  | { statements: IStatement[] }
+);
+
+export type NavigationDirection = "left" | "right" | "up" | "down";
+export type NavigationModifier = "alt" | "mod";
+export type INavigation = {
+  id?: string;
+  direction?: NavigationDirection;
+  modifier?: NavigationModifier;
+  disable?: boolean;
+};
+
+/* Project Types */
+
+export interface Project {
+  id: string;
+  name: string;
+  version: string;
+  createdAt: number;
+  updatedAt?: number;
+  files: ProjectFile[];
+  description?: string;
+  userId?: string;
+  dependencies?: Dependencies;
+  deployment?: DeploymentConfig;
+  repository?: { url: string; currentBranch?: string; lastCommit?: string };
+}
+
+export type ProjectFile = {
+  id: string;
+  name: string;
+  createdAt: number;
+  updatedAt?: number;
+  tags?: string[];
+} & (
+  | {
+      type: "operation";
+      content: { type: OperationType; value: DataValue<OperationType> };
+      tests?: TestCase[];
+      documentation?: string;
+    }
+  | { type: "globals"; content: Record<string, IData> }
+  | { type: "documentation"; content: string }
+  | { type: "json"; content: Record<string, unknown> }
+);
+
+export interface TestCase {
+  name: string;
+  description?: string;
+  inputs: IData[];
+  expectedOutput: IData;
+  status?: "pending" | "passed" | "failed";
+}
+
+export interface DependencyBase {
+  namespace?: string;
+  version: string;
+  types?: string;
+  exports: {
+    name: string; // System will handle the kind of export
+    importedBy: { operationName: string }[];
+  }[];
+}
+export interface Dependencies {
+  npm: (DependencyBase & { name: string })[];
+  logicflow: (DependencyBase & { projectId: string })[];
+  deno: DependencyBase & { url: string }[];
+}
+
+export type DeploymentConfig = {
+  trigger: (HttpTrigger | CronTrigger)[]; // TODO: trigger should be the entrypoint file with 'request' as a parameter
+  runtime: {
+    type: "node" | "deno" | "edge";
+    version: string;
+    language: "typescript";
+    target: "ES2019" | "ES2020" | "ES2021" | "ES2022" | "ESNext";
+    timeout?: number;
+    memory?: number;
+    regions?: string[];
+  };
+  build: {
+    outDir: string;
+    tsconfig: Record<string, unknown>;
+    include?: string[];
+    exclude?: string[];
+  };
+  environmentVariables: { key: string; required: boolean }[];
+  ciCd?: Record<string, unknown>;
+} & (
+  | { platform: "vercel" }
+  | { platform: "netlify" }
+  | { platform: "cloudflare"; compatibility_flags?: string[] }
+  | {
+      platform: "supabase";
+      permissions?: { read?: string[]; write?: string[]; env?: string[] };
+      verify_jwt: boolean;
+    }
+);
+
+type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+export interface HttpTrigger {
+  type: "http";
+  path: string;
+  methods?: HttpMethod | HttpMethod[]; // If undefined, accepts all methods
+  cors?: {
+    origin: string | string[];
+    methods?: HttpMethod[];
+    allowedHeaders?: string[];
+    credentials?: boolean;
+  };
+}
+
+export interface CronTrigger {
+  type: "cron";
+  schedule: string; // Cron expression
+  timezone?: string;
+}

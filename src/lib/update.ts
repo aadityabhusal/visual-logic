@@ -1,14 +1,14 @@
-import { executeOperation } from "./execution";
-import { getFilteredOperations } from "./methods";
-import { IStatement, IData, OperationType, Context } from "./types";
+import { nanoid } from "nanoid";
+import { getFilteredOperations, executeOperation } from "./operation";
+import { IStatement, IData, OperationType, Context, DataValue } from "./types";
 import {
   createData,
   getStatementResult,
   isDataOfType,
   isTypeCompatible,
-  resetParameters,
-  getOperationType,
   getConditionResult,
+  createDefaultValue,
+  inferTypeFromValue,
 } from "./utils";
 
 export function updateOperationCalls(
@@ -118,6 +118,41 @@ function getReferenceData(
   };
 }
 
+export function resetParameters(
+  parameters: DataValue<OperationType>["parameters"],
+  argumentList?: DataValue<OperationType>["parameters"]
+): IStatement[] {
+  return parameters.map((param) => {
+    const argData = argumentList?.find((item) => item.id === param.id)?.data;
+    let paramData = { ...param.data, isTypeEditable: argData?.isTypeEditable };
+    if (isDataOfType(paramData, "operation")) {
+      const argParams = isDataOfType(argData, "operation")
+        ? argData.value.parameters
+        : undefined;
+      const params = resetParameters(paramData.value.parameters, argParams);
+      paramData = {
+        ...paramData,
+        id: nanoid(),
+        type: inferTypeFromValue({
+          parameters: params,
+          statements: paramData.value.statements,
+        }),
+        value: {
+          ...paramData.value,
+          parameters: params,
+        },
+      };
+    } else {
+      paramData = {
+        ...paramData,
+        id: nanoid(),
+        value: argData?.value || createDefaultValue(paramData.type),
+      };
+    }
+    return { ...param, id: nanoid(), data: paramData };
+  });
+}
+
 export function getReferenceOperation(
   operation: IData<OperationType>,
   context: Context,
@@ -195,7 +230,10 @@ export function getReferenceOperation(
 
   return {
     ...operation,
-    type: getOperationType(finalParameters, updatedStatements),
+    type: inferTypeFromValue({
+      parameters: finalParameters,
+      statements: updatedStatements,
+    }),
     value: {
       ...operation.value,
       parameters: finalParameters,
@@ -324,7 +362,10 @@ export function updateOperations(
       ...prevOperations,
       {
         ...currentOperation,
-        type: getOperationType(parameters, statements),
+        type: inferTypeFromValue({
+          parameters: parameters,
+          statements: statements,
+        }),
         value: { ...currentOperation.value, parameters, statements },
       },
     ];

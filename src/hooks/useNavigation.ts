@@ -1,22 +1,19 @@
+import { getOperationEntities, handleNavigation } from "@/lib/navigation";
+import { useProjectStore, uiConfigStore } from "@/lib/store";
 import {
-  getOperationEntities,
-  handleNavigation,
+  IData,
   NavigationDirection,
   NavigationModifier,
-} from "@/lib/navigation";
-import { operationsStore, uiConfigStore } from "@/lib/store";
+  OperationType,
+} from "@/lib/types";
 import { HotkeyItem } from "@mantine/hooks";
 import { useMemo } from "react";
-import { useSearchParams } from "react-router";
 
-export function useCustomHotkeys(): HotkeyItem[] {
-  const { undo, redo } = operationsStore.temporal.getState();
-  const [searchParams] = useSearchParams();
-  const { operations } = operationsStore();
-  const currentOperation = useMemo(
-    () => operations.find((op) => op.id === searchParams.get("operationId")),
-    [operations, searchParams]
-  );
+export function useCustomHotkeys(
+  currentOperation?: IData<OperationType>
+): HotkeyItem[] {
+  const { undo, redo } = useProjectStore.temporal.getState();
+
   const { navigation, setUiConfig } = uiConfigStore();
   const entities = useMemo(
     () => currentOperation && getOperationEntities(currentOperation),

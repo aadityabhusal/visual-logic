@@ -1,9 +1,11 @@
-import { IUiConfig } from "./store";
 import {
   ConditionType,
   DataValue,
   IData,
   IStatement,
+  INavigation,
+  NavigationDirection,
+  NavigationModifier,
   OperationType,
 } from "./types";
 import {
@@ -14,8 +16,6 @@ import {
   isTextInput,
 } from "./utils";
 
-export type NavigationDirection = "left" | "right" | "up" | "down";
-export type NavigationModifier = "alt" | "mod";
 export type NavigationEntity = {
   id: string;
   depth: number;
@@ -83,8 +83,11 @@ export function handleNavigation({
 }: {
   event: KeyboardEvent;
   direction: NavigationDirection;
-  navigation: IUiConfig["navigation"];
-  setUiConfig: IUiConfig["setUiConfig"];
+  navigation?: INavigation;
+  setUiConfig: (config: {
+    navigationEntities?: NavigationEntity[];
+    navigation?: INavigation;
+  }) => void;
   entities: NavigationEntity[];
   modifier?: NavigationModifier;
 }): void {
@@ -133,15 +136,10 @@ export function handleNavigation({
   }
 
   if (targetEntity) {
-    setUiConfig((p) => ({
-      ...p,
+    setUiConfig({
       navigationEntities: entities,
-      navigation: {
-        id: targetEntity.id,
-        direction,
-        modifier,
-      },
-    }));
+      navigation: { id: targetEntity.id, direction, modifier },
+    });
   }
 }
 

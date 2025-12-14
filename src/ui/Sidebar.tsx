@@ -1,17 +1,21 @@
 import { FaGear, FaPlus, FaX } from "react-icons/fa6";
-import { uiConfigStore, operationsStore } from "../lib/store";
-import { createData, createVariableName } from "../lib/utils";
+import { uiConfigStore, useProjectStore } from "../lib/store";
+import { createProjectFile, handleSearchParams } from "../lib/utils";
 import { NoteText } from "./NoteText";
 import { IconButton } from "./IconButton";
 import { SiGithub, SiYoutube } from "react-icons/si";
 import { Popover } from "@mantine/core";
 import { preferenceOptions } from "../lib/data";
 import { useSearchParams } from "react-router";
+import { ProjectFile } from "@/lib/types";
+import { useState } from "react";
+import { BaseInput } from "@/components/Input/BaseInput";
 
-export function Sidebar() {
-  const { operations, addOperation, setOperation } = operationsStore();
+export function Sidebar({ projectFiles }: { projectFiles: ProjectFile[] }) {
+  const { addFile, updateFile, deleteFile } = useProjectStore();
   const { setUiConfig, ...uiConfig } = uiConfigStore();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [editingId, setEditingId] = useState<string>();
 
   return (
     <div className="flex flex-col ml-auto w-40 border-r">
@@ -22,34 +26,15 @@ export function Sidebar() {
           icon={FaPlus}
           title="Add operation"
           onClick={() =>
-            addOperation(
-              createData({
-                type: {
-                  kind: "operation",
-                  parameters: [],
-                  result: { kind: "undefined" },
-                },
-                value: {
-                  parameters: [],
-                  statements: [],
-                  name: createVariableName({
-                    prefix: "operation",
-                    prev: operations
-                      .map((operation) => operation.value.name)
-                      .filter(Boolean) as string[],
-                    indexOffset: 1,
-                  }),
-                },
-              })
-            )
+            addFile(createProjectFile({ type: "operation" }, projectFiles))
           }
         >
           Add
         </IconButton>
       </div>
       <ul className="flex-1 p-1 overflow-y-auto dropdown-scrollbar list-none m-0">
-        {!operations.length && <NoteText center>Add an operation</NoteText>}
-        {operations.map((item) => (
+        {!projectFiles.length && <NoteText center>Add an operation</NoteText>}
+        {projectFiles.map((item) => (
           <li
             className={
               "flex items-center justify-between cursor-pointer p-1 hover:bg-dropdown-hover " +
@@ -58,16 +43,40 @@ export function Sidebar() {
                 : "bg-editor")
             }
             key={item.id}
-            onClick={() => setSearchParams({ operationId: item.id })}
+            onClick={() =>
+              setSearchParams(
+                ...handleSearchParams({ operationId: item.id }, true)
+              )
+            }
           >
-            <span className="truncate">{item.value.name}</span>
+            {editingId === item.id ? (
+              <BaseInput
+                autoFocus
+                className="focus:outline outline-white"
+                defaultValue={item.name}
+                onFocus={() => setUiConfig({ navigation: undefined })}
+                onBlur={(e) => {
+                  if (e.target.value) {
+                    updateFile(item.id, { name: e.target.value });
+                  }
+                  setEditingId(undefined);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.currentTarget.blur();
+                }}
+              />
+            ) : (
+              <span className="truncate" onClick={() => setEditingId(item.id)}>
+                {item.name}
+              </span>
+            )}
             <IconButton
               icon={FaX}
               title="Delete operation"
               size={10}
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();
-                setOperation(item, true);
+                deleteFile(item.id);
               }}
             />
           </li>
@@ -85,7 +94,7 @@ export function Sidebar() {
           <SiYoutube size={20} />
         </a>
         <a
-          href="https://github.com/aadityabhusal/visual-logic"
+          href="https://github.com/aadityabhusal/logicflow"
           target="_blank"
           rel="noreferrer"
           style={{ display: "flex", userSelect: "none" }}
