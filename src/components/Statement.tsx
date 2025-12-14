@@ -68,7 +68,6 @@ export function Statement({
 
   function addOperationCall() {
     const data = getStatementResult(statement);
-    if (data.entityType !== "data") return;
     const operation = createOperationCall({ data, context });
     const operations = [...statement.operations, operation];
     handleStatement(

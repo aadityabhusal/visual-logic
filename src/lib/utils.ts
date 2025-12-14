@@ -351,7 +351,8 @@ export function applyTypeNarrowing(
   let referenceName: string | undefined;
 
   if (
-    (operation.value.name === "typeOf" || operation.value.name === "equals") &&
+    (operation.value.name === "isTypeOf" ||
+      operation.value.name === "isEqual") &&
     param &&
     data.reference
   ) {
@@ -629,7 +630,8 @@ export function getDataDropdownList({
         secondaryLabel: variable.type.kind,
         variableType: variable.type,
         entityType: "data",
-        onClick: () => onSelect(variable),
+        onClick: () =>
+          onSelect({ ...variable, isTypeEditable: data.isTypeEditable }),
       });
       return acc;
     }, [] as IDropdownItem[]),

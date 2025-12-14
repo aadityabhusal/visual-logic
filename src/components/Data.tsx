@@ -42,7 +42,8 @@ export function Data({
       isDataOfType(data, "object") ||
       isDataOfType(data, "boolean") ||
       isDataOfType(data, "union") ||
-      isDataOfType(data, "condition"));
+      isDataOfType(data, "condition") ||
+      isDataOfType(data, "operation"));
 
   return (
     <Dropdown

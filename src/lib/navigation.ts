@@ -138,11 +138,7 @@ export function handleNavigation({
   if (targetEntity) {
     setUiConfig({
       navigationEntities: entities,
-      navigation: {
-        id: targetEntity.id,
-        direction,
-        modifier,
-      },
+      navigation: { id: targetEntity.id, direction, modifier },
     });
   }
 }

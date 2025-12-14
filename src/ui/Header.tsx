@@ -16,6 +16,7 @@ import { IData, OperationType, Project } from "../lib/types";
 import { IDataSchema } from "../lib/schemas";
 import { Link } from "react-router";
 import { Tooltip } from "@mantine/core";
+import { BaseInput } from "@/components/Input/BaseInput";
 
 export function Header({
   currentProject,
@@ -27,7 +28,7 @@ export function Header({
   const setUiConfig = uiConfigStore().setUiConfig;
   const { undo, redo, pastStates, futureStates } =
     useProjectStore.temporal.getState();
-  const { updateFile } = useProjectStore();
+  const { updateFile, updateProject } = useProjectStore();
   const clipboard = useClipboard({ timeout: 500 });
   const [isOperationPasted, setIsOperationPasted] = useState(false);
   const pasteAnimation = useTimeout(() => setIsOperationPasted(false), 500);
@@ -42,12 +43,23 @@ export function Header({
       <div className="flex items-center gap-2">
         <Tooltip label="Dashboard">
           <Link to="/" className="hover:underline">
-            <FaHouse size={20} />
+            <FaHouse />
           </Link>
         </Tooltip>
         <span className="text-disabled text-2xl">/</span>
         {currentProject && (
-          <span className="pt-0.5">{currentProject.name}</span>
+          <BaseInput
+            className="focus:outline hover:outline outline-white"
+            defaultValue={currentProject.name}
+            onFocus={() => setUiConfig({ navigation: undefined })}
+            onBlur={(e) =>
+              e.target.value &&
+              updateProject(currentProject.id, { name: e.target.value })
+            }
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+            }}
+          />
         )}
       </div>
       <div className="flex items-center gap-2">

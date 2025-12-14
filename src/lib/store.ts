@@ -7,13 +7,12 @@ import { createWithEqualityFn } from "zustand/traditional";
 import { shallow } from "zustand/shallow";
 import { openDB } from "idb";
 import {
-  createOperationFromFile,
   createProjectFile,
   createVariableName,
   jsonParseReviver,
   jsonStringifyReplacer,
 } from "./utils";
-import { getOperationEntities, NavigationEntity } from "./navigation";
+import { NavigationEntity } from "./navigation";
 import { nanoid } from "nanoid";
 
 const IDbStore = openDB("logicflow", 1, {
@@ -30,15 +29,21 @@ const IDbStore = openDB("logicflow", 1, {
 const createIDbStorage = <T>(storeName: string) =>
   createJSONStorage<T>(
     () => ({
-      getItem: async (key) => (await IDbStore).get(storeName, key) || null,
+      getItem: async (key) =>
+        (await IDbStore)
+          .get(storeName, key)
+          .then((data) => data || null)
+          .catch((e) => (console.error(`IndexedDB getItem error:`, e), null)),
       setItem: async (key, value) =>
-        (await IDbStore).put(storeName, value, key),
-      removeItem: async (key) => (await IDbStore).delete(storeName, key),
+        (await IDbStore).put(storeName, value, key).catch((e) => {
+          console.error(`IndexedDB setItem error:`, e);
+        }),
+      removeItem: async (key) =>
+        (await IDbStore).delete(storeName, key).catch((e) => {
+          console.error(`IndexedDB removeItem error:`, e);
+        }),
     }),
-    {
-      reviver: jsonParseReviver,
-      replacer: jsonStringifyReplacer,
-    }
+    { reviver: jsonParseReviver, replacer: jsonStringifyReplacer }
   );
 
 export interface IProjectsStore {
@@ -138,12 +143,6 @@ const createCurrentProjectSlice: StateCreator<
       ...currentProject,
       files: currentProject.files.map((file) => {
         if (file.id !== fileId) return file;
-        const operation = createOperationFromFile(file);
-        if (operation) {
-          uiConfigStore.getState().setUiConfig({
-            navigationEntities: getOperationEntities(operation),
-          });
-        }
         return { ...file, ...updates, updatedAt } as ProjectFile;
       }),
       updatedAt,

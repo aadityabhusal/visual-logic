@@ -33,17 +33,17 @@ function BaseInputInner<T extends string | number>(
   });
 
   const commonProps = {
+    ...props,
     value: inputValue,
     classNames: {
       input: [
-        "number-input outline-none bg-inherit border-none p-0",
+        "number-input outline-0 bg-inherit border-none p-0",
         props.className,
         textWidth >= MAX_WIDTH ? "truncate" : "",
       ].join(" "),
     },
     styles: { input: { width: textWidth, ...props.styles } },
     onClick: props.onClick,
-    ...props,
   } as typeof props;
 
   return (

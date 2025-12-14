@@ -108,17 +108,11 @@ export type Parameter = {
 export type OperationListItem = {
   name: string;
   parameters: ((data: IData) => Parameter[]) | Parameter[];
-  result: ((data: IData) => DataType) | DataType;
   isResultTypeFixed?: boolean; // Show error when type mismatches in the UI
 } & ( // eslint-disable-next-line @typescript-eslint/no-explicit-any
   | { handler: (...args: IData<any>[]) => IData }
   | { statements: IStatement[] }
 );
-
-export type ExecutionContext = {
-  parameters: Map<string, IData>;
-  statements: Map<string, IData>;
-};
 
 export type NavigationDirection = "left" | "right" | "up" | "down";
 export type NavigationModifier = "alt" | "mod";

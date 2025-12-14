@@ -52,7 +52,7 @@ export default function Dashboard() {
             >
               <div className="flex-1 flex flex-col gap-2">
                 <Link
-                  to={`/project/${project.id}`}
+                  to={`/project/${project.id}?operationId=${project.files[0].id}`}
                   className="hover:underline text-lg font-semibold"
                 >
                   {project.name}

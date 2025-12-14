@@ -8,11 +8,14 @@ import { Popover } from "@mantine/core";
 import { preferenceOptions } from "../lib/data";
 import { useSearchParams } from "react-router";
 import { ProjectFile } from "@/lib/types";
+import { useState } from "react";
+import { BaseInput } from "@/components/Input/BaseInput";
 
 export function Sidebar({ projectFiles }: { projectFiles: ProjectFile[] }) {
-  const { addFile, deleteFile } = useProjectStore();
+  const { addFile, updateFile, deleteFile } = useProjectStore();
   const { setUiConfig, ...uiConfig } = uiConfigStore();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [editingId, setEditingId] = useState<string>();
 
   return (
     <div className="flex flex-col ml-auto w-40 border-r">
@@ -46,7 +49,27 @@ export function Sidebar({ projectFiles }: { projectFiles: ProjectFile[] }) {
               )
             }
           >
-            <span className="truncate">{item.name}</span>
+            {editingId === item.id ? (
+              <BaseInput
+                autoFocus
+                className="focus:outline outline-white"
+                defaultValue={item.name}
+                onFocus={() => setUiConfig({ navigation: undefined })}
+                onBlur={(e) => {
+                  if (e.target.value) {
+                    updateFile(item.id, { name: e.target.value });
+                  }
+                  setEditingId(undefined);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.currentTarget.blur();
+                }}
+              />
+            ) : (
+              <span className="truncate" onClick={() => setEditingId(item.id)}>
+                {item.name}
+              </span>
+            )}
             <IconButton
               icon={FaX}
               title="Delete operation"

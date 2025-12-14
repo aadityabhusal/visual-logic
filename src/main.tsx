@@ -15,7 +15,7 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { LoadingFallback } from "./ui/LoadingFallback";
-import { useProjectStore } from "./lib/store";
+import { useProjectStore, waitForHydration } from "./lib/store";
 
 const theme = createTheme({
   scale: 1,
@@ -51,6 +51,7 @@ const router = createBrowserRouter([
     lazy: () =>
       import("@/pages/Project").then((m) => ({ Component: m.default })),
     loader: async ({ params }: LoaderFunctionArgs) => {
+      await waitForHydration();
       useProjectStore.getState().setCurrentProjectId(params.id!);
       return null;
     },
