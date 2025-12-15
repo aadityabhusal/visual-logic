@@ -6,6 +6,7 @@ import {
   FaRegPaste,
   FaCheck,
   FaHouse,
+  FaGear,
 } from "react-icons/fa6";
 import { uiConfigStore, useProjectStore } from "../lib/store";
 import { IconButton } from "./IconButton";
@@ -15,8 +16,9 @@ import { useState } from "react";
 import { IData, OperationType, Project } from "../lib/types";
 import { IDataSchema } from "../lib/schemas";
 import { Link } from "react-router";
-import { Tooltip } from "@mantine/core";
+import { Popover, Tooltip } from "@mantine/core";
 import { BaseInput } from "@/components/Input/BaseInput";
+import { preferenceOptions } from "@/lib/data";
 
 export function Header({
   currentProject,
@@ -25,7 +27,7 @@ export function Header({
   currentOperation?: IData<OperationType>;
   currentProject?: Project;
 }) {
-  const setUiConfig = uiConfigStore().setUiConfig;
+  const { setUiConfig, ...uiConfig } = uiConfigStore();
   const { undo, redo, pastStates, futureStates } =
     useProjectStore.temporal.getState();
   const { updateFile, updateProject } = useProjectStore();
@@ -35,11 +37,38 @@ export function Header({
 
   return (
     <div className="border-b p-2 flex items-center justify-between gap-4">
-      <IconButton
-        icon={FaBars}
-        size={16}
-        onClick={() => setUiConfig((p) => ({ hideSidebar: !p.hideSidebar }))}
-      />
+      <div className="flex items-center gap-4">
+        <IconButton
+          icon={FaBars}
+          size={16}
+          onClick={() => setUiConfig((p) => ({ hideSidebar: !p.hideSidebar }))}
+        />
+        <Popover>
+          <Popover.Target>
+            <IconButton title="Settings" className="w-5 h-5" icon={FaGear} />
+          </Popover.Target>
+          <Popover.Dropdown
+            classNames={{ dropdown: "absolute bg-editor border" }}
+          >
+            {preferenceOptions.map((item) => (
+              <div
+                className="flex justify-between items-center gap-4 py-1 px-2 border-b"
+                key={item.id}
+              >
+                <label className="cursor-pointer" htmlFor={item.id}>
+                  {item.label}
+                </label>
+                <input
+                  id={item.id}
+                  type="checkbox"
+                  checked={uiConfig[item.id]}
+                  onChange={(e) => setUiConfig({ [item.id]: e.target.checked })}
+                />
+              </div>
+            ))}
+          </Popover.Dropdown>
+        </Popover>
+      </div>
       <div className="flex items-center gap-2">
         <Tooltip label="Dashboard">
           <Link to="/" className="hover:underline">

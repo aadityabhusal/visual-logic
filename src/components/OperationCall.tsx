@@ -97,7 +97,7 @@ export function OperationCall({
   return (
     <Dropdown
       id={operation.id}
-      result={operation.value.result}
+      data={operation.value.result}
       items={filteredOperations.map((item) => ({
         label: item.name,
         value: item.name,

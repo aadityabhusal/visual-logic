@@ -1,5 +1,4 @@
 import { Operation } from "@/components/Operation";
-import { ParseOperation } from "@/components/Parse/ParseOperation";
 import { uiConfigStore, useProjectStore } from "@/lib/store";
 import { Header } from "@/ui/Header";
 import { Sidebar } from "@/ui/Sidebar";
@@ -16,7 +15,7 @@ import { getOperationEntities } from "@/lib/navigation";
 export default function Project() {
   const [searchParams] = useSearchParams();
   const { getCurrentProject, updateFile, deleteFile } = useProjectStore();
-  const { displayCode, hideSidebar, setUiConfig } = uiConfigStore();
+  const { hideSidebar, hideFocusInfo, setUiConfig } = uiConfigStore();
 
   const currentProject = getCurrentProject();
   const operationId = searchParams.get("operationId");
@@ -90,9 +89,9 @@ export default function Project() {
           ) : (
             <NoteText>Select an operation</NoteText>
           )}
-          <FocusInfo />
+          {!hideFocusInfo && <FocusInfo />}
         </div>
-        {displayCode && currentOperation ? (
+        {/* {displayCode && currentOperation ? (
           <div className={"p-1 flex-1 overflow-y-auto scroll border-l"}>
             <NoteText border italic>
               In-progress and preview-only.
@@ -101,7 +100,7 @@ export default function Project() {
               <ParseOperation operation={currentOperation} />
             </pre>
           </div>
-        ) : null}
+        ) : null} */}
       </div>
     </div>
   );

@@ -48,7 +48,7 @@ export function Data({
   return (
     <Dropdown
       id={data.id}
-      result={data}
+      data={data}
       items={dropdownItems}
       handleDelete={!disableDelete ? () => handleChange(data, true) : undefined}
       addOperationCall={addOperationCall}

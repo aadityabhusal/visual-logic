@@ -136,7 +136,7 @@ export function Statement({
   return (
     <div className="flex items-start gap-1">
       {options?.enableVariable ? (
-        <div className="flex items-center gap-1 mr-1 [&>svg]:cursor-pointer [&>svg]:shrink-0">
+        <div className="flex items-center gap-1 mr-1">
           {hasName ? (
             <BaseInput
               ref={(elem) => isNameFocused && elem?.focus()}

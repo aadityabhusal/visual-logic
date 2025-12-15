@@ -31,7 +31,6 @@ export function Dropdown({
   id,
   value,
   data,
-  result,
   items,
   handleDelete,
   addOperationCall,
@@ -45,7 +44,6 @@ export function Dropdown({
   id: string;
   value?: string;
   data?: IStatement["data"];
-  result?: IStatement["data"];
   items?: IDropdownItem[];
   handleDelete?: () => void;
   addOperationCall?: () => void;
@@ -73,13 +71,13 @@ export function Dropdown({
     onDropdownClose: () => {
       handleSearch(options?.withSearch ? "" : value || "");
       combobox.resetSelectedOption();
-      setUiConfig((p) => ({ ...p, navigation: { id }, result }));
+      setUiConfig((p) => ({ ...p, navigation: { id }, result: data }));
     },
     onDropdownOpen: () => {
       if (options?.withSearch) combobox.focusSearchInput();
       setUiConfig({
         navigation: { id, disable: true },
-        result,
+        result: data,
         showPopup: true,
       });
     },
@@ -124,7 +122,7 @@ export function Dropdown({
   function handleSearch(val: string) {
     if (!combobox.dropdownOpened) combobox.openDropdown();
     setSearch(val);
-    setUiConfig({ result });
+    setUiConfig({ result: data });
   }
 
   useHotkeys(
@@ -184,7 +182,7 @@ export function Dropdown({
     if (combobox.targetRef.current instanceof HTMLInputElement) {
       combobox.targetRef.current.focus();
     } else {
-      setUiConfig({ result });
+      setUiConfig({ result: data });
     }
 
     const textInput = isTextInput(combobox.targetRef.current);
@@ -198,7 +196,7 @@ export function Dropdown({
       }
       textInput.setSelectionRange(caretPosition, caretPosition);
     }
-  }, [isFocused, combobox.targetRef, navigation, setUiConfig, result]);
+  }, [isFocused, combobox.targetRef, navigation, setUiConfig, data]);
 
   return (
     <Combobox
@@ -254,7 +252,11 @@ export function Dropdown({
                 combobox?.openDropdown();
               },
               onFocus: () =>
-                setUiConfig({ navigation: { id }, result, showPopup: true }),
+                setUiConfig({
+                  navigation: { id },
+                  result: data,
+                  showPopup: true,
+                }),
             })}
           </Combobox.EventsTarget>
           {isDataOfType(data, "operation") && reference && (

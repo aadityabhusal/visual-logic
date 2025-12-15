@@ -1,11 +1,9 @@
-import { FaGear, FaPlus, FaX } from "react-icons/fa6";
+import { FaPlus, FaX } from "react-icons/fa6";
 import { uiConfigStore, useProjectStore } from "../lib/store";
 import { createProjectFile, handleSearchParams } from "../lib/utils";
 import { NoteText } from "./NoteText";
 import { IconButton } from "./IconButton";
 import { SiGithub, SiYoutube } from "react-icons/si";
-import { Popover } from "@mantine/core";
-import { preferenceOptions } from "../lib/data";
 import { useSearchParams } from "react-router";
 import { ProjectFile } from "@/lib/types";
 import { useState } from "react";
@@ -13,7 +11,7 @@ import { BaseInput } from "@/components/Input/BaseInput";
 
 export function Sidebar({ projectFiles }: { projectFiles: ProjectFile[] }) {
   const { addFile, updateFile, deleteFile } = useProjectStore();
-  const { setUiConfig, ...uiConfig } = uiConfigStore();
+  const { setUiConfig } = uiConfigStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const [editingId, setEditingId] = useState<string>();
 
@@ -37,7 +35,7 @@ export function Sidebar({ projectFiles }: { projectFiles: ProjectFile[] }) {
         {projectFiles.map((item) => (
           <li
             className={
-              "flex items-center justify-between cursor-pointer p-1 hover:bg-dropdown-hover " +
+              "flex items-center justify-between p-1 hover:bg-dropdown-hover " +
               (item.id === searchParams.get("operationId")
                 ? "bg-dropdown-hover"
                 : "bg-editor")
@@ -82,7 +80,7 @@ export function Sidebar({ projectFiles }: { projectFiles: ProjectFile[] }) {
           </li>
         ))}
       </ul>
-      <div className="flex items-center gap-3 p-2 border-t">
+      <div className="flex items-center gap-4 p-2 border-t">
         <a
           href="https://www.youtube.com/watch?v=AOfOhNwQL64"
           target="_blank"
@@ -102,35 +100,6 @@ export function Sidebar({ projectFiles }: { projectFiles: ProjectFile[] }) {
         >
           <SiGithub size={20} />
         </a>
-        <Popover>
-          <Popover.Target>
-            <IconButton
-              title="Settings"
-              className="w-5 h-5 ml-auto"
-              icon={FaGear}
-            />
-          </Popover.Target>
-          <Popover.Dropdown
-            classNames={{ dropdown: "absolute bg-editor border" }}
-          >
-            {preferenceOptions.map((item) => (
-              <div
-                className="flex justify-between items-center gap-4 py-1 px-2 border-b"
-                key={item.id}
-              >
-                <label className="cursor-pointer" htmlFor={item.id}>
-                  {item.label}
-                </label>
-                <input
-                  id={item.id}
-                  type="checkbox"
-                  checked={uiConfig[item.id]}
-                  onChange={(e) => setUiConfig({ [item.id]: e.target.checked })}
-                />
-              </div>
-            ))}
-          </Popover.Dropdown>
-        </Popover>
       </div>
     </div>
   );

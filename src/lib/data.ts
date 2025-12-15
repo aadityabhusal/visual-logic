@@ -53,7 +53,7 @@ export const DataTypes: {
 
 export const preferenceOptions = [
   // { id: "highlightAll", label: "Highlight all" },
-  { id: "highlightOperation", label: "Highlight operations" },
-  { id: "hideResultValue", label: "Hide result value" },
-  { id: "displayCode", label: "Display Code" },
+  // { id: "displayCode", label: "Display Code" },
+  { id: "highlightOperation", label: "Highlight Operations" },
+  { id: "hideFocusInfo", label: "Hide Details" },
 ] as const;
