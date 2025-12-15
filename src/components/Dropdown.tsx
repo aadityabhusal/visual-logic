@@ -139,7 +139,7 @@ export function Dropdown({
                 const operation = createOperationFromFile(
                   useProjectStore
                     .getState()
-                    .getFile(searchParams.get("operationId"))
+                    .getFile(searchParams.get("file"))
                 );
                 if (!operation) return p;
                 const newEntities = getOperationEntities(operation);
@@ -267,7 +267,7 @@ export function Dropdown({
               icon={FaSquareArrowUpRight}
               onClick={() =>
                 setSearchParams(
-                  ...handleSearchParams({ operationId: reference.id }, true)
+                  ...handleSearchParams({ file: data.value.name }, true)
                 )
               }
               hidden={!isFocused && !isHovered}

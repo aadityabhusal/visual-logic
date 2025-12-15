@@ -633,7 +633,7 @@ function executeStatement(statement: IStatement, context: Context): IData {
   let currentData = statement.data;
   if (statement.data.reference) {
     const refName = statement.data.reference.name;
-    currentData = context.variables.get(refName) || statement.data;
+    currentData = context.variables.get(refName) ?? statement.data;
   }
   if (isDataOfType(currentData, "condition")) {
     const conditionValue = currentData.value;

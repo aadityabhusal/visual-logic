@@ -18,13 +18,13 @@ export default function Project() {
   const { hideSidebar, hideFocusInfo, setUiConfig } = uiConfigStore();
 
   const currentProject = getCurrentProject();
-  const operationId = searchParams.get("operationId");
+  const fileName = searchParams.get("file");
   const currentOperation = useMemo(
     () =>
       createOperationFromFile(
-        currentProject?.files.find((file) => file.id === operationId)
+        currentProject?.files.find((file) => file.name === fileName)
       ),
-    [currentProject?.files, operationId]
+    [currentProject?.files, fileName]
   );
 
   const handleOperationChange = useCallback(

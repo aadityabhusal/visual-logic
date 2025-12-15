@@ -36,15 +36,13 @@ export function Sidebar({ projectFiles }: { projectFiles: ProjectFile[] }) {
           <li
             className={
               "flex items-center justify-between p-1 hover:bg-dropdown-hover " +
-              (item.id === searchParams.get("operationId")
+              (item.name === searchParams.get("file")
                 ? "bg-dropdown-hover"
                 : "bg-editor")
             }
             key={item.id}
             onClick={() =>
-              setSearchParams(
-                ...handleSearchParams({ operationId: item.id }, true)
-              )
+              setSearchParams(...handleSearchParams({ file: item.name }, true))
             }
           >
             {editingId === item.id ? (
