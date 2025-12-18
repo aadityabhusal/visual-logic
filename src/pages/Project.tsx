@@ -43,7 +43,7 @@ export default function Project() {
   useEffect(() => {
     if (currentOperation) {
       setUiConfig({
-        navigationEntities: getOperationEntities(currentOperation),
+        navigationEntities: getOperationEntities(currentOperation, 0),
       });
     }
   }, [currentOperation, setUiConfig]);
@@ -80,7 +80,14 @@ export default function Project() {
                   if (!operation || operationFile.id === currentOperation?.id) {
                     return acc;
                   }
-                  acc.set(operationFile.name, operation);
+                  acc.set(operationFile.name, {
+                    data: operation,
+                    reference: {
+                      name: operationFile.name,
+                      id: operationFile.id,
+                    },
+                    isOperationFile: true,
+                  });
                   return acc;
                 }, new Map() as Context["variables"]),
               }}

@@ -37,7 +37,7 @@ export function Data({
   );
 
   const showDropdownIcon =
-    !data.reference?.name &&
+    !isDataOfType(data, "reference") &&
     (isDataOfType(data, "array") ||
       isDataOfType(data, "object") ||
       isDataOfType(data, "boolean") ||
@@ -58,13 +58,13 @@ export function Data({
         focusOnClick: showDropdownIcon,
       }}
       context={context}
-      value={data.reference?.name || data.type.kind}
+      value={isDataOfType(data, "reference") ? data.value.name : data.type.kind}
       isInputTarget={
-        !!data.reference ||
+        isDataOfType(data, "reference") ||
         ["string", "number", "undefined"].includes(data.type.kind)
       }
       target={({ onChange, ...props }: IDropdownTargetProps) =>
-        data.reference?.name ? (
+        isDataOfType(data, "reference") ? (
           <BaseInput {...props} onChange={onChange} className="text-variable" />
         ) : isDataOfType(data, "operation") ? (
           <Operation

@@ -14,9 +14,14 @@ export type OperationType = {
   parameters: { type: DataType; name?: string }[];
   result: DataType;
 };
-export type ConditionType = { kind: "condition"; type: DataType };
+export type ConditionType = { kind: "condition"; resultType: DataType };
 export type UnknownType = { kind: "unknown" };
 export type NeverType = { kind: "never" };
+export type ReferenceType = {
+  kind: "reference";
+  // referenceType: "variable" | "env";
+  dataType: DataType;
+};
 
 export type DataType =
   | UnknownType
@@ -29,7 +34,8 @@ export type DataType =
   | ObjectType
   | UnionType
   | OperationType
-  | ConditionType;
+  | ConditionType
+  | ReferenceType;
 
 type BaseDataValue<T extends DataType> = T extends UnknownType
   ? unknown
@@ -61,6 +67,8 @@ type BaseDataValue<T extends DataType> = T extends UnknownType
       false: IStatement;
       result?: IData;
     }
+  : T extends ReferenceType
+  ? { name: string; id: string }
   : never;
 
 export type DataValue<T extends DataType> = T extends UnionType & {
@@ -75,7 +83,6 @@ export interface IData<T extends DataType = DataType> {
   type: T;
   value: DataValue<T>;
   isTypeEditable?: boolean;
-  reference?: { id: string; name: string };
 }
 
 export interface IStatement {
@@ -96,7 +103,14 @@ export interface IDropdownItem {
 }
 
 export type Context = {
-  variables: Map<string, IData>;
+  variables: Map<
+    string,
+    {
+      data: IData;
+      reference?: { name: string; id: string };
+      isOperationFile?: boolean;
+    }
+  >;
   currentStatementId?: string;
 };
 
@@ -108,9 +122,10 @@ export type Parameter = {
 export type OperationListItem = {
   name: string;
   parameters: ((data: IData) => Parameter[]) | Parameter[];
-  isResultTypeFixed?: boolean; // Show error when type mismatches in the UI
+  lazyEvaluation?: boolean;
+  isResultTypeFixed?: boolean; // TODO: Show error when type mismatches in the UI
 } & ( // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  | { handler: (...args: IData<any>[]) => IData }
+  | { handler: (...args: [Context, ...IData<any>[]]) => IData }
   | { statements: IStatement[] }
 );
 

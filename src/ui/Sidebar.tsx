@@ -1,5 +1,5 @@
-import { FaPlus, FaX } from "react-icons/fa6";
-import { uiConfigStore, useProjectStore } from "../lib/store";
+import { FaPencil, FaPlus, FaX } from "react-icons/fa6";
+import { useProjectStore } from "../lib/store";
 import { createProjectFile, handleSearchParams } from "../lib/utils";
 import { NoteText } from "./NoteText";
 import { IconButton } from "./IconButton";
@@ -7,13 +7,12 @@ import { SiGithub, SiYoutube } from "react-icons/si";
 import { useSearchParams } from "react-router";
 import { ProjectFile } from "@/lib/types";
 import { useState } from "react";
-import { BaseInput } from "@/components/Input/BaseInput";
 
 export function Sidebar({ projectFiles }: { projectFiles: ProjectFile[] }) {
   const { addFile, updateFile, deleteFile } = useProjectStore();
-  const { setUiConfig } = uiConfigStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const [editingId, setEditingId] = useState<string>();
+  const [hoveringId, setHoveringId] = useState<string>();
 
   return (
     <div className="flex flex-col ml-auto w-40 border-r">
@@ -35,7 +34,7 @@ export function Sidebar({ projectFiles }: { projectFiles: ProjectFile[] }) {
         {projectFiles.map((item) => (
           <li
             className={
-              "flex items-center justify-between p-1 hover:bg-dropdown-hover " +
+              "flex items-center gap-1 justify-between p-1 hover:bg-dropdown-hover " +
               (item.name === searchParams.get("file")
                 ? "bg-dropdown-hover"
                 : "bg-editor")
@@ -44,16 +43,23 @@ export function Sidebar({ projectFiles }: { projectFiles: ProjectFile[] }) {
             onClick={() =>
               setSearchParams(...handleSearchParams({ file: item.name }, true))
             }
+            onPointerOver={() => setHoveringId(item.id)}
+            onPointerLeave={() => setHoveringId(undefined)}
           >
             {editingId === item.id ? (
-              <BaseInput
+              <input
                 autoFocus
-                className="focus:outline outline-white"
+                className="focus:outline outline-white flex-1 w-full"
                 defaultValue={item.name}
-                onFocus={() => setUiConfig({ navigation: undefined })}
+                onClick={(e) => e.stopPropagation()}
                 onBlur={(e) => {
                   if (e.target.value) {
                     updateFile(item.id, { name: e.target.value });
+                    if (searchParams.get("file") === item.name) {
+                      setSearchParams(
+                        ...handleSearchParams({ file: e.target.value }, true)
+                      );
+                    }
                   }
                   setEditingId(undefined);
                 }}
@@ -62,19 +68,32 @@ export function Sidebar({ projectFiles }: { projectFiles: ProjectFile[] }) {
                 }}
               />
             ) : (
-              <span className="truncate" onClick={() => setEditingId(item.id)}>
-                {item.name}
-              </span>
+              <span className="truncate mr-auto">{item.name}</span>
             )}
-            <IconButton
-              icon={FaX}
-              title="Delete operation"
-              size={10}
-              onClick={(e: MouseEvent) => {
-                e.stopPropagation();
-                deleteFile(item.id);
-              }}
-            />
+            {!editingId && hoveringId === item.id && (
+              <IconButton
+                icon={FaPencil}
+                title="Edit operation name"
+                className="p-0.5 hover:outline hover:outline-border"
+                size={10}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingId(item.id);
+                }}
+              />
+            )}
+            {hoveringId === item.id && (
+              <IconButton
+                icon={FaX}
+                title="Delete operation"
+                className="p-0.5 hover:outline hover:outline-border"
+                size={10}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteFile(item.id);
+                }}
+              />
+            )}
           </li>
         ))}
       </ul>

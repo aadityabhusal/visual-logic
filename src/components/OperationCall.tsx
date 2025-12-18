@@ -33,7 +33,7 @@ export function OperationCall({
       operation.value.name === "or"
         ? context.variables
         : narrowedTypes.entries().reduce((acc, [key, value]) => {
-            if (value.type.kind === "never") acc.delete(key);
+            if (value.data.type.kind === "never") acc.delete(key);
             else acc.set(key, value);
             return acc;
           }, new Map(context.variables)),
@@ -67,7 +67,7 @@ export function OperationCall({
 
     const parametersResult = parameters.map((item) => getStatementResult(item));
     const result = foundOperation
-      ? executeOperation(foundOperation, data, parametersResult)
+      ? executeOperation(foundOperation, data, parametersResult, context)
       : operation.value.result;
 
     // Update parameter types while preserving the result type from the operation definition

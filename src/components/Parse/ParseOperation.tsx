@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import { ParseStatement } from "./ParseStatement";
-import { IData, OperationType } from "../../lib/types";
+import { IData, OperationType } from "@/lib/types";
 
 export function ParseOperation({
   operation,
@@ -13,9 +13,7 @@ export function ParseOperation({
     if (level <= 0) return "";
     return [...Array(level)].map((_) => "\t").join("");
   }
-  return operation.reference ? (
-    <span className="text-variable">{operation.reference.name}</span>
-  ) : (
+  return (
     <>
       <span>
         <span className="text-reserved">function</span>{" "}

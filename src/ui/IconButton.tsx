@@ -1,20 +1,19 @@
 import {
   ActionIcon,
   ActionIconProps,
-  PolymorphicComponentProps,
   Tooltip,
   TooltipProps,
 } from "@mantine/core";
-import { forwardRef } from "react";
+import { forwardRef, HTMLAttributes } from "react";
 import { IconType } from "react-icons";
 
 export const IconButton = forwardRef<
   HTMLButtonElement,
-  PolymorphicComponentProps<"button", ActionIconProps> & {
-    icon: IconType;
-    size?: number;
-    position?: TooltipProps["position"];
-  }
+  ActionIconProps &
+    HTMLAttributes<HTMLButtonElement> & {
+      icon: IconType;
+      position?: TooltipProps["position"];
+    }
 >(({ icon: Icon, size, children: _children, title, ...props }, ref) => {
   const iconNode = (
     <ActionIcon size={size} ref={ref} {...props}>

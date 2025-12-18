@@ -3,7 +3,7 @@ import { Context, IData, IStatement, OperationType } from "../lib/types";
 import { updateStatements } from "../lib/update";
 import {
   createVariableName,
-  getStatementResult,
+  createContextVariables,
   inferTypeFromValue,
 } from "../lib/utils";
 import { Statement } from "./Statement";
@@ -161,14 +161,12 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
               }
               context={{
                 currentStatementId: statement.id,
-                variables: operation.value.parameters
-                  .concat(operation.value.statements.slice(0, i))
-                  .reduce((acc, param) => {
-                    if (param.name) {
-                      acc.set(param.name, getStatementResult(param));
-                    }
-                    return acc;
-                  }, new Map(context.variables)),
+                variables: createContextVariables(
+                  operation.value.parameters.concat(
+                    operation.value.statements.slice(0, i)
+                  ),
+                  context.variables
+                ),
               }}
             />
           ))}

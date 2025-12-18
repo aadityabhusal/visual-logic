@@ -30,7 +30,7 @@ export const ObjectInput = forwardRef<HTMLDivElement, ObjectInputProps>(
       const newValue = new Map(dataArray);
       handleData({
         ...data,
-        type: inferTypeFromValue<ObjectType>(newValue),
+        type: inferTypeFromValue(newValue),
         value: newValue,
       });
     }

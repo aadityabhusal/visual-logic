@@ -2,13 +2,13 @@ import { nanoid } from "nanoid";
 import { getFilteredOperations, executeOperation } from "./operation";
 import { IStatement, IData, OperationType, Context, DataValue } from "./types";
 import {
-  createData,
   getStatementResult,
   isDataOfType,
-  isTypeCompatible,
   getConditionResult,
   createDefaultValue,
   inferTypeFromValue,
+  createContextVariables,
+  createStatement,
 } from "./utils";
 
 export function updateOperationCalls(
@@ -38,7 +38,7 @@ export function updateOperationCalls(
       const currentResult = currentOperation.value.result;
       const result = foundOperation
         ? {
-            ...executeOperation(foundOperation, data, parameters),
+            ...executeOperation(foundOperation, data, parameters, context),
             ...(currentResult && { id: currentResult?.id }),
             isTypeEditable: data.isTypeEditable,
           }
@@ -349,10 +349,10 @@ export function updateOperations(
         ...currentOperation.value.statements,
       ],
       context: {
-        variables: prevOperations.reduce((acc, operation) => {
-          if (operation.value.name) acc.set(operation.value.name, operation);
-          return acc;
-        }, new Map() as Context["variables"]),
+        variables: createContextVariables(
+          prevOperations.map((data) => createStatement({ data })),
+          new Map()
+        ),
       },
     });
     const parameterLength = currentOperation.value.parameters.length;
@@ -362,10 +362,7 @@ export function updateOperations(
       ...prevOperations,
       {
         ...currentOperation,
-        type: inferTypeFromValue({
-          parameters: parameters,
-          statements: statements,
-        }),
+        type: inferTypeFromValue({ parameters, statements }),
         value: { ...currentOperation.value, parameters, statements },
       },
     ];

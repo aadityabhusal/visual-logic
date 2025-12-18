@@ -22,7 +22,7 @@ export function FocusInfo() {
           icon={FaX}
           title="Delete operation"
           size={12}
-          onClick={(e: MouseEvent) => {
+          onClick={(e) => {
             e.stopPropagation();
             setUiConfig({ showPopup: false, result: undefined });
           }}

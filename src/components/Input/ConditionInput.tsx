@@ -30,7 +30,7 @@ export const ConditionInput = forwardRef<HTMLDivElement, ConditionInputProps>(
       );
       handleData({
         ...data,
-        type: { kind: "condition", type: unionType },
+        type: { kind: "condition", resultType: unionType },
         value: { ...value, result: getConditionResult(value) },
       });
     }

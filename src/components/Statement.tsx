@@ -249,11 +249,11 @@ export function Statement({
         {
           statement.operations.reduce(
             (acc, operation, i, operationsList) => {
-              const data = getStatementResult(statement, i, true);
+              const result = getStatementResult(statement, i, true);
               acc.narrowedTypes = applyTypeNarrowing(
-                context.variables,
+                context,
                 acc.narrowedTypes,
-                data,
+                result,
                 operation
               );
 
@@ -272,11 +272,12 @@ export function Statement({
                     onRemove={() => handleOperationCall(operation, i, true)}
                   >
                     <OperationCall
-                      data={data}
+                      data={result}
                       operation={operation}
                       handleOperationCall={(op, remove) =>
                         handleOperationCall(op, i, remove)
                       }
+                      // passing context and narrowedTypes separately to handle inverse type narrowing
                       context={context}
                       narrowedTypes={acc.narrowedTypes}
                       addOperationCall={

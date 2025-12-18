@@ -13,6 +13,12 @@ import {
   Parameter,
   ProjectFile,
 } from "./types";
+import {
+  ArrayValueSchema,
+  ConditionValueSchema,
+  ObjectValueSchema,
+  OperationValueSchema,
+} from "./schemas";
 
 /* Create */
 
@@ -26,7 +32,6 @@ export function createData<T extends DataType>(
     type,
     value: props.value ?? createDefaultValue(type),
     isTypeEditable: props.isTypeEditable,
-    reference: props.reference,
   };
 }
 
@@ -213,7 +218,6 @@ export function createOperationFromFile(file?: ProjectFile) {
     type: file.content.type,
     value: file.content.value,
     isTypeEditable: true,
-    reference: { id: file.id, name: file.name },
   } as IData<OperationType>;
 }
 
@@ -290,20 +294,23 @@ export function getInverseTypes(
   return narrowedTypes.entries().reduce((acc, [key, value]) => {
     const variable = originalTypes.get(key);
     if (!variable) return acc;
-    let excludedType: DataType = variable.type;
+    let excludedType: DataType = variable.data.type;
 
-    if (variable.type.kind === "union") {
-      const remainingTypes = variable.type.types.filter(
-        (t) => !isTypeCompatible(t, value.type)
+    if (variable.data.type.kind === "union") {
+      const remainingTypes = variable.data.type.types.filter(
+        (t) => !isTypeCompatible(t, value.data.type)
       );
       if (remainingTypes.length === 0) excludedType = { kind: "never" };
       else excludedType = resolveUnionType(remainingTypes);
-    } else if (isTypeCompatible(variable.type, value.type)) {
+    } else if (isTypeCompatible(variable.data.type, value.data.type)) {
       excludedType = { kind: "never" }; // If not a union and types are compatible
     }
 
     if (excludedType.kind !== "never") {
-      acc.set(key, { ...variable, type: excludedType });
+      acc.set(key, {
+        ...variable,
+        data: { ...variable.data, type: excludedType },
+      });
     }
     return acc;
   }, new Map(originalTypes));
@@ -340,7 +347,7 @@ function narrowType(
 }
 
 export function applyTypeNarrowing(
-  originalTypes: Context["variables"],
+  context: Context,
   narrowedTypes: Context["variables"],
   data: IData,
   operation: IData<OperationType>
@@ -354,13 +361,13 @@ export function applyTypeNarrowing(
     (operation.value.name === "isTypeOf" ||
       operation.value.name === "isEqual") &&
     param &&
-    data.reference
+    isDataOfType(data, "reference")
   ) {
-    referenceName = data.reference.name;
-    const reference = originalTypes.get(referenceName);
+    referenceName = data.value.name;
+    const reference = context.variables.get(referenceName);
     if (reference) {
       narrowedType = narrowType(
-        reference.type,
+        reference.data.type,
         inferTypeFromValue(param.data.value)
       );
     }
@@ -368,34 +375,38 @@ export function applyTypeNarrowing(
 
   if (
     (operation.value.name === "or" || operation.value.name === "and") &&
-    param.data.reference
+    isDataOfType(param.data, "reference") &&
+    param.operations[0]
   ) {
-    const source =
-      operation.value.name === "or" ? originalTypes : narrowedTypes;
     const resultType = applyTypeNarrowing(
-      source,
-      new Map(source),
+      context,
+      new Map(
+        operation.value.name === "or" ? context.variables : narrowedTypes
+      ),
       param.data,
       param.operations[0]
     );
-    referenceName = param.data.reference.name;
+    referenceName = param.data.value.name;
     const types = [
-      narrowedTypes.get(param.data.reference.name)?.type,
-      resultType.get(param.data.reference.name)?.type,
+      narrowedTypes.get(referenceName)?.data.type,
+      resultType.get(referenceName)?.data.type,
     ].filter(Boolean) as DataType[];
 
     if (types.length > 0) narrowedType = resolveUnionType(types);
   }
 
   if (operation.value.name === "not") {
-    narrowedTypes = getInverseTypes(originalTypes, narrowedTypes);
+    narrowedTypes = getInverseTypes(context.variables, narrowedTypes);
   }
 
   if (referenceName) {
-    narrowedTypes.set(referenceName, {
-      ...originalTypes.get(referenceName)!,
-      type: narrowedType ?? { kind: "never" },
-    });
+    const variable = context.variables.get(referenceName);
+    if (variable) {
+      narrowedTypes.set(referenceName, {
+        ...variable,
+        data: { ...variable.data, type: narrowedType ?? { kind: "never" } },
+      });
+    }
   }
 
   return narrowedTypes;
@@ -462,46 +473,50 @@ function getOperationType(
   return { kind: "operation", parameters: parameterTypes, result: resultType };
 }
 
-export function inferTypeFromValue<T extends DataType>(value: DataValue<T>) {
+export function resolveReference(data: IData, context: Context): IData {
+  if (!isDataOfType(data, "reference")) return data;
+  const variable = context.variables.get(data.value.name);
+  return variable ? resolveReference(variable.data, context) : data;
+}
+
+export function inferTypeFromValue<T extends DataType>(value: DataValue<T>): T {
   if (value === undefined) return { kind: "undefined" } as T;
   if (typeof value === "string") return { kind: "string" } as T;
   if (typeof value === "number") return { kind: "number" } as T;
   if (typeof value === "boolean") return { kind: "boolean" } as T;
-  if (Array.isArray(value)) {
-    return { kind: "array", elementType: getArrayElementType(value) } as T;
+
+  const arrayValue = ArrayValueSchema.safeParse(value);
+  if (arrayValue.success) {
+    return {
+      kind: "array",
+      elementType: getArrayElementType(arrayValue.data),
+    } as T;
   }
-  if (value instanceof Map) {
+  const objectValue = ObjectValueSchema.safeParse(value);
+  if (objectValue.success) {
     return {
       kind: "object",
-      properties: value.entries().reduce((acc, [key, statement]) => {
+      properties: objectValue.data.entries().reduce((acc, [key, statement]) => {
         acc[key] = statement.data.type;
         return acc;
       }, {} as { [key: string]: DataType }),
     } as T;
   }
-  if (
-    value &&
-    typeof value === "object" &&
-    "parameters" in value &&
-    "statements" in value &&
-    Array.isArray(value.parameters) &&
-    Array.isArray(value.statements)
-  ) {
-    return getOperationType(value.parameters, value.statements) as T;
+  const operationValue = OperationValueSchema.safeParse(value);
+  if (operationValue.success) {
+    return getOperationType(
+      operationValue.data.parameters,
+      operationValue.data.statements
+    ) as T;
   }
-  if (
-    value &&
-    typeof value === "object" &&
-    "condition" in value &&
-    "true" in value &&
-    "false" in value
-  ) {
-    const trueType = getStatementResult(value.true as IStatement).type;
-    const falseType = getStatementResult(value.false as IStatement).type;
+  const conditionValue = ConditionValueSchema.safeParse(value);
+  if (conditionValue.success) {
+    const trueType = getStatementResult(conditionValue.data.true).type;
+    const falseType = getStatementResult(conditionValue.data.false).type;
     const unionType = resolveUnionType(
       isTypeCompatible(trueType, falseType) ? [trueType] : [trueType, falseType]
     );
-    return { kind: "condition", type: unionType } as T;
+    return { kind: "condition", resultType: unionType } as T;
   }
   return { kind: "unknown" } as T;
 }
@@ -545,8 +560,10 @@ export function getTypeSignature(type: DataType, maxDepth: number = 4): string {
     }
 
     case "condition":
-      return getTypeSignature(type.type, maxDepth - 1);
+      return getTypeSignature(type.resultType, maxDepth - 1);
 
+    case "reference":
+      return getTypeSignature(type.dataType, maxDepth - 1);
     default:
       return "unknown";
   }
@@ -571,13 +588,7 @@ export function getStatementResult(
   } else if (isDataOfType(result, "condition")) {
     result = result.value.result ?? getConditionResult(result.value);
   }
-  return {
-    ...result,
-    id: nanoid(),
-    ...(statement.name
-      ? { reference: { id: statement.id, name: statement.name } }
-      : {}),
-  };
+  return { ...result, id: nanoid() };
 }
 
 export function getConditionResult(condition: DataValue<ConditionType>): IData {
@@ -603,7 +614,7 @@ export function getDataDropdownList({
       if (DataTypes[kind].hideFromDropdown) return acc;
       if (
         data.isTypeEditable ||
-        (data.reference && kind === (data as IData).type.kind)
+        (isDataOfType(data, "reference") && kind === data.type.dataType.kind)
       ) {
         acc.push({
           entityType: "data",
@@ -622,16 +633,24 @@ export function getDataDropdownList({
       return acc;
     }, [] as IDropdownItem[]),
     ...context.variables.entries().reduce((acc, [name, variable]) => {
-      if (!data.isTypeEditable && !isTypeCompatible(variable.type, data.type)) {
+      if (
+        !data.isTypeEditable &&
+        !isTypeCompatible(variable.data.type, data.type)
+      ) {
         return acc;
       }
       acc.push({
         value: name,
-        secondaryLabel: variable.type.kind,
-        variableType: variable.type,
+        secondaryLabel: variable.data.type.kind,
+        variableType: variable.data.type,
         entityType: "data",
         onClick: () =>
-          onSelect({ ...variable, isTypeEditable: data.isTypeEditable }),
+          onSelect({
+            ...variable.data,
+            type: { kind: "reference", dataType: variable.data.type },
+            value: variable.reference,
+            isTypeEditable: data.isTypeEditable,
+          }),
       });
       return acc;
     }, [] as IDropdownItem[]),
@@ -670,4 +689,23 @@ export function handleSearchParams(
     else searchParams.set(key, value.toString());
   });
   return [searchParams, { replace }] as const;
+}
+
+export function createContextVariables(
+  statements: IStatement[],
+  variables: Context["variables"]
+): Context["variables"] {
+  return statements.reduce((variables, statement) => {
+    if (statement.name) {
+      const data = resolveReference(statement.data, { variables });
+      const result = getStatementResult({ ...statement, data });
+      variables.set(statement.name, {
+        data: result,
+        reference: isDataOfType(statement.data, "reference")
+          ? statement.data.value
+          : undefined,
+      });
+    }
+    return variables;
+  }, new Map(variables));
 }

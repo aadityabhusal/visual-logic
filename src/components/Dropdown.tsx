@@ -10,7 +10,7 @@ import {
 } from "react-icons/fa6";
 import { useProjectStore, uiConfigStore } from "../lib/store";
 import { getHotkeyHandler, HotkeyItem, useHotkeys } from "@mantine/hooks";
-import { Context, IData, IDropdownItem, IStatement } from "../lib/types";
+import { Context, IData, IDropdownItem } from "../lib/types";
 import { useSearchParams } from "react-router";
 import {
   createOperationFromFile,
@@ -18,6 +18,7 @@ import {
   handleSearchParams,
   isDataOfType,
   isTextInput,
+  resolveReference,
 } from "../lib/utils";
 import { getNextIdAfterDelete, getOperationEntities } from "@/lib/navigation";
 
@@ -38,12 +39,12 @@ export function Dropdown({
   options,
   hotkeys,
   isInputTarget,
-  reference,
   target,
+  context,
 }: {
   id: string;
+  data?: IData;
   value?: string;
-  data?: IStatement["data"];
   items?: IDropdownItem[];
   handleDelete?: () => void;
   addOperationCall?: () => void;
@@ -55,12 +56,15 @@ export function Dropdown({
   };
   hotkeys?: HotkeyItem[];
   isInputTarget?: boolean;
-  reference?: IData["reference"];
   target: (value: IDropdownTargetProps) => ReactNode;
   context: Context;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const { highlightOperation, navigation, setUiConfig } = uiConfigStore();
+  const result = useMemo(
+    () => (data ? resolveReference(data, context) : undefined),
+    [data, context]
+  );
   const forceDisplayBorder =
     highlightOperation && isDataOfType(data, "operation");
   const [isHovered, setHovered] = useState(false);
@@ -71,13 +75,13 @@ export function Dropdown({
     onDropdownClose: () => {
       handleSearch(options?.withSearch ? "" : value || "");
       combobox.resetSelectedOption();
-      setUiConfig((p) => ({ ...p, navigation: { id }, result: data }));
+      setUiConfig((p) => ({ ...p, navigation: { id, context }, result }));
     },
     onDropdownOpen: () => {
       if (options?.withSearch) combobox.focusSearchInput();
       setUiConfig({
         navigation: { id, disable: true },
-        result: data,
+        result,
         showPopup: true,
       });
     },
@@ -122,7 +126,7 @@ export function Dropdown({
   function handleSearch(val: string) {
     if (!combobox.dropdownOpened) combobox.openDropdown();
     setSearch(val);
-    setUiConfig({ result: data });
+    setUiConfig({ result });
   }
 
   useHotkeys(
@@ -137,17 +141,16 @@ export function Dropdown({
               textInput?.blur();
               setUiConfig((p) => {
                 const operation = createOperationFromFile(
-                  useProjectStore
-                    .getState()
-                    .getFile(searchParams.get("file"))
+                  useProjectStore.getState().getFile(searchParams.get("file"))
                 );
                 if (!operation) return p;
-                const newEntities = getOperationEntities(operation);
+                const newEntities = getOperationEntities(operation, 0);
                 const oldEntities = p.navigationEntities || [];
                 return {
                   navigationEntities: newEntities,
                   navigation: {
                     id: getNextIdAfterDelete(newEntities, oldEntities, id),
+                    context,
                   },
                 };
               });
@@ -182,7 +185,7 @@ export function Dropdown({
     if (combobox.targetRef.current instanceof HTMLInputElement) {
       combobox.targetRef.current.focus();
     } else {
-      setUiConfig({ result: data });
+      setUiConfig({ result });
     }
 
     const textInput = isTextInput(combobox.targetRef.current);
@@ -196,7 +199,7 @@ export function Dropdown({
       }
       textInput.setSelectionRange(caretPosition, caretPosition);
     }
-  }, [isFocused, combobox.targetRef, navigation, setUiConfig, data]);
+  }, [isFocused, combobox.targetRef, navigation, setUiConfig, result]);
 
   return (
     <Combobox
@@ -254,26 +257,27 @@ export function Dropdown({
               onFocus: () =>
                 setUiConfig({
                   navigation: { id },
-                  result: data,
+                  result,
                   showPopup: true,
                 }),
             })}
           </Combobox.EventsTarget>
-          {isDataOfType(data, "operation") && reference && (
-            <IconButton
-              tabIndex={-1}
-              size={8}
-              className="absolute -top-1.5 right-2.5 text-white bg-border rounded-full z-10 p-0.5"
-              icon={FaSquareArrowUpRight}
-              onClick={() =>
-                setSearchParams(
-                  ...handleSearchParams({ file: data.value.name }, true)
-                )
-              }
-              hidden={!isFocused && !isHovered}
-              title="Go to reference"
-            />
-          )}
+          {isDataOfType(data, "reference") &&
+            context.variables.get(data.value.name)?.isOperationFile && (
+              <IconButton
+                tabIndex={-1}
+                size={8}
+                className="absolute -top-1.5 right-2.5 text-white bg-border rounded-full z-10 p-0.5"
+                icon={FaSquareArrowUpRight}
+                onClick={() =>
+                  setSearchParams(
+                    ...handleSearchParams({ file: data.value.name }, true)
+                  )
+                }
+                hidden={!isFocused && !isHovered}
+                title="Go to reference"
+              />
+            )}
           {handleDelete && (
             <IconButton
               tabIndex={-1}

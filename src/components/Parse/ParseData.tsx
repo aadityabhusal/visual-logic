@@ -1,12 +1,12 @@
 import { Fragment } from "react";
-import { theme } from "../../lib/theme";
-import { ArrayType, ConditionType, IData, ObjectType } from "../../lib/types";
+import { theme } from "@/lib/theme";
+import { ArrayType, ConditionType, IData, ObjectType } from "@/lib/types";
 import { ParseStatement } from "./ParseStatement";
 import {
   getConditionResult,
   inferTypeFromValue,
   isDataOfType,
-} from "../../lib/utils";
+} from "@/lib/utils";
 
 export function ParseData({
   data,
@@ -17,8 +17,8 @@ export function ParseData({
   showData?: boolean;
   nest?: number;
 }) {
-  if (!showData && data.reference) {
-    return <span className="text-variable">{data.reference.name}</span>;
+  if (!showData && isDataOfType(data, "reference")) {
+    return <span className="text-variable">{data.value.name}</span>;
   }
   if (isDataOfType(data, "array")) {
     return <ParseArray data={data} showData={showData} nest={nest} />;

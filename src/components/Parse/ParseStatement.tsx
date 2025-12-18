@@ -1,7 +1,7 @@
-import { IStatement } from "../../lib/types";
+import { IStatement } from "@/lib/types";
 import { ParseData } from "./ParseData";
 import { ParseOperation } from "./ParseOperation";
-import { getStatementResult, isDataOfType } from "../../lib/utils";
+import { getStatementResult, isDataOfType } from "@/lib/utils";
 
 export function ParseStatement({
   statement,
