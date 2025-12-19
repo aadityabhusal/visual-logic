@@ -1,11 +1,9 @@
 import { FaArrowRightLong, FaArrowTurnUp, FaEquals } from "react-icons/fa6";
 import { Context, IData, IStatement, OperationType } from "../lib/types";
-import { updateOperationCalls } from "../lib/update";
 import {
   isTypeCompatible,
   getStatementResult,
   createVariableName,
-  isDataOfType,
   applyTypeNarrowing,
 } from "../lib/utils";
 import { createOperationCall, getFilteredOperations } from "../lib/operation";
@@ -70,32 +68,8 @@ export function Statement({
     const data = getStatementResult(statement);
     const operation = createOperationCall({ data, context });
     const operations = [...statement.operations, operation];
-    handleStatement(
-      updateOperationCalls({ ...statement, operations }, context)
-    );
+    handleStatement({ ...statement, operations });
     setUiConfig({ navigation: { id: operation.id, direction: "right" } });
-  }
-
-  function handleData(data: IData, remove?: boolean) {
-    if (remove) handleStatement(statement, remove);
-    else {
-      let operations = [...statement.operations];
-      if (!isTypeCompatible(statement.data.type, data.type)) operations = [];
-      handleStatement(
-        updateOperationCalls({ ...statement, data, operations }, context)
-      );
-    }
-  }
-
-  function handelOperation(operation: IData<OperationType>, remove?: boolean) {
-    if (remove) handleStatement(statement, remove);
-    else
-      handleStatement(
-        updateOperationCalls(
-          { ...statement, data: operation, operations: statement.operations },
-          context
-        )
-      );
   }
 
   function handleOperationCall(
@@ -128,9 +102,7 @@ export function Statement({
       }
       operations[index] = operation;
     }
-    handleStatement(
-      updateOperationCalls({ ...statement, operations }, context)
-    );
+    handleStatement({ ...statement, operations });
   }
 
   return (
@@ -239,10 +211,8 @@ export function Statement({
                 : undefined
             }
             context={context}
-            handleChange={
-              isDataOfType(statement.data, "operation")
-                ? handelOperation
-                : handleData
+            handleChange={(data, remove) =>
+              handleStatement({ ...statement, data }, remove)
             }
           />
         </ErrorBoundary>

@@ -25,10 +25,12 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
   ({ operation, handleChange, context, options, ...props }, ref) => {
     function handleStatement({
       statement,
+      context,
       remove,
       parameterLength = operation.value.parameters.length,
     }: {
       statement: IStatement;
+      context: Context;
       remove?: boolean;
       parameterLength?: number;
     }) {
@@ -120,6 +122,7 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
                     statement,
                     remove,
                     parameterLength: paramList.length + (remove ? -1 : 0),
+                    context,
                   })
                 }
                 options={{
@@ -148,28 +151,29 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
           <span>{")"}</span>
         </div>
         <div className="pl-4 [&>div]:mb-1 w-fit">
-          {operation.value.statements.map((statement, i) => (
-            <Statement
-              key={statement.id}
-              statement={statement}
-              options={{ enableVariable: true }}
-              handleStatement={(statement, remove) =>
-                handleStatement({ statement, remove })
-              }
-              addStatement={(statement, position) =>
-                addStatement(statement, position, i)
-              }
-              context={{
-                currentStatementId: statement.id,
-                variables: createContextVariables(
-                  operation.value.parameters.concat(
-                    operation.value.statements.slice(0, i)
-                  ),
-                  context.variables
+          {operation.value.statements.map((statement, i) => {
+            const _context = {
+              currentStatementId: statement.id,
+              variables: createContextVariables(
+                operation.value.parameters.concat(
+                  operation.value.statements.slice(0, i)
                 ),
-              }}
-            />
-          ))}
+                context.variables
+              ),
+            };
+            return (
+              <Statement
+                key={statement.id}
+                statement={statement}
+                options={{ enableVariable: true }}
+                handleStatement={(statement, remove) =>
+                  handleStatement({ statement, remove, context: _context })
+                }
+                addStatement={(stmt, pos) => addStatement(stmt, pos, i)}
+                context={_context}
+              />
+            );
+          })}
           <AddStatement
             id={`${operation.id}_statement`}
             onSelect={(statement) => {

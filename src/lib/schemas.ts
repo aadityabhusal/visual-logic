@@ -123,7 +123,7 @@ export const ConditionValueSchema: z.ZodType<DataValue<ConditionType>> =
 
 const ReferenceTypeSchema: z.ZodType<ReferenceType> = z.object({
   kind: z.literal("reference"),
-  referenceType: z.enum(["variable", "env"]),
+  // referenceType: z.enum(["variable", "env"]),
   get dataType() {
     return DataTypeSchema;
   },

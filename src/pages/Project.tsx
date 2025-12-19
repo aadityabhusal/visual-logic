@@ -81,11 +81,7 @@ export default function Project() {
                     return acc;
                   }
                   acc.set(operationFile.name, {
-                    data: operation,
-                    reference: {
-                      name: operationFile.name,
-                      id: operationFile.id,
-                    },
+                    data: { ...operation, id: operationFile.id },
                     isOperationFile: true,
                   });
                   return acc;

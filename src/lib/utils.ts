@@ -648,7 +648,7 @@ export function getDataDropdownList({
           onSelect({
             ...variable.data,
             type: { kind: "reference", dataType: variable.data.type },
-            value: variable.reference,
+            value: { name, id: variable.data.id },
             isTypeEditable: data.isTypeEditable,
           }),
       });
@@ -700,7 +700,7 @@ export function createContextVariables(
       const data = resolveReference(statement.data, { variables });
       const result = getStatementResult({ ...statement, data });
       variables.set(statement.name, {
-        data: result,
+        data: { ...result, id: statement.id },
         reference: isDataOfType(statement.data, "reference")
           ? statement.data.value
           : undefined,
