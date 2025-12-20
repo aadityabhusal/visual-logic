@@ -660,7 +660,10 @@ function buildExecutionContext(
   return context;
 }
 
-function executeStatement(statement: IStatement, context: Context): IData {
+export function executeStatement(
+  statement: IStatement,
+  context: Context
+): IData {
   let currentData = resolveReference(statement.data, context);
   if (isDataOfType(currentData, "condition")) {
     const conditionValue = currentData.value;

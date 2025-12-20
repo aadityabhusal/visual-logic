@@ -57,7 +57,7 @@ type BaseDataValue<T extends DataType> = T extends UnknownType
   ? {
       parameters: IStatement[];
       statements: IStatement[];
-      result?: IData;
+      result?: IData; // for operation calls
       name?: string; // for non-statement operations
     }
   : T extends ConditionType

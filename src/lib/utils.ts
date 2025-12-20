@@ -18,6 +18,7 @@ import {
   ConditionValueSchema,
   ObjectValueSchema,
   OperationValueSchema,
+  ReferenceValueSchema,
 } from "./schemas";
 
 /* Create */
@@ -265,9 +266,15 @@ export function isTypeCompatible(first: DataType, second: DataType): boolean {
   if (first.kind === "union") {
     return first.types.some((t) => isTypeCompatible(t, second));
   }
-
   if (second.kind === "union") {
     return second.types.some((t) => isTypeCompatible(first, t));
+  }
+
+  if (first.kind === "reference") {
+    return isTypeCompatible(first.dataType, second);
+  }
+  if (second.kind === "reference") {
+    return isTypeCompatible(first, second.dataType);
   }
 
   return first.kind === second.kind;
@@ -479,7 +486,10 @@ export function resolveReference(data: IData, context: Context): IData {
   return variable ? resolveReference(variable.data, context) : data;
 }
 
-export function inferTypeFromValue<T extends DataType>(value: DataValue<T>): T {
+export function inferTypeFromValue<T extends DataType>(
+  value: DataValue<T>,
+  context?: Context
+): T {
   if (value === undefined) return { kind: "undefined" } as T;
   if (typeof value === "string") return { kind: "string" } as T;
   if (typeof value === "number") return { kind: "number" } as T;
@@ -517,6 +527,11 @@ export function inferTypeFromValue<T extends DataType>(value: DataValue<T>): T {
       isTypeCompatible(trueType, falseType) ? [trueType] : [trueType, falseType]
     );
     return { kind: "condition", resultType: unionType } as T;
+  }
+  const referenceValue = ReferenceValueSchema.safeParse(value);
+  if (referenceValue.success && context) {
+    const type = context.variables.get(referenceValue.data.name)?.data.type;
+    return { kind: "reference", dataType: type ?? { kind: "unknown" } } as T;
   }
   return { kind: "unknown" } as T;
 }

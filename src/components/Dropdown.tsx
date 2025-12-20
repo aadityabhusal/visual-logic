@@ -75,7 +75,7 @@ export function Dropdown({
     onDropdownClose: () => {
       handleSearch(options?.withSearch ? "" : value || "");
       combobox.resetSelectedOption();
-      setUiConfig((p) => ({ ...p, navigation: { id, context }, result }));
+      setUiConfig((p) => ({ ...p, navigation: { id }, result }));
     },
     onDropdownOpen: () => {
       if (options?.withSearch) combobox.focusSearchInput();
@@ -199,7 +199,13 @@ export function Dropdown({
       }
       textInput.setSelectionRange(caretPosition, caretPosition);
     }
-  }, [isFocused, combobox.targetRef, navigation, setUiConfig, result]);
+  }, [
+    isFocused,
+    combobox.targetRef,
+    navigation?.direction,
+    navigation?.modifier,
+    setUiConfig,
+  ]);
 
   return (
     <Combobox
@@ -255,11 +261,7 @@ export function Dropdown({
                 combobox?.openDropdown();
               },
               onFocus: () =>
-                setUiConfig({
-                  navigation: { id },
-                  result,
-                  showPopup: true,
-                }),
+                setUiConfig({ navigation: { id }, result, showPopup: true }),
             })}
           </Combobox.EventsTarget>
           {isDataOfType(data, "reference") &&

@@ -3,7 +3,7 @@ import { UnionType, IData, DataType, Context } from "../../lib/types";
 import {
   createData,
   createDefaultValue,
-  createStatement,
+  isDataOfType,
   getTypeSignature,
   inferTypeFromValue,
   isTypeCompatible,
@@ -13,7 +13,7 @@ import { FaChevronDown, FaX } from "react-icons/fa6";
 import { DataTypes } from "@/lib/data";
 import { Menu, Tooltip } from "@mantine/core";
 import { IconButton } from "@/ui/IconButton";
-import { Statement } from "../Statement";
+import { Data } from "../Data";
 import { uiConfigStore } from "@/lib/store";
 
 export interface UnionInputProps extends HTMLAttributes<HTMLDivElement> {
@@ -28,32 +28,19 @@ export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
     const [menuOpened, setMenuOpened] = useState(false);
     const isFocused = navigation?.id === `${data.id}_options`;
 
-    const activeTypeIndex = useMemo(() => {
-      const valueType = inferTypeFromValue(data.value);
-      const index = data.type.types.findIndex((t) =>
-        isTypeCompatible(valueType, t)
-      );
-      return index >= 0 ? index : 0;
-    }, [data.type.types, data.value]);
-
-    const activeStatement = useMemo(
-      () =>
-        createStatement({
-          data: createData({
-            id: `${data.id}_data`,
-            type: data.type.types[activeTypeIndex],
-            value: data.value,
-            isTypeEditable: data.isTypeEditable,
-          }),
+    const activeType = useMemo(() => {
+      const type = inferTypeFromValue(data.value, context);
+      const index = data.type.types.findIndex((t) => isTypeCompatible(type, t));
+      return {
+        data: createData({
+          id: `${data.id}_data`,
+          type: index === -1 ? data.type.types[0] : type,
+          value: data.value,
+          isTypeEditable: data.isTypeEditable,
         }),
-      [
-        data.id,
-        data.type.types,
-        data.value,
-        data.isTypeEditable,
-        activeTypeIndex,
-      ]
-    );
+        index: index === -1 ? 0 : index,
+      };
+    }, [context, data.id, data.isTypeEditable, data.type.types, data.value]);
 
     function handleTypeAdd(newType: DataType) {
       handleData({
@@ -65,7 +52,9 @@ export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
 
     function handleActiveTypeChange(newData: IData) {
       const updatedTypes = [...data.type.types];
-      updatedTypes[activeTypeIndex] = newData.type;
+      updatedTypes[activeType.index] = isDataOfType(newData, "reference")
+        ? newData.type.dataType
+        : newData.type;
 
       handleData({
         ...data,
@@ -85,7 +74,7 @@ export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
       if (newTypes.length === 0) newTypes = [{ kind: "undefined" }];
 
       // If removing the active type, switch to first type
-      const wasActive = index === activeTypeIndex;
+      const wasActive = index === activeType.index;
       const newValue = wasActive ? createDefaultValue(newTypes[0]) : data.value;
 
       handleData({
@@ -104,15 +93,14 @@ export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
         ref={ref}
         className={["flex items-start gap-1", props?.className].join(" ")}
       >
-        <Statement
-          statement={activeStatement}
-          handleStatement={(statement, remove) => {
-            if (remove) handleTypeRemove(activeTypeIndex);
-            else handleActiveTypeChange(statement.data);
-          }}
+        <Data
+          data={activeType.data}
+          handleChange={(newData, remove) =>
+            remove
+              ? handleTypeRemove(activeType.index)
+              : handleActiveTypeChange(newData)
+          }
           context={context}
-          // TODO: disableDelete is hiding parameters for operation in union type
-          options={{ disableOperationCall: true }}
         />
         <Menu
           width={200}
@@ -155,7 +143,7 @@ export const UnionInput = forwardRef<HTMLDivElement, UnionInputProps>(
                 classNames={{
                   item: [
                     menuItemClassNames,
-                    i === activeTypeIndex ? "bg-dropdown-selected" : "",
+                    i === activeType.index ? "bg-dropdown-selected" : "",
                   ].join(" "),
                 }}
               >

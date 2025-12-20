@@ -1,11 +1,23 @@
-import { getFilteredOperations, executeOperation } from "./operation";
-import { IStatement, IData, OperationType, Context } from "./types";
+import {
+  getFilteredOperations,
+  executeOperation,
+  executeStatement,
+} from "./operation";
+import {
+  IStatement,
+  IData,
+  OperationType,
+  Context,
+  DataValue,
+  DataType,
+} from "./types";
 import {
   getStatementResult,
   isDataOfType,
   inferTypeFromValue,
   createContextVariables,
   createStatement,
+  createData,
 } from "./utils";
 
 export function updateOperationCalls(
@@ -51,7 +63,55 @@ export function updateOperationCalls(
   );
 }
 
-function updateStatementReference(
+function updateDataValue(
+  data: IData,
+  context: Context,
+  reference?: { name: string; data: IData<DataType> }
+): DataValue<DataType> {
+  return reference
+    ? { name: reference.name, id: reference.data.id }
+    : isDataOfType(data, "array")
+    ? updateStatements({ statements: data.value, context })
+    : isDataOfType(data, "object")
+    ? new Map(
+        [...data.value.entries()].map(([name, statement]) => [
+          name,
+          updateStatement(statement, context),
+        ])
+      )
+    : isDataOfType(data, "operation")
+    ? {
+        parameters: data.value.parameters,
+        statements: updateStatements({
+          statements: data.value.statements,
+          context,
+        }),
+      }
+    : isDataOfType(data, "union")
+    ? updateDataValue(
+        { ...data, type: inferTypeFromValue(data.value) },
+        context
+      )
+    : isDataOfType(data, "condition")
+    ? (() => {
+        const condition = updateStatement(data.value.condition, context);
+        const _true = updateStatement(data.value.true, context);
+        const _false = updateStatement(data.value.false, context);
+        const result = executeStatement(
+          createStatement({
+            data: createData({
+              type: data.type,
+              value: { condition, true: _true, false: _false },
+            }),
+          }),
+          context
+        );
+        return { condition, true: _true, false: _false, result };
+      })()
+    : data.value;
+}
+
+function updateStatement(
   currentStatement: IStatement,
   context: Context
 ): IStatement {
@@ -65,16 +125,16 @@ function updateStatementReference(
     ? { name: foundReference[0], data: foundReference[1].data }
     : undefined;
 
-  return {
+  const newStatement = {
     ...currentStatement,
-    data: reference
-      ? {
-          ...currentStatement.data,
-          type: { kind: "reference", dataType: reference.data.type },
-          value: { name: reference.name, id: reference.data.id },
-        }
-      : currentStatement.data,
-    operations: updateOperationCalls(currentStatement, context),
+    data: {
+      ...currentStatement.data,
+      value: updateDataValue(currentStatement.data, context, reference),
+    },
+  };
+  return {
+    ...newStatement,
+    operations: updateOperationCalls(newStatement, context),
   };
 }
 
@@ -108,10 +168,7 @@ export function updateStatements({
         new Map(context.variables)
       ),
     };
-    return [
-      ...prevStatements,
-      updateStatementReference(statementToProcess, _context),
-    ];
+    return [...prevStatements, updateStatement(statementToProcess, _context)];
   }, [] as IStatement[]);
 }
 
