@@ -6,7 +6,11 @@ import {
   createVariableName,
   applyTypeNarrowing,
 } from "../lib/utils";
-import { createOperationCall, getFilteredOperations } from "../lib/operation";
+import {
+  createOperationCall,
+  getFilteredOperations,
+  getSkipExecution,
+} from "../lib/operation";
 import { Data } from "./Data";
 import { BaseInput } from "./Input/BaseInput";
 import { OperationCall } from "./OperationCall";
@@ -23,7 +27,7 @@ import { ErrorBoundary } from "./ErrorBoundary";
 export function Statement({
   statement,
   handleStatement,
-  context,
+  context: _context,
   addStatement,
   options,
 }: {
@@ -53,6 +57,15 @@ export function Statement({
 
   const isEqualsFocused = navigation?.id === `${statement.id}_equals`;
   const isNameFocused = navigation?.id === `${statement.id}_name`;
+  const context = useMemo(
+    () => ({
+      ..._context,
+      skipExecution:
+        _context.skipExecution ??
+        getSkipExecution({ context: _context, data: statement.data }),
+    }),
+    [_context, statement.data]
+  );
 
   const hoverEvents = useMemo(
     () => ({
@@ -248,7 +261,12 @@ export function Statement({
                         handleOperationCall(op, i, remove)
                       }
                       // passing context and narrowedTypes separately to handle inverse type narrowing
-                      context={context}
+                      context={{
+                        ...context,
+                        skipExecution:
+                          context.skipExecution ??
+                          getSkipExecution({ context, result, operation }),
+                      }}
                       narrowedTypes={acc.narrowedTypes}
                       addOperationCall={
                         !options?.disableOperationCall &&

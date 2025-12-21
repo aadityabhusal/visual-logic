@@ -12,6 +12,7 @@ import {
   UnionType,
   Parameter,
   ProjectFile,
+  GetSkipExecutionParams,
 } from "./types";
 import {
   ArrayValueSchema,
@@ -222,6 +223,34 @@ export function createOperationFromFile(file?: ProjectFile) {
   } as IData<OperationType>;
 }
 
+export function createContextVariables(
+  statements: IStatement[],
+  variables: Context["variables"],
+  getSkipExecution: (params: GetSkipExecutionParams) => Context["skipExecution"]
+): Context["variables"] {
+  return statements.reduce((variables, statement) => {
+    if (statement.name) {
+      const data = resolveReference(statement.data, { variables });
+      const result = getStatementResult({ ...statement, data });
+
+      const skipExecution = getSkipExecution({
+        context: { variables },
+        data: statement.data,
+      });
+      // TODO: maybe loop through operations and updated skipExecution
+      // if (!skipExecution) {}
+
+      variables.set(statement.name, {
+        data: { ...result, id: statement.id },
+        reference: isDataOfType(statement.data, "reference")
+          ? statement.data.value
+          : undefined,
+        skipExecution,
+      });
+    }
+    return variables;
+  }, new Map(variables));
+}
 /* Types */
 
 export function isTypeCompatible(first: DataType, second: DataType): boolean {
@@ -261,19 +290,17 @@ export function isTypeCompatible(first: DataType, second: DataType): boolean {
         first.types.some((firstType) => isTypeCompatible(firstType, secondType))
       )
     );
-  }
-
-  if (first.kind === "union") {
+  } else if (first.kind === "union") {
     return first.types.some((t) => isTypeCompatible(t, second));
-  }
-  if (second.kind === "union") {
+  } else if (second.kind === "union") {
     return second.types.some((t) => isTypeCompatible(first, t));
   }
 
-  if (first.kind === "reference") {
+  if (first.kind === "reference" && second.kind === "reference") {
+    return isTypeCompatible(first.dataType, second.dataType);
+  } else if (first.kind === "reference") {
     return isTypeCompatible(first.dataType, second);
-  }
-  if (second.kind === "reference") {
+  } else if (second.kind === "reference") {
     return isTypeCompatible(first, second.dataType);
   }
 
@@ -704,23 +731,4 @@ export function handleSearchParams(
     else searchParams.set(key, value.toString());
   });
   return [searchParams, { replace }] as const;
-}
-
-export function createContextVariables(
-  statements: IStatement[],
-  variables: Context["variables"]
-): Context["variables"] {
-  return statements.reduce((variables, statement) => {
-    if (statement.name) {
-      const data = resolveReference(statement.data, { variables });
-      const result = getStatementResult({ ...statement, data });
-      variables.set(statement.name, {
-        data: { ...result, id: statement.id },
-        reference: isDataOfType(statement.data, "reference")
-          ? statement.data.value
-          : undefined,
-      });
-    }
-    return variables;
-  }, new Map(variables));
 }

@@ -102,16 +102,19 @@ export interface IDropdownItem {
   onClick?: () => void;
 }
 
+/* Context and Execution */
+
 export type Context = {
   variables: Map<
     string,
     {
       data: IData;
       reference?: { name: string; id: string };
-      isOperationFile?: boolean;
+      skipExecution?: { type: "error" | "skipped"; reason: string };
     }
   >;
   currentStatementId?: string;
+  skipExecution?: { type: "error" | "skipped"; reason: string };
 };
 
 export type Parameter = {
@@ -122,7 +125,6 @@ export type Parameter = {
 export type OperationListItem = {
   name: string;
   parameters: ((data: IData) => Parameter[]) | Parameter[];
-  lazyEvaluation?: boolean;
   isResultTypeFixed?: boolean; // TODO: Show error when type mismatches in the UI
 } & ( // eslint-disable-next-line @typescript-eslint/no-explicit-any
   | { handler: (...args: [Context, ...IData<any>[]]) => IData }
@@ -136,6 +138,13 @@ export type INavigation = {
   direction?: NavigationDirection;
   modifier?: NavigationModifier;
   disable?: boolean;
+};
+
+export type GetSkipExecutionParams = {
+  context: Context;
+  data?: IData;
+  result?: IData;
+  operation?: IData<OperationType>;
 };
 
 /* Project Types */

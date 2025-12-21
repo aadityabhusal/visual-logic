@@ -2,6 +2,7 @@ import {
   getFilteredOperations,
   executeOperation,
   executeStatement,
+  getSkipExecution,
 } from "./operation";
 import {
   IStatement,
@@ -165,7 +166,8 @@ export function updateStatements({
       currentStatementId: statementToProcess.id,
       variables: createContextVariables(
         prevStatements,
-        new Map(context.variables)
+        new Map(context.variables),
+        getSkipExecution
       ),
     };
     return [...prevStatements, updateStatement(statementToProcess, _context)];
@@ -195,7 +197,8 @@ export function updateOperations(
       context: {
         variables: createContextVariables(
           prevOperations.map((data) => createStatement({ data })),
-          new Map()
+          new Map(),
+          getSkipExecution
         ),
       },
     });

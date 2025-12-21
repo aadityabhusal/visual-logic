@@ -13,6 +13,7 @@ import {
   ObjectType,
   OperationListItem,
   Parameter,
+  GetSkipExecutionParams,
 } from "./types";
 import {
   createData,
@@ -720,4 +721,39 @@ export function executeOperation(
     return lastResult;
   }
   return createData({ type: { kind: "undefined" } });
+}
+
+export function getSkipExecution({
+  context,
+  data,
+  result,
+  operation,
+}: GetSkipExecutionParams): Context["skipExecution"] {
+  if (context.skipExecution) return context.skipExecution;
+  if (data && isDataOfType(data, "reference")) {
+    const variable = context.variables.get(data.value.name);
+    if (!variable) {
+      return {
+        type: "error",
+        reason: `Variable '${data.value.name}' was not found.`,
+      };
+    }
+    if (variable.skipExecution) return variable.skipExecution;
+  }
+
+  if (
+    result &&
+    operation &&
+    !getFilteredOperations(result, context.variables).find(
+      (op) => op.name === operation.value.name
+    )
+  ) {
+    return {
+      type: "error",
+      reason: `Operation '${operation.value.name}' cannot be chained after '${
+        resolveReference(result, context).type.kind
+      }' type.`,
+    };
+  }
+  return undefined;
 }

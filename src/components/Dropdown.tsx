@@ -32,6 +32,7 @@ export function Dropdown({
   id,
   value,
   data,
+  operationResult,
   items,
   handleDelete,
   addOperationCall,
@@ -44,6 +45,7 @@ export function Dropdown({
 }: {
   id: string;
   data?: IData;
+  operationResult?: IData;
   value?: string;
   items?: IDropdownItem[];
   handleDelete?: () => void;
@@ -62,8 +64,13 @@ export function Dropdown({
   const [searchParams, setSearchParams] = useSearchParams();
   const { highlightOperation, navigation, setUiConfig } = uiConfigStore();
   const result = useMemo(
-    () => (data ? resolveReference(data, context) : undefined),
-    [data, context]
+    () =>
+      operationResult
+        ? resolveReference(operationResult, context)
+        : data
+        ? resolveReference(data, context)
+        : undefined,
+    [operationResult, data, context]
   );
   const forceDisplayBorder =
     highlightOperation && isDataOfType(data, "operation");
@@ -75,17 +82,14 @@ export function Dropdown({
     onDropdownClose: () => {
       handleSearch(options?.withSearch ? "" : value || "");
       combobox.resetSelectedOption();
-      setUiConfig((p) => ({ ...p, navigation: { id }, result }));
+      setUiConfig({ navigation: { id } });
     },
     onDropdownOpen: () => {
       if (options?.withSearch) combobox.focusSearchInput();
-      setUiConfig({
-        navigation: { id, disable: true },
-        result,
-        showPopup: true,
-      });
+      setUiConfig({ navigation: { id, disable: true } });
     },
   });
+  const { getCurrentProject } = useProjectStore();
 
   const dropdownOptions = useMemo(
     () =>
@@ -126,7 +130,7 @@ export function Dropdown({
   function handleSearch(val: string) {
     if (!combobox.dropdownOpened) combobox.openDropdown();
     setSearch(val);
-    setUiConfig({ result });
+    setUiConfig({ result, skipExecution: context.skipExecution });
   }
 
   useHotkeys(
@@ -136,7 +140,12 @@ export function Dropdown({
             key,
             () => {
               const textInput = isTextInput(combobox.targetRef.current);
-              if ((textInput && textInput.value) || !handleDelete) return;
+              if (!textInput || !handleDelete) return;
+              if (
+                textInput.value.length > (data?.type.kind === "number" ? 1 : 0)
+              ) {
+                return;
+              }
               handleDelete();
               textInput?.blur();
               setUiConfig((p) => {
@@ -185,7 +194,7 @@ export function Dropdown({
     if (combobox.targetRef.current instanceof HTMLInputElement) {
       combobox.targetRef.current.focus();
     } else {
-      setUiConfig({ result });
+      setUiConfig({ result, skipExecution: context.skipExecution });
     }
 
     const textInput = isTextInput(combobox.targetRef.current);
@@ -228,6 +237,7 @@ export function Dropdown({
             forceDisplayBorder || isFocused || isHovered
               ? "outline outline-border"
               : "",
+            context.skipExecution?.reason ? "opacity-50 " : "",
           ].join(" ")}
           onMouseOver={(e) => {
             e.stopPropagation();
@@ -261,11 +271,18 @@ export function Dropdown({
                 combobox?.openDropdown();
               },
               onFocus: () =>
-                setUiConfig({ navigation: { id }, result, showPopup: true }),
+                setUiConfig({
+                  navigation: { id },
+                  result,
+                  showPopup: true,
+                  skipExecution: context.skipExecution,
+                }),
             })}
           </Combobox.EventsTarget>
           {isDataOfType(data, "reference") &&
-            context.variables.get(data.value.name)?.isOperationFile && (
+            getCurrentProject()?.files.find(
+              (f) => f.name === data.value.name
+            ) && (
               <IconButton
                 tabIndex={-1}
                 size={8}

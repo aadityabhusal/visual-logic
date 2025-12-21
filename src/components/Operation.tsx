@@ -8,6 +8,7 @@ import {
 } from "../lib/utils";
 import { Statement } from "./Statement";
 import { AddStatement } from "./AddStatement";
+import { getSkipExecution } from "@/lib/operation";
 
 export interface OperationInputProps extends HTMLAttributes<HTMLDivElement> {
   operation: IData<OperationType>;
@@ -158,7 +159,8 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
                 operation.value.parameters.concat(
                   operation.value.statements.slice(0, i)
                 ),
-                context.variables
+                context.variables,
+                getSkipExecution
               ),
             };
             return (

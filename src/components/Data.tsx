@@ -101,7 +101,7 @@ export function Data({
             value={data.value}
             onChange={(val) => {
               onChange?.(val.toString());
-              handleChange({ ...data, value: val });
+              handleChange({ ...data, value: Number(val) });
             }}
           />
         ) : isDataOfType(data, "string") ? (
