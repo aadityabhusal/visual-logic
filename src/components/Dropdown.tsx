@@ -265,10 +265,16 @@ export function Dropdown({
                 : {}),
               onClick: (e) => {
                 e.stopPropagation();
-                if (options?.focusOnClick && e.target !== e.currentTarget) {
-                  return;
-                }
-                combobox?.openDropdown();
+                if (options?.focusOnClick) {
+                  if (e.target === e.currentTarget) {
+                    setUiConfig({
+                      navigation: { id },
+                      result,
+                      showPopup: true,
+                      skipExecution: context.skipExecution,
+                    });
+                  }
+                } else combobox?.openDropdown();
               },
               onFocus: () =>
                 setUiConfig({

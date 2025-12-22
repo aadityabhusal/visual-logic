@@ -15,6 +15,7 @@ import { DataTypes } from "../lib/data";
 import { ConditionInput } from "./Input/ConditionInput";
 import { UnionInput } from "./Input/UnionInput";
 import { Operation } from "./Operation";
+import { ErrorInput } from "./Input/ErrorInput";
 
 interface IProps {
   data: IData;
@@ -37,13 +38,13 @@ export function Data({
   );
 
   const showDropdownIcon =
-    !isDataOfType(data, "reference") &&
-    (isDataOfType(data, "array") ||
-      isDataOfType(data, "object") ||
-      isDataOfType(data, "boolean") ||
-      isDataOfType(data, "union") ||
-      isDataOfType(data, "condition") ||
-      isDataOfType(data, "operation"));
+    isDataOfType(data, "array") ||
+    isDataOfType(data, "object") ||
+    isDataOfType(data, "boolean") ||
+    isDataOfType(data, "union") ||
+    isDataOfType(data, "condition") ||
+    isDataOfType(data, "operation") ||
+    isDataOfType(data, "error");
 
   return (
     <Dropdown
@@ -125,6 +126,13 @@ export function Data({
           />
         ) : isDataOfType(data, "union") ? (
           <UnionInput
+            data={data}
+            handleData={handleChange}
+            context={context}
+            onClick={props.onClick}
+          />
+        ) : isDataOfType(data, "error") ? (
+          <ErrorInput
             data={data}
             handleData={handleChange}
             context={context}

@@ -44,7 +44,7 @@ const unknownOperations: OperationListItem[] = [
     handler: (_, data: IData<StringType>) => {
       return createData({
         type: { kind: "string" },
-        value: String(data.value),
+        value: JSON.stringify(data.value),
       });
     },
   },
@@ -241,6 +241,12 @@ const numberOperations: OperationListItem[] = [
     name: "divide",
     parameters: [{ type: { kind: "number" } }, { type: { kind: "number" } }],
     handler: (_, data: IData<NumberType>, p1: IData<NumberType>) => {
+      if (p1.value === 0) {
+        return createData({
+          type: { kind: "error", errorType: "runtime_error" },
+          value: { reason: "Division by zero" },
+        });
+      }
       return createData({
         type: { kind: "number" },
         value: data.value / p1.value,
@@ -261,6 +267,12 @@ const numberOperations: OperationListItem[] = [
     name: "mod",
     parameters: [{ type: { kind: "number" } }, { type: { kind: "number" } }],
     handler: (_, data: IData<NumberType>, p1: IData<NumberType>) => {
+      if (p1.value === 0) {
+        return createData({
+          type: { kind: "error", errorType: "runtime_error" },
+          value: { reason: "Modulo by zero" },
+        });
+      }
       return createData({
         type: { kind: "number" },
         value: data.value % p1.value,
@@ -391,7 +403,7 @@ const objectOperations: OperationListItem[] = [
       { type: { kind: "object", properties: {} } },
       { type: { kind: "string" } },
     ],
-    handler(_, data: IData<ObjectType>, p1: IData<StringType>) {
+    handler: (_, data: IData<ObjectType>, p1: IData<StringType>) => {
       const item = data.value.get(p1.value);
       if (!item) return createData({ type: { kind: "undefined" } });
       const value = getStatementResult(item) as IData;
@@ -404,7 +416,7 @@ const objectOperations: OperationListItem[] = [
       { type: { kind: "object", properties: {} } },
       { type: { kind: "string" } },
     ],
-    handler(_, data: IData<ObjectType>, p1: IData<StringType>) {
+    handler: (_, data: IData<ObjectType>, p1: IData<StringType>) => {
       return createData({
         type: { kind: "boolean" },
         value: data.value.has(p1.value),
@@ -414,7 +426,7 @@ const objectOperations: OperationListItem[] = [
   {
     name: "keys",
     parameters: [{ type: { kind: "object", properties: {} } }],
-    handler(_, data: IData<ObjectType>) {
+    handler: (_, data: IData<ObjectType>) => {
       return createData({
         type: { kind: "array", elementType: { kind: "string" } },
         value: [...data.value.keys()].map((item) =>
@@ -428,7 +440,7 @@ const objectOperations: OperationListItem[] = [
   {
     name: "values",
     parameters: [{ type: { kind: "object", properties: {} } }],
-    handler(_, data: IData<ObjectType>) {
+    handler: (_, data: IData<ObjectType>) => {
       return createData({
         type: {
           kind: "array",
@@ -463,7 +475,7 @@ const operationOperations: OperationListItem[] = [
     ],
     handler: (context, data: IData<OperationType>, ...p: IData[]) => {
       return executeOperation(
-        operationToListItem("call", data),
+        operationToListItem(data, "call"),
         p[0],
         p.slice(1),
         context
@@ -492,7 +504,7 @@ function executeArrayOperation(
   return data.value.map((item, index) => {
     const itemData = getStatementResult(item);
     return executeOperation(
-      operationToListItem("anonymous", operation),
+      operationToListItem(operation),
       itemData,
       [createData({ type: { kind: "number" }, value: index }), data],
       context
@@ -522,38 +534,42 @@ function getArrayCallbackParameters(data: IData) {
 
 /* Operation List */
 
-function operationToListItem(name: string, operation: IData<OperationType>) {
+function operationToListItem(operation: IData<OperationType>, name?: string) {
   return {
-    name: name ?? operation.value.name,
+    name: name ?? operation.value.name ?? "anonymous",
     parameters: operation.type.parameters,
     statements: operation.value.statements,
   } as OperationListItem;
 }
+
+const dataSupportsOperation = (
+  data: IData,
+  operationItem: OperationListItem
+) => {
+  if (data.type.kind === "never") return false;
+  const operationParameters = getOperationListItemParameters(
+    operationItem,
+    data
+  );
+  const firstParam = operationParameters[0]?.type ?? { kind: "undefined" };
+  return data.type.kind === "union" && firstParam.kind !== "union"
+    ? data.type.types.every((t) => t.kind === firstParam.kind)
+    : data.type.kind === firstParam.kind || firstParam.kind === "unknown";
+};
 
 export function getFilteredOperations(
   _data: IData,
   variables: Context["variables"]
 ) {
   const data = resolveReference(_data, { variables });
-  const supportsOperation = (data: DataType, firstParam: DataType) => {
-    if (data.kind === "never") return false;
-    return data.kind === "union" && firstParam.kind !== "union"
-      ? data.types.every((t) => t.kind === firstParam.kind)
-      : data.kind === firstParam.kind || firstParam.kind === "unknown";
-  };
   const builtInOps = builtInOperations.filter((operation) => {
-    const operationParameters = getOperationListItemParameters(operation, data);
-    const firstParam = operationParameters[0]?.type ?? { kind: "undefined" };
-    return supportsOperation(data.type, firstParam);
+    return dataSupportsOperation(data, operation);
   });
 
   const userDefinedOps = variables.entries().reduce((acc, [name, variable]) => {
     if (!name || !isDataOfType(variable.data, "operation")) return acc;
-    const firstParam = variable.data.type.parameters[0]?.type ?? {
-      kind: "undefined",
-    };
-    if (supportsOperation(data.type, firstParam)) {
-      acc.push(operationToListItem(name, variable.data));
+    if (dataSupportsOperation(data, operationToListItem(variable.data, name))) {
+      acc.push(operationToListItem(variable.data, name));
     }
     return acc;
   }, [] as OperationListItem[]);
@@ -666,25 +682,32 @@ export function executeStatement(
   context: Context
 ): IData {
   let currentData = resolveReference(statement.data, context);
+  if (isDataOfType(currentData, "error")) return currentData;
+
   if (isDataOfType(currentData, "condition")) {
     const conditionValue = currentData.value;
     const conditionResult = executeStatement(conditionValue.condition, context);
+    if (isDataOfType(conditionResult, "error")) return conditionResult;
     currentData = executeStatement(
       conditionResult.value ? conditionValue.true : conditionValue.false,
       context
     );
+    if (isDataOfType(currentData, "error")) return currentData;
   }
-  // Apply operation chain to the resolved data
+
   let result = currentData;
   for (const operation of statement.operations) {
-    const resolvedParams = operation.value.parameters.map((param) =>
-      executeStatement(param, context)
-    );
     const foundOp = builtInOperations.find(
       (op) => op.name === operation.value.name
     );
-    if (foundOp && "handler" in foundOp) {
-      result = foundOp.handler(context, result, ...resolvedParams);
+    if (foundOp) {
+      result = executeOperation(
+        foundOp,
+        result,
+        operation.value.parameters.map((p) => executeStatement(p, context)),
+        context
+      );
+      if (isDataOfType(result, "error")) return result;
     } else if (operation.value.result) {
       result = operation.value.result;
     }
@@ -699,8 +722,24 @@ export function executeOperation(
   prevContext: Context
 ): IData {
   const data = resolveReference(_data, prevContext);
-  if ("handler" in operation)
-    return operation.handler(prevContext, data, ...parameters);
+  if (isDataOfType(data, "error") && !dataSupportsOperation(data, operation)) {
+    return data;
+  }
+  const errorParam = parameters.find((p) => isDataOfType(p, "error"));
+  if (errorParam) return errorParam;
+
+  if ("handler" in operation) {
+    try {
+      return operation.handler(prevContext, data, ...parameters);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      return createData({
+        type: { kind: "error", errorType: "runtime_error" },
+        value: { reason: `Runtime error: ${errorMessage}` },
+      });
+    }
+  }
   if ("statements" in operation && operation.statements.length > 0) {
     const context = buildExecutionContext(
       operation,
@@ -711,6 +750,7 @@ export function executeOperation(
     let lastResult: IData = createData({ type: { kind: "undefined" } });
     for (const statement of operation.statements) {
       lastResult = executeStatement(statement, context);
+      if (isDataOfType(lastResult, "error")) return lastResult;
       if (statement.name) {
         context.variables.set(statement.name, {
           data: lastResult,

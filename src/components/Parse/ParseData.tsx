@@ -44,6 +44,13 @@ export function ParseData({
       />
     );
   }
+  if (isDataOfType(data, "error")) {
+    return (
+      <span style={{ whiteSpace: "pre", color: theme.color.error }}>
+        {data.value.reason}
+      </span>
+    );
+  }
   return (
     <span
       style={{

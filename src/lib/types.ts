@@ -2,7 +2,6 @@ export type UndefinedType = { kind: "undefined" };
 export type StringType = { kind: "string" };
 export type NumberType = { kind: "number" };
 export type BooleanType = { kind: "boolean" };
-
 export type ArrayType = { kind: "array"; elementType: DataType };
 export type ObjectType = {
   kind: "object";
@@ -22,6 +21,10 @@ export type ReferenceType = {
   // referenceType: "variable" | "env";
   dataType: DataType;
 };
+export type ErrorType = {
+  kind: "error";
+  errorType: "reference_error" | "type_error" | "runtime_error";
+};
 
 export type DataType =
   | UnknownType
@@ -35,7 +38,8 @@ export type DataType =
   | UnionType
   | OperationType
   | ConditionType
-  | ReferenceType;
+  | ReferenceType
+  | ErrorType;
 
 type BaseDataValue<T extends DataType> = T extends UnknownType
   ? unknown
@@ -69,6 +73,8 @@ type BaseDataValue<T extends DataType> = T extends UnknownType
     }
   : T extends ReferenceType
   ? { name: string; id: string }
+  : T extends ErrorType
+  ? { reason: string }
   : never;
 
 export type DataValue<T extends DataType> = T extends UnionType & {

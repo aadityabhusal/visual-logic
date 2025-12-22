@@ -17,6 +17,7 @@ import type {
   NeverType,
   ReferenceType,
   DataValue,
+  ErrorType,
 } from "./types";
 
 /**
@@ -134,6 +135,14 @@ export const ReferenceValueSchema: z.ZodType<DataValue<ReferenceType>> =
     id: z.string(),
   });
 
+const ErrorTypeSchema: z.ZodType<ErrorType> = z.object({
+  kind: z.literal("error"),
+  errorType: z.enum(["reference_error", "type_error", "runtime_error"]),
+});
+export const ErrorValueSchema: z.ZodType<DataValue<ErrorType>> = z.object({
+  reason: z.string(),
+});
+
 export const DataTypeSchema: z.ZodType<DataType> = z.union([
   UnknownTypeSchema,
   NeverTypeSchema,
@@ -147,6 +156,7 @@ export const DataTypeSchema: z.ZodType<DataType> = z.union([
   OperationTypeSchema,
   ConditionTypeSchema,
   ReferenceTypeSchema,
+  ErrorTypeSchema,
 ]);
 
 export const IDataSchema: z.ZodType<IData> = z
@@ -179,12 +189,14 @@ export const IDataSchema: z.ZodType<IData> = z
             OperationValueSchema,
             ConditionValueSchema,
             ReferenceValueSchema,
+            ErrorValueSchema,
           ]);
         },
       }),
       z.object({ type: OperationTypeSchema, value: OperationValueSchema }),
       z.object({ type: ConditionTypeSchema, value: ConditionValueSchema }),
       z.object({ type: ReferenceTypeSchema, value: ReferenceValueSchema }),
+      z.object({ type: ErrorTypeSchema, value: ErrorValueSchema }),
     ])
   );
 export const IStatementSchema: z.ZodType<IStatement> = z.object({

@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { DataTypes } from "./data";
+import { DataTypes, ErrorTypesData } from "./data";
 import {
   IData,
   IStatement,
@@ -17,6 +17,7 @@ import {
 import {
   ArrayValueSchema,
   ConditionValueSchema,
+  ErrorValueSchema,
   ObjectValueSchema,
   OperationValueSchema,
   ReferenceValueSchema,
@@ -147,6 +148,11 @@ export function createDefaultValue<T extends DataType>(type: T): DataValue<T> {
         result: createStatement().data,
       } as DataValue<T>;
     }
+    case "error": {
+      return {
+        reason: ErrorTypesData[type.errorType]?.name ?? "Unknown Error",
+      } as DataValue<T>;
+    }
 
     default:
       return undefined as DataValue<T>;
@@ -231,7 +237,10 @@ export function createContextVariables(
   return statements.reduce((variables, statement) => {
     if (statement.name) {
       const data = resolveReference(statement.data, { variables });
-      const result = getStatementResult({ ...statement, data });
+
+      const result = isDataOfType(data, "error")
+        ? data
+        : getStatementResult({ ...statement, data });
 
       const skipExecution = getSkipExecution({
         context: { variables },
@@ -254,6 +263,10 @@ export function createContextVariables(
 /* Types */
 
 export function isTypeCompatible(first: DataType, second: DataType): boolean {
+  // Error types are compatible with each other (regardless of category)
+  if (first.kind === "error" && second.kind === "error") {
+    return true;
+  }
   if (first.kind === "operation" && second.kind === "operation") {
     if (first.parameters.length !== second.parameters.length) return false;
     if (!isTypeCompatible(first.result, second.result)) return false;
@@ -510,7 +523,13 @@ function getOperationType(
 export function resolveReference(data: IData, context: Context): IData {
   if (!isDataOfType(data, "reference")) return data;
   const variable = context.variables.get(data.value.name);
-  return variable ? resolveReference(variable.data, context) : data;
+  if (!variable) {
+    return createData({
+      type: { kind: "error", errorType: "reference_error" },
+      value: { reason: `Variable '${data.value.name}' not found` },
+    });
+  }
+  return resolveReference(variable.data, context);
 }
 
 export function inferTypeFromValue<T extends DataType>(
@@ -560,6 +579,10 @@ export function inferTypeFromValue<T extends DataType>(
     const type = context.variables.get(referenceValue.data.name)?.data.type;
     return { kind: "reference", dataType: type ?? { kind: "unknown" } } as T;
   }
+  const errorValue = ErrorValueSchema.safeParse(value);
+  if (errorValue.success) {
+    return { kind: "error", errorType: "runtime_error" } as T;
+  }
   return { kind: "unknown" } as T;
 }
 
@@ -574,6 +597,9 @@ export function getTypeSignature(type: DataType, maxDepth: number = 4): string {
     case "boolean":
     case "unknown":
       return type.kind;
+
+    case "error":
+      return ErrorTypesData[type.errorType]?.name ?? "Unknown Error";
 
     case "array":
       return `${getTypeSignature(type.elementType, maxDepth - 1)}[]`;
