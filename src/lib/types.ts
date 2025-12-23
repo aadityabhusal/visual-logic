@@ -116,11 +116,11 @@ export type Context = {
     {
       data: IData;
       reference?: { name: string; id: string };
-      skipExecution?: { type: "error" | "skipped"; reason: string };
+      skipExecution?: { reason: string };
     }
   >;
   currentStatementId?: string;
-  skipExecution?: { type: "error" | "skipped"; reason: string };
+  skipExecution?: { reason: string };
 };
 
 export type Parameter = {
@@ -134,6 +134,8 @@ export type OperationListItem = {
   isResultTypeFixed?: boolean; // TODO: Show error when type mismatches in the UI
 } & ( // eslint-disable-next-line @typescript-eslint/no-explicit-any
   | { handler: (...args: [Context, ...IData<any>[]]) => IData }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | { lazyHandler: (...args: [Context, IData<any>, ...IStatement[]]) => IData }
   | { statements: IStatement[] }
 );
 
@@ -151,6 +153,7 @@ export type GetSkipExecutionParams = {
   data?: IData;
   result?: IData;
   operation?: IData<OperationType>;
+  parameterIndex?: number;
 };
 
 /* Project Types */

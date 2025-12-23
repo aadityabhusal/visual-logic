@@ -16,7 +16,6 @@ export interface OperationInputProps extends HTMLAttributes<HTMLDivElement> {
   context: Context;
   options?: {
     disableDelete?: boolean;
-    disablaAddParameter?: boolean;
     disableDropdown?: boolean;
     isTopLevel?: boolean;
   };
@@ -141,7 +140,7 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
               {i + 1 < paramList.length && <span>,</span>}
             </Fragment>
           ))}
-          {options?.disablaAddParameter ? null : (
+          {operation.isTypeEditable && (
             <AddStatement
               id={`${operation.id}_parameter`}
               onSelect={addParameter}

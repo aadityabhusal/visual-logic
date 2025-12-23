@@ -34,30 +34,18 @@ export function FocusInfo() {
       </div>
       {result?.type.kind !== "operation" ? (
         <div className="p-1">
-          {skipExecution?.reason ? (
-            <>
-              <div
-                className={[
-                  skipExecution.type === "error"
-                    ? "text-red-500"
-                    : "text-disabled",
-                  "mb-1.5",
-                ].join(" ")}
-              >
-                {skipExecution.type === "error" ? "Error" : "Skipped"}
-              </div>
-              <div className="text-sm">{skipExecution.reason}</div>
-            </>
-          ) : (
-            <>
-              <div className="text-gray-300 mb-1.5">Result</div>
-              <ErrorBoundary displayError={true}>
-                <pre className="max-w-96 overflow-x-auto dropdown-scrollbar text-wrap text-sm">
-                  <ParseData data={result} showData={true} />
-                </pre>
-              </ErrorBoundary>
-            </>
-          )}
+          <div className="text-gray-300 mb-1.5">
+            {skipExecution ? "Skipped" : "Result"}
+          </div>
+          <ErrorBoundary displayError={true}>
+            <pre className="max-w-96 overflow-x-auto dropdown-scrollbar text-wrap text-sm">
+              {skipExecution ? (
+                skipExecution.reason
+              ) : (
+                <ParseData data={result} showData={true} />
+              )}
+            </pre>
+          </ErrorBoundary>
         </div>
       ) : null}
     </div>

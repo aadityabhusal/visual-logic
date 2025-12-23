@@ -26,22 +26,20 @@ import {
 /* Create */
 
 export function createData<T extends DataType>(
-  props: Partial<IData<T>>
+  props?: Partial<IData<T>>
 ): IData<T> {
-  const type = (props.type || { kind: "undefined" }) as T;
+  const type = (props?.type || { kind: "undefined" }) as T;
   return {
-    id: props.id ?? nanoid(),
+    id: props?.id ?? nanoid(),
     entityType: "data",
     type,
-    value: props.value ?? createDefaultValue(type),
-    isTypeEditable: props.isTypeEditable,
+    value: props?.value ?? createDefaultValue(type),
+    isTypeEditable: props?.isTypeEditable,
   };
 }
 
 export function createStatement(props?: Partial<IStatement>): IStatement {
-  const newData =
-    props?.data ||
-    createData({ type: { kind: "undefined" }, isTypeEditable: true });
+  const newData = props?.data || createData({ isTypeEditable: true });
   const newId = props?.id || nanoid();
   return {
     id: newId,
@@ -134,11 +132,7 @@ export function createDefaultValue<T extends DataType>(type: T): DataValue<T> {
         id: nanoid(),
         entityType: "statement",
         operations: [],
-        data: createData({
-          type: { kind: "undefined" },
-          value: undefined,
-          isTypeEditable: true,
-        }),
+        data: createData({ isTypeEditable: true }),
       });
 
       return {
@@ -649,10 +643,9 @@ export function getStatementResult(
   const lastOperation = statement.operations[statement.operations.length - 1];
   if (index) {
     const statementResult = statement.operations[index - 1]?.value.result;
-    result = statementResult ?? createData({ type: { kind: "undefined" } });
+    result = statementResult ?? createData();
   } else if (!prevEntity && lastOperation) {
-    result =
-      lastOperation.value.result ?? createData({ type: { kind: "undefined" } });
+    result = lastOperation.value.result ?? createData();
   } else if (isDataOfType(result, "condition")) {
     result = result.value.result ?? getConditionResult(result.value);
   }

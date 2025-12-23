@@ -2,12 +2,10 @@ import { nanoid } from "nanoid";
 import {
   IData,
   IStatement,
-  DataType,
   OperationType,
   StringType,
   ArrayType,
   NumberType,
-  UnknownType,
   Context,
   BooleanType,
   ObjectType,
@@ -54,11 +52,8 @@ const unknownOperations: OperationListItem[] = [
 const unionOperations: OperationListItem[] = [
   {
     name: "isTypeOf",
-    parameters: (data) => [
-      { type: { kind: "union", types: [] } },
-      { type: data.type },
-    ],
-    handler: (_, data: IData<UnknownType>, typeData: IData) => {
+    parameters: (data) => [{ type: data.type }, { type: data.type }],
+    handler: (_, data: IData, typeData: IData) => {
       return createData({
         type: { kind: "boolean" },
         value: isTypeCompatible(
@@ -79,10 +74,19 @@ const booleanOperations: OperationListItem[] = [
       { type: { kind: "boolean" } },
       { type: { kind: "undefined" }, isTypeEditable: true },
     ],
-    handler: (_, data: IData<BooleanType>, p1: IData) => {
+    lazyHandler: (
+      context,
+      data: IData<BooleanType>,
+      trueStatement: IStatement
+    ) => {
+      if (!data.value) {
+        return createData({ type: { kind: "boolean" }, value: false });
+      }
+      const result = executeStatement(trueStatement, context);
+      if (isDataOfType(result, "error")) return result;
       return createData({
         type: { kind: "boolean" },
-        value: Boolean(data.value) && Boolean(p1.value),
+        value: Boolean(result.value),
       });
     },
   },
@@ -92,10 +96,19 @@ const booleanOperations: OperationListItem[] = [
       { type: { kind: "boolean" } },
       { type: { kind: "undefined" }, isTypeEditable: true },
     ],
-    handler: (_, data: IData<UnknownType>, p1: IData) => {
+    lazyHandler: (
+      context,
+      data: IData<BooleanType>,
+      falseStatement: IStatement
+    ) => {
+      if (data.value) {
+        return createData({ type: { kind: "boolean" }, value: true });
+      }
+      const result = executeStatement(falseStatement, context);
+      if (isDataOfType(result, "error")) return result;
       return createData({
         type: { kind: "boolean" },
-        value: Boolean(data.value) || Boolean(p1.value),
+        value: Boolean(result.value),
       });
     },
   },
@@ -113,9 +126,20 @@ const booleanOperations: OperationListItem[] = [
       { type: { kind: "undefined" }, isTypeEditable: true },
       { type: { kind: "undefined" }, isTypeEditable: true },
     ],
-    handler: (_, data: IData<BooleanType>, p1: IData, p2: IData) => {
-      const value = data.value ? p1.value : p2.value;
-      return createData({ type: inferTypeFromValue(value), value });
+    lazyHandler: (
+      context,
+      data: IData<BooleanType>,
+      trueBranch: IStatement,
+      falseBranch: IStatement
+    ) => {
+      const resultType = resolveUnionType([
+        getStatementResult(trueBranch).type,
+        getStatementResult(falseBranch).type,
+      ]);
+      const selectedBranch = data.value ? trueBranch : falseBranch;
+      const executedResult = executeStatement(selectedBranch, context);
+      if (isDataOfType(executedResult, "error")) return executedResult;
+      return createData({ type: resultType, value: executedResult.value });
     },
   },
 ];
@@ -335,7 +359,7 @@ const arrayOperations: OperationListItem[] = [
     ],
     handler: (_, data: IData<ArrayType>, p1: IData<NumberType>) => {
       const item = data.value.at(p1.value);
-      if (!item) return createData({ type: { kind: "undefined" } });
+      if (!item) return createData();
       const value = getStatementResult(item) as IData;
       return createData({ type: value.type, value: value.value });
     },
@@ -375,10 +399,7 @@ const arrayOperations: OperationListItem[] = [
     ) => {
       const results = executeArrayOperation(data, operation, context);
       const found = results.find((r) => Boolean(r.value));
-      return createData({
-        type: found?.type ?? { kind: "undefined" },
-        value: found?.value ?? undefined,
-      });
+      return createData({ type: found?.type, value: found?.value });
     },
   },
   {
@@ -405,7 +426,7 @@ const objectOperations: OperationListItem[] = [
     ],
     handler: (_, data: IData<ObjectType>, p1: IData<StringType>) => {
       const item = data.value.get(p1.value);
-      if (!item) return createData({ type: { kind: "undefined" } });
+      if (!item) return createData();
       const value = getStatementResult(item) as IData;
       return createData({ type: value.type, value: value.value });
     },
@@ -477,7 +498,7 @@ const operationOperations: OperationListItem[] = [
       return executeOperation(
         operationToListItem(data, "call"),
         p[0],
-        p.slice(1),
+        p.slice(1).map((data) => createStatement({ data })),
         context
       );
     },
@@ -505,8 +526,13 @@ function executeArrayOperation(
     const itemData = getStatementResult(item);
     return executeOperation(
       operationToListItem(operation),
-      itemData,
-      [createData({ type: { kind: "number" }, value: index }), data],
+      { ...itemData, type: data.type.elementType },
+      [
+        createStatement({
+          data: createData({ type: { kind: "number" }, value: index }),
+        }),
+        createStatement({ data }),
+      ],
       context
     );
   });
@@ -619,12 +645,7 @@ export function createOperationCall({
     }
     return newParam;
   });
-  const result = executeOperation(
-    newOperation,
-    data,
-    newParameters.map((p) => getStatementResult(p)),
-    context
-  );
+  const result = executeOperation(newOperation, data, newParameters, context);
 
   return {
     id: nanoid(),
@@ -648,7 +669,7 @@ export function createOperationCall({
 function buildExecutionContext(
   operation: OperationListItem,
   data: IData,
-  parameters: IData[],
+  parameters: IData[], // This is only for operations with statements so parameters are an array of data
   prevContext: Context
 ): Context {
   const context = { variables: new Map(prevContext.variables) };
@@ -658,19 +679,26 @@ function buildExecutionContext(
   );
   if (operationListItemParams[0]?.name) {
     const resolved = resolveReference(data, prevContext);
+    const skipExecution = getSkipExecution({ context: prevContext, data });
     context.variables.set(operationListItemParams[0].name, {
       data: resolved,
       reference: isDataOfType(data, "reference") ? data.value : undefined,
+      skipExecution,
     });
   }
   operationListItemParams.slice(1).forEach((param, index) => {
     if (param.name && parameters[index]) {
       const resolved = resolveReference(parameters[index], prevContext);
+      const skipExecution = getSkipExecution({
+        context: prevContext,
+        data: parameters[index],
+      });
       context.variables.set(param.name, {
         data: resolved,
         reference: isDataOfType(parameters[index], "reference")
           ? parameters[index].value
           : undefined,
+        skipExecution,
       });
     }
   });
@@ -704,7 +732,7 @@ export function executeStatement(
       result = executeOperation(
         foundOp,
         result,
-        operation.value.parameters.map((p) => executeStatement(p, context)),
+        operation.value.parameters,
         context
       );
       if (isDataOfType(result, "error")) return result;
@@ -715,16 +743,35 @@ export function executeStatement(
   return result;
 }
 
+function createRuntimeError(error: unknown): IData {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  return createData({
+    type: { kind: "error", errorType: "runtime_error" },
+    value: { reason: `Runtime error: ${errorMessage}` },
+  });
+}
+
 export function executeOperation(
   operation: OperationListItem,
   _data: IData,
-  parameters: IData[],
+  _parameters: IStatement[],
   prevContext: Context
 ): IData {
+  if (prevContext.skipExecution) return createData();
   const data = resolveReference(_data, prevContext);
   if (isDataOfType(data, "error") && !dataSupportsOperation(data, operation)) {
     return data;
   }
+
+  if ("lazyHandler" in operation) {
+    try {
+      return operation.lazyHandler(prevContext, data, ..._parameters);
+    } catch (error) {
+      return createRuntimeError(error);
+    }
+  }
+
+  const parameters = _parameters.map((p) => executeStatement(p, prevContext));
   const errorParam = parameters.find((p) => isDataOfType(p, "error"));
   if (errorParam) return errorParam;
 
@@ -732,14 +779,10 @@ export function executeOperation(
     try {
       return operation.handler(prevContext, data, ...parameters);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      return createData({
-        type: { kind: "error", errorType: "runtime_error" },
-        value: { reason: `Runtime error: ${errorMessage}` },
-      });
+      return createRuntimeError(error);
     }
   }
+
   if ("statements" in operation && operation.statements.length > 0) {
     const context = buildExecutionContext(
       operation,
@@ -747,20 +790,26 @@ export function executeOperation(
       parameters,
       prevContext
     );
-    let lastResult: IData = createData({ type: { kind: "undefined" } });
+    let lastResult: IData = createData();
     for (const statement of operation.statements) {
       lastResult = executeStatement(statement, context);
       if (isDataOfType(lastResult, "error")) return lastResult;
       if (statement.name) {
+        const skipExecution = getSkipExecution({
+          context,
+          data: statement.data,
+        });
         context.variables.set(statement.name, {
           data: lastResult,
           reference: undefined,
+          skipExecution,
         });
       }
     }
     return lastResult;
   }
-  return createData({ type: { kind: "undefined" } });
+
+  return createData();
 }
 
 export function getSkipExecution({
@@ -768,17 +817,36 @@ export function getSkipExecution({
   data,
   result,
   operation,
+  parameterIndex,
 }: GetSkipExecutionParams): Context["skipExecution"] {
   if (context.skipExecution) return context.skipExecution;
   if (data && isDataOfType(data, "reference")) {
     const variable = context.variables.get(data.value.name);
-    if (!variable) {
-      return {
-        type: "error",
-        reason: `Variable '${data.value.name}' was not found.`,
-      };
+    if (variable?.skipExecution) return variable.skipExecution;
+  }
+
+  // Check for skipped branches in lazy-evaluated operations
+  if (result && operation && parameterIndex !== undefined) {
+    const resolvedResult = resolveReference(result, context);
+    const operationName = operation.value.name;
+
+    if (
+      operationName === "thenElse" &&
+      isDataOfType(resolvedResult, "boolean")
+    ) {
+      if (parameterIndex === 0 && resolvedResult.value === false) {
+        return { reason: "Unreachable branch: condition is false" };
+      }
+      if (parameterIndex === 1 && resolvedResult.value === true) {
+        return { reason: "Unreachable branch: condition is true" };
+      }
+    } else if (
+      parameterIndex === 0 &&
+      isDataOfType(resolvedResult, "boolean") &&
+      resolvedResult.value === (operationName === "or" ? true : false)
+    ) {
+      return { reason: `${operationName} operation is unreachable` };
     }
-    if (variable.skipExecution) return variable.skipExecution;
   }
 
   if (
@@ -789,11 +857,11 @@ export function getSkipExecution({
     )
   ) {
     return {
-      type: "error",
       reason: `Operation '${operation.value.name}' cannot be chained after '${
         resolveReference(result, context).type.kind
       }' type.`,
     };
   }
+
   return undefined;
 }

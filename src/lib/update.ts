@@ -35,10 +35,6 @@ export function updateOperationCalls(
         statements: currentOperation.value.parameters,
         context,
       });
-      const paramResults = parameters.map((item) => {
-        return getStatementResult(item);
-      });
-
       const foundOperation = getFilteredOperations(
         data,
         context.variables
@@ -46,7 +42,7 @@ export function updateOperationCalls(
       const currentResult = currentOperation.value.result;
       const result = foundOperation
         ? {
-            ...executeOperation(foundOperation, data, paramResults, context),
+            ...executeOperation(foundOperation, data, parameters, context),
             ...(currentResult && { id: currentResult?.id }),
             isTypeEditable: data.isTypeEditable,
           }
@@ -81,13 +77,7 @@ function updateDataValue(
         ])
       )
     : isDataOfType(data, "operation")
-    ? {
-        parameters: data.value.parameters,
-        statements: updateStatements({
-          statements: data.value.statements,
-          context,
-        }),
-      }
+    ? updateOperations([data], context)?.[0]?.value ?? data
     : isDataOfType(data, "union")
     ? updateDataValue(
         { ...data, type: inferTypeFromValue(data.value) },
@@ -176,12 +166,13 @@ export function updateStatements({
 
 export function updateOperations(
   operations: IData<OperationType>[],
-  changedOperation: IData<OperationType>,
+  context: Context,
+  changedOperation?: IData<OperationType>,
   removeOperation?: boolean
 ): IData<OperationType>[] {
   let currentIndexFound = false;
   return operations.reduce((prevOperations, currentOperation) => {
-    if (currentOperation.id === changedOperation.id) {
+    if (currentOperation.id === changedOperation?.id) {
       currentIndexFound = true;
       if (removeOperation) return prevOperations;
       else return [...prevOperations, changedOperation];
@@ -197,7 +188,7 @@ export function updateOperations(
       context: {
         variables: createContextVariables(
           prevOperations.map((data) => createStatement({ data })),
-          new Map(),
+          new Map(context.variables),
           getSkipExecution
         ),
       },

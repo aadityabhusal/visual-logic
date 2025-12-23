@@ -5,8 +5,9 @@ import {
   createOperationCall,
   executeOperation,
   getFilteredOperations,
+  getSkipExecution,
 } from "../lib/operation";
-import { getStatementResult, getInverseTypes } from "../lib/utils";
+import { getInverseTypes } from "../lib/utils";
 import { BaseInput } from "./Input/BaseInput";
 import { useMemo } from "react";
 
@@ -31,7 +32,7 @@ export function OperationCall({
   const updatedVariables = useMemo(
     () =>
       operation.value.name === "or"
-        ? context.variables
+        ? context.variables // TODO: inverse narrowed types for 'or' operation
         : narrowedTypes.entries().reduce((acc, [key, value]) => {
             if (value.data.type.kind === "never") acc.delete(key);
             else acc.set(key, value);
@@ -56,7 +57,11 @@ export function OperationCall({
     );
   }
 
-  function handleParameter(item: IStatement, index: number) {
+  function handleParameter(
+    item: IStatement,
+    index: number,
+    variables: Context["variables"]
+  ) {
     // eslint-disable-next-line prefer-const
     let parameters = [...operation.value.parameters];
     parameters[index] = item;
@@ -64,10 +69,11 @@ export function OperationCall({
     const foundOperation = filteredOperations.find(
       (op) => op.name === operation.value.name
     );
-
-    const parametersResult = parameters.map((item) => getStatementResult(item));
     const result = foundOperation
-      ? executeOperation(foundOperation, data, parametersResult, context)
+      ? executeOperation(foundOperation, data, parameters, {
+          ...context,
+          variables,
+        })
       : operation.value.result;
 
     // Update parameter types while preserving the result type from the operation definition
@@ -115,23 +121,36 @@ export function OperationCall({
       target={(props) => <BaseInput {...props} className="text-method" />}
     >
       <span>{"("}</span>
-      {operation.value.parameters.map((item, i, arr) => (
-        <span key={i} className="flex">
-          <Statement
-            statement={item}
-            handleStatement={(val) => val && handleParameter(val, i)}
-            options={{ disableDelete: true }}
-            context={{
-              ...context,
-              variables:
-                operation.value.name === "thenElse" && i === 1
-                  ? getInverseTypes(context.variables, narrowedTypes)
-                  : updatedVariables,
-            }}
-          />
-          {i < arr.length - 1 ? <span>{", "}</span> : null}
-        </span>
-      ))}
+      {operation.value.parameters.map((item, i, arr) => {
+        const variables =
+          operation.value.name === "thenElse" && i === 1
+            ? getInverseTypes(context.variables, narrowedTypes)
+            : updatedVariables;
+        return (
+          <span key={i} className="flex">
+            <Statement
+              statement={item}
+              handleStatement={(val) =>
+                val && handleParameter(val, i, variables)
+              }
+              options={{ disableDelete: true }}
+              context={{
+                ...context,
+                variables,
+                skipExecution:
+                  context.skipExecution ??
+                  getSkipExecution({
+                    context,
+                    result: data,
+                    operation,
+                    parameterIndex: i,
+                  }),
+              }}
+            />
+            {i < arr.length - 1 ? <span>{", "}</span> : null}
+          </span>
+        );
+      })}
       <span className="self-end">{")"}</span>
     </Dropdown>
   );
