@@ -27,7 +27,7 @@ import { ErrorBoundary } from "./ErrorBoundary";
 export function Statement({
   statement,
   handleStatement,
-  context: _context,
+  context,
   addStatement,
   options,
 }: {
@@ -57,16 +57,6 @@ export function Statement({
 
   const isEqualsFocused = navigation?.id === `${statement.id}_equals`;
   const isNameFocused = navigation?.id === `${statement.id}_name`;
-  const context = useMemo(
-    () => ({
-      ..._context,
-      skipExecution:
-        _context.skipExecution ??
-        getSkipExecution({ context: _context, data: statement.data }),
-    }),
-    [_context, statement.data]
-  );
-
   const hoverEvents = useMemo(
     () => ({
       onMouseEnter: openDropdown,
@@ -77,6 +67,7 @@ export function Statement({
     [openDropdown, closeDropdown]
   );
 
+  // TODO: should context be passed as a parameter?
   function addOperationCall() {
     const data = getStatementResult(statement);
     const operation = createOperationCall({ data, context });
@@ -219,6 +210,7 @@ export function Statement({
             addOperationCall={
               !options?.disableOperationCall &&
               statement.operations.length === 0 &&
+              !context.skipExecution &&
               getFilteredOperations(statement.data, context.variables).length
                 ? addOperationCall
                 : undefined
@@ -263,9 +255,11 @@ export function Statement({
                       // passing context and narrowedTypes separately to handle inverse type narrowing
                       context={{
                         ...context,
-                        skipExecution:
-                          context.skipExecution ??
-                          getSkipExecution({ context, result, operation }),
+                        skipExecution: getSkipExecution({
+                          context,
+                          data: result,
+                          operation,
+                        }),
                       }}
                       narrowedTypes={acc.narrowedTypes}
                       addOperationCall={

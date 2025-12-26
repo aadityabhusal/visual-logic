@@ -237,7 +237,7 @@ export function Dropdown({
             forceDisplayBorder || isFocused || isHovered
               ? "outline outline-border"
               : "",
-            context.skipExecution?.reason ? "opacity-50 " : "",
+            context.skipExecution ? "opacity-50 " : "",
           ].join(" ")}
           onMouseOver={(e) => {
             e.stopPropagation();

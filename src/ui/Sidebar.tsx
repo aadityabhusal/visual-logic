@@ -5,11 +5,12 @@ import { NoteText } from "./NoteText";
 import { IconButton } from "./IconButton";
 import { SiGithub, SiYoutube } from "react-icons/si";
 import { useSearchParams } from "react-router";
-import { ProjectFile } from "@/lib/types";
 import { useState } from "react";
+import { updateFiles } from "@/lib/update";
 
-export function Sidebar({ projectFiles }: { projectFiles: ProjectFile[] }) {
-  const { addFile, updateFile, deleteFile } = useProjectStore();
+export function Sidebar() {
+  const { addFile, updateProject, deleteFile, getFile, getCurrentProject } =
+    useProjectStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const [editingId, setEditingId] = useState<string>();
   const [hoveringId, setHoveringId] = useState<string>();
@@ -23,15 +24,22 @@ export function Sidebar({ projectFiles }: { projectFiles: ProjectFile[] }) {
           icon={FaPlus}
           title="Add operation"
           onClick={() =>
-            addFile(createProjectFile({ type: "operation" }, projectFiles))
+            addFile(
+              createProjectFile(
+                { type: "operation" },
+                getCurrentProject()?.files
+              )
+            )
           }
         >
           Add
         </IconButton>
       </div>
       <ul className="flex-1 p-1 overflow-y-auto dropdown-scrollbar list-none m-0">
-        {!projectFiles.length && <NoteText center>Add an operation</NoteText>}
-        {projectFiles.map((item) => (
+        {!getCurrentProject()?.files.length && (
+          <NoteText center>Add an operation</NoteText>
+        )}
+        {getCurrentProject()?.files.map((item) => (
           <li
             className={
               "flex items-center gap-1 justify-between p-1 hover:bg-dropdown-hover " +
@@ -52,19 +60,29 @@ export function Sidebar({ projectFiles }: { projectFiles: ProjectFile[] }) {
                 className="focus:outline outline-white flex-1 w-full"
                 defaultValue={item.name}
                 onClick={(e) => e.stopPropagation()}
-                onBlur={(e) => {
-                  if (e.target.value) {
-                    updateFile(item.id, { name: e.target.value });
+                onBlur={({ target }) => {
+                  const currentProject = getCurrentProject();
+                  const file = getFile(item.id);
+                  if (target.value && currentProject && file) {
+                    updateProject(currentProject.id, {
+                      files: updateFiles(currentProject.files, {
+                        ...file,
+                        name: target.value,
+                      }),
+                    });
                     if (searchParams.get("file") === item.name) {
                       setSearchParams(
-                        ...handleSearchParams({ file: e.target.value }, true)
+                        ...handleSearchParams({ file: target.value }, true)
                       );
                     }
                   }
                   setEditingId(undefined);
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") e.currentTarget.blur();
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                  }
                 }}
               />
             ) : (

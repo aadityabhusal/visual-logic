@@ -1,4 +1,10 @@
-import { Fragment, forwardRef, HTMLAttributes } from "react";
+import {
+  Fragment,
+  forwardRef,
+  HTMLAttributes,
+  ReactNode,
+  useCallback,
+} from "react";
 import { Context, IData, IStatement, OperationType } from "../lib/types";
 import { updateStatements } from "../lib/update";
 import {
@@ -23,86 +29,91 @@ export interface OperationInputProps extends HTMLAttributes<HTMLDivElement> {
 
 export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
   ({ operation, handleChange, context, options, ...props }, ref) => {
-    function handleStatement({
-      statement,
-      context,
-      remove,
-      parameterLength = operation.value.parameters.length,
-    }: {
-      statement: IStatement;
-      context: Context;
-      remove?: boolean;
-      parameterLength?: number;
-    }) {
-      const updatedStatements = updateStatements({
-        statements: [
-          ...operation.value.parameters,
-          ...operation.value.statements,
-        ],
+    const handleStatement = useCallback(
+      ({
+        statement,
         context,
-        changedStatement: statement,
-        removeStatement: remove,
-      });
-
-      const updatedParameters = updatedStatements.slice(0, parameterLength);
-      const updatedStatementsList = updatedStatements.slice(parameterLength);
-
-      handleChange({
-        ...operation,
-        type: inferTypeFromValue({
-          parameters: updatedParameters,
-          statements: updatedStatementsList,
-        }),
-        value: {
-          ...operation.value,
-          parameters: updatedParameters,
-          statements: updatedStatementsList,
-        },
-      });
-    }
-
-    function addStatement(
-      statement: IStatement,
-      position: "before" | "after",
-      index: number
-    ) {
-      const _index = position === "before" ? index : index + 1;
-      handleChange({
-        ...operation,
-        value: {
-          ...operation.value,
+        remove,
+        parameterLength = operation.value.parameters.length,
+      }: {
+        statement: IStatement;
+        context: Context;
+        remove?: boolean;
+        parameterLength?: number;
+      }) => {
+        const updatedStatements = updateStatements({
           statements: [
-            ...operation.value.statements.slice(0, _index),
-            statement,
-            ...operation.value.statements.slice(_index),
+            ...operation.value.parameters,
+            ...operation.value.statements,
           ],
-        },
-      });
-    }
+          context,
+          changedStatement: statement,
+          removeStatement: remove,
+        });
 
-    function addParameter(statement: IStatement) {
-      const parameters = [...operation.value.parameters];
-      const statements = [...operation.value.statements];
-      const newParameter = {
-        ...statement,
-        name: createVariableName({
-          prefix: "param",
-          prev: [...parameters, ...context.variables.keys()],
-        }),
-      };
-      const updatedParameters = [...parameters, newParameter];
-      handleChange({
-        ...operation,
-        type: inferTypeFromValue({
-          parameters: updatedParameters,
-          statements: statements,
-        }),
-        value: {
-          ...operation.value,
-          parameters: updatedParameters,
-        },
-      });
-    }
+        const updatedParameters = updatedStatements.slice(0, parameterLength);
+        const updatedStatementsList = updatedStatements.slice(parameterLength);
+
+        handleChange({
+          ...operation,
+          type: inferTypeFromValue({
+            parameters: updatedParameters,
+            statements: updatedStatementsList,
+          }),
+          value: {
+            ...operation.value,
+            parameters: updatedParameters,
+            statements: updatedStatementsList,
+          },
+        });
+      },
+      [handleChange, operation]
+    );
+
+    const addStatement = useCallback(
+      (statement: IStatement, position: "before" | "after", index: number) => {
+        const _index = position === "before" ? index : index + 1;
+        handleChange({
+          ...operation,
+          value: {
+            ...operation.value,
+            statements: [
+              ...operation.value.statements.slice(0, _index),
+              statement,
+              ...operation.value.statements.slice(_index),
+            ],
+          },
+        });
+      },
+      [handleChange, operation]
+    );
+
+    const addParameter = useCallback(
+      (statement: IStatement) => {
+        const parameters = [...operation.value.parameters];
+        const statements = [...operation.value.statements];
+        const newParameter = {
+          ...statement,
+          name: createVariableName({
+            prefix: "param",
+            prev: [...parameters, ...context.variables.keys()],
+          }),
+        };
+        const updatedParameters = [...parameters, newParameter];
+        handleChange({
+          ...operation,
+          type: inferTypeFromValue({
+            parameters: updatedParameters,
+            statements: statements,
+          }),
+          value: {
+            ...operation.value,
+            parameters: updatedParameters,
+          },
+        });
+      },
+      [context.variables, handleChange, operation]
+    );
 
     return (
       <div
@@ -151,30 +162,47 @@ export const Operation = forwardRef<HTMLDivElement, OperationInputProps>(
           <span>{")"}</span>
         </div>
         <div className="pl-4 [&>div]:mb-1 w-fit">
-          {operation.value.statements.map((statement, i) => {
-            const _context = {
-              currentStatementId: statement.id,
-              variables: createContextVariables(
-                operation.value.parameters.concat(
-                  operation.value.statements.slice(0, i)
+          {
+            operation.value.statements.reduce(
+              (acc, statement, i) => {
+                const _context: Context = {
+                  currentStatementId: statement.id,
+                  variables: acc.variables,
+                  skipExecution: getSkipExecution({
+                    context: { ...context, variables: acc.variables },
+                    data: statement.data,
+                  }),
+                };
+
+                acc.variables = createContextVariables(
+                  [statement],
+                  acc.variables
+                );
+
+                acc.elements.push(
+                  <Statement
+                    key={statement.id}
+                    statement={statement}
+                    options={{ enableVariable: true }}
+                    handleStatement={(statement, remove) =>
+                      handleStatement({ statement, remove, context: _context })
+                    }
+                    addStatement={(stmt, pos) => addStatement(stmt, pos, i)}
+                    context={_context}
+                  />
+                );
+
+                return acc;
+              },
+              {
+                elements: [] as ReactNode[],
+                variables: createContextVariables(
+                  operation.value.parameters,
+                  context.variables
                 ),
-                context.variables,
-                getSkipExecution
-              ),
-            };
-            return (
-              <Statement
-                key={statement.id}
-                statement={statement}
-                options={{ enableVariable: true }}
-                handleStatement={(statement, remove) =>
-                  handleStatement({ statement, remove, context: _context })
-                }
-                addStatement={(stmt, pos) => addStatement(stmt, pos, i)}
-                context={_context}
-              />
-            );
-          })}
+              }
+            ).elements
+          }
           <AddStatement
             id={`${operation.id}_statement`}
             onSelect={(statement) => {

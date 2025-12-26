@@ -12,7 +12,6 @@ import {
   UnionType,
   Parameter,
   ProjectFile,
-  GetSkipExecutionParams,
 } from "./types";
 import {
   ArrayValueSchema,
@@ -218,42 +217,56 @@ export function createOperationFromFile(file?: ProjectFile) {
     id: file.id,
     entityType: "data",
     type: file.content.type,
-    value: file.content.value,
+    value: { ...file.content.value, name: file.name },
     isTypeEditable: true,
   } as IData<OperationType>;
 }
 
+export function createFileFromOperation(operation: IData<OperationType>) {
+  return {
+    id: operation.id,
+    name: operation.value.name,
+    type: "operation",
+    content: { type: operation.type, value: operation.value },
+  } as ProjectFile;
+}
+
 export function createContextVariables(
   statements: IStatement[],
-  variables: Context["variables"],
-  getSkipExecution: (params: GetSkipExecutionParams) => Context["skipExecution"]
+  variables: Context["variables"]
 ): Context["variables"] {
   return statements.reduce((variables, statement) => {
     if (statement.name) {
       const data = resolveReference(statement.data, { variables });
-
-      const result = isDataOfType(data, "error")
-        ? data
-        : getStatementResult({ ...statement, data });
-
-      const skipExecution = getSkipExecution({
-        context: { variables },
-        data: statement.data,
-      });
-      // TODO: maybe loop through operations and updated skipExecution
-      // if (!skipExecution) {}
+      const result = getStatementResult({ ...statement, data });
 
       variables.set(statement.name, {
         data: { ...result, id: statement.id },
         reference: isDataOfType(statement.data, "reference")
           ? statement.data.value
           : undefined,
-        skipExecution,
       });
     }
     return variables;
   }, new Map(variables));
 }
+
+export function createFileVariables(
+  files: ProjectFile[] = [],
+  currentOperationId?: string
+): Context["variables"] {
+  return files.reduce((acc, operationFile) => {
+    const operation = createOperationFromFile(operationFile);
+    if (!operation || operationFile.id === currentOperationId) {
+      return acc;
+    }
+    acc.set(operationFile.name, {
+      data: { ...operation, id: operationFile.id },
+    });
+    return acc;
+  }, new Map() as Context["variables"]);
+}
+
 /* Types */
 
 export function isTypeCompatible(first: DataType, second: DataType): boolean {
@@ -520,7 +533,7 @@ export function resolveReference(data: IData, context: Context): IData {
   if (!variable) {
     return createData({
       type: { kind: "error", errorType: "reference_error" },
-      value: { reason: `Variable '${data.value.name}' not found` },
+      value: { reason: `'${data.value.name}' not found` },
     });
   }
   return resolveReference(variable.data, context);
@@ -640,6 +653,7 @@ export function getStatementResult(
   // TODO: Make use of the data type to create a better type for result e.g. a union type
 ): IData {
   let result = statement.data;
+  if (isDataOfType(result, "error")) return { ...result, id: nanoid() };
   const lastOperation = statement.operations[statement.operations.length - 1];
   if (index) {
     const statementResult = statement.operations[index - 1]?.value.result;
@@ -708,6 +722,7 @@ export function getDataDropdownList({
         onClick: () =>
           onSelect({
             ...variable.data,
+            id: nanoid(),
             type: { kind: "reference", dataType: variable.data.type },
             value: { name, id: variable.data.id },
             isTypeEditable: data.isTypeEditable,

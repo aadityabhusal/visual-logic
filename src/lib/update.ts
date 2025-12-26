@@ -11,6 +11,7 @@ import {
   Context,
   DataValue,
   DataType,
+  ProjectFile,
 } from "./types";
 import {
   getStatementResult,
@@ -19,45 +20,46 @@ import {
   createContextVariables,
   createStatement,
   createData,
+  createOperationFromFile,
+  createFileFromOperation,
+  createFileVariables,
 } from "./utils";
 
 export function updateOperationCalls(
   statement: IStatement,
-  context: Context
+  _context: Context
 ): IData<OperationType>[] {
-  return statement.operations.reduce(
-    (previousOperations, currentOperation, index) => {
-      const data = getStatementResult(
-        { ...statement, operations: previousOperations },
-        index
-      );
-      const parameters = updateStatements({
-        statements: currentOperation.value.parameters,
-        context,
-      });
-      const foundOperation = getFilteredOperations(
-        data,
-        context.variables
-      ).find((operation) => operation.name === currentOperation.value.name);
-      const currentResult = currentOperation.value.result;
-      const result = foundOperation
-        ? {
-            ...executeOperation(foundOperation, data, parameters, context),
-            ...(currentResult && { id: currentResult?.id }),
-            isTypeEditable: data.isTypeEditable,
-          }
-        : currentResult;
+  return statement.operations.reduce((previousOperations, operation, index) => {
+    const data = getStatementResult(
+      { ...statement, operations: previousOperations },
+      index
+    );
+    const context = {
+      ..._context,
+      skipExecution: getSkipExecution({ context: _context, data, operation }),
+    };
+    const parameters = updateStatements({
+      statements: operation.value.parameters,
+      context,
+      operation,
+    });
+    const foundOperation = getFilteredOperations(data, context.variables).find(
+      (op) => op.name === operation.value.name
+    );
+    const currentResult = operation.value.result;
+    const result = foundOperation
+      ? {
+          ...executeOperation(foundOperation, data, parameters, context),
+          ...(currentResult && { id: currentResult?.id }),
+          isTypeEditable: data.isTypeEditable,
+        }
+      : currentResult;
 
-      return [
-        ...previousOperations,
-        {
-          ...currentOperation,
-          value: { ...currentOperation.value, parameters, result },
-        },
-      ];
-    },
-    [] as IData<OperationType>[]
-  );
+    return [
+      ...previousOperations,
+      { ...operation, value: { ...operation.value, parameters, result } },
+    ];
+  }, [] as IData<OperationType>[]);
 }
 
 function updateDataValue(
@@ -77,7 +79,7 @@ function updateDataValue(
         ])
       )
     : isDataOfType(data, "operation")
-    ? updateOperations([data], context)?.[0]?.value ?? data
+    ? updateOperationValue(data, context) ?? data.value
     : isDataOfType(data, "union")
     ? updateDataValue(
         { ...data, type: inferTypeFromValue(data.value) },
@@ -131,17 +133,19 @@ function updateStatement(
 
 export function updateStatements({
   statements,
+  context,
   changedStatement,
   removeStatement,
-  context,
+  operation,
 }: {
   statements: IStatement[];
+  context: Context;
   changedStatement?: IStatement;
   removeStatement?: boolean;
-  context: Context;
+  operation?: IData<OperationType>;
 }): IStatement[] {
   let currentIndexFound = false;
-  return statements.reduce((prevStatements, currentStatement) => {
+  return statements.reduce((prevStatements, currentStatement, index) => {
     let statementToProcess = currentStatement;
     if (currentStatement.id === changedStatement?.id) {
       currentIndexFound = true;
@@ -152,57 +156,57 @@ export function updateStatements({
     if (changedStatement && !currentIndexFound)
       return [...prevStatements, currentStatement];
 
+    const variables = createContextVariables(prevStatements, context.variables);
     const _context = {
       currentStatementId: statementToProcess.id,
-      variables: createContextVariables(
-        prevStatements,
-        new Map(context.variables),
-        getSkipExecution
-      ),
+      variables,
+      skipExecution: getSkipExecution({
+        context: { ...context, variables },
+        data: statementToProcess.data,
+        ...(operation ? { operation, parameterIndex: index } : {}),
+      }),
     };
     return [...prevStatements, updateStatement(statementToProcess, _context)];
   }, [] as IStatement[]);
 }
 
-export function updateOperations(
-  operations: IData<OperationType>[],
-  context: Context,
-  changedOperation?: IData<OperationType>,
-  removeOperation?: boolean
-): IData<OperationType>[] {
-  let currentIndexFound = false;
-  return operations.reduce((prevOperations, currentOperation) => {
-    if (currentOperation.id === changedOperation?.id) {
-      currentIndexFound = true;
-      if (removeOperation) return prevOperations;
-      else return [...prevOperations, changedOperation];
-    }
+function updateOperationValue(
+  operation: IData<OperationType>,
+  context: Context
+): DataValue<OperationType> {
+  const updatedStatements = updateStatements({
+    statements: [...operation.value.parameters, ...operation.value.statements],
+    context,
+  });
+  const parameterLength = operation.value.parameters.length;
+  const parameters = updatedStatements.slice(0, parameterLength);
+  const statements = updatedStatements.slice(parameterLength);
+  return { ...operation.value, parameters, statements };
+}
 
-    if (!currentIndexFound) return [...prevOperations, currentOperation];
-
-    const updatedStatements = updateStatements({
-      statements: [
-        ...currentOperation.value.parameters,
-        ...currentOperation.value.statements,
-      ],
-      context: {
-        variables: createContextVariables(
-          prevOperations.map((data) => createStatement({ data })),
-          new Map(context.variables),
-          getSkipExecution
-        ),
-      },
-    });
-    const parameterLength = currentOperation.value.parameters.length;
-    const parameters = updatedStatements.slice(0, parameterLength);
-    const statements = updatedStatements.slice(parameterLength);
-    return [
-      ...prevOperations,
-      {
-        ...currentOperation,
-        type: inferTypeFromValue({ parameters, statements }),
-        value: { ...currentOperation.value, parameters, statements },
-      },
-    ];
-  }, [] as IData<OperationType>[]);
+export function updateFiles(
+  files: ProjectFile[],
+  changedFile?: ProjectFile
+): ProjectFile[] {
+  return files
+    .map((file) => (file.id === changedFile?.id ? changedFile : file))
+    .reduce((prevFile, currentFile, _, fileList) => {
+      let fileToProcess = currentFile;
+      if (fileToProcess.id === changedFile?.id)
+        return [...prevFile, changedFile];
+      const context = {
+        variables: createFileVariables(fileList, currentFile.id),
+      };
+      const operation = createOperationFromFile(currentFile);
+      if (operation) {
+        const value = updateOperationValue(operation, context);
+        const operationFile = createFileFromOperation({
+          ...operation,
+          type: inferTypeFromValue(value),
+          value,
+        });
+        fileToProcess = { ...operationFile, updatedAt: Date.now() };
+      }
+      return [...prevFile, fileToProcess];
+    }, [] as ProjectFile[]);
 }

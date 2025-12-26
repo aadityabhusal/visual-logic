@@ -41,8 +41,8 @@ export function OperationCall({
     [context.variables, narrowedTypes, operation.value.name]
   );
   const filteredOperations = useMemo(
-    () => getFilteredOperations(data, updatedVariables),
-    [data, updatedVariables]
+    () => getFilteredOperations(data, context.variables),
+    [data, context.variables]
   );
 
   function handleDropdown(name: string) {
@@ -114,7 +114,9 @@ export function OperationCall({
       context={context}
       value={operation.value.name}
       addOperationCall={
-        filteredOperations.length ? addOperationCall : undefined
+        filteredOperations.length && !context.skipExecution
+          ? addOperationCall
+          : undefined
       }
       handleDelete={() => handleOperationCall(operation, true)}
       isInputTarget
@@ -137,14 +139,12 @@ export function OperationCall({
               context={{
                 ...context,
                 variables,
-                skipExecution:
-                  context.skipExecution ??
-                  getSkipExecution({
-                    context,
-                    result: data,
-                    operation,
-                    parameterIndex: i,
-                  }),
+                skipExecution: getSkipExecution({
+                  context,
+                  data,
+                  operation,
+                  parameterIndex: i,
+                }),
               }}
             />
             {i < arr.length - 1 ? <span>{", "}</span> : null}

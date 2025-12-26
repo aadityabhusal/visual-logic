@@ -11,7 +11,6 @@ import {
   ObjectType,
   OperationListItem,
   Parameter,
-  GetSkipExecutionParams,
 } from "./types";
 import {
   createData,
@@ -52,7 +51,15 @@ const unknownOperations: OperationListItem[] = [
 const unionOperations: OperationListItem[] = [
   {
     name: "isTypeOf",
-    parameters: (data) => [{ type: data.type }, { type: data.type }],
+    parameters: (data) => [
+      {
+        type: {
+          kind: "union",
+          types: isDataOfType(data, "union") ? data.type.types : [],
+        },
+      },
+      { type: data.type },
+    ],
     handler: (_, data: IData, typeData: IData) => {
       return createData({
         type: { kind: "boolean" },
@@ -679,26 +686,19 @@ function buildExecutionContext(
   );
   if (operationListItemParams[0]?.name) {
     const resolved = resolveReference(data, prevContext);
-    const skipExecution = getSkipExecution({ context: prevContext, data });
     context.variables.set(operationListItemParams[0].name, {
       data: resolved,
       reference: isDataOfType(data, "reference") ? data.value : undefined,
-      skipExecution,
     });
   }
   operationListItemParams.slice(1).forEach((param, index) => {
     if (param.name && parameters[index]) {
       const resolved = resolveReference(parameters[index], prevContext);
-      const skipExecution = getSkipExecution({
-        context: prevContext,
-        data: parameters[index],
-      });
       context.variables.set(param.name, {
         data: resolved,
         reference: isDataOfType(parameters[index], "reference")
           ? parameters[index].value
           : undefined,
-        skipExecution,
       });
     }
   });
@@ -723,23 +723,24 @@ export function executeStatement(
     if (isDataOfType(currentData, "error")) return currentData;
   }
 
-  let result = currentData;
-  for (const operation of statement.operations) {
+  const result = statement.operations.reduce((acc, operation) => {
+    if (isDataOfType(acc, "error")) return acc;
     const foundOp = builtInOperations.find(
       (op) => op.name === operation.value.name
     );
     if (foundOp) {
-      result = executeOperation(
+      const operationResult = executeOperation(
         foundOp,
-        result,
+        acc,
         operation.value.parameters,
         context
       );
-      if (isDataOfType(result, "error")) return result;
+      return operationResult;
     } else if (operation.value.result) {
-      result = operation.value.result;
+      return operation.value.result;
     }
-  }
+    return acc;
+  }, currentData);
   return result;
 }
 
@@ -795,14 +796,9 @@ export function executeOperation(
       lastResult = executeStatement(statement, context);
       if (isDataOfType(lastResult, "error")) return lastResult;
       if (statement.name) {
-        const skipExecution = getSkipExecution({
-          context,
-          data: statement.data,
-        });
         context.variables.set(statement.name, {
           data: lastResult,
           reference: undefined,
-          skipExecution,
         });
       }
     }
@@ -814,52 +810,42 @@ export function executeOperation(
 
 export function getSkipExecution({
   context,
-  data,
-  result,
+  data: _data,
   operation,
   parameterIndex,
-}: GetSkipExecutionParams): Context["skipExecution"] {
+}: {
+  context: Context;
+  data: IData;
+  operation?: IData<OperationType>;
+  parameterIndex?: number;
+}): Context["skipExecution"] {
   if (context.skipExecution) return context.skipExecution;
-  if (data && isDataOfType(data, "reference")) {
-    const variable = context.variables.get(data.value.name);
-    if (variable?.skipExecution) return variable.skipExecution;
-  }
+  const data = resolveReference(_data, context);
+  if (isDataOfType(data, "error")) return { reason: data.value.reason };
+  if (!operation) return undefined;
 
-  // Check for skipped branches in lazy-evaluated operations
-  if (result && operation && parameterIndex !== undefined) {
-    const resolvedResult = resolveReference(result, context);
+  if (parameterIndex !== undefined && isDataOfType(data, "boolean")) {
     const operationName = operation.value.name;
-
     if (
       operationName === "thenElse" &&
-      isDataOfType(resolvedResult, "boolean")
+      data.value === (parameterIndex === 0 ? false : true)
     ) {
-      if (parameterIndex === 0 && resolvedResult.value === false) {
-        return { reason: "Unreachable branch: condition is false" };
-      }
-      if (parameterIndex === 1 && resolvedResult.value === true) {
-        return { reason: "Unreachable branch: condition is true" };
-      }
+      return { reason: "Unreachable branch" };
     } else if (
-      parameterIndex === 0 &&
-      isDataOfType(resolvedResult, "boolean") &&
-      resolvedResult.value === (operationName === "or" ? true : false)
+      (operationName === "or" || operationName === "and") &&
+      data.value === (operationName === "or" ? true : false)
     ) {
       return { reason: `${operationName} operation is unreachable` };
     }
   }
 
   if (
-    result &&
-    operation &&
-    !getFilteredOperations(result, context.variables).find(
+    !getFilteredOperations(data, context.variables).find(
       (op) => op.name === operation.value.name
     )
   ) {
     return {
-      reason: `Operation '${operation.value.name}' cannot be chained after '${
-        resolveReference(result, context).type.kind
-      }' type.`,
+      reason: `Operation '${operation.value.name}' cannot be chained after '${data.type.kind}' type`,
     };
   }
 

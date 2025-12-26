@@ -113,11 +113,7 @@ export interface IDropdownItem {
 export type Context = {
   variables: Map<
     string,
-    {
-      data: IData;
-      reference?: { name: string; id: string };
-      skipExecution?: { reason: string };
-    }
+    { data: IData; reference?: { name: string; id: string } }
   >;
   currentStatementId?: string;
   skipExecution?: { reason: string };
@@ -146,14 +142,6 @@ export type INavigation = {
   direction?: NavigationDirection;
   modifier?: NavigationModifier;
   disable?: boolean;
-};
-
-export type GetSkipExecutionParams = {
-  context: Context;
-  data?: IData;
-  result?: IData;
-  operation?: IData<OperationType>;
-  parameterIndex?: number;
 };
 
 /* Project Types */
