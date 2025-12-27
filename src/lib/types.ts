@@ -2,7 +2,6 @@ export type UndefinedType = { kind: "undefined" };
 export type StringType = { kind: "string" };
 export type NumberType = { kind: "number" };
 export type BooleanType = { kind: "boolean" };
-
 export type ArrayType = { kind: "array"; elementType: DataType };
 export type ObjectType = {
   kind: "object";
@@ -14,9 +13,18 @@ export type OperationType = {
   parameters: { type: DataType; name?: string }[];
   result: DataType;
 };
-export type ConditionType = { kind: "condition"; type: DataType };
+export type ConditionType = { kind: "condition"; resultType: DataType };
 export type UnknownType = { kind: "unknown" };
 export type NeverType = { kind: "never" };
+export type ReferenceType = {
+  kind: "reference";
+  // referenceType: "variable" | "env";
+  dataType: DataType;
+};
+export type ErrorType = {
+  kind: "error";
+  errorType: "reference_error" | "type_error" | "runtime_error";
+};
 
 export type DataType =
   | UnknownType
@@ -29,7 +37,9 @@ export type DataType =
   | ObjectType
   | UnionType
   | OperationType
-  | ConditionType;
+  | ConditionType
+  | ReferenceType
+  | ErrorType;
 
 type BaseDataValue<T extends DataType> = T extends UnknownType
   ? unknown
@@ -51,7 +61,7 @@ type BaseDataValue<T extends DataType> = T extends UnknownType
   ? {
       parameters: IStatement[];
       statements: IStatement[];
-      result?: IData;
+      result?: IData; // for operation calls
       name?: string; // for non-statement operations
     }
   : T extends ConditionType
@@ -61,6 +71,10 @@ type BaseDataValue<T extends DataType> = T extends UnknownType
       false: IStatement;
       result?: IData;
     }
+  : T extends ReferenceType
+  ? { name: string; id: string }
+  : T extends ErrorType
+  ? { reason: string }
   : never;
 
 export type DataValue<T extends DataType> = T extends UnionType & {
@@ -75,7 +89,6 @@ export interface IData<T extends DataType = DataType> {
   type: T;
   value: DataValue<T>;
   isTypeEditable?: boolean;
-  reference?: { id: string; name: string };
 }
 
 export interface IStatement {
@@ -95,9 +108,15 @@ export interface IDropdownItem {
   onClick?: () => void;
 }
 
+/* Context and Execution */
+
 export type Context = {
-  variables: Map<string, IData>;
+  variables: Map<
+    string,
+    { data: IData; reference?: { name: string; id: string } }
+  >;
   currentStatementId?: string;
+  skipExecution?: { reason: string };
 };
 
 export type Parameter = {
@@ -108,9 +127,11 @@ export type Parameter = {
 export type OperationListItem = {
   name: string;
   parameters: ((data: IData) => Parameter[]) | Parameter[];
-  isResultTypeFixed?: boolean; // Show error when type mismatches in the UI
+  isResultTypeFixed?: boolean; // TODO: Show error when type mismatches in the UI
 } & ( // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  | { handler: (...args: IData<any>[]) => IData }
+  | { handler: (...args: [Context, ...IData<any>[]]) => IData }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | { lazyHandler: (...args: [Context, IData<any>, ...IStatement[]]) => IData }
   | { statements: IStatement[] }
 );
 

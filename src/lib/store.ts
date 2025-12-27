@@ -1,7 +1,13 @@
 import { StateCreator } from "zustand";
 import { temporal } from "zundo";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { INavigation, IStatement, Project, ProjectFile } from "./types";
+import {
+  Context,
+  INavigation,
+  IStatement,
+  Project,
+  ProjectFile,
+} from "./types";
 import { preferenceOptions } from "./data";
 import { createWithEqualityFn } from "zustand/traditional";
 import { shallow } from "zustand/shallow";
@@ -213,6 +219,7 @@ export type IUiConfig = Partial<{
 }> & {
   hideSidebar?: boolean;
   result?: IStatement["data"];
+  skipExecution?: Context["skipExecution"];
   showPopup?: boolean;
   navigationEntities?: NavigationEntity[];
   navigation?: INavigation;

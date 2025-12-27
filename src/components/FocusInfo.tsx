@@ -7,7 +7,7 @@ import { useHotkeys } from "@mantine/hooks";
 import { getTypeSignature } from "@/lib/utils";
 
 export function FocusInfo() {
-  const { showPopup, result, setUiConfig } = uiConfigStore();
+  const { showPopup, result, skipExecution, setUiConfig } = uiConfigStore();
 
   useHotkeys([
     ["Escape", () => setUiConfig({ showPopup: false, result: undefined })],
@@ -22,7 +22,7 @@ export function FocusInfo() {
           icon={FaX}
           title="Delete operation"
           size={12}
-          onClick={(e: MouseEvent) => {
+          onClick={(e) => {
             e.stopPropagation();
             setUiConfig({ showPopup: false, result: undefined });
           }}
@@ -34,10 +34,16 @@ export function FocusInfo() {
       </div>
       {result?.type.kind !== "operation" ? (
         <div className="p-1">
-          <div className="text-gray-300 mb-1.5">Result</div>
+          <div className="text-gray-300 mb-1.5">
+            {skipExecution ? "Skipped" : "Result"}
+          </div>
           <ErrorBoundary displayError={true}>
-            <pre className="max-w-96 overflow-x-auto dropdown-scrollbar text-wrap">
-              <ParseData data={result} showData={true} />
+            <pre className="max-w-96 overflow-x-auto dropdown-scrollbar text-wrap text-sm">
+              {skipExecution ? (
+                skipExecution.reason
+              ) : (
+                <ParseData data={result} showData={true} />
+              )}
             </pre>
           </ErrorBoundary>
         </div>

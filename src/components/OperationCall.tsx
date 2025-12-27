@@ -5,8 +5,9 @@ import {
   createOperationCall,
   executeOperation,
   getFilteredOperations,
+  getSkipExecution,
 } from "../lib/operation";
-import { getStatementResult, getInverseTypes } from "../lib/utils";
+import { getInverseTypes, mergeNarrowedTypes } from "../lib/utils";
 import { BaseInput } from "./Input/BaseInput";
 import { useMemo } from "react";
 
@@ -30,18 +31,16 @@ export function OperationCall({
 }) {
   const updatedVariables = useMemo(
     () =>
-      operation.value.name === "or"
-        ? context.variables
-        : narrowedTypes.entries().reduce((acc, [key, value]) => {
-            if (value.type.kind === "never") acc.delete(key);
-            else acc.set(key, value);
-            return acc;
-          }, new Map(context.variables)),
+      mergeNarrowedTypes(
+        context.variables,
+        narrowedTypes,
+        operation.value.name
+      ),
     [context.variables, narrowedTypes, operation.value.name]
   );
   const filteredOperations = useMemo(
-    () => getFilteredOperations(data, updatedVariables),
-    [data, updatedVariables]
+    () => getFilteredOperations(data, context.variables),
+    [data, context.variables]
   );
 
   function handleDropdown(name: string) {
@@ -56,7 +55,11 @@ export function OperationCall({
     );
   }
 
-  function handleParameter(item: IStatement, index: number) {
+  function handleParameter(
+    item: IStatement,
+    index: number,
+    variables: Context["variables"]
+  ) {
     // eslint-disable-next-line prefer-const
     let parameters = [...operation.value.parameters];
     parameters[index] = item;
@@ -64,10 +67,11 @@ export function OperationCall({
     const foundOperation = filteredOperations.find(
       (op) => op.name === operation.value.name
     );
-
-    const parametersResult = parameters.map((item) => getStatementResult(item));
     const result = foundOperation
-      ? executeOperation(foundOperation, data, parametersResult)
+      ? executeOperation(foundOperation, data, parameters, {
+          ...context,
+          variables,
+        })
       : operation.value.result;
 
     // Update parameter types while preserving the result type from the operation definition
@@ -97,7 +101,7 @@ export function OperationCall({
   return (
     <Dropdown
       id={operation.id}
-      data={operation.value.result}
+      operationResult={operation.value.result}
       items={filteredOperations.map((item) => ({
         label: item.name,
         value: item.name,
@@ -108,30 +112,43 @@ export function OperationCall({
       context={context}
       value={operation.value.name}
       addOperationCall={
-        filteredOperations.length ? addOperationCall : undefined
+        filteredOperations.length && !context.skipExecution
+          ? addOperationCall
+          : undefined
       }
       handleDelete={() => handleOperationCall(operation, true)}
       isInputTarget
       target={(props) => <BaseInput {...props} className="text-method" />}
     >
       <span>{"("}</span>
-      {operation.value.parameters.map((item, i, arr) => (
-        <span key={i} className="flex">
-          <Statement
-            statement={item}
-            handleStatement={(val) => val && handleParameter(val, i)}
-            options={{ disableDelete: true }}
-            context={{
-              ...context,
-              variables:
-                operation.value.name === "thenElse" && i === 1
-                  ? getInverseTypes(context.variables, narrowedTypes)
-                  : updatedVariables,
-            }}
-          />
-          {i < arr.length - 1 ? <span>{", "}</span> : null}
-        </span>
-      ))}
+      {operation.value.parameters.map((item, paramIndex, arr) => {
+        const variables =
+          operation.value.name === "thenElse" && paramIndex === 1
+            ? getInverseTypes(context.variables, narrowedTypes)
+            : updatedVariables;
+        return (
+          <span key={paramIndex} className="flex">
+            <Statement
+              statement={item}
+              handleStatement={(val) =>
+                val && handleParameter(val, paramIndex, variables)
+              }
+              options={{ disableDelete: true }}
+              context={{
+                ...context,
+                variables,
+                skipExecution: getSkipExecution({
+                  context,
+                  data,
+                  operation,
+                  paramIndex,
+                }),
+              }}
+            />
+            {paramIndex < arr.length - 1 ? <span>{", "}</span> : null}
+          </span>
+        );
+      })}
       <span className="self-end">{")"}</span>
     </Dropdown>
   );

@@ -36,6 +36,7 @@ function BaseInputInner<T extends string | number>(
     ...props,
     value: inputValue,
     classNames: {
+      wrapper: "flex gap-1 items-center",
       input: [
         "number-input outline-0 bg-inherit border-none p-0",
         props.className,

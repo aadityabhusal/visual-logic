@@ -1,19 +1,19 @@
-import { FaPlus, FaX } from "react-icons/fa6";
-import { uiConfigStore, useProjectStore } from "../lib/store";
+import { FaPencil, FaPlus, FaX } from "react-icons/fa6";
+import { useProjectStore } from "../lib/store";
 import { createProjectFile, handleSearchParams } from "../lib/utils";
 import { NoteText } from "./NoteText";
 import { IconButton } from "./IconButton";
 import { SiGithub, SiYoutube } from "react-icons/si";
 import { useSearchParams } from "react-router";
-import { ProjectFile } from "@/lib/types";
 import { useState } from "react";
-import { BaseInput } from "@/components/Input/BaseInput";
+import { updateFiles } from "@/lib/update";
 
-export function Sidebar({ projectFiles }: { projectFiles: ProjectFile[] }) {
-  const { addFile, updateFile, deleteFile } = useProjectStore();
-  const { setUiConfig } = uiConfigStore();
+export function Sidebar() {
+  const { addFile, updateProject, deleteFile, getFile, getCurrentProject } =
+    useProjectStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const [editingId, setEditingId] = useState<string>();
+  const [hoveringId, setHoveringId] = useState<string>();
 
   return (
     <div className="flex flex-col ml-auto w-40 border-r">
@@ -24,59 +24,94 @@ export function Sidebar({ projectFiles }: { projectFiles: ProjectFile[] }) {
           icon={FaPlus}
           title="Add operation"
           onClick={() =>
-            addFile(createProjectFile({ type: "operation" }, projectFiles))
+            addFile(
+              createProjectFile(
+                { type: "operation" },
+                getCurrentProject()?.files
+              )
+            )
           }
         >
           Add
         </IconButton>
       </div>
       <ul className="flex-1 p-1 overflow-y-auto dropdown-scrollbar list-none m-0">
-        {!projectFiles.length && <NoteText center>Add an operation</NoteText>}
-        {projectFiles.map((item) => (
+        {!getCurrentProject()?.files.length && (
+          <NoteText center>Add an operation</NoteText>
+        )}
+        {getCurrentProject()?.files.map((item) => (
           <li
             className={
-              "flex items-center justify-between p-1 hover:bg-dropdown-hover " +
-              (item.id === searchParams.get("operationId")
+              "flex items-center gap-1 justify-between p-1 hover:bg-dropdown-hover " +
+              (item.name === searchParams.get("file")
                 ? "bg-dropdown-hover"
                 : "bg-editor")
             }
             key={item.id}
             onClick={() =>
-              setSearchParams(
-                ...handleSearchParams({ operationId: item.id }, true)
-              )
+              setSearchParams(...handleSearchParams({ file: item.name }, true))
             }
+            onPointerOver={() => setHoveringId(item.id)}
+            onPointerLeave={() => setHoveringId(undefined)}
           >
             {editingId === item.id ? (
-              <BaseInput
+              <input
                 autoFocus
-                className="focus:outline outline-white"
+                className="focus:outline outline-white flex-1 w-full"
                 defaultValue={item.name}
-                onFocus={() => setUiConfig({ navigation: undefined })}
-                onBlur={(e) => {
-                  if (e.target.value) {
-                    updateFile(item.id, { name: e.target.value });
+                onClick={(e) => e.stopPropagation()}
+                onBlur={({ target }) => {
+                  const currentProject = getCurrentProject();
+                  const file = getFile(item.id);
+                  if (target.value && currentProject && file) {
+                    updateProject(currentProject.id, {
+                      files: updateFiles(currentProject.files, {
+                        ...file,
+                        name: target.value,
+                      }),
+                    });
+                    if (searchParams.get("file") === item.name) {
+                      setSearchParams(
+                        ...handleSearchParams({ file: target.value }, true)
+                      );
+                    }
                   }
                   setEditingId(undefined);
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") e.currentTarget.blur();
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                  }
                 }}
               />
             ) : (
-              <span className="truncate" onClick={() => setEditingId(item.id)}>
-                {item.name}
-              </span>
+              <span className="truncate mr-auto">{item.name}</span>
             )}
-            <IconButton
-              icon={FaX}
-              title="Delete operation"
-              size={10}
-              onClick={(e: MouseEvent) => {
-                e.stopPropagation();
-                deleteFile(item.id);
-              }}
-            />
+            {!editingId && hoveringId === item.id && (
+              <IconButton
+                icon={FaPencil}
+                title="Edit operation name"
+                className="p-0.5 hover:outline hover:outline-border"
+                size={10}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingId(item.id);
+                }}
+              />
+            )}
+            {hoveringId === item.id && (
+              <IconButton
+                icon={FaX}
+                title="Delete operation"
+                className="p-0.5 hover:outline hover:outline-border"
+                size={10}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteFile(item.id);
+                }}
+              />
+            )}
           </li>
         ))}
       </ul>

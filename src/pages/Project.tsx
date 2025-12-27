@@ -8,23 +8,28 @@ import { useHotkeys } from "@mantine/hooks";
 import { FocusInfo } from "@/components/FocusInfo";
 import { useSearchParams, Navigate } from "react-router";
 import { useCustomHotkeys } from "@/hooks/useNavigation";
-import { Context, IData, OperationType } from "@/lib/types";
-import { createOperationFromFile } from "@/lib/utils";
+import { IData, OperationType } from "@/lib/types";
+import {
+  createFileFromOperation,
+  createFileVariables,
+  createOperationFromFile,
+} from "@/lib/utils";
 import { getOperationEntities } from "@/lib/navigation";
+import { updateFiles } from "@/lib/update";
 
 export default function Project() {
   const [searchParams] = useSearchParams();
-  const { getCurrentProject, updateFile, deleteFile } = useProjectStore();
+  const { getCurrentProject, deleteFile, updateProject } = useProjectStore();
   const { hideSidebar, hideFocusInfo, setUiConfig } = uiConfigStore();
 
   const currentProject = getCurrentProject();
-  const operationId = searchParams.get("operationId");
+  const fileName = searchParams.get("file");
   const currentOperation = useMemo(
     () =>
       createOperationFromFile(
-        currentProject?.files.find((file) => file.id === operationId)
+        currentProject?.files.find((file) => file.name === fileName)
       ),
-    [currentProject?.files, operationId]
+    [currentProject?.files, fileName]
   );
 
   const handleOperationChange = useCallback(
@@ -32,18 +37,21 @@ export default function Project() {
       if (!currentProject) return;
       if (remove) deleteFile(operation.id);
       else {
-        updateFile(operation.id, {
-          content: { type: operation.type, value: operation.value },
+        updateProject(currentProject.id, {
+          files: updateFiles(
+            currentProject.files,
+            createFileFromOperation(operation)
+          ),
         });
       }
     },
-    [currentProject, updateFile, deleteFile]
+    [currentProject, updateProject, deleteFile]
   );
 
   useEffect(() => {
     if (currentOperation) {
       setUiConfig({
-        navigationEntities: getOperationEntities(currentOperation),
+        navigationEntities: getOperationEntities(currentOperation, 0),
       });
     }
   }, [currentOperation, setUiConfig]);
@@ -59,7 +67,7 @@ export default function Project() {
         currentProject={currentProject}
       />
       <div className="flex flex-1 min-h-0 relative">
-        {!hideSidebar && <Sidebar projectFiles={currentProject?.files || []} />}
+        {!hideSidebar && <Sidebar />}
         <div
           className={"p-1 flex-1 overflow-y-auto scroll"}
           onClick={(e) => {
@@ -75,14 +83,10 @@ export default function Project() {
               operation={currentOperation}
               handleChange={handleOperationChange}
               context={{
-                variables: currentProject.files.reduce((acc, operationFile) => {
-                  const operation = createOperationFromFile(operationFile);
-                  if (!operation || operationFile.id === currentOperation?.id) {
-                    return acc;
-                  }
-                  acc.set(operationFile.name, operation);
-                  return acc;
-                }, new Map() as Context["variables"]),
+                variables: createFileVariables(
+                  currentProject?.files,
+                  currentOperation?.id
+                ),
               }}
               options={{ isTopLevel: true, disableDropdown: true }}
             />
@@ -91,16 +95,6 @@ export default function Project() {
           )}
           {!hideFocusInfo && <FocusInfo />}
         </div>
-        {/* {displayCode && currentOperation ? (
-          <div className={"p-1 flex-1 overflow-y-auto scroll border-l"}>
-            <NoteText border italic>
-              In-progress and preview-only.
-            </NoteText>
-            <pre>
-              <ParseOperation operation={currentOperation} />
-            </pre>
-          </div>
-        ) : null} */}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { DataType } from "./types";
+import { DataType, ErrorType } from "./types";
 
 export const DataTypes: {
   [K in DataType["kind"]]: {
@@ -45,10 +45,26 @@ export const DataTypes: {
   condition: {
     type: {
       kind: "condition",
-      type: { kind: "union", types: [{ kind: "undefined" }] },
+      resultType: { kind: "union", types: [{ kind: "undefined" }] },
     },
     hideFromDropdown: true,
   },
+  reference: {
+    type: { kind: "reference", dataType: { kind: "undefined" } },
+    hideFromDropdown: true,
+  },
+  error: {
+    type: { kind: "error", errorType: "runtime_error" },
+    // hideFromDropdown: true,
+  },
+};
+
+export const ErrorTypesData: {
+  [K in ErrorType["errorType"]]: { name: string };
+} = {
+  reference_error: { name: "Reference Error" },
+  type_error: { name: "Type Error" },
+  runtime_error: { name: "Runtime Error" },
 };
 
 export const preferenceOptions = [

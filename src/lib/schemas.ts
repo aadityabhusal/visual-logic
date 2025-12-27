@@ -15,6 +15,9 @@ import type {
   IDropdownItem,
   UnknownType,
   NeverType,
+  ReferenceType,
+  DataValue,
+  ErrorType,
 } from "./types";
 
 /**
@@ -51,6 +54,9 @@ const ArrayTypeSchema: z.ZodType<ArrayType> = z.object({
     return DataTypeSchema;
   },
 });
+export const ArrayValueSchema: z.ZodType<DataValue<ArrayType>> = z.lazy(() =>
+  z.array(IStatementSchema)
+);
 
 const ObjectTypeSchema: z.ZodType<ObjectType> = z.object({
   kind: z.literal("object"),
@@ -58,6 +64,9 @@ const ObjectTypeSchema: z.ZodType<ObjectType> = z.object({
     return z.record(z.string(), DataTypeSchema);
   },
 });
+export const ObjectValueSchema: z.ZodType<DataValue<ObjectType>> = z.lazy(() =>
+  z.map(z.string(), IStatementSchema)
+);
 
 const UnionTypeSchema: z.ZodType<UnionType> = z.object({
   kind: z.literal("union"),
@@ -77,12 +86,61 @@ const OperationTypeSchema: z.ZodType<OperationType> = z.object({
     return DataTypeSchema;
   },
 });
+export const OperationValueSchema: z.ZodType<DataValue<OperationType>> =
+  z.object({
+    get statements() {
+      return z.array(IStatementSchema);
+    },
+    get parameters() {
+      return z.array(IStatementSchema);
+    },
+    get result() {
+      return IDataSchema.optional();
+    },
+    name: z.string().optional(),
+  });
 
 const ConditionTypeSchema: z.ZodType<ConditionType> = z.object({
   kind: z.literal("condition"),
-  get type() {
-    return UnionTypeSchema;
+  get resultType() {
+    return DataTypeSchema;
   },
+});
+export const ConditionValueSchema: z.ZodType<DataValue<ConditionType>> =
+  z.object({
+    get condition() {
+      return IStatementSchema;
+    },
+    get true() {
+      return IStatementSchema;
+    },
+    get false() {
+      return IStatementSchema;
+    },
+    get result() {
+      return IDataSchema.optional();
+    },
+  });
+
+const ReferenceTypeSchema: z.ZodType<ReferenceType> = z.object({
+  kind: z.literal("reference"),
+  // referenceType: z.enum(["variable", "env"]),
+  get dataType() {
+    return DataTypeSchema;
+  },
+});
+export const ReferenceValueSchema: z.ZodType<DataValue<ReferenceType>> =
+  z.object({
+    name: z.string(),
+    id: z.string(),
+  });
+
+const ErrorTypeSchema: z.ZodType<ErrorType> = z.object({
+  kind: z.literal("error"),
+  errorType: z.enum(["reference_error", "type_error", "runtime_error"]),
+});
+export const ErrorValueSchema: z.ZodType<DataValue<ErrorType>> = z.object({
+  reason: z.string(),
 });
 
 export const DataTypeSchema: z.ZodType<DataType> = z.union([
@@ -97,6 +155,8 @@ export const DataTypeSchema: z.ZodType<DataType> = z.union([
   UnionTypeSchema,
   OperationTypeSchema,
   ConditionTypeSchema,
+  ReferenceTypeSchema,
+  ErrorTypeSchema,
 ]);
 
 export const IDataSchema: z.ZodType<IData> = z
@@ -104,47 +164,18 @@ export const IDataSchema: z.ZodType<IData> = z
     id: z.string(),
     entityType: z.literal("data"),
     isTypeEditable: z.boolean().optional(),
-    reference: z.object({ id: z.string(), name: z.string() }).optional(),
   })
   .and(
     // Note: We use z.union instead of z.discriminatedUnion because the discriminator (kind) is nested inside the type object.
     z.union([
-      z.object({
-        type: UnknownTypeSchema,
-        value: z.unknown(),
-      }),
-      z.object({
-        type: NeverTypeSchema,
-        value: z.never(),
-      }),
-      z.object({
-        type: UndefinedTypeSchema,
-        value: z.undefined(),
-      }),
-      z.object({
-        type: StringTypeSchema,
-        value: z.string(),
-      }),
-      z.object({
-        type: NumberTypeSchema,
-        value: z.number(),
-      }),
-      z.object({
-        type: BooleanTypeSchema,
-        value: z.boolean(),
-      }),
-      z.object({
-        type: ArrayTypeSchema,
-        get value() {
-          return z.array(IStatementSchema);
-        },
-      }),
-      z.object({
-        type: ObjectTypeSchema,
-        get value() {
-          return z.map(z.string(), IStatementSchema);
-        },
-      }),
+      z.object({ type: UnknownTypeSchema, value: z.unknown() }),
+      z.object({ type: NeverTypeSchema, value: z.never() }),
+      z.object({ type: UndefinedTypeSchema, value: z.undefined() }),
+      z.object({ type: StringTypeSchema, value: z.string() }),
+      z.object({ type: NumberTypeSchema, value: z.number() }),
+      z.object({ type: BooleanTypeSchema, value: z.boolean() }),
+      z.object({ type: ArrayTypeSchema, value: ArrayValueSchema }),
+      z.object({ type: ObjectTypeSchema, value: ObjectValueSchema }),
       z.object({
         type: UnionTypeSchema,
         get value() {
@@ -153,48 +184,21 @@ export const IDataSchema: z.ZodType<IData> = z
             z.string(),
             z.number(),
             z.boolean(),
-            z.array(IStatementSchema),
-            z.map(z.string(), IStatementSchema),
-            z.object({
-              parameters: z.array(IStatementSchema),
-              statements: z.array(IStatementSchema),
-              result: IDataSchema.optional(),
-              name: z.string().optional(),
-            }),
-            z.object({
-              condition: IStatementSchema,
-              true: IStatementSchema,
-              false: IStatementSchema,
-              result: IDataSchema.optional(),
-            }),
+            ArrayValueSchema,
+            ObjectValueSchema,
+            OperationValueSchema,
+            ConditionValueSchema,
+            ReferenceValueSchema,
+            ErrorValueSchema,
           ]);
         },
       }),
-      z.object({
-        type: OperationTypeSchema,
-        get value() {
-          return z.object({
-            parameters: z.array(IStatementSchema),
-            statements: z.array(IStatementSchema),
-            result: IDataSchema.optional(),
-            name: z.string().optional(),
-          });
-        },
-      }),
-      z.object({
-        type: ConditionTypeSchema,
-        get value() {
-          return z.object({
-            condition: IStatementSchema,
-            true: IStatementSchema,
-            false: IStatementSchema,
-            result: IDataSchema.optional(),
-          });
-        },
-      }),
+      z.object({ type: OperationTypeSchema, value: OperationValueSchema }),
+      z.object({ type: ConditionTypeSchema, value: ConditionValueSchema }),
+      z.object({ type: ReferenceTypeSchema, value: ReferenceValueSchema }),
+      z.object({ type: ErrorTypeSchema, value: ErrorValueSchema }),
     ])
   );
-
 export const IStatementSchema: z.ZodType<IStatement> = z.object({
   id: z.string(),
   entityType: z.literal("statement"),

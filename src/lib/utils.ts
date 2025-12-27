@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { DataTypes } from "./data";
+import { DataTypes, ErrorTypesData } from "./data";
 import {
   IData,
   IStatement,
@@ -13,27 +13,25 @@ import {
   Parameter,
   ProjectFile,
 } from "./types";
+import { ErrorValueSchema, ReferenceValueSchema } from "./schemas";
 
 /* Create */
 
 export function createData<T extends DataType>(
-  props: Partial<IData<T>>
+  props?: Partial<IData<T>>
 ): IData<T> {
-  const type = (props.type || { kind: "undefined" }) as T;
+  const type = (props?.type || { kind: "undefined" }) as T;
   return {
-    id: props.id ?? nanoid(),
+    id: props?.id ?? nanoid(),
     entityType: "data",
     type,
-    value: props.value ?? createDefaultValue(type),
-    isTypeEditable: props.isTypeEditable,
-    reference: props.reference,
+    value: props?.value ?? createDefaultValue(type),
+    isTypeEditable: props?.isTypeEditable,
   };
 }
 
 export function createStatement(props?: Partial<IStatement>): IStatement {
-  const newData =
-    props?.data ||
-    createData({ type: { kind: "undefined" }, isTypeEditable: true });
+  const newData = props?.data || createData({ isTypeEditable: true });
   const newId = props?.id || nanoid();
   return {
     id: newId,
@@ -126,11 +124,7 @@ export function createDefaultValue<T extends DataType>(type: T): DataValue<T> {
         id: nanoid(),
         entityType: "statement",
         operations: [],
-        data: createData({
-          type: { kind: "undefined" },
-          value: undefined,
-          isTypeEditable: true,
-        }),
+        data: createData({ isTypeEditable: true }),
       });
 
       return {
@@ -138,6 +132,11 @@ export function createDefaultValue<T extends DataType>(type: T): DataValue<T> {
         true: createStatement(),
         false: createStatement(),
         result: createStatement().data,
+      } as DataValue<T>;
+    }
+    case "error": {
+      return {
+        reason: ErrorTypesData[type.errorType]?.name ?? "Unknown Error",
       } as DataValue<T>;
     }
 
@@ -211,15 +210,63 @@ export function createOperationFromFile(file?: ProjectFile) {
     id: file.id,
     entityType: "data",
     type: file.content.type,
-    value: file.content.value,
+    value: { ...file.content.value, name: file.name },
     isTypeEditable: true,
-    reference: { id: file.id, name: file.name },
   } as IData<OperationType>;
+}
+
+export function createFileFromOperation(operation: IData<OperationType>) {
+  return {
+    id: operation.id,
+    name: operation.value.name,
+    type: "operation",
+    content: { type: operation.type, value: operation.value },
+  } as ProjectFile;
+}
+
+export function createContextVariables(
+  statements: IStatement[],
+  variables: Context["variables"]
+): Context["variables"] {
+  return statements.reduce((variables, statement) => {
+    if (statement.name) {
+      const data = resolveReference(statement.data, { variables });
+      const result = getStatementResult({ ...statement, data });
+
+      variables.set(statement.name, {
+        data: { ...result, id: statement.id },
+        reference: isDataOfType(statement.data, "reference")
+          ? statement.data.value
+          : undefined,
+      });
+    }
+    return variables;
+  }, new Map(variables));
+}
+
+export function createFileVariables(
+  files: ProjectFile[] = [],
+  currentOperationId?: string
+): Context["variables"] {
+  return files.reduce((acc, operationFile) => {
+    const operation = createOperationFromFile(operationFile);
+    if (!operation || operationFile.id === currentOperationId) {
+      return acc;
+    }
+    acc.set(operationFile.name, {
+      data: { ...operation, id: operationFile.id },
+    });
+    return acc;
+  }, new Map() as Context["variables"]);
 }
 
 /* Types */
 
 export function isTypeCompatible(first: DataType, second: DataType): boolean {
+  // Error types are compatible with each other (regardless of category)
+  if (first.kind === "error" && second.kind === "error") {
+    return true;
+  }
   if (first.kind === "operation" && second.kind === "operation") {
     if (first.parameters.length !== second.parameters.length) return false;
     if (!isTypeCompatible(first.result, second.result)) return false;
@@ -256,14 +303,18 @@ export function isTypeCompatible(first: DataType, second: DataType): boolean {
         first.types.some((firstType) => isTypeCompatible(firstType, secondType))
       )
     );
-  }
-
-  if (first.kind === "union") {
+  } else if (first.kind === "union") {
     return first.types.some((t) => isTypeCompatible(t, second));
+  } else if (second.kind === "union") {
+    return second.types.some((t) => isTypeCompatible(first, t));
   }
 
-  if (second.kind === "union") {
-    return second.types.some((t) => isTypeCompatible(first, t));
+  if (first.kind === "reference" && second.kind === "reference") {
+    return isTypeCompatible(first.dataType, second.dataType);
+  } else if (first.kind === "reference") {
+    return isTypeCompatible(first.dataType, second);
+  } else if (second.kind === "reference") {
+    return isTypeCompatible(first, second.dataType);
   }
 
   return first.kind === second.kind;
@@ -290,20 +341,23 @@ export function getInverseTypes(
   return narrowedTypes.entries().reduce((acc, [key, value]) => {
     const variable = originalTypes.get(key);
     if (!variable) return acc;
-    let excludedType: DataType = variable.type;
+    let excludedType: DataType = variable.data.type;
 
-    if (variable.type.kind === "union") {
-      const remainingTypes = variable.type.types.filter(
-        (t) => !isTypeCompatible(t, value.type)
+    if (variable.data.type.kind === "union") {
+      const remainingTypes = variable.data.type.types.filter(
+        (t) => !isTypeCompatible(t, value.data.type)
       );
       if (remainingTypes.length === 0) excludedType = { kind: "never" };
       else excludedType = resolveUnionType(remainingTypes);
-    } else if (isTypeCompatible(variable.type, value.type)) {
+    } else if (isTypeCompatible(variable.data.type, value.data.type)) {
       excludedType = { kind: "never" }; // If not a union and types are compatible
     }
 
     if (excludedType.kind !== "never") {
-      acc.set(key, { ...variable, type: excludedType });
+      acc.set(key, {
+        ...variable,
+        data: { ...variable.data, type: excludedType },
+      });
     }
     return acc;
   }, new Map(originalTypes));
@@ -340,7 +394,7 @@ function narrowType(
 }
 
 export function applyTypeNarrowing(
-  originalTypes: Context["variables"],
+  context: Context,
   narrowedTypes: Context["variables"],
   data: IData,
   operation: IData<OperationType>
@@ -354,13 +408,13 @@ export function applyTypeNarrowing(
     (operation.value.name === "isTypeOf" ||
       operation.value.name === "isEqual") &&
     param &&
-    data.reference
+    isDataOfType(data, "reference")
   ) {
-    referenceName = data.reference.name;
-    const reference = originalTypes.get(referenceName);
+    referenceName = data.value.name;
+    const reference = context.variables.get(referenceName);
     if (reference) {
       narrowedType = narrowType(
-        reference.type,
+        reference.data.type,
         inferTypeFromValue(param.data.value)
       );
     }
@@ -368,37 +422,55 @@ export function applyTypeNarrowing(
 
   if (
     (operation.value.name === "or" || operation.value.name === "and") &&
-    param.data.reference
+    isDataOfType(param.data, "reference") &&
+    param.operations[0]
   ) {
-    const source =
-      operation.value.name === "or" ? originalTypes : narrowedTypes;
     const resultType = applyTypeNarrowing(
-      source,
-      new Map(source),
+      context,
+      new Map(
+        operation.value.name === "or" ? context.variables : narrowedTypes
+      ),
       param.data,
       param.operations[0]
     );
-    referenceName = param.data.reference.name;
+    referenceName = param.data.value.name;
     const types = [
-      narrowedTypes.get(param.data.reference.name)?.type,
-      resultType.get(param.data.reference.name)?.type,
+      narrowedTypes.get(referenceName)?.data.type,
+      resultType.get(referenceName)?.data.type,
     ].filter(Boolean) as DataType[];
 
     if (types.length > 0) narrowedType = resolveUnionType(types);
   }
 
   if (operation.value.name === "not") {
-    narrowedTypes = getInverseTypes(originalTypes, narrowedTypes);
+    narrowedTypes = getInverseTypes(context.variables, narrowedTypes);
   }
 
   if (referenceName) {
-    narrowedTypes.set(referenceName, {
-      ...originalTypes.get(referenceName)!,
-      type: narrowedType ?? { kind: "never" },
-    });
+    const variable = context.variables.get(referenceName);
+    if (variable) {
+      narrowedTypes.set(referenceName, {
+        ...variable,
+        data: { ...variable.data, type: narrowedType ?? { kind: "never" } },
+      });
+    }
   }
 
   return narrowedTypes;
+}
+
+export function mergeNarrowedTypes(
+  originalTypes: Context["variables"],
+  narrowedTypes: Context["variables"],
+  operationName?: string
+): Context["variables"] {
+  return operationName === "or"
+    ? originalTypes // TODO: inverse narrowed types for 'or' operation
+    : narrowedTypes.entries().reduce((acc, [key, value]) => {
+        if (value.data.type.kind === "never") acc.delete(key);
+        else acc.set(key, value);
+        return acc;
+      }, new Map(originalTypes));
 }
 
 export function resolveUnionType(types: DataType[], union: true): UnionType;
@@ -462,13 +534,32 @@ function getOperationType(
   return { kind: "operation", parameters: parameterTypes, result: resultType };
 }
 
-export function inferTypeFromValue<T extends DataType>(value: DataValue<T>) {
+export function resolveReference(data: IData, context: Context): IData {
+  if (!isDataOfType(data, "reference")) return data;
+  const variable = context.variables.get(data.value.name);
+  if (!variable) {
+    return createData({
+      type: { kind: "error", errorType: "reference_error" },
+      value: { reason: `'${data.value.name}' not found` },
+    });
+  }
+  return resolveReference(variable.data, context);
+}
+
+export function inferTypeFromValue<T extends DataType>(
+  value: DataValue<T>,
+  context?: Context
+): T {
   if (value === undefined) return { kind: "undefined" } as T;
   if (typeof value === "string") return { kind: "string" } as T;
   if (typeof value === "number") return { kind: "number" } as T;
   if (typeof value === "boolean") return { kind: "boolean" } as T;
+
   if (Array.isArray(value)) {
-    return { kind: "array", elementType: getArrayElementType(value) } as T;
+    return {
+      kind: "array",
+      elementType: getArrayElementType(value),
+    } as T;
   }
   if (value instanceof Map) {
     return {
@@ -501,7 +592,16 @@ export function inferTypeFromValue<T extends DataType>(value: DataValue<T>) {
     const unionType = resolveUnionType(
       isTypeCompatible(trueType, falseType) ? [trueType] : [trueType, falseType]
     );
-    return { kind: "condition", type: unionType } as T;
+    return { kind: "condition", resultType: unionType } as T;
+  }
+  const referenceValue = ReferenceValueSchema.safeParse(value);
+  if (referenceValue.success && context) {
+    const type = context.variables.get(referenceValue.data.name)?.data.type;
+    return { kind: "reference", dataType: type ?? { kind: "unknown" } } as T;
+  }
+  const errorValue = ErrorValueSchema.safeParse(value);
+  if (errorValue.success) {
+    return { kind: "error", errorType: "runtime_error" } as T;
   }
   return { kind: "unknown" } as T;
 }
@@ -517,6 +617,9 @@ export function getTypeSignature(type: DataType, maxDepth: number = 4): string {
     case "boolean":
     case "unknown":
       return type.kind;
+
+    case "error":
+      return ErrorTypesData[type.errorType]?.name ?? "Unknown Error";
 
     case "array":
       return `${getTypeSignature(type.elementType, maxDepth - 1)}[]`;
@@ -545,8 +648,10 @@ export function getTypeSignature(type: DataType, maxDepth: number = 4): string {
     }
 
     case "condition":
-      return getTypeSignature(type.type, maxDepth - 1);
+      return getTypeSignature(type.resultType, maxDepth - 1);
 
+    case "reference":
+      return getTypeSignature(type.dataType, maxDepth - 1);
     default:
       return "unknown";
   }
@@ -561,23 +666,17 @@ export function getStatementResult(
   // TODO: Make use of the data type to create a better type for result e.g. a union type
 ): IData {
   let result = statement.data;
+  if (isDataOfType(result, "error")) return { ...result, id: nanoid() };
   const lastOperation = statement.operations[statement.operations.length - 1];
   if (index) {
     const statementResult = statement.operations[index - 1]?.value.result;
-    result = statementResult ?? createData({ type: { kind: "undefined" } });
+    result = statementResult ?? createData();
   } else if (!prevEntity && lastOperation) {
-    result =
-      lastOperation.value.result ?? createData({ type: { kind: "undefined" } });
+    result = lastOperation.value.result ?? createData();
   } else if (isDataOfType(result, "condition")) {
     result = result.value.result ?? getConditionResult(result.value);
   }
-  return {
-    ...result,
-    id: nanoid(),
-    ...(statement.name
-      ? { reference: { id: statement.id, name: statement.name } }
-      : {}),
-  };
+  return { ...result, id: nanoid() };
 }
 
 export function getConditionResult(condition: DataValue<ConditionType>): IData {
@@ -603,7 +702,7 @@ export function getDataDropdownList({
       if (DataTypes[kind].hideFromDropdown) return acc;
       if (
         data.isTypeEditable ||
-        (data.reference && kind === (data as IData).type.kind)
+        (isDataOfType(data, "reference") && kind === data.type.dataType.kind)
       ) {
         acc.push({
           entityType: "data",
@@ -622,16 +721,25 @@ export function getDataDropdownList({
       return acc;
     }, [] as IDropdownItem[]),
     ...context.variables.entries().reduce((acc, [name, variable]) => {
-      if (!data.isTypeEditable && !isTypeCompatible(variable.type, data.type)) {
+      if (
+        !data.isTypeEditable &&
+        !isTypeCompatible(variable.data.type, data.type)
+      ) {
         return acc;
       }
       acc.push({
         value: name,
-        secondaryLabel: variable.type.kind,
-        variableType: variable.type,
+        secondaryLabel: variable.data.type.kind,
+        variableType: variable.data.type,
         entityType: "data",
         onClick: () =>
-          onSelect({ ...variable, isTypeEditable: data.isTypeEditable }),
+          onSelect({
+            ...variable.data,
+            id: nanoid(),
+            type: { kind: "reference", dataType: variable.data.type },
+            value: { name, id: variable.data.id },
+            isTypeEditable: data.isTypeEditable,
+          }),
       });
       return acc;
     }, [] as IDropdownItem[]),

@@ -1,373 +1,240 @@
-import { nanoid } from "nanoid";
-import { getFilteredOperations, executeOperation } from "./operation";
-import { IStatement, IData, OperationType, Context, DataValue } from "./types";
 import {
-  createData,
+  getFilteredOperations,
+  executeOperation,
+  executeStatement,
+  getSkipExecution,
+} from "./operation";
+import {
+  IStatement,
+  IData,
+  OperationType,
+  Context,
+  DataValue,
+  DataType,
+  ProjectFile,
+} from "./types";
+import {
   getStatementResult,
   isDataOfType,
-  isTypeCompatible,
-  getConditionResult,
-  createDefaultValue,
   inferTypeFromValue,
+  createContextVariables,
+  createStatement,
+  createData,
+  createOperationFromFile,
+  createFileFromOperation,
+  createFileVariables,
+  applyTypeNarrowing,
+  getInverseTypes,
+  mergeNarrowedTypes,
 } from "./utils";
 
 export function updateOperationCalls(
   statement: IStatement,
-  context: Context
-): IStatement {
-  const updatedOperations = statement.operations.reduce(
-    (previousOperations, currentOperation, index) => {
-      const data = getStatementResult(
-        { ...statement, operations: previousOperations },
-        index
+  _context: Context
+): IData<OperationType>[] {
+  return statement.operations.reduce(
+    (acc, operation, operationIndex) => {
+      const data = getStatementResult(statement, operationIndex, true);
+      acc.narrowedTypes = applyTypeNarrowing(
+        _context,
+        acc.narrowedTypes,
+        data,
+        operation
       );
-      const parameters = currentOperation.value.parameters.map((item) => {
-        // let closure = item.data.entityType === "operation" && {
-        //   closure: [...item.data.closure, ...previous],
-        // };
-        return getStatementResult({
-          ...item,
-          data: { ...item.data /* ...closure */ },
+      const context = {
+        ..._context,
+        skipExecution: getSkipExecution({ context: _context, data, operation }),
+      };
+
+      const parameters = operation.value.parameters.map((param, paramIndex) => {
+        const variables =
+          operation.value.name === "thenElse" && paramIndex === 1
+            ? getInverseTypes(context.variables, acc.narrowedTypes)
+            : mergeNarrowedTypes(
+                context.variables,
+                acc.narrowedTypes,
+                operation.value.name
+              );
+        return updateStatement(param, {
+          ...context,
+          variables,
+          skipExecution: getSkipExecution({
+            context: { ...context, variables },
+            data: param.data,
+            operation,
+            paramIndex: paramIndex,
+          }),
         });
       });
 
       const foundOperation = getFilteredOperations(
         data,
         context.variables
-      ).find((operation) => operation.name === currentOperation.value.name);
-      const currentResult = currentOperation.value.result;
+      ).find((op) => op.name === operation.value.name);
+      const currentResult = operation.value.result;
       const result = foundOperation
         ? {
-            ...executeOperation(foundOperation, data, parameters),
+            ...executeOperation(foundOperation, data, parameters, context),
             ...(currentResult && { id: currentResult?.id }),
             isTypeEditable: data.isTypeEditable,
           }
         : currentResult;
 
-      return [
-        ...previousOperations,
-        { ...currentOperation, value: { ...currentOperation.value, result } },
+      acc.operations = [
+        ...acc.operations,
+        { ...operation, value: { ...operation.value, parameters, result } },
       ];
+      return acc;
     },
-    [] as IData<OperationType>[]
-  );
-  return { ...statement, operations: updatedOperations };
+    { operations: [] as IData<OperationType>[], narrowedTypes: new Map() }
+  ).operations;
 }
 
-function getReferenceData(
+function updateDataValue(
   data: IData,
   context: Context,
-  reference?: { name: string; data: IData }
-): IData {
-  const currentReference = data.reference;
-
-  const isTypeChanged =
-    reference &&
-    (reference?.data.entityType !== "data" ||
-      !isTypeCompatible(data.type, reference?.data.type));
-  const isReferenceRemoved =
-    currentReference?.id &&
-    (!reference?.name || reference?.data.entityType !== "data");
-
-  const { id: _id, ...newData } = createData({
-    type: data.type,
-    isTypeEditable: data.isTypeEditable,
-  });
-
-  return {
-    ...data,
-    reference:
-      reference?.name && currentReference
-        ? { ...currentReference, name: reference?.name }
-        : undefined,
-    value:
-      reference?.data.entityType === "data"
-        ? reference?.data.value
-        : Array.isArray(data.value)
-        ? updateStatements({ statements: data.value, context })
-        : data.value instanceof Map
-        ? new Map(
-            [...data.value.entries()].map(([name, value]) => [
-              name,
-              updateStatements({ statements: [value], context })[0],
-            ])
-          )
-        : isDataOfType(data, "condition")
-        ? (() => {
-            const condition = updateStatements({
-              statements: [data.value.condition],
-              context,
-            })[0];
-            const _true = updateStatements({
-              statements: [data.value.true],
-              context,
-            })[0];
-            const _false = updateStatements({
-              statements: [data.value.false],
-              context,
-            })[0];
-            const result = getConditionResult({
-              condition,
-              true: _true,
-              false: _false,
-            });
-            return { condition, true: _true, false: _false, result };
-          })()
-        : data.value,
-    ...((isReferenceRemoved || isTypeChanged) && newData),
-  };
+  reference?: { name: string; data: IData<DataType> }
+): DataValue<DataType> {
+  return reference
+    ? { name: reference.name, id: reference.data.id }
+    : isDataOfType(data, "array")
+    ? updateStatements({ statements: data.value, context })
+    : isDataOfType(data, "object")
+    ? new Map(
+        [...data.value.entries()].map(([name, statement]) => [
+          name,
+          updateStatement(statement, context),
+        ])
+      )
+    : isDataOfType(data, "operation")
+    ? updateOperationValue(data, context) ?? data.value
+    : isDataOfType(data, "union")
+    ? updateDataValue(
+        { ...data, type: inferTypeFromValue(data.value) },
+        context
+      )
+    : isDataOfType(data, "condition")
+    ? (() => {
+        const condition = updateStatement(data.value.condition, context);
+        const _true = updateStatement(data.value.true, context);
+        const _false = updateStatement(data.value.false, context);
+        const result = executeStatement(
+          createStatement({
+            data: createData({
+              type: data.type,
+              value: { condition, true: _true, false: _false },
+            }),
+          }),
+          context
+        );
+        return { condition, true: _true, false: _false, result };
+      })()
+    : data.value;
 }
 
-export function resetParameters(
-  parameters: DataValue<OperationType>["parameters"],
-  argumentList?: DataValue<OperationType>["parameters"]
-): IStatement[] {
-  return parameters.map((param) => {
-    const argData = argumentList?.find((item) => item.id === param.id)?.data;
-    let paramData = { ...param.data, isTypeEditable: argData?.isTypeEditable };
-    if (isDataOfType(paramData, "operation")) {
-      const argParams = isDataOfType(argData, "operation")
-        ? argData.value.parameters
-        : undefined;
-      const params = resetParameters(paramData.value.parameters, argParams);
-      paramData = {
-        ...paramData,
-        id: nanoid(),
-        type: inferTypeFromValue({
-          parameters: params,
-          statements: paramData.value.statements,
-        }),
-        value: {
-          ...paramData.value,
-          parameters: params,
-        },
-      };
-    } else {
-      paramData = {
-        ...paramData,
-        id: nanoid(),
-        value: argData?.value || createDefaultValue(paramData.type),
-      };
-    }
-    return { ...param, id: nanoid(), data: paramData };
-  });
-}
-
-export function getReferenceOperation(
-  operation: IData<OperationType>,
-  context: Context,
-  reference?: { name: string; data: IData }
-): IData<OperationType> {
-  const currentReference = operation.reference;
-  const isReferenceRemoved =
-    currentReference?.id &&
-    (!reference?.name || !isDataOfType(reference.data, "operation"));
-  const isTypeChanged = reference
-    ? !isTypeCompatible(operation.type, reference.data.type)
-    : true;
-
-  let parameterList = operation.value.parameters;
-  let statementList = operation.value.statements;
-  // TODO: handle closure with execution context
-  // let closure = operation.closure;
-  if (reference && isDataOfType(reference.data, "operation")) {
-    parameterList = reference.data.value.parameters;
-    statementList = reference.data.value.statements;
-    // closure = getClosureList(reference) || closure;
-  }
-
-  const updatedParameters = parameterList.map((parameter) => {
-    let argument = operation.value.parameters?.find(
-      (item) => item.id === parameter.id
-    );
-    if (argument) {
-      if (
-        !isTypeCompatible(
-          parameter.data.type,
-          getStatementResult(argument).type
-        )
-      ) {
-        if (isDataOfType(argument.data, "operation")) {
-          const params = isDataOfType(parameter.data, "operation")
-            ? parameter.data.value.parameters
-            : argument.data.value.parameters;
-          argument = {
-            ...argument,
-            data: {
-              ...argument.data,
-              value: {
-                ...argument.data.value,
-                parameters: resetParameters(
-                  params,
-                  argument.data.value.parameters
-                ),
-              },
-            },
-          };
-        } else {
-          argument = { ...argument, data: parameter.data };
-        }
-      }
-      return updateStatements({ statements: [argument], context })[0];
-    }
-    return { ...parameter, data: { ...parameter.data, isTypeEditable: false } };
-  });
-
-  const updatedStatements = updateStatements({
-    statements: statementList,
-    context: {
-      ...context,
-      variables: updatedParameters.reduce((acc, param) => {
-        if (param.name) acc.set(param.name, getStatementResult(param));
-        return acc;
-      }, new Map(context.variables)),
-    },
-  });
-
-  const finalParameters = isTypeChanged
-    ? resetParameters(updatedParameters, operation.value.parameters)
-    : updatedParameters;
-
-  return {
-    ...operation,
-    type: inferTypeFromValue({
-      parameters: finalParameters,
-      statements: updatedStatements,
-    }),
-    value: {
-      ...operation.value,
-      parameters: finalParameters,
-      statements: updatedStatements,
-    },
-    reference:
-      reference?.name && currentReference && !isReferenceRemoved
-        ? { ...currentReference, name: reference?.name }
-        : undefined,
-    // closure,
-  };
-}
-
-export function updateStatementReference(
+function updateStatement(
   currentStatement: IStatement,
   context: Context
 ): IStatement {
-  const currentReference = currentStatement.data.reference;
+  const currentReference = isDataOfType(currentStatement.data, "reference")
+    ? currentStatement.data.value
+    : undefined;
   const foundReference = context.variables
     .entries()
-    .find(([, item]) => item.reference?.id === currentReference?.id);
+    .find(([, item]) => item.data?.id === currentReference?.id);
   const reference = foundReference
-    ? { name: foundReference[0], data: foundReference[1] }
+    ? { name: foundReference[0], data: foundReference[1].data }
     : undefined;
 
-  return {
+  const newStatement = {
     ...currentStatement,
-    data: isDataOfType(currentStatement.data, "operation")
-      ? getReferenceOperation(currentStatement.data, context, reference)
-      : getReferenceData(currentStatement.data, context, reference),
-    operations: currentStatement.operations.map((operation) => {
-      const updatedParameters = updateStatements({
-        statements: operation.value.parameters,
-        context,
-      });
-      // For operation calls, preserve the result type from the definition
-      // Only update parameter types
-      return {
-        ...operation,
-        type: {
-          ...operation.type,
-          parameters: updatedParameters.map((param) => ({
-            name: param.name,
-            type: param.data.type,
-          })),
-        },
-        value: {
-          ...operation.value,
-          parameters: updatedParameters,
-        },
-      };
-    }),
+    data: {
+      ...currentStatement.data,
+      value: updateDataValue(currentStatement.data, context, reference),
+    },
+  };
+  return {
+    ...newStatement,
+    operations: updateOperationCalls(newStatement, context),
   };
 }
 
 export function updateStatements({
   statements,
+  context,
   changedStatement,
   removeStatement,
-  context,
+  operation,
 }: {
   statements: IStatement[];
+  context: Context;
   changedStatement?: IStatement;
   removeStatement?: boolean;
-  context: Context;
+  operation?: IData<OperationType>;
 }): IStatement[] {
   let currentIndexFound = false;
-  return statements.reduce((prevStatements, currentStatement) => {
+  return statements.reduce((prevStatements, currentStatement, index) => {
+    let statementToProcess = currentStatement;
     if (currentStatement.id === changedStatement?.id) {
       currentIndexFound = true;
       if (removeStatement) return prevStatements;
-      else return [...prevStatements, changedStatement];
+      statementToProcess = changedStatement;
     }
 
     if (changedStatement && !currentIndexFound)
       return [...prevStatements, currentStatement];
 
+    const variables = createContextVariables(prevStatements, context.variables);
     const _context = {
-      currentStatementId: currentStatement.id,
-      variables: prevStatements.reduce((acc, stmt) => {
-        if (stmt.name) acc.set(stmt.name, getStatementResult(stmt));
-        return acc;
-      }, new Map([...context.variables].filter(([, item]) => item.reference?.id !== changedStatement?.id))),
+      currentStatementId: statementToProcess.id,
+      variables,
+      skipExecution: getSkipExecution({
+        context: { ...context, variables },
+        data: statementToProcess.data,
+        ...(operation ? { operation, paramIndex: index } : {}),
+      }),
     };
-    return [
-      ...prevStatements,
-      updateOperationCalls(
-        updateStatementReference(currentStatement, _context),
-        _context
-      ),
-    ];
+    return [...prevStatements, updateStatement(statementToProcess, _context)];
   }, [] as IStatement[]);
 }
 
-export function updateOperations(
-  operations: IData<OperationType>[],
-  changedOperation: IData<OperationType>,
-  removeOperation?: boolean
-): IData<OperationType>[] {
-  let currentIndexFound = false;
-  return operations.reduce((prevOperations, currentOperation) => {
-    if (currentOperation.id === changedOperation.id) {
-      currentIndexFound = true;
-      if (removeOperation) return prevOperations;
-      else return [...prevOperations, changedOperation];
-    }
+function updateOperationValue(
+  operation: IData<OperationType>,
+  context: Context
+): DataValue<OperationType> {
+  const updatedStatements = updateStatements({
+    statements: [...operation.value.parameters, ...operation.value.statements],
+    context,
+  });
+  const parameterLength = operation.value.parameters.length;
+  const parameters = updatedStatements.slice(0, parameterLength);
+  const statements = updatedStatements.slice(parameterLength);
+  return { ...operation.value, parameters, statements };
+}
 
-    if (!currentIndexFound) return [...prevOperations, currentOperation];
-
-    const updatedStatements = updateStatements({
-      statements: [
-        ...currentOperation.value.parameters,
-        ...currentOperation.value.statements,
-      ],
-      context: {
-        variables: prevOperations.reduce((acc, operation) => {
-          if (operation.value.name) acc.set(operation.value.name, operation);
-          return acc;
-        }, new Map() as Context["variables"]),
-      },
-    });
-    const parameterLength = currentOperation.value.parameters.length;
-    const parameters = updatedStatements.slice(0, parameterLength);
-    const statements = updatedStatements.slice(parameterLength);
-    return [
-      ...prevOperations,
-      {
-        ...currentOperation,
-        type: inferTypeFromValue({
-          parameters: parameters,
-          statements: statements,
-        }),
-        value: { ...currentOperation.value, parameters, statements },
-      },
-    ];
-  }, [] as IData<OperationType>[]);
+export function updateFiles(
+  files: ProjectFile[],
+  changedFile?: ProjectFile
+): ProjectFile[] {
+  return files
+    .map((file) => (file.id === changedFile?.id ? changedFile : file))
+    .reduce((prevFile, currentFile, _, fileList) => {
+      let fileToProcess = currentFile;
+      if (fileToProcess.id === changedFile?.id)
+        return [...prevFile, changedFile];
+      const context = {
+        variables: createFileVariables(fileList, currentFile.id),
+      };
+      const operation = createOperationFromFile(currentFile);
+      if (operation) {
+        const value = updateOperationValue(operation, context);
+        const operationFile = createFileFromOperation({
+          ...operation,
+          type: inferTypeFromValue(value),
+          value,
+        });
+        fileToProcess = { ...operationFile, updatedAt: Date.now() };
+      }
+      return [...prevFile, fileToProcess];
+    }, [] as ProjectFile[]);
 }

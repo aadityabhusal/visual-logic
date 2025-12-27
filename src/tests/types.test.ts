@@ -60,7 +60,7 @@ const numberData = createData({ type: { kind: "number" } });
 
 const booleanData = createData({ type: { kind: "boolean" } });
 
-const undefinedData = createData({ type: { kind: "undefined" } });
+const undefinedData = createData();
 
 const arrayData = createData({
   type: {

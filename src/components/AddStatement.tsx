@@ -32,10 +32,7 @@ export function AddStatement({
           className || "",
         ].join(" ")}
         onClick={() => {
-          const data = createData({
-            type: { kind: "undefined" },
-            isTypeEditable: true,
-          });
+          const data = createData({ isTypeEditable: true });
           setUiConfig({ navigation: { id: data.id } });
           onSelect(createStatement({ data }));
         }}

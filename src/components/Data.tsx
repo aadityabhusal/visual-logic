@@ -15,6 +15,7 @@ import { DataTypes } from "../lib/data";
 import { ConditionInput } from "./Input/ConditionInput";
 import { UnionInput } from "./Input/UnionInput";
 import { Operation } from "./Operation";
+import { ErrorInput } from "./Input/ErrorInput";
 
 interface IProps {
   data: IData;
@@ -37,13 +38,13 @@ export function Data({
   );
 
   const showDropdownIcon =
-    !data.reference?.name &&
-    (isDataOfType(data, "array") ||
-      isDataOfType(data, "object") ||
-      isDataOfType(data, "boolean") ||
-      isDataOfType(data, "union") ||
-      isDataOfType(data, "condition") ||
-      isDataOfType(data, "operation"));
+    isDataOfType(data, "array") ||
+    isDataOfType(data, "object") ||
+    isDataOfType(data, "boolean") ||
+    isDataOfType(data, "union") ||
+    isDataOfType(data, "condition") ||
+    isDataOfType(data, "operation") ||
+    isDataOfType(data, "error");
 
   return (
     <Dropdown
@@ -58,13 +59,13 @@ export function Data({
         focusOnClick: showDropdownIcon,
       }}
       context={context}
-      value={data.reference?.name || data.type.kind}
+      value={isDataOfType(data, "reference") ? data.value.name : data.type.kind}
       isInputTarget={
-        !!data.reference ||
+        isDataOfType(data, "reference") ||
         ["string", "number", "undefined"].includes(data.type.kind)
       }
       target={({ onChange, ...props }: IDropdownTargetProps) =>
-        data.reference?.name ? (
+        isDataOfType(data, "reference") ? (
           <BaseInput {...props} onChange={onChange} className="text-variable" />
         ) : isDataOfType(data, "operation") ? (
           <Operation
@@ -101,7 +102,7 @@ export function Data({
             value={data.value}
             onChange={(val) => {
               onChange?.(val.toString());
-              handleChange({ ...data, value: val });
+              handleChange({ ...data, value: Number(val) });
             }}
           />
         ) : isDataOfType(data, "string") ? (
@@ -125,6 +126,13 @@ export function Data({
           />
         ) : isDataOfType(data, "union") ? (
           <UnionInput
+            data={data}
+            handleData={handleChange}
+            context={context}
+            onClick={props.onClick}
+          />
+        ) : isDataOfType(data, "error") ? (
+          <ErrorInput
             data={data}
             handleData={handleChange}
             context={context}

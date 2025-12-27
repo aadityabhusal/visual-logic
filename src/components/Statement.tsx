@@ -1,14 +1,16 @@
 import { FaArrowRightLong, FaArrowTurnUp, FaEquals } from "react-icons/fa6";
 import { Context, IData, IStatement, OperationType } from "../lib/types";
-import { updateOperationCalls } from "../lib/update";
 import {
   isTypeCompatible,
   getStatementResult,
   createVariableName,
-  isDataOfType,
   applyTypeNarrowing,
 } from "../lib/utils";
-import { createOperationCall, getFilteredOperations } from "../lib/operation";
+import {
+  createOperationCall,
+  getFilteredOperations,
+  getSkipExecution,
+} from "../lib/operation";
 import { Data } from "./Data";
 import { BaseInput } from "./Input/BaseInput";
 import { OperationCall } from "./OperationCall";
@@ -55,7 +57,6 @@ export function Statement({
 
   const isEqualsFocused = navigation?.id === `${statement.id}_equals`;
   const isNameFocused = navigation?.id === `${statement.id}_name`;
-
   const hoverEvents = useMemo(
     () => ({
       onMouseEnter: openDropdown,
@@ -66,36 +67,13 @@ export function Statement({
     [openDropdown, closeDropdown]
   );
 
+  // TODO: should context be passed as a parameter?
   function addOperationCall() {
     const data = getStatementResult(statement);
     const operation = createOperationCall({ data, context });
     const operations = [...statement.operations, operation];
-    handleStatement(
-      updateOperationCalls({ ...statement, operations }, context)
-    );
+    handleStatement({ ...statement, operations });
     setUiConfig({ navigation: { id: operation.id, direction: "right" } });
-  }
-
-  function handleData(data: IData, remove?: boolean) {
-    if (remove) handleStatement(statement, remove);
-    else {
-      let operations = [...statement.operations];
-      if (!isTypeCompatible(statement.data.type, data.type)) operations = [];
-      handleStatement(
-        updateOperationCalls({ ...statement, data, operations }, context)
-      );
-    }
-  }
-
-  function handelOperation(operation: IData<OperationType>, remove?: boolean) {
-    if (remove) handleStatement(statement, remove);
-    else
-      handleStatement(
-        updateOperationCalls(
-          { ...statement, data: operation, operations: statement.operations },
-          context
-        )
-      );
   }
 
   function handleOperationCall(
@@ -128,9 +106,7 @@ export function Statement({
       }
       operations[index] = operation;
     }
-    handleStatement(
-      updateOperationCalls({ ...statement, operations }, context)
-    );
+    handleStatement({ ...statement, operations });
   }
 
   return (
@@ -226,7 +202,11 @@ export function Statement({
       >
         <ErrorBoundary
           displayError={true}
-          onRemove={() => handleStatement(statement, true)}
+          onRemove={
+            options?.disableDelete
+              ? undefined
+              : () => handleStatement(statement, true)
+          }
         >
           <Data
             data={statement.data}
@@ -234,15 +214,14 @@ export function Statement({
             addOperationCall={
               !options?.disableOperationCall &&
               statement.operations.length === 0 &&
+              !context.skipExecution &&
               getFilteredOperations(statement.data, context.variables).length
                 ? addOperationCall
                 : undefined
             }
             context={context}
-            handleChange={
-              isDataOfType(statement.data, "operation")
-                ? handelOperation
-                : handleData
+            handleChange={(data, remove) =>
+              handleStatement({ ...statement, data }, remove)
             }
           />
         </ErrorBoundary>
@@ -251,7 +230,7 @@ export function Statement({
             (acc, operation, i, operationsList) => {
               const data = getStatementResult(statement, i, true);
               acc.narrowedTypes = applyTypeNarrowing(
-                context.variables,
+                context,
                 acc.narrowedTypes,
                 data,
                 operation
@@ -277,7 +256,15 @@ export function Statement({
                       handleOperationCall={(op, remove) =>
                         handleOperationCall(op, i, remove)
                       }
-                      context={context}
+                      // passing context and narrowedTypes separately to handle inverse type narrowing
+                      context={{
+                        ...context,
+                        skipExecution: getSkipExecution({
+                          context,
+                          data,
+                          operation,
+                        }),
+                      }}
                       narrowedTypes={acc.narrowedTypes}
                       addOperationCall={
                         !options?.disableOperationCall &&
