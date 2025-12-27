@@ -812,23 +812,23 @@ export function getSkipExecution({
   context,
   data: _data,
   operation,
-  parameterIndex,
+  paramIndex,
 }: {
   context: Context;
   data: IData;
   operation?: IData<OperationType>;
-  parameterIndex?: number;
+  paramIndex?: number;
 }): Context["skipExecution"] {
   if (context.skipExecution) return context.skipExecution;
   const data = resolveReference(_data, context);
   if (isDataOfType(data, "error")) return { reason: data.value.reason };
   if (!operation) return undefined;
 
-  if (parameterIndex !== undefined && isDataOfType(data, "boolean")) {
+  if (paramIndex !== undefined && isDataOfType(data, "boolean")) {
     const operationName = operation.value.name;
     if (
       operationName === "thenElse" &&
-      data.value === (parameterIndex === 0 ? false : true)
+      data.value === (paramIndex === 0 ? false : true)
     ) {
       return { reason: "Unreachable branch" };
     } else if (
@@ -840,6 +840,7 @@ export function getSkipExecution({
   }
 
   if (
+    paramIndex === undefined &&
     !getFilteredOperations(data, context.variables).find(
       (op) => op.name === operation.value.name
     )

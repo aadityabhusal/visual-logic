@@ -13,14 +13,7 @@ import {
   Parameter,
   ProjectFile,
 } from "./types";
-import {
-  ArrayValueSchema,
-  ConditionValueSchema,
-  ErrorValueSchema,
-  ObjectValueSchema,
-  OperationValueSchema,
-  ReferenceValueSchema,
-} from "./schemas";
+import { ErrorValueSchema, ReferenceValueSchema } from "./schemas";
 
 /* Create */
 
@@ -466,6 +459,20 @@ export function applyTypeNarrowing(
   return narrowedTypes;
 }
 
+export function mergeNarrowedTypes(
+  originalTypes: Context["variables"],
+  narrowedTypes: Context["variables"],
+  operationName?: string
+): Context["variables"] {
+  return operationName === "or"
+    ? originalTypes // TODO: inverse narrowed types for 'or' operation
+    : narrowedTypes.entries().reduce((acc, [key, value]) => {
+        if (value.data.type.kind === "never") acc.delete(key);
+        else acc.set(key, value);
+        return acc;
+      }, new Map(originalTypes));
+}
+
 export function resolveUnionType(types: DataType[], union: true): UnionType;
 export function resolveUnionType(types: DataType[], union?: false): DataType;
 export function resolveUnionType(
@@ -548,34 +555,40 @@ export function inferTypeFromValue<T extends DataType>(
   if (typeof value === "number") return { kind: "number" } as T;
   if (typeof value === "boolean") return { kind: "boolean" } as T;
 
-  const arrayValue = ArrayValueSchema.safeParse(value);
-  if (arrayValue.success) {
+  if (Array.isArray(value)) {
     return {
       kind: "array",
-      elementType: getArrayElementType(arrayValue.data),
+      elementType: getArrayElementType(value),
     } as T;
   }
-  const objectValue = ObjectValueSchema.safeParse(value);
-  if (objectValue.success) {
+  if (value instanceof Map) {
     return {
       kind: "object",
-      properties: objectValue.data.entries().reduce((acc, [key, statement]) => {
+      properties: value.entries().reduce((acc, [key, statement]) => {
         acc[key] = statement.data.type;
         return acc;
       }, {} as { [key: string]: DataType }),
     } as T;
   }
-  const operationValue = OperationValueSchema.safeParse(value);
-  if (operationValue.success) {
-    return getOperationType(
-      operationValue.data.parameters,
-      operationValue.data.statements
-    ) as T;
+  if (
+    value &&
+    typeof value === "object" &&
+    "parameters" in value &&
+    "statements" in value &&
+    Array.isArray(value.parameters) &&
+    Array.isArray(value.statements)
+  ) {
+    return getOperationType(value.parameters, value.statements) as T;
   }
-  const conditionValue = ConditionValueSchema.safeParse(value);
-  if (conditionValue.success) {
-    const trueType = getStatementResult(conditionValue.data.true).type;
-    const falseType = getStatementResult(conditionValue.data.false).type;
+  if (
+    value &&
+    typeof value === "object" &&
+    "condition" in value &&
+    "true" in value &&
+    "false" in value
+  ) {
+    const trueType = getStatementResult(value.true as IStatement).type;
+    const falseType = getStatementResult(value.false as IStatement).type;
     const unionType = resolveUnionType(
       isTypeCompatible(trueType, falseType) ? [trueType] : [trueType, falseType]
     );

@@ -202,7 +202,11 @@ export function Statement({
       >
         <ErrorBoundary
           displayError={true}
-          onRemove={() => handleStatement(statement, true)}
+          onRemove={
+            options?.disableDelete
+              ? undefined
+              : () => handleStatement(statement, true)
+          }
         >
           <Data
             data={statement.data}
@@ -224,11 +228,11 @@ export function Statement({
         {
           statement.operations.reduce(
             (acc, operation, i, operationsList) => {
-              const result = getStatementResult(statement, i, true);
+              const data = getStatementResult(statement, i, true);
               acc.narrowedTypes = applyTypeNarrowing(
                 context,
                 acc.narrowedTypes,
-                result,
+                data,
                 operation
               );
 
@@ -247,7 +251,7 @@ export function Statement({
                     onRemove={() => handleOperationCall(operation, i, true)}
                   >
                     <OperationCall
-                      data={result}
+                      data={data}
                       operation={operation}
                       handleOperationCall={(op, remove) =>
                         handleOperationCall(op, i, remove)
@@ -257,7 +261,7 @@ export function Statement({
                         ...context,
                         skipExecution: getSkipExecution({
                           context,
-                          data: result,
+                          data,
                           operation,
                         }),
                       }}

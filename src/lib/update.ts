@@ -23,43 +23,71 @@ import {
   createOperationFromFile,
   createFileFromOperation,
   createFileVariables,
+  applyTypeNarrowing,
+  getInverseTypes,
+  mergeNarrowedTypes,
 } from "./utils";
 
 export function updateOperationCalls(
   statement: IStatement,
   _context: Context
 ): IData<OperationType>[] {
-  return statement.operations.reduce((previousOperations, operation, index) => {
-    const data = getStatementResult(
-      { ...statement, operations: previousOperations },
-      index
-    );
-    const context = {
-      ..._context,
-      skipExecution: getSkipExecution({ context: _context, data, operation }),
-    };
-    const parameters = updateStatements({
-      statements: operation.value.parameters,
-      context,
-      operation,
-    });
-    const foundOperation = getFilteredOperations(data, context.variables).find(
-      (op) => op.name === operation.value.name
-    );
-    const currentResult = operation.value.result;
-    const result = foundOperation
-      ? {
-          ...executeOperation(foundOperation, data, parameters, context),
-          ...(currentResult && { id: currentResult?.id }),
-          isTypeEditable: data.isTypeEditable,
-        }
-      : currentResult;
+  return statement.operations.reduce(
+    (acc, operation, operationIndex) => {
+      const data = getStatementResult(statement, operationIndex, true);
+      acc.narrowedTypes = applyTypeNarrowing(
+        _context,
+        acc.narrowedTypes,
+        data,
+        operation
+      );
+      const context = {
+        ..._context,
+        skipExecution: getSkipExecution({ context: _context, data, operation }),
+      };
 
-    return [
-      ...previousOperations,
-      { ...operation, value: { ...operation.value, parameters, result } },
-    ];
-  }, [] as IData<OperationType>[]);
+      const parameters = operation.value.parameters.map((param, paramIndex) => {
+        const variables =
+          operation.value.name === "thenElse" && paramIndex === 1
+            ? getInverseTypes(context.variables, acc.narrowedTypes)
+            : mergeNarrowedTypes(
+                context.variables,
+                acc.narrowedTypes,
+                operation.value.name
+              );
+        return updateStatement(param, {
+          ...context,
+          variables,
+          skipExecution: getSkipExecution({
+            context: { ...context, variables },
+            data: param.data,
+            operation,
+            paramIndex: paramIndex,
+          }),
+        });
+      });
+
+      const foundOperation = getFilteredOperations(
+        data,
+        context.variables
+      ).find((op) => op.name === operation.value.name);
+      const currentResult = operation.value.result;
+      const result = foundOperation
+        ? {
+            ...executeOperation(foundOperation, data, parameters, context),
+            ...(currentResult && { id: currentResult?.id }),
+            isTypeEditable: data.isTypeEditable,
+          }
+        : currentResult;
+
+      acc.operations = [
+        ...acc.operations,
+        { ...operation, value: { ...operation.value, parameters, result } },
+      ];
+      return acc;
+    },
+    { operations: [] as IData<OperationType>[], narrowedTypes: new Map() }
+  ).operations;
 }
 
 function updateDataValue(
@@ -163,7 +191,7 @@ export function updateStatements({
       skipExecution: getSkipExecution({
         context: { ...context, variables },
         data: statementToProcess.data,
-        ...(operation ? { operation, parameterIndex: index } : {}),
+        ...(operation ? { operation, paramIndex: index } : {}),
       }),
     };
     return [...prevStatements, updateStatement(statementToProcess, _context)];

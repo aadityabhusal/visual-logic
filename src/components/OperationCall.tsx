@@ -7,7 +7,7 @@ import {
   getFilteredOperations,
   getSkipExecution,
 } from "../lib/operation";
-import { getInverseTypes } from "../lib/utils";
+import { getInverseTypes, mergeNarrowedTypes } from "../lib/utils";
 import { BaseInput } from "./Input/BaseInput";
 import { useMemo } from "react";
 
@@ -31,13 +31,11 @@ export function OperationCall({
 }) {
   const updatedVariables = useMemo(
     () =>
-      operation.value.name === "or"
-        ? context.variables // TODO: inverse narrowed types for 'or' operation
-        : narrowedTypes.entries().reduce((acc, [key, value]) => {
-            if (value.data.type.kind === "never") acc.delete(key);
-            else acc.set(key, value);
-            return acc;
-          }, new Map(context.variables)),
+      mergeNarrowedTypes(
+        context.variables,
+        narrowedTypes,
+        operation.value.name
+      ),
     [context.variables, narrowedTypes, operation.value.name]
   );
   const filteredOperations = useMemo(
@@ -123,17 +121,17 @@ export function OperationCall({
       target={(props) => <BaseInput {...props} className="text-method" />}
     >
       <span>{"("}</span>
-      {operation.value.parameters.map((item, i, arr) => {
+      {operation.value.parameters.map((item, paramIndex, arr) => {
         const variables =
-          operation.value.name === "thenElse" && i === 1
+          operation.value.name === "thenElse" && paramIndex === 1
             ? getInverseTypes(context.variables, narrowedTypes)
             : updatedVariables;
         return (
-          <span key={i} className="flex">
+          <span key={paramIndex} className="flex">
             <Statement
               statement={item}
               handleStatement={(val) =>
-                val && handleParameter(val, i, variables)
+                val && handleParameter(val, paramIndex, variables)
               }
               options={{ disableDelete: true }}
               context={{
@@ -143,11 +141,11 @@ export function OperationCall({
                   context,
                   data,
                   operation,
-                  parameterIndex: i,
+                  paramIndex,
                 }),
               }}
             />
-            {i < arr.length - 1 ? <span>{", "}</span> : null}
+            {paramIndex < arr.length - 1 ? <span>{", "}</span> : null}
           </span>
         );
       })}
